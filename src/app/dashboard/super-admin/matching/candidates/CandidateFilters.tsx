@@ -11,6 +11,7 @@
 'use client';
 
 import { Fragment } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -50,6 +51,7 @@ export default function CandidateFilters({
   scanning,
   onScan
 }: CandidateFiltersProps) {
+  const t = useTranslations('superadmin.matching.filters');
   /**
    * Zählt aktive Filter
    */
@@ -109,7 +111,7 @@ export default function CandidateFilters({
       <SearchInput
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Kandidaten durchsuchen..."
+        placeholder={t('searchPlaceholder')}
         className="flex-1"
       />
 
@@ -147,13 +149,13 @@ export default function CandidateFilters({
                 <div className="space-y-4">
                   {/* Header */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{t('title')}</h3>
                     {activeFilterCount > 0 && (
                       <button
                         onClick={resetFilters}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
-                        Zurücksetzen
+                        {t('resetButton')}
                       </button>
                     )}
                   </div>
@@ -161,7 +163,7 @@ export default function CandidateFilters({
                   {/* Status Multi-Select */}
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Status
+                      {t('statusLabel')}
                     </label>
                     <div className="space-y-2">
                       {(['pending', 'imported', 'skipped', 'rejected'] as const).map((status) => {
@@ -189,7 +191,7 @@ export default function CandidateFilters({
                   {/* Score Range */}
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Min. Score
+                      {t('minScoreLabel')}
                     </label>
                     <select
                       value={filters.minScore?.toString() || ''}
@@ -199,19 +201,19 @@ export default function CandidateFilters({
                       })}
                       className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
                     >
-                      <option value="">Alle</option>
-                      <option value="50">Min. 50 Punkte</option>
-                      <option value="60">Min. 60 Punkte</option>
-                      <option value="70">Min. 70 Punkte</option>
-                      <option value="80">Min. 80 Punkte</option>
-                      <option value="90">Min. 90 Punkte</option>
+                      <option value="">{t('allOption')}</option>
+                      <option value="50">{t('minScoreOption', { score: 50 })}</option>
+                      <option value="60">{t('minScoreOption', { score: 60 })}</option>
+                      <option value="70">{t('minScoreOption', { score: 70 })}</option>
+                      <option value="80">{t('minScoreOption', { score: 80 })}</option>
+                      <option value="90">{t('minScoreOption', { score: 90 })}</option>
                     </select>
                   </div>
 
                   {/* Match Type */}
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Match-Type
+                      {t('matchTypeLabel')}
                     </label>
                     <select
                       value={filters.matchType || ''}
@@ -221,16 +223,16 @@ export default function CandidateFilters({
                       })}
                       className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
                     >
-                      <option value="">Alle</option>
-                      <option value="email">E-Mail</option>
-                      <option value="name">Name</option>
+                      <option value="">{t('allOption')}</option>
+                      <option value="email">{t('matchTypeEmail')}</option>
+                      <option value="name">{t('matchTypeName')}</option>
                     </select>
                   </div>
 
                   {/* Min Varianten */}
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Min. Organisationen
+                      {t('minOrgsLabel')}
                     </label>
                     <select
                       value={filters.minVariants?.toString() || ''}
@@ -240,11 +242,11 @@ export default function CandidateFilters({
                       })}
                       className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
                     >
-                      <option value="">Alle</option>
-                      <option value="2">Min. 2</option>
-                      <option value="3">Min. 3</option>
-                      <option value="4">Min. 4</option>
-                      <option value="5">Min. 5</option>
+                      <option value="">{t('allOption')}</option>
+                      <option value="2">{t('minOrgsOption', { count: 2 })}</option>
+                      <option value="3">{t('minOrgsOption', { count: 3 })}</option>
+                      <option value="4">{t('minOrgsOption', { count: 4 })}</option>
+                      <option value="5">{t('minOrgsOption', { count: 5 })}</option>
                     </select>
                   </div>
 
@@ -259,10 +261,10 @@ export default function CandidateFilters({
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          🔧 Development-Modus
+                          {t('devModeLabel')}
                         </span>
                         <span className="text-xs text-zinc-500">
-                          Min 1 Org, min Score: 40
+                          {t('devModeDescription')}
                         </span>
                       </div>
                     </label>
@@ -274,10 +276,10 @@ export default function CandidateFilters({
                       <div className={`h-4 w-4 rounded ${useAiMerge ? 'bg-blue-600' : 'bg-zinc-300'}`} />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          🤖 KI-Daten-Merge {useAiMerge ? 'aktiviert' : 'deaktiviert'}
+                          {t('aiMergeLabel', { status: useAiMerge ? t('aiMergeActive') : t('aiMergeInactive') })}
                         </span>
                         <span className="text-xs text-zinc-500">
-                          Einstellung ändern in → SuperAdmin Settings
+                          {t('aiMergeDescription')}
                         </span>
                       </div>
                     </div>
@@ -299,12 +301,12 @@ export default function CandidateFilters({
         {scanning ? (
           <>
             <ArrowPathIcon className="size-5 animate-spin" />
-            Scanne...
+            {t('scanningButton')}
           </>
         ) : (
           <>
             <ArrowPathIcon className="size-5" />
-            Scan
+            {t('scanButton')}
           </>
         )}
       </Button>
@@ -328,14 +330,14 @@ export default function CandidateFilters({
             <div className="py-1">
               {devMode && (
                 <div className="px-4 py-2 text-xs text-zinc-500 border-b border-zinc-200 dark:border-zinc-700">
-                  🔧 Dev-Mode aktiv
+                  {t('devModeActive')}
                 </div>
               )}
               <button
                 onClick={() => window.open('/dashboard/super-admin/matching/analytics', '_blank')}
                 className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
-                Analytics öffnen
+                {t('openAnalytics')}
               </button>
             </div>
           </Popover.Panel>

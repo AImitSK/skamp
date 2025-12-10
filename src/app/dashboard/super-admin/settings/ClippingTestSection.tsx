@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -51,6 +52,7 @@ interface TestDataStats {
 }
 
 export default function ClippingTestSection() {
+  const t = useTranslations('superadmin.settings.clippingTest');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
@@ -76,7 +78,7 @@ export default function ClippingTestSection() {
    */
   const handleTestKeywordExtraction = async () => {
     if (!companyName.trim()) {
-      toast.error('Bitte Firmennamen eingeben');
+      toast.error(t('keywordTest.errorNoName'));
       return;
     }
 
@@ -103,10 +105,10 @@ export default function ClippingTestSection() {
         removedLegalForms
       });
 
-      toast.success(`${result.all.length} Keywords extrahiert`);
+      toast.success(t('keywordTest.success', { count: result.all.length }));
     } catch (error) {
       console.error('Keyword extraction failed:', error);
-      toast.error('Fehler bei der Keyword-Extraktion');
+      toast.error(t('keywordTest.error'));
     } finally {
       setLoading(false);
     }
@@ -117,7 +119,7 @@ export default function ClippingTestSection() {
    */
   const handleTestMatchScore = async () => {
     if (!testFirmenname.trim() || !testTitel.trim()) {
-      toast.error('Bitte Firmenname und Titel eingeben');
+      toast.error(t('matchScoreTest.errorNameAndTitle'));
       return;
     }
 
@@ -150,10 +152,10 @@ export default function ClippingTestSection() {
         confidence
       });
 
-      toast.success('Match-Score berechnet');
+      toast.success(t('matchScoreTest.success'));
     } catch (error) {
       console.error('Match score test failed:', error);
-      toast.error('Fehler bei der Match-Score Berechnung');
+      toast.error(t('matchScoreTest.error'));
     } finally {
       setLoading(false);
     }
@@ -165,15 +167,15 @@ export default function ClippingTestSection() {
    */
   const handleSeedTestData = async () => {
     if (!user || !currentOrganization) {
-      toast.error('Nicht authentifiziert');
+      toast.error(t('testData.errorNotAuthenticated'));
       return;
     }
 
-    if (!confirm('Test-Daten für Clipping-System erstellen?')) {
+    if (!confirm(t('testData.confirmCreate'))) {
       return;
     }
 
-    const toastId = toast.loading('Erstelle Test-Daten...');
+    const toastId = toast.loading(t('testData.creating'));
     setLoading(true);
 
     try {
@@ -191,10 +193,10 @@ export default function ClippingTestSection() {
       };
 
       setTestDataStats(stats);
-      toast.error('Funktion noch nicht implementiert - Modul fehlt', { id: toastId });
+      toast.error(t('testData.notImplemented'), { id: toastId });
     } catch (error) {
       console.error('Seed test data failed:', error);
-      toast.error('Fehler beim Erstellen der Test-Daten', { id: toastId });
+      toast.error(t('testData.errorCreating'), { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -206,15 +208,15 @@ export default function ClippingTestSection() {
    */
   const handleCleanupTestData = async () => {
     if (!currentOrganization) {
-      toast.error('Keine Organisation ausgewählt');
+      toast.error(t('testData.errorNoOrganization'));
       return;
     }
 
-    if (!confirm('Alle Clipping Test-Daten löschen?')) {
+    if (!confirm(t('testData.confirmDelete'))) {
       return;
     }
 
-    const toastId = toast.loading('Lösche Test-Daten...');
+    const toastId = toast.loading(t('testData.deleting'));
     setLoading(true);
 
     try {
@@ -223,10 +225,10 @@ export default function ClippingTestSection() {
       // await cleanupClippingTestData(currentOrganization.id);
 
       setTestDataStats(null);
-      toast.error('Funktion noch nicht implementiert - Modul fehlt', { id: toastId });
+      toast.error(t('testData.notImplemented'), { id: toastId });
     } catch (error) {
       console.error('Cleanup test data failed:', error);
-      toast.error('Fehler beim Löschen der Test-Daten', { id: toastId });
+      toast.error(t('testData.errorDeleting'), { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -239,28 +241,28 @@ export default function ClippingTestSection() {
         <div className="flex items-center gap-2 mb-3">
           <MagnifyingGlassIcon className="size-5 text-blue-600" />
           <h4 className="font-medium text-zinc-900 dark:text-white">
-            1. Keyword-Extraktion Test
+            {t('keywordTest.title')}
           </h4>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           <input
             type="text"
-            placeholder="Firmenname (Pflicht)"
+            placeholder={t('keywordTest.namePlaceholder')}
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm"
           />
           <input
             type="text"
-            placeholder="Official Name (optional)"
+            placeholder={t('keywordTest.officialNamePlaceholder')}
             value={officialName}
             onChange={(e) => setOfficialName(e.target.value)}
             className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm"
           />
           <input
             type="text"
-            placeholder="Trading Name (optional)"
+            placeholder={t('keywordTest.tradingNamePlaceholder')}
             value={tradingName}
             onChange={(e) => setTradingName(e.target.value)}
             className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm"
@@ -274,13 +276,13 @@ export default function ClippingTestSection() {
           className="mb-3"
         >
           <BeakerIcon className="size-4" />
-          Keywords extrahieren
+          {t('keywordTest.extractButton')}
         </Button>
 
         {keywordResult && (
           <div className="p-3 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">
             <div className="text-sm mb-2">
-              <span className="text-zinc-500">Primary:</span>{' '}
+              <span className="text-zinc-500">{t('keywordTest.primaryLabel')}:</span>{' '}
               <span className="font-medium text-zinc-900 dark:text-white">{keywordResult.primary}</span>
             </div>
             <div className="flex flex-wrap gap-1 mb-2">
@@ -290,7 +292,7 @@ export default function ClippingTestSection() {
             </div>
             {keywordResult.removedLegalForms.length > 0 && (
               <div className="text-xs text-zinc-500">
-                Erkannte Rechtsformen: {keywordResult.removedLegalForms.join(', ')}
+                {t('keywordTest.legalFormsLabel')}: {keywordResult.removedLegalForms.join(', ')}
               </div>
             )}
           </div>
@@ -302,21 +304,21 @@ export default function ClippingTestSection() {
         <div className="flex items-center gap-2 mb-3">
           <SparklesIcon className="size-5 text-purple-600" />
           <h4 className="font-medium text-zinc-900 dark:text-white">
-            2. Match-Score Test
+            {t('matchScoreTest.title')}
           </h4>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           <input
             type="text"
-            placeholder="Firmenname"
+            placeholder={t('matchScoreTest.companyPlaceholder')}
             value={testFirmenname}
             onChange={(e) => setTestFirmenname(e.target.value)}
             className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm"
           />
           <input
             type="text"
-            placeholder="SEO-Keywords (kommasepariert)"
+            placeholder={t('matchScoreTest.seoPlaceholder')}
             value={testSeoKeywords}
             onChange={(e) => setTestSeoKeywords(e.target.value)}
             className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm"
@@ -325,14 +327,14 @@ export default function ClippingTestSection() {
 
         <input
           type="text"
-          placeholder="Artikel-Titel"
+          placeholder={t('matchScoreTest.titlePlaceholder')}
           value={testTitel}
           onChange={(e) => setTestTitel(e.target.value)}
           className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-sm mb-3"
         />
 
         <textarea
-          placeholder="Artikel-Content (optional)"
+          placeholder={t('matchScoreTest.contentPlaceholder')}
           value={testContent}
           onChange={(e) => setTestContent(e.target.value)}
           rows={3}
@@ -346,7 +348,7 @@ export default function ClippingTestSection() {
           className="mb-3"
         >
           <BeakerIcon className="size-4" />
-          Score berechnen
+          {t('matchScoreTest.calculateButton')}
         </Button>
 
         {matchResult && (
@@ -374,26 +376,26 @@ export default function ClippingTestSection() {
 
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="text-zinc-500">Reason:</span>{' '}
+                <span className="text-zinc-500">{t('matchScoreTest.reasonLabel')}:</span>{' '}
                 <span className="font-medium">{matchResult.reason}</span>
               </div>
               <div>
-                <span className="text-zinc-500">SEO-Score:</span>{' '}
+                <span className="text-zinc-500">{t('matchScoreTest.seoScoreLabel')}:</span>{' '}
                 <span className="font-medium">{matchResult.seoScore}%</span>
               </div>
               <div>
-                <span className="text-zinc-500">Firma gefunden:</span>{' '}
-                <span className="font-medium">{matchResult.companyMatch.found ? 'Ja' : 'Nein'}</span>
+                <span className="text-zinc-500">{t('matchScoreTest.companyFoundLabel')}:</span>{' '}
+                <span className="font-medium">{matchResult.companyMatch.found ? t('common.yes') : t('common.no')}</span>
               </div>
               <div>
-                <span className="text-zinc-500">Im Titel:</span>{' '}
-                <span className="font-medium">{matchResult.companyMatch.inTitle ? 'Ja' : 'Nein'}</span>
+                <span className="text-zinc-500">{t('matchScoreTest.inTitleLabel')}:</span>{' '}
+                <span className="font-medium">{matchResult.companyMatch.inTitle ? t('common.yes') : t('common.no')}</span>
               </div>
             </div>
 
             {matchResult.companyMatch.matchedKeyword && (
               <div className="mt-2 text-sm">
-                <span className="text-zinc-500">Matched Keyword:</span>{' '}
+                <span className="text-zinc-500">{t('matchScoreTest.matchedKeywordLabel')}:</span>{' '}
                 <Badge color="blue">{matchResult.companyMatch.matchedKeyword}</Badge>
               </div>
             )}
@@ -406,12 +408,12 @@ export default function ClippingTestSection() {
         <div className="flex items-center gap-2 mb-3">
           <DocumentTextIcon className="size-5 text-green-600" />
           <h4 className="font-medium text-zinc-900 dark:text-white">
-            3. Test-Daten Generator
+            {t('testData.title')}
           </h4>
         </div>
 
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-          Erstellt Test-Projekt, Kampagne, Clippings und Monitoring-Suggestions für die aktuelle Organisation.
+          {t('testData.description')}
         </p>
 
         <div className="flex flex-wrap gap-3 mb-3">
@@ -421,7 +423,7 @@ export default function ClippingTestSection() {
             disabled={loading}
           >
             <SparklesIcon className="size-4" />
-            Test-Daten erstellen
+            {t('testData.createButton')}
           </Button>
 
           <Button
@@ -430,16 +432,20 @@ export default function ClippingTestSection() {
             disabled={loading}
           >
             <TrashIcon className="size-4" />
-            Test-Daten löschen
+            {t('testData.deleteButton')}
           </Button>
         </div>
 
         {testDataStats && (
           <div className="p-3 bg-white dark:bg-zinc-800 rounded border border-green-200 dark:border-green-700">
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Erstellt: {testDataStats.projects} Projekt, {testDataStats.companies} Company,{' '}
-              {testDataStats.campaigns} Kampagne, {testDataStats.clippings} Clippings,{' '}
-              {testDataStats.suggestions} Suggestions
+              {t('testData.statsLabel', {
+                projects: testDataStats.projects,
+                companies: testDataStats.companies,
+                campaigns: testDataStats.campaigns,
+                clippings: testDataStats.clippings,
+                suggestions: testDataStats.suggestions
+              })}
             </div>
           </div>
         )}

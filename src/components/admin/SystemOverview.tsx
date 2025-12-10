@@ -1,8 +1,11 @@
+'use client';
+
 import { ChartBarIcon, NewspaperIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Text, Strong } from '@/components/ui/text';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toDate } from '@/lib/utils/timestamp-utils';
+import { useTranslations } from 'next-intl';
 
 interface SystemOverviewProps {
   stats: {
@@ -53,33 +56,35 @@ function StatCard({ title, value, icon: Icon, color = 'blue' }: StatCardProps) {
 }
 
 export function SystemOverview({ stats }: SystemOverviewProps) {
+  const t = useTranslations('superadmin.monitoring.systemOverview');
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Aktive Tracker"
+          title={t('stats.activeTrackers')}
           value={stats.totalActiveTrackers}
           icon={ChartBarIcon}
           color="blue"
         />
 
         <StatCard
-          title="Artikel heute"
+          title={t('stats.articlesToday')}
           value={stats.totalArticlesFoundToday}
           icon={NewspaperIcon}
           color="blue"
         />
 
         <StatCard
-          title="Auto-Confirmed"
+          title={t('stats.autoConfirmed')}
           value={stats.totalAutoConfirmed}
           icon={CheckCircleIcon}
           color="green"
         />
 
         <StatCard
-          title="Pending Review"
+          title={t('stats.pendingReview')}
           value={stats.totalPending}
           icon={ClockIcon}
           color="yellow"
@@ -89,10 +94,10 @@ export function SystemOverview({ stats }: SystemOverviewProps) {
       {/* Last Crawl Run Info */}
       {stats.lastCrawlRun && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Text className="text-sm font-medium text-gray-700 mb-3">Letzter Crawler-Run</Text>
+          <Text className="text-sm font-medium text-gray-700 mb-3">{t('lastCrawl.title')}</Text>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Text className="text-xs text-gray-500">Zeitpunkt</Text>
+              <Text className="text-xs text-gray-500">{t('lastCrawl.timestamp')}</Text>
               <Text className="text-sm font-medium">
                 {(() => {
                   const date = toDate(stats.lastCrawlRun.timestamp);
@@ -101,15 +106,15 @@ export function SystemOverview({ stats }: SystemOverviewProps) {
               </Text>
             </div>
             <div>
-              <Text className="text-xs text-gray-500">Tracker verarbeitet</Text>
+              <Text className="text-xs text-gray-500">{t('lastCrawl.trackersProcessed')}</Text>
               <Text className="text-sm font-medium">{stats.lastCrawlRun.trackersProcessed}</Text>
             </div>
             <div>
-              <Text className="text-xs text-gray-500">Artikel gefunden</Text>
+              <Text className="text-xs text-gray-500">{t('lastCrawl.articlesFound')}</Text>
               <Text className="text-sm font-medium">{stats.lastCrawlRun.articlesFound}</Text>
             </div>
             <div>
-              <Text className="text-xs text-gray-500">Status</Text>
+              <Text className="text-xs text-gray-500">{t('lastCrawl.status')}</Text>
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   stats.lastCrawlRun.status === 'success'
@@ -117,7 +122,7 @@ export function SystemOverview({ stats }: SystemOverviewProps) {
                     : 'bg-red-100 text-red-700'
                 }`}
               >
-                {stats.lastCrawlRun.status === 'success' ? '✅ Erfolg' : '❌ Fehler'}
+                {stats.lastCrawlRun.status === 'success' ? t('lastCrawl.statusSuccess') : t('lastCrawl.statusError')}
               </span>
             </div>
           </div>

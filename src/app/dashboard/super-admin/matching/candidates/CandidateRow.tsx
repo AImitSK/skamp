@@ -11,6 +11,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
   UserIcon,
@@ -49,6 +50,7 @@ function CandidateRow({
   onViewDetails,
   useAiMerge
 }: CandidateRowProps) {
+  const t = useTranslations('superadmin.matching.candidateRow');
   const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -218,7 +220,7 @@ function CandidateRow({
                   {email}
                 </>
               ) : (
-                <span className="italic">Keine E-Mail</span>
+                <span className="italic">{t('noEmail')}</span>
               )}
             </div>
             {firstVariant.contactData.companyName && (
@@ -253,7 +255,7 @@ function CandidateRow({
             {candidate.variants.length}
           </span>
           <span className="text-sm text-zinc-500">
-            {candidate.variants.length === 1 ? 'Org' : 'Orgs'}
+            {t('orgLabel', { count: candidate.variants.length })}
           </span>
         </div>
       </TableCell>
@@ -326,7 +328,7 @@ function CandidateRow({
 
           {candidate.status === 'imported' && (
             <span className="text-xs text-green-600 dark:text-green-400">
-              Importiert
+              {t('importedLabel')}
             </span>
           )}
         </div>

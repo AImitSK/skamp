@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   ArrowLeftIcon,
   DocumentTextIcon,
   EyeIcon,
@@ -22,6 +23,7 @@ import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strate
 import StrategyDocumentEditor from '@/components/strategy/StrategyDocumentEditor';
 
 export default function StrategyDocumentPage() {
+  const t = useTranslations('strategy');
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -53,11 +55,11 @@ export default function StrategyDocumentPage() {
         // Nur readonly wenn Dokument approved/archiviert ist oder User keine Bearbeitungsrechte hat
         setIsReadOnly(documentData.status === 'approved' || documentData.status === 'archived');
       } else {
-        setError('Strategiedokument nicht gefunden');
+        setError(t('errors.notFound'));
       }
     } catch (error: any) {
       console.error('Fehler beim Laden des Strategiedokuments:', error);
-      setError('Strategiedokument konnte nicht geladen werden');
+      setError(t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -71,15 +73,15 @@ export default function StrategyDocumentPage() {
       await strategyDocumentService.update(
         document.id,
         { content, title },
-        'Automatische Speicherung',
+        t('actions.autoSave'),
         { organizationId: currentOrganization.id, userId: user.uid }
       );
-      
+
       // Dokument neu laden um aktuelle Version zu haben
       await loadDocument();
     } catch (error) {
       console.error('Fehler beim Speichern des Strategiedokuments:', error);
-      alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+      alert(t('errors.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -93,14 +95,14 @@ export default function StrategyDocumentPage() {
       await strategyDocumentService.update(
         document.id,
         { status: newStatus },
-        `Status geändert zu: ${newStatus}`,
+        `${t('actions.statusChanged')}: ${newStatus}`,
         { organizationId: currentOrganization.id, userId: user.uid }
       );
-      
+
       await loadDocument();
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Status:', error);
-      alert('Fehler beim Aktualisieren des Status.');
+      alert(t('errors.statusUpdateFailed'));
     } finally {
       setSaving(false);
     }
@@ -125,7 +127,7 @@ export default function StrategyDocumentPage() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Fehler beim PDF-Export:', error);
-      alert('Fehler beim Exportieren als PDF.');
+      alert(t('errors.exportFailed'));
     }
   };
 
@@ -141,20 +143,20 @@ export default function StrategyDocumentPage() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'draft': return 'Entwurf';
-      case 'review': return 'In Prüfung';
-      case 'approved': return 'Freigegeben';
-      case 'archived': return 'Archiviert';
+      case 'draft': return t('status.draft');
+      case 'review': return t('status.review');
+      case 'approved': return t('status.approved');
+      case 'archived': return t('status.archived');
       default: return status;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'briefing': return 'Projekt-Briefing';
-      case 'strategy': return 'Strategiedokument';
-      case 'analysis': return 'Analyse';
-      case 'notes': return 'Notizen';
+      case 'briefing': return t('types.briefing');
+      case 'strategy': return t('types.strategy');
+      case 'analysis': return t('types.analysis');
+      case 'notes': return t('types.notes');
       default: return type;
     }
   };
@@ -163,7 +165,7 @@ export default function StrategyDocumentPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Strategiedokument wird geladen...</Text>
+        <Text className="ml-3">{t('loading')}</Text>
       </div>
     );
   }
@@ -174,11 +176,11 @@ export default function StrategyDocumentPage() {
         <div className="text-red-600 mb-4">
           <DocumentTextIcon className="h-12 w-12 mx-auto" />
         </div>
-        <Heading>{error || 'Strategiedokument nicht gefunden'}</Heading>
+        <Heading>{error || t('errors.notFound')}</Heading>
         <div className="mt-6">
           <Button onClick={() => router.back()}>
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            Zurück
+            {t('actions.back')}
           </Button>
         </div>
       </div>
@@ -202,7 +204,7 @@ export default function StrategyDocumentPage() {
                 </Badge>
                 {document.templateName && (
                   <Badge color="zinc" className="text-xs">
-                    aus {document.templateName}
+                    {t('labels.fromTemplate', { name: document.templateName })}
                   </Badge>
                 )}
               </div>
@@ -219,7 +221,10 @@ export default function StrategyDocumentPage() {
                 <div className="flex items-center space-x-1">
                   <ClockIcon className="h-3 w-3 text-gray-400" />
                   <Text className="text-sm text-gray-600">
-                    Version {document.version}, zuletzt geändert {document.updatedAt.toDate().toLocaleDateString('de-DE')}
+                    {t('labels.versionInfo', {
+                      version: document.version,
+                      date: document.updatedAt.toDate().toLocaleDateString('de-DE')
+                    })}
                   </Text>
                 </div>
               </div>
@@ -229,7 +234,7 @@ export default function StrategyDocumentPage() {
           <div className="flex items-center space-x-3">
             <Button plain onClick={handleExportPDF}>
               <DownloadIcon className="w-4 h-4 mr-2" />
-              PDF Export
+              {t('actions.exportPdf')}
             </Button>
 
             {!isReadOnly && (
@@ -241,7 +246,7 @@ export default function StrategyDocumentPage() {
                     disabled={saving}
                   >
                     <EyeIcon className="w-4 h-4 mr-2" />
-                    Zur Prüfung
+                    {t('actions.toReview')}
                   </Button>
                 )}
 
@@ -251,16 +256,16 @@ export default function StrategyDocumentPage() {
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={saving}
                   >
-                    Freigeben
+                    {t('actions.approve')}
                   </Button>
                 )}
               </>
             )}
-            
+
             {isReadOnly && (
               <Badge color="blue" className="px-3 py-2">
                 <EyeIcon className="w-4 h-4 mr-1" />
-                Nur Lesen
+                {t('labels.readOnly')}
               </Badge>
             )}
           </div>

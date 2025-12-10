@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { findOrCreateCompany } from '@/lib/matching/company-finder';
@@ -11,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function MatchingTestSection() {
+  const t = useTranslations('superadmin.settings.matchingTest');
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
 
@@ -33,7 +35,7 @@ export default function MatchingTestSection() {
    */
   const handleTestSimilarity = () => {
     if (!testName1 || !testName2) {
-      toast.error('Bitte beide Namen eingeben');
+      toast.error(t('similarityTest.errorBothNames'));
       return;
     }
 
@@ -51,12 +53,12 @@ export default function MatchingTestSection() {
    */
   const handleTestCompanyFinder = async () => {
     if (!currentOrganization || !user) {
-      toast.error('Nicht eingeloggt oder keine Organisation');
+      toast.error(t('companyTest.errorNotLoggedIn'));
       return;
     }
 
     if (!companyTestName && !companyTestDomain) {
-      toast.error('Bitte Namen oder Domain eingeben');
+      toast.error(t('companyTest.errorNameOrDomain'));
       return;
     }
 
@@ -80,7 +82,7 @@ export default function MatchingTestSection() {
 
     } catch (error) {
       console.error('Company test failed:', error);
-      toast.error('Company-Test fehlgeschlagen');
+      toast.error(t('companyTest.errorFailed'));
     }
   };
 
@@ -89,12 +91,12 @@ export default function MatchingTestSection() {
    */
   const handleTestPublicationFinder = async () => {
     if (!currentOrganization) {
-      toast.error('Keine Organisation ausgewählt');
+      toast.error(t('publicationTest.errorNoOrganization'));
       return;
     }
 
     if (!pubTestName) {
-      toast.error('Bitte Publikations-Namen eingeben');
+      toast.error(t('publicationTest.errorNoName'));
       return;
     }
 
@@ -118,7 +120,7 @@ export default function MatchingTestSection() {
 
     } catch (error) {
       console.error('Publication test failed:', error);
-      toast.error('Publication-Test fehlgeschlagen');
+      toast.error(t('publicationTest.errorFailed'));
     }
   };
 
@@ -126,48 +128,48 @@ export default function MatchingTestSection() {
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
-          🧪 Matching System Tests
+          {t('title')}
         </h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Teste die verschiedenen Komponenten des Intelligent Matching Systems
+          {t('description')}
         </p>
       </div>
 
       {/* Test 1: String Similarity */}
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
-          1. String Similarity Test
+          {t('similarityTest.title')}
         </h3>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Name 1:
+              {t('similarityTest.name1Label')}
             </label>
             <input
               type="text"
               value={testName1}
               onChange={(e) => setTestName1(e.target.value)}
-              placeholder="z.B. Spiegel Verlag"
+              placeholder={t('similarityTest.name1Placeholder')}
               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Name 2:
+              {t('similarityTest.name2Label')}
             </label>
             <input
               type="text"
               value={testName2}
               onChange={(e) => setTestName2(e.target.value)}
-              placeholder="z.B. Der Spiegel"
+              placeholder={t('similarityTest.name2Placeholder')}
               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md"
             />
           </div>
         </div>
 
         <Button onClick={handleTestSimilarity}>
-          Similarity berechnen
+          {t('similarityTest.calculateButton')}
         </Button>
 
         {similarityResult && (
@@ -176,7 +178,7 @@ export default function MatchingTestSection() {
               <strong>"{similarityResult.name1}"</strong> vs <strong>"{similarityResult.name2}"</strong>
             </div>
             <div className="mt-2">
-              Similarity: <Badge color={similarityResult.match ? 'green' : 'red'}>
+              {t('similarityTest.similarity')}: <Badge color={similarityResult.match ? 'green' : 'red'}>
                 {similarityResult.similarity}%
               </Badge>
             </div>
@@ -187,38 +189,38 @@ export default function MatchingTestSection() {
       {/* Test 2: Company Finder */}
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
-          2. Company Finder Test
+          {t('companyTest.title')}
         </h3>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              Company Name:
+              {t('companyTest.nameLabel')}
             </label>
             <input
               type="text"
               value={companyTestName}
               onChange={(e) => setCompanyTestName(e.target.value)}
-              placeholder="z.B. Spiegel Verlag"
+              placeholder={t('companyTest.namePlaceholder')}
               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              E-Mail Domain:
+              {t('companyTest.domainLabel')}
             </label>
             <input
               type="text"
               value={companyTestDomain}
               onChange={(e) => setCompanyTestDomain(e.target.value)}
-              placeholder="z.B. spiegel.de"
+              placeholder={t('companyTest.domainPlaceholder')}
               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md"
             />
           </div>
         </div>
 
         <Button onClick={handleTestCompanyFinder}>
-          Company finden
+          {t('companyTest.findButton')}
         </Button>
 
         {companyResults.length > 0 && (
@@ -226,14 +228,14 @@ export default function MatchingTestSection() {
             {companyResults.map((result, index) => (
               <div key={index} className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
                 <div className="text-sm">
-                  <strong>{result.companyName || 'Keine Company gefunden'}</strong>
+                  <strong>{result.companyName || t('companyTest.noCompanyFound')}</strong>
                 </div>
                 <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Methode: {result.method} |
-                  Konfidenz: <Badge color={result.confidence === 'high' ? 'green' : 'yellow'}>
+                  {t('companyTest.method')}: {result.method} |
+                  {t('companyTest.confidence')}: <Badge color={result.confidence === 'high' ? 'green' : 'yellow'}>
                     {result.confidence}
                   </Badge> |
-                  Erstellt: {result.wasCreated ? 'Ja' : 'Nein'}
+                  {t('companyTest.created')}: {result.wasCreated ? t('common.yes') : t('common.no')}
                 </div>
               </div>
             ))}
@@ -244,24 +246,24 @@ export default function MatchingTestSection() {
       {/* Test 3: Publication Finder */}
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
-          3. Publication Finder Test
+          {t('publicationTest.title')}
         </h3>
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            Publication Name:
+            {t('publicationTest.nameLabel')}
           </label>
           <input
             type="text"
             value={pubTestName}
             onChange={(e) => setPubTestName(e.target.value)}
-            placeholder="z.B. Der Spiegel"
+            placeholder={t('publicationTest.namePlaceholder')}
             className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md"
           />
         </div>
 
         <Button onClick={handleTestPublicationFinder}>
-          Publication finden
+          {t('publicationTest.findButton')}
         </Button>
 
         {pubResults.length > 0 && (
@@ -272,8 +274,8 @@ export default function MatchingTestSection() {
                   <strong>{result.publicationName}</strong>
                 </div>
                 <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Match Type: {result.matchType} |
-                  Konfidenz: <Badge color={result.confidence > 0.8 ? 'green' : 'yellow'}>
+                  {t('publicationTest.matchType')}: {result.matchType} |
+                  {t('publicationTest.confidence')}: <Badge color={result.confidence > 0.8 ? 'green' : 'yellow'}>
                     {Math.round(result.confidence * 100)}%
                   </Badge>
                 </div>

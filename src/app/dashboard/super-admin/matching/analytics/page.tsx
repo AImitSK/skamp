@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
   ChartBarIcon,
@@ -48,6 +49,7 @@ interface AnalyticsData {
 }
 
 export default function MatchingAnalyticsPage() {
+  const t = useTranslations('superadmin.matching.analyticsPage');
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -153,7 +155,7 @@ export default function MatchingAnalyticsPage() {
           <div className="text-center">
             <ArrowPathIcon className="size-12 text-zinc-400 animate-spin mx-auto" />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              Lade Analytics...
+              {t('loading')}
             </p>
           </div>
         </div>
@@ -166,7 +168,7 @@ export default function MatchingAnalyticsPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Keine Daten verfügbar
+            {t('noData')}
           </p>
         </div>
       </div>
@@ -178,10 +180,10 @@ export default function MatchingAnalyticsPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-          Matching Analytics
+          {t('title')}
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Statistiken und Metriken zum Matching-System
+          {t('description')}
         </p>
       </div>
 
@@ -189,7 +191,7 @@ export default function MatchingAnalyticsPage() {
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Gesamt
+            {t('stats.total')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
             {analytics.total}
@@ -198,7 +200,7 @@ export default function MatchingAnalyticsPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Pending
+            {t('stats.pending')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-yellow-600">
             {analytics.byStatus.pending}
@@ -212,7 +214,7 @@ export default function MatchingAnalyticsPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Importiert
+            {t('stats.imported')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-green-600">
             {analytics.byStatus.imported}
@@ -226,7 +228,7 @@ export default function MatchingAnalyticsPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Übersprungen
+            {t('stats.skipped')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-zinc-500">
             {analytics.byStatus.skipped}
@@ -240,7 +242,7 @@ export default function MatchingAnalyticsPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Abgelehnt
+            {t('stats.rejected')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-red-600">
             {analytics.byStatus.rejected}
@@ -259,7 +261,7 @@ export default function MatchingAnalyticsPage() {
           <div className="flex items-center gap-2 mb-4">
             <ChartBarIcon className="size-5 text-zinc-500" />
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Score-Verteilung
+              {t('scoreDistribution.title')}
             </h2>
           </div>
 
@@ -273,10 +275,10 @@ export default function MatchingAnalyticsPage() {
                 <div key={range}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      {range} Punkte
+                      {t('scoreDistribution.rangeLabel', { range })}
                     </span>
                     <span className="text-sm text-zinc-500">
-                      {count} ({percentage}%)
+                      {t('scoreDistribution.countLabel', { count, percentage })}
                     </span>
                   </div>
                   <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
@@ -292,10 +294,10 @@ export default function MatchingAnalyticsPage() {
 
           <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Durchschnittlicher Score
+              {t('scoreDistribution.averageLabel')}
             </div>
             <div className="text-2xl font-semibold text-zinc-900 dark:text-white">
-              {analytics.averageScore} / 100
+              {t('scoreDistribution.averageValue', { score: analytics.averageScore })}
             </div>
           </div>
         </div>
@@ -305,7 +307,7 @@ export default function MatchingAnalyticsPage() {
           <div className="flex items-center gap-2 mb-4">
             <TrophyIcon className="size-5 text-zinc-500" />
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Top Organisationen
+              {t('topOrganizations.title')}
             </h2>
           </div>
 
@@ -345,14 +347,14 @@ export default function MatchingAnalyticsPage() {
           <div className="flex items-center gap-2 mb-4">
             <ClockIcon className="size-5 text-zinc-500" />
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Letzter Scan
+              {t('lastScan.title')}
             </h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <div className="text-xs text-zinc-500 uppercase tracking-wider">
-                Status
+                {t('lastScan.statusLabel')}
               </div>
               <div className="mt-1">
                 <span className={`
@@ -368,7 +370,7 @@ export default function MatchingAnalyticsPage() {
 
             <div>
               <div className="text-xs text-zinc-500 uppercase tracking-wider">
-                Kandidaten erstellt
+                {t('lastScan.candidatesCreatedLabel')}
               </div>
               <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-white">
                 {analytics.lastScan.stats?.candidatesCreated || 0}
@@ -377,7 +379,7 @@ export default function MatchingAnalyticsPage() {
 
             <div>
               <div className="text-xs text-zinc-500 uppercase tracking-wider">
-                Kandidaten aktualisiert
+                {t('lastScan.candidatesUpdatedLabel')}
               </div>
               <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-white">
                 {analytics.lastScan.stats?.candidatesUpdated || 0}
@@ -386,11 +388,11 @@ export default function MatchingAnalyticsPage() {
 
             <div>
               <div className="text-xs text-zinc-500 uppercase tracking-wider">
-                Dauer
+                {t('lastScan.durationLabel')}
               </div>
               <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-white">
                 {analytics.lastScan.duration
-                  ? `${Math.round(analytics.lastScan.duration / 1000)}s`
+                  ? t('lastScan.durationValue', { seconds: Math.round(analytics.lastScan.duration / 1000) })
                   : '—'}
               </div>
             </div>
@@ -398,7 +400,7 @@ export default function MatchingAnalyticsPage() {
 
           {analytics.lastScan.startedAt && (
             <div className="mt-4 text-xs text-zinc-500">
-              Gestartet: {new Date(analytics.lastScan.startedAt.toDate()).toLocaleString('de-DE')}
+              {t('lastScan.startedAt', { date: new Date(analytics.lastScan.startedAt.toDate()).toLocaleString('de-DE') })}
             </div>
           )}
         </div>

@@ -3085,6 +3085,309 @@
       "noteSaved": "Note gespeichert",
       "noteSaveError": "Fehler beim Speichern",
       "networkError": "Netzwerkfehler"
+    },
+    "monitoring": {
+      "title": "Monitoring & Control Center",
+      "loading": "Lade Monitoring-Daten...",
+      "errors": {
+        "accessDenied": "Zugriff verweigert",
+        "loadingData": "Fehler beim Laden der Daten",
+        "accessDeniedTitle": "Zugriff verweigert",
+        "superAdminOnly": "Diese Seite ist nur für Super-Admins zugänglich."
+      },
+      "alerts": {
+        "crawlerStarted": "Crawler gestartet! Ergebnisse erscheinen in wenigen Minuten."
+      },
+      "tabs": {
+        "organizations": "Organizations",
+        "channelHealth": "Channel Health",
+        "errorLogs": "Error Logs ({count})"
+      },
+      "systemOverview": {
+        "stats": {
+          "activeTrackers": "Aktive Tracker",
+          "articlesToday": "Artikel heute",
+          "autoConfirmed": "Auto-Confirmed",
+          "pendingReview": "Pending Review"
+        },
+        "lastCrawl": {
+          "title": "Letzter Crawler-Run",
+          "timestamp": "Zeitpunkt",
+          "trackersProcessed": "Tracker verarbeitet",
+          "articlesFound": "Artikel gefunden",
+          "status": "Status",
+          "statusSuccess": "✅ Erfolg",
+          "statusError": "❌ Fehler"
+        }
+      },
+      "organizationStats": {
+        "empty": "Keine Organizations mit aktiven Trackern gefunden",
+        "crawlerStarted": "Org-Crawler gestartet!",
+        "crawlerError": "Fehler beim Starten des Crawlers",
+        "headers": {
+          "organization": "Organization",
+          "activeTrackers": "Aktive Tracker",
+          "articlesFound": "Artikel gefunden",
+          "autoConfirmRate": "Auto-Confirm Rate",
+          "lastActivity": "Letzte Aktivität",
+          "actions": "Aktionen"
+        },
+        "startCrawl": "Crawl starten"
+      },
+      "crawlerControl": {
+        "title": "Crawler Control",
+        "status": {
+          "active": "✅ Aktiv",
+          "paused": "⏸️ Pausiert"
+        },
+        "pausedSince": "Pausiert",
+        "reason": "Grund",
+        "buttons": {
+          "pause": "⏸️ Cron Job pausieren",
+          "resume": "Cron Job aktivieren",
+          "triggerAll": "Manuell starten (alle Orgs)"
+        },
+        "dialog": {
+          "title": "Cron Job pausieren",
+          "reasonLabel": "Grund für Pause",
+          "reasonPlaceholder": "z.B. Wartungsarbeiten, Performance-Probleme...",
+          "cancel": "Abbrechen",
+          "confirm": "Pausieren"
+        }
+      },
+      "errorLog": {
+        "empty": "Keine Fehler gefunden 🎉",
+        "detailsButton": "Details",
+        "errorTypes": {
+          "rssFeed": "RSS Feed Error",
+          "crawler": "Crawler Error",
+          "channel": "Channel Error"
+        },
+        "headers": {
+          "time": "Zeit",
+          "type": "Typ",
+          "organization": "Organization",
+          "error": "Fehler",
+          "details": "Details"
+        },
+        "dialog": {
+          "title": "Error Details",
+          "timestamp": "Zeitpunkt",
+          "type": "Typ",
+          "organizationId": "Organization ID",
+          "campaignId": "Campaign ID",
+          "channelId": "Channel ID",
+          "errorMessage": "Fehlermeldung",
+          "stackTrace": "Stack Trace",
+          "metadata": "Metadata",
+          "close": "Schließen"
+        }
+      },
+      "channelHealth": {
+        "empty": "Alle Channels funktionieren einwandfrei 🎉",
+        "never": "Nie",
+        "types": {
+          "rssFeed": "RSS Feed",
+          "googleNews": "Google News"
+        },
+        "headers": {
+          "publication": "Publication",
+          "type": "Typ",
+          "url": "URL",
+          "errors": "Fehler (letzte 10)",
+          "lastSuccess": "Letzter Erfolg",
+          "lastError": "Letzter Fehler"
+        }
+      }
+    }
+  },
+  "strategy": {
+    "loading": "Strategiedokument wird geladen...",
+    "errors": {
+      "notFound": "Strategiedokument nicht gefunden",
+      "loadFailed": "Strategiedokument konnte nicht geladen werden",
+      "saveFailed": "Fehler beim Speichern. Bitte versuchen Sie es erneut.",
+      "statusUpdateFailed": "Fehler beim Aktualisieren des Status.",
+      "exportFailed": "Fehler beim Exportieren als PDF."
+    },
+    "actions": {
+      "autoSave": "Automatische Speicherung",
+      "statusChanged": "Status geändert zu",
+      "back": "Zurück",
+      "exportPdf": "PDF Export",
+      "toReview": "Zur Prüfung",
+      "approve": "Freigeben"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "review": "In Prüfung",
+      "approved": "Freigegeben",
+      "archived": "Archiviert"
+    },
+    "types": {
+      "briefing": "Projekt-Briefing",
+      "strategy": "Strategiedokument",
+      "analysis": "Analyse",
+      "notes": "Notizen"
+    },
+    "labels": {
+      "fromTemplate": "aus {name}",
+      "versionInfo": "Version {version}, zuletzt geändert {date}",
+      "readOnly": "Nur Lesen"
+    },
+    "editor": {
+      "loading": "Editor wird geladen...",
+      "placeholder": "Beginnen Sie hier mit der Erstellung Ihres Strategiedokuments...",
+      "titlePlaceholder": "Dokumenttitel eingeben...",
+      "save": "Speichern",
+      "saving": "Speichern...",
+      "cancel": "Abbrechen",
+      "toolbar": {
+        "bold": "Fett (Strg+B)",
+        "italic": "Kursiv (Strg+I)",
+        "heading1": "Überschrift 1",
+        "heading2": "Überschrift 2",
+        "bulletList": "Aufzählungsliste",
+        "orderedList": "Nummerierte Liste",
+        "blockquote": "Zitat",
+        "codeBlock": "Code-Block",
+        "insertTable": "Tabelle einfügen (3x3)",
+        "addColumnBefore": "Spalte links hinzufügen",
+        "addColumnAfter": "Spalte rechts hinzufügen",
+        "deleteColumn": "Spalte löschen",
+        "addRowBefore": "Zeile oben hinzufügen",
+        "addRowAfter": "Zeile unten hinzufügen",
+        "deleteRow": "Zeile löschen",
+        "deleteTable": "Tabelle löschen"
+      },
+      "statusBar": {
+        "editing": "Bearbeitung",
+        "newDocument": "Neues Dokument",
+        "type": "Typ",
+        "characters": "Zeichen",
+        "version": "Version",
+        "lastEdited": "Zuletzt bearbeitet",
+        "unknown": "Unbekannt"
+      }
+    },
+    "matching": {
+      "recommendation": {
+        "title": "💡 Empfehlung",
+        "variantLabel": "Variante #{number}",
+        "completenessScore": "Vollständigkeits-Score: {score} / 100",
+        "selectButton": "Auswählen",
+        "selectedLabel": "Ausgewählt"
+      },
+      "variantCard": {
+        "variantLabel": "Variante #{number}",
+        "recommendedBadge": "Empfohlen",
+        "selectedBadge": "Ausgewählt",
+        "primaryBadge": "Primary",
+        "journalistLabel": "Journalist",
+        "selectButton": "Diese Variante auswählen"
+      },
+      "filters": {
+        "searchPlaceholder": "Kandidaten durchsuchen...",
+        "title": "Filter",
+        "resetButton": "Zurücksetzen",
+        "statusLabel": "Status",
+        "minScoreLabel": "Min. Score",
+        "allOption": "Alle",
+        "minScoreOption": "Min. {score} Punkte",
+        "matchTypeLabel": "Match-Type",
+        "matchTypeEmail": "E-Mail",
+        "matchTypeName": "Name",
+        "minOrgsLabel": "Min. Organisationen",
+        "minOrgsOption": "Min. {count}",
+        "devModeLabel": "🔧 Development-Modus",
+        "devModeDescription": "Min 1 Org, min Score: 40",
+        "aiMergeLabel": "🤖 KI-Daten-Merge {status}",
+        "aiMergeActive": "aktiviert",
+        "aiMergeInactive": "deaktiviert",
+        "aiMergeDescription": "Einstellung ändern in → SuperAdmin Settings",
+        "scanButton": "Scan",
+        "scanningButton": "Scanne...",
+        "devModeActive": "🔧 Dev-Mode aktiv",
+        "openAnalytics": "Analytics öffnen"
+      },
+      "detailModal": {
+        "title": "Kandidat Details",
+        "scoreBadge": "Score: {score} / 100",
+        "candidateLabel": "Kandidat: {name}",
+        "unknownCandidate": "Unbekannt",
+        "aiMergeTitle": "KI-Daten-Merge aktiviert",
+        "aiMergeDescription": "Gemini kombiniert automatisch die besten Werte aus allen {count} Varianten",
+        "cancelButton": "Abbrechen",
+        "rejectButton": "Ablehnen",
+        "skipButton": "Überspringen",
+        "importButton": "Importieren"
+      },
+      "candidateRow": {
+        "noEmail": "Keine E-Mail",
+        "orgLabel": "{count, plural, one {Org} other {Orgs}}",
+        "importedLabel": "Importiert"
+      },
+      "table": {
+        "loading": "Lade Kandidaten...",
+        "nameEmailHeader": "Name / E-Mail",
+        "scoreHeader": "Score",
+        "matchTypeHeader": "Match-Type",
+        "organizationsHeader": "Organisationen",
+        "statusHeader": "Status",
+        "createdHeader": "Erstellt",
+        "actionsHeader": "Aktionen",
+        "candidateCount": "{count, plural, one {# Kandidat} other {# Kandidaten}}",
+        "refreshButton": "Aktualisieren"
+      },
+      "candidatesPage": {
+        "title": "Matching-Kandidaten",
+        "description": "Journalisten die von mehreren Organisationen erfasst wurden",
+        "stats": {
+          "total": "Gesamt",
+          "pending": "Pending",
+          "imported": "Importiert",
+          "skipped": "Übersprungen",
+          "rejected": "Abgelehnt"
+        },
+        "emptyState": {
+          "title": "Keine Kandidaten gefunden",
+          "tryDifferentFilters": "Versuche andere Filter oder führe einen neuen Scan aus.",
+          "runScan": "Führe einen Scan aus, um Kandidaten zu finden.",
+          "scanButton": "Jetzt scannen"
+        }
+      },
+      "analyticsPage": {
+        "loading": "Lade Analytics...",
+        "noData": "Keine Daten verfügbar",
+        "title": "Matching Analytics",
+        "description": "Statistiken und Metriken zum Matching-System",
+        "stats": {
+          "total": "Gesamt",
+          "pending": "Pending",
+          "imported": "Importiert",
+          "skipped": "Übersprungen",
+          "rejected": "Abgelehnt"
+        },
+        "scoreDistribution": {
+          "title": "Score-Verteilung",
+          "rangeLabel": "{range} Punkte",
+          "countLabel": "{count} ({percentage}%)",
+          "averageLabel": "Durchschnittlicher Score",
+          "averageValue": "{score} / 100"
+        },
+        "topOrganizations": {
+          "title": "Top Organisationen"
+        },
+        "lastScan": {
+          "title": "Letzter Scan",
+          "statusLabel": "Status",
+          "candidatesCreatedLabel": "Kandidaten erstellt",
+          "candidatesUpdatedLabel": "Kandidaten aktualisiert",
+          "durationLabel": "Dauer",
+          "durationValue": "{seconds}s",
+          "startedAt": "Gestartet: {date}"
+        }
+      }
     }
   }
 }

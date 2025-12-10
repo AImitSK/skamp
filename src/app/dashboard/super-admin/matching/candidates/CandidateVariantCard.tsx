@@ -11,6 +11,7 @@
 
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   BuildingOfficeIcon,
   EnvelopeIcon,
@@ -41,6 +42,7 @@ export default function CandidateVariantCard({
   isRecommended,
   onSelect
 }: CandidateVariantCardProps) {
+  const t = useTranslations('superadmin.matching.variantCard');
   const data = variant.contactData;
 
   /**
@@ -128,7 +130,7 @@ export default function CandidateVariantCard({
               </span>
             </div>
             <div className="text-xs text-zinc-500 mt-0.5">
-              Variante #{index + 1}
+              {t('variantLabel', { number: index + 1 })}
             </div>
           </div>
         </div>
@@ -138,7 +140,7 @@ export default function CandidateVariantCard({
           {isRecommended && (
             <Badge color="indigo" className="flex items-center gap-1">
               <SparklesIcon className="size-3" />
-              <span>Empfohlen</span>
+              <span>{t('recommendedBadge')}</span>
             </Badge>
           )}
 
@@ -146,7 +148,7 @@ export default function CandidateVariantCard({
           {isSelected && (
             <Badge color="green" className="flex items-center gap-1">
               <CheckCircleIcon className="size-3" />
-              <span>Ausgewählt</span>
+              <span>{t('selectedBadge')}</span>
             </Badge>
           )}
 
@@ -185,7 +187,7 @@ export default function CandidateVariantCard({
                 <div key={idx} className="text-sm">
                   <span className="text-zinc-900 dark:text-white">{email.email}</span>
                   {email.isPrimary && (
-                    <Badge color="indigo" className="ml-2 text-xs">Primary</Badge>
+                    <Badge color="indigo" className="ml-2 text-xs">{t('primaryBadge')}</Badge>
                   )}
                   {email.type && <span className="text-zinc-500 ml-2">({email.type})</span>}
                 </div>
@@ -203,7 +205,7 @@ export default function CandidateVariantCard({
                 <div key={idx} className="text-sm">
                   <span className="text-zinc-900 dark:text-white">{phone.number}</span>
                   {phone.isPrimary && (
-                    <Badge color="indigo" className="ml-2 text-xs">Primary</Badge>
+                    <Badge color="indigo" className="ml-2 text-xs">{t('primaryBadge')}</Badge>
                   )}
                   {phone.type && <span className="text-zinc-500 ml-2">({phone.type})</span>}
                 </div>
@@ -236,7 +238,7 @@ export default function CandidateVariantCard({
             <NewspaperIcon className="size-5 text-zinc-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
-                Journalist
+                {t('journalistLabel')}
               </div>
 
               {/* Beats */}
@@ -299,7 +301,7 @@ export default function CandidateVariantCard({
             onClick={onSelect}
             className="w-full"
           >
-            Diese Variante auswählen
+            {t('selectButton')}
           </Button>
         </div>
       )}

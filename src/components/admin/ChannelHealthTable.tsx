@@ -7,6 +7,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toDate } from '@/lib/utils/timestamp-utils';
+import { useTranslations } from 'next-intl';
 
 interface ChannelHealthTableProps {
   channels: Array<{
@@ -22,13 +23,15 @@ interface ChannelHealthTableProps {
 }
 
 export function ChannelHealthTable({ channels }: ChannelHealthTableProps) {
+  const t = useTranslations('superadmin.monitoring.channelHealth');
+
   // Nur Channels mit Fehlern anzeigen
   const problematicChannels = channels.filter(c => c.errorCount > 0);
 
   if (problematicChannels.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <Text className="text-gray-500">Alle Channels funktionieren einwandfrei 🎉</Text>
+        <Text className="text-gray-500">{t('empty')}</Text>
       </div>
     );
   }
@@ -37,12 +40,12 @@ export function ChannelHealthTable({ channels }: ChannelHealthTableProps) {
     <Table>
       <TableHead>
         <TableRow>
-          <TableHeader>Publication</TableHeader>
-          <TableHeader>Typ</TableHeader>
-          <TableHeader>URL</TableHeader>
-          <TableHeader>Fehler (letzte 10)</TableHeader>
-          <TableHeader>Letzter Erfolg</TableHeader>
-          <TableHeader>Letzter Fehler</TableHeader>
+          <TableHeader>{t('headers.publication')}</TableHeader>
+          <TableHeader>{t('headers.type')}</TableHeader>
+          <TableHeader>{t('headers.url')}</TableHeader>
+          <TableHeader>{t('headers.errors')}</TableHeader>
+          <TableHeader>{t('headers.lastSuccess')}</TableHeader>
+          <TableHeader>{t('headers.lastError')}</TableHeader>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -58,7 +61,7 @@ export function ChannelHealthTable({ channels }: ChannelHealthTableProps) {
             </TableCell>
             <TableCell>
               <Badge color="zinc" className="text-xs">
-                {channel.type === 'rss_feed' ? 'RSS Feed' : 'Google News'}
+                {channel.type === 'rss_feed' ? t('types.rssFeed') : t('types.googleNews')}
               </Badge>
             </TableCell>
             <TableCell>
@@ -92,7 +95,7 @@ export function ChannelHealthTable({ channels }: ChannelHealthTableProps) {
                     {formatDistanceToNow(date, { addSuffix: true, locale: de })}
                   </Text>
                 ) : (
-                  <Text className="text-sm text-gray-400">Nie</Text>
+                  <Text className="text-sm text-gray-400">{t('never')}</Text>
                 );
               })()}
             </TableCell>

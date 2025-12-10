@@ -10,6 +10,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { XMarkIcon, CheckIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export default function CandidateDetailModal({
   onUpdate,
   useAiMerge
 }: CandidateDetailModalProps) {
+  const t = useTranslations('superadmin.matching.detailModal');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
@@ -207,7 +209,7 @@ export default function CandidateDetailModal({
           <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
-                Kandidat Details
+                {t('title')}
               </DialogTitle>
 
               <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
@@ -215,7 +217,7 @@ export default function CandidateDetailModal({
               </Badge>
 
               <Badge color="blue">
-                {`Score: ${candidate.score} / 100`}
+                {t('scoreBadge', { score: candidate.score })}
               </Badge>
             </div>
 
@@ -229,7 +231,7 @@ export default function CandidateDetailModal({
 
           <div className="flex-1 overflow-y-auto p-6">
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              Kandidat: {candidate.variants[0]?.contactData.displayName || 'Unbekannt'}
+              {t('candidateLabel', { name: candidate.variants[0]?.contactData.displayName || t('unknownCandidate') })}
             </p>
 
             {recommendation && (
@@ -249,10 +251,10 @@ export default function CandidateDetailModal({
                   <div className="flex-shrink-0 text-2xl">🤖</div>
                   <div className="flex-1">
                     <div className="font-medium text-zinc-900 dark:text-white">
-                      KI-Daten-Merge aktiviert
+                      {t('aiMergeTitle')}
                     </div>
                     <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Gemini kombiniert automatisch die besten Werte aus allen {candidate.variants.length} Varianten
+                      {t('aiMergeDescription', { count: candidate.variants.length })}
                     </div>
                   </div>
                 </div>
@@ -275,22 +277,22 @@ export default function CandidateDetailModal({
 
           <div className="flex justify-end gap-2 p-6 border-t border-zinc-200 dark:border-zinc-800">
             <Button color="zinc" onClick={onClose}>
-              Abbrechen
+              {t('cancelButton')}
             </Button>
 
             <Button color="secondary" onClick={handleReject} disabled={actionLoading}>
               <XMarkIcon className="size-4" />
-              <span>Ablehnen</span>
+              <span>{t('rejectButton')}</span>
             </Button>
 
             <Button color="zinc" onClick={handleSkip} disabled={actionLoading}>
               <ForwardIcon className="size-4" />
-              <span>Überspringen</span>
+              <span>{t('skipButton')}</span>
             </Button>
 
             <Button color="primary" onClick={handleImport} disabled={actionLoading}>
               <CheckIcon className="size-4" />
-              <span>Importieren</span>
+              <span>{t('importButton')}</span>
             </Button>
           </div>
         </DialogPanel>

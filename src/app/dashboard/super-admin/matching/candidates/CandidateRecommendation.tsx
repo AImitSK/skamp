@@ -9,6 +9,7 @@
 
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   SparklesIcon,
   CheckCircleIcon
@@ -28,6 +29,7 @@ export default function CandidateRecommendationBox({
   variantIndex,
   onSelectVariant
 }: CandidateRecommendationBoxProps) {
+  const t = useTranslations('superadmin.matching.recommendation');
   const isRecommendedSelected = variantIndex === recommendation.recommendedIndex;
 
   return (
@@ -50,10 +52,10 @@ export default function CandidateRecommendationBox({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-              💡 Empfehlung
+              {t('title')}
             </h3>
             <Badge color="indigo" className="text-xs">
-              {`Variante #${recommendation.recommendedIndex + 1}`}
+              {t('variantLabel', { number: recommendation.recommendedIndex + 1 })}
             </Badge>
           </div>
 
@@ -64,7 +66,7 @@ export default function CandidateRecommendationBox({
           <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
             <CheckCircleIcon className="size-4" />
             <span>
-              {`Vollständigkeits-Score: ${recommendation.score} / 100`}
+              {t('completenessScore', { score: recommendation.score })}
             </span>
           </div>
         </div>
@@ -77,7 +79,7 @@ export default function CandidateRecommendationBox({
               onClick={() => onSelectVariant(recommendation.recommendedIndex)}
               className="text-sm"
             >
-              Auswählen
+              {t('selectButton')}
             </Button>
           </div>
         )}
@@ -86,7 +88,7 @@ export default function CandidateRecommendationBox({
           <div className="flex-shrink-0">
             <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium">
               <CheckCircleIcon className="size-5" />
-              Ausgewählt
+              {t('selectedLabel')}
             </div>
           </div>
         )}

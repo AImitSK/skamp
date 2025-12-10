@@ -10,6 +10,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 // TODO: Tabs functionality temporarily removed due to import issues
 // import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
@@ -39,6 +40,7 @@ import ConflictReviewSection from './ConflictReviewSection';
 import ClippingTestSection from './ClippingTestSection';
 
 export default function SuperAdminSettingsPage() {
+  const t = useTranslations('superadmin.settings');
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -89,11 +91,11 @@ export default function SuperAdminSettingsPage() {
    * Erstellt realistische Test-Daten (200+ Szenarien)
    */
   const handleSeedRealisticTestData = async () => {
-    if (!confirm('Realistische Test-Daten erstellen? Dies erstellt 10 Organisationen mit 200+ Test-Szenarien für umfassendes Matching-Testing.')) {
+    if (!confirm(t('realisticTestData.confirmCreate'))) {
       return;
     }
 
-    const toastId = toast.loading('Erstelle realistische Test-Daten... Dies kann 60-90 Sekunden dauern.');
+    const toastId = toast.loading(t('realisticTestData.creating'));
     setLoading(true);
 
     try {
@@ -103,13 +105,19 @@ export default function SuperAdminSettingsPage() {
 
       const totalScenarios = Object.values(stats.scenarios || {}).reduce((a: number, b: number) => a + b, 0);
       toast.success(
-        `Realistische Test-Daten erstellt! ${stats.organizations} Orgs, ${stats.companies} Companies, ${stats.publications} Publications, ${stats.contacts} Kontakte → ${totalScenarios} Szenarien`,
+        t('realisticTestData.success', {
+          orgs: stats.organizations,
+          companies: stats.companies,
+          publications: stats.publications,
+          contacts: stats.contacts,
+          scenarios: totalScenarios
+        }),
         { id: toastId, duration: 10000 }
       );
     } catch (error) {
       console.error('Realistic seed failed:', error);
       toast.error(
-        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        t('realisticTestData.error', { message: error instanceof Error ? error.message : t('common.unknownError') }),
         { id: toastId }
       );
     } finally {
@@ -121,11 +129,11 @@ export default function SuperAdminSettingsPage() {
    * Löscht realistische Test-Daten
    */
   const handleCleanupRealisticTestData = async () => {
-    if (!confirm('Realistische Test-Daten löschen? Dies entfernt alle Test-Organisationen, Companies, Publications und Kontakte.')) {
+    if (!confirm(t('realisticTestData.confirmDelete'))) {
       return;
     }
 
-    const toastId = toast.loading('Lösche realistische Test-Daten...');
+    const toastId = toast.loading(t('realisticTestData.deleting'));
     setLoading(true);
 
     try {
@@ -133,11 +141,11 @@ export default function SuperAdminSettingsPage() {
       const { cleanupRealisticTestData } = await import('@/lib/matching/seed-realistic-test-data');
       await cleanupRealisticTestData();
 
-      toast.success('Realistische Test-Daten gelöscht!', { id: toastId, duration: 5000 });
+      toast.success(t('realisticTestData.deleteSuccess'), { id: toastId, duration: 5000 });
     } catch (error) {
       console.error('Realistic cleanup failed:', error);
       toast.error(
-        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        t('realisticTestData.error', { message: error instanceof Error ? error.message : t('common.unknownError') }),
         { id: toastId }
       );
     } finally {
@@ -154,10 +162,10 @@ export default function SuperAdminSettingsPage() {
     try {
       setUseAiMerge(enabled);
       await matchingSettingsService.updateAiMerge(enabled, user.uid);
-      toast.success(enabled ? 'KI-Daten-Merge aktiviert' : 'KI-Daten-Merge deaktiviert');
+      toast.success(enabled ? t('settings.aiMerge.enabled') : t('settings.aiMerge.disabled'));
     } catch (error) {
       console.error('Error updating AI merge setting:', error);
-      toast.error('Fehler beim Speichern der Einstellung');
+      toast.error(t('settings.errorSaving'));
       setUseAiMerge(!enabled); // Rollback
     }
   };
@@ -171,10 +179,10 @@ export default function SuperAdminSettingsPage() {
     try {
       setAutoScanEnabled(enabled);
       await matchingSettingsService.updateAutoScan(enabled, autoScanInterval, user.uid);
-      toast.success(enabled ? 'Automatischer Scan aktiviert' : 'Automatischer Scan deaktiviert');
+      toast.success(enabled ? t('settings.autoScan.enabled') : t('settings.autoScan.disabled'));
     } catch (error) {
       console.error('Error updating auto scan setting:', error);
-      toast.error('Fehler beim Speichern der Einstellung');
+      toast.error(t('settings.errorSaving'));
       setAutoScanEnabled(!enabled); // Rollback
     }
   };
@@ -188,10 +196,10 @@ export default function SuperAdminSettingsPage() {
     try {
       setAutoScanInterval(interval);
       await matchingSettingsService.updateAutoScan(autoScanEnabled, interval, user.uid);
-      toast.success(`Intervall auf "${interval}" geändert`);
+      toast.success(t('settings.autoScan.intervalChanged', { interval }));
     } catch (error) {
       console.error('Error updating auto scan interval:', error);
-      toast.error('Fehler beim Speichern der Einstellung');
+      toast.error(t('settings.errorSaving'));
     }
   };
 
@@ -204,10 +212,10 @@ export default function SuperAdminSettingsPage() {
     try {
       setAutoImportEnabled(enabled);
       await matchingSettingsService.updateAutoImport(enabled, autoImportScore, user.uid);
-      toast.success(enabled ? 'Automatischer Import aktiviert' : 'Automatischer Import deaktiviert');
+      toast.success(enabled ? t('settings.autoImport.enabled') : t('settings.autoImport.disabled'));
     } catch (error) {
       console.error('Error updating auto import setting:', error);
-      toast.error('Fehler beim Speichern der Einstellung');
+      toast.error(t('settings.errorSaving'));
       setAutoImportEnabled(!enabled); // Rollback
     }
   };
@@ -221,10 +229,10 @@ export default function SuperAdminSettingsPage() {
     try {
       setAutoImportScore(score);
       await matchingSettingsService.updateAutoImport(autoImportEnabled, score, user.uid);
-      toast.success(`Score-Schwellwert auf ${score} geändert`);
+      toast.success(t('settings.autoImport.scoreChanged', { score }));
     } catch (error) {
       console.error('Error updating auto import score:', error);
-      toast.error('Fehler beim Speichern der Einstellung');
+      toast.error(t('settings.errorSaving'));
     }
   };
 
@@ -233,7 +241,7 @@ export default function SuperAdminSettingsPage() {
    * Triggert Matching-Scan (direkt via Client SDK)
    */
   const handleTriggerScan = async () => {
-    const toastId = toast.loading('Starte Matching-Scan...');
+    const toastId = toast.loading(t('matching.scanning'));
     setLoading(true);
 
     try {
@@ -242,14 +250,17 @@ export default function SuperAdminSettingsPage() {
       });
 
       toast.success(
-        `Scan abgeschlossen! ${job.stats?.candidatesCreated || 0} neue, ${job.stats?.candidatesUpdated || 0} aktualisierte Kandidaten`,
+        t('matching.scanSuccess', {
+          created: job.stats?.candidatesCreated || 0,
+          updated: job.stats?.candidatesUpdated || 0
+        }),
         { id: toastId, duration: 5000 }
       );
       await loadLastScan();
     } catch (error) {
       console.error('Scan failed:', error);
       toast.error(
-        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        t('matching.scanError', { message: error instanceof Error ? error.message : t('common.unknownError') }),
         { id: toastId }
       );
     } finally {
@@ -262,10 +273,10 @@ export default function SuperAdminSettingsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-          SuperAdmin Einstellungen
+          {t('title')}
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Verwaltung und Test-Tools für SuperAdmin-Features
+          {t('description')}
         </p>
       </div>
 
@@ -273,7 +284,7 @@ export default function SuperAdminSettingsPage() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
           <Cog6ToothIcon className="size-5" />
-          Globale Einstellungen
+          {t('settings.title')}
         </h2>
 
         <div className="space-y-4">

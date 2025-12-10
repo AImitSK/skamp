@@ -11,6 +11,7 @@
 
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
   ChevronUpIcon,
@@ -47,6 +48,7 @@ export default function CandidatesTable({
   onRefresh,
   useAiMerge
 }: CandidatesTableProps) {
+  const t = useTranslations('superadmin.matching.table');
 
   /**
    * Ändert Sortierung
@@ -108,7 +110,7 @@ export default function CandidatesTable({
       <div className="p-12 text-center">
         <ArrowPathIcon className="mx-auto size-8 text-zinc-400 animate-spin" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          Lade Kandidaten...
+          {t('loading')}
         </p>
       </div>
     );
@@ -125,26 +127,26 @@ export default function CandidatesTable({
           <TableHead>
             <TableRow>
               <SortableHeader field="matchKey">
-                Name / E-Mail
+                {t('nameEmailHeader')}
               </SortableHeader>
 
               <SortableHeader field="score">
-                Score
+                {t('scoreHeader')}
               </SortableHeader>
 
-              <TableHeader>Match-Type</TableHeader>
+              <TableHeader>{t('matchTypeHeader')}</TableHeader>
 
               <SortableHeader field="variantCount">
-                Organisationen
+                {t('organizationsHeader')}
               </SortableHeader>
 
-              <TableHeader>Status</TableHeader>
+              <TableHeader>{t('statusHeader')}</TableHeader>
 
               <SortableHeader field="createdAt">
-                Erstellt
+                {t('createdHeader')}
               </SortableHeader>
 
-              <TableHeader>Aktionen</TableHeader>
+              <TableHeader>{t('actionsHeader')}</TableHeader>
             </TableRow>
           </TableHead>
 
@@ -165,7 +167,7 @@ export default function CandidatesTable({
       <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            {candidates.length} {candidates.length === 1 ? 'Kandidat' : 'Kandidaten'}
+            {t('candidateCount', { count: candidates.length })}
           </div>
 
           <Button
@@ -174,7 +176,7 @@ export default function CandidatesTable({
             className="text-sm"
           >
             <ArrowPathIcon className="size-4" />
-            Aktualisieren
+            {t('refreshButton')}
           </Button>
         </div>
       </div>

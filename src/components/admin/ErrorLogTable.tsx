@@ -9,6 +9,7 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toDate } from '@/lib/utils/timestamp-utils';
+import { useTranslations } from 'next-intl';
 
 interface ErrorLog {
   id: string;
@@ -26,19 +27,20 @@ interface ErrorLogTableProps {
   logs: ErrorLog[];
 }
 
-const errorTypeLabels: Record<string, string> = {
-  rss_feed_error: 'RSS Feed Error',
-  crawler_error: 'Crawler Error',
-  channel_error: 'Channel Error'
-};
-
 export function ErrorLogTable({ logs }: ErrorLogTableProps) {
+  const t = useTranslations('superadmin.monitoring.errorLog');
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
+
+  const errorTypeLabels: Record<string, string> = {
+    rss_feed_error: t('errorTypes.rssFeed'),
+    crawler_error: t('errorTypes.crawler'),
+    channel_error: t('errorTypes.channel')
+  };
 
   if (logs.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <Text className="text-gray-500">Keine Fehler gefunden 🎉</Text>
+        <Text className="text-gray-500">{t('empty')}</Text>
       </div>
     );
   }
@@ -48,11 +50,11 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
       <Table>
         <TableHead>
           <TableRow>
-            <TableHeader>Zeit</TableHeader>
-            <TableHeader>Typ</TableHeader>
-            <TableHeader>Organization</TableHeader>
-            <TableHeader>Fehler</TableHeader>
-            <TableHeader>Details</TableHeader>
+            <TableHeader>{t('headers.time')}</TableHeader>
+            <TableHeader>{t('headers.type')}</TableHeader>
+            <TableHeader>{t('headers.organization')}</TableHeader>
+            <TableHeader>{t('headers.error')}</TableHeader>
+            <TableHeader>{t('headers.details')}</TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -83,7 +85,7 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
                   onClick={() => setSelectedLog(log)}
                   className="text-sm"
                 >
-                  Details
+                  {t('detailsButton')}
                 </Button>
               </TableCell>
             </TableRow>
@@ -94,10 +96,10 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
       {/* Error Detail Modal */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onClose={() => setSelectedLog(null)}>
-          <DialogTitle>Error Details</DialogTitle>
+          <DialogTitle>{t('dialog.title')}</DialogTitle>
           <DialogBody className="space-y-4">
             <div>
-              <Text className="text-xs text-gray-500">Zeitpunkt</Text>
+              <Text className="text-xs text-gray-500">{t('dialog.timestamp')}</Text>
               <Text className="text-sm font-medium">
                 {(() => {
                   const date = toDate(selectedLog.timestamp);
@@ -107,7 +109,7 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
             </div>
 
             <div>
-              <Text className="text-xs text-gray-500">Typ</Text>
+              <Text className="text-xs text-gray-500">{t('dialog.type')}</Text>
               <Badge color="red" className="mt-1">
                 {errorTypeLabels[selectedLog.type] || selectedLog.type}
               </Badge>
@@ -115,27 +117,27 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
 
             {selectedLog.organizationId && (
               <div>
-                <Text className="text-xs text-gray-500">Organization ID</Text>
+                <Text className="text-xs text-gray-500">{t('dialog.organizationId')}</Text>
                 <Text className="text-sm font-mono">{selectedLog.organizationId}</Text>
               </div>
             )}
 
             {selectedLog.campaignId && (
               <div>
-                <Text className="text-xs text-gray-500">Campaign ID</Text>
+                <Text className="text-xs text-gray-500">{t('dialog.campaignId')}</Text>
                 <Text className="text-sm font-mono">{selectedLog.campaignId}</Text>
               </div>
             )}
 
             {selectedLog.channelId && (
               <div>
-                <Text className="text-xs text-gray-500">Channel ID</Text>
+                <Text className="text-xs text-gray-500">{t('dialog.channelId')}</Text>
                 <Text className="text-sm font-mono">{selectedLog.channelId}</Text>
               </div>
             )}
 
             <div>
-              <Text className="text-xs text-gray-500">Fehlermeldung</Text>
+              <Text className="text-xs text-gray-500">{t('dialog.errorMessage')}</Text>
               <div className="mt-1 p-3 bg-red-50 rounded-lg">
                 <Text className="text-sm text-red-700 font-mono whitespace-pre-wrap">
                   {selectedLog.errorMessage}
@@ -145,7 +147,7 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
 
             {selectedLog.stackTrace && (
               <div>
-                <Text className="text-xs text-gray-500">Stack Trace</Text>
+                <Text className="text-xs text-gray-500">{t('dialog.stackTrace')}</Text>
                 <div className="mt-1 p-3 bg-gray-50 rounded-lg max-h-64 overflow-auto">
                   <Text className="text-xs font-mono whitespace-pre-wrap">
                     {selectedLog.stackTrace}
@@ -156,7 +158,7 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
 
             {selectedLog.metadata && (
               <div>
-                <Text className="text-xs text-gray-500">Metadata</Text>
+                <Text className="text-xs text-gray-500">{t('dialog.metadata')}</Text>
                 <div className="mt-1 p-3 bg-gray-50 rounded-lg max-h-64 overflow-auto">
                   <pre className="text-xs font-mono">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
@@ -166,7 +168,7 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
             )}
           </DialogBody>
           <DialogActions>
-            <Button onClick={() => setSelectedLog(null)}>Schließen</Button>
+            <Button onClick={() => setSelectedLog(null)}>{t('dialog.close')}</Button>
           </DialogActions>
         </Dialog>
       )}

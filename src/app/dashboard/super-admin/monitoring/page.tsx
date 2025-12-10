@@ -9,10 +9,12 @@ import { ErrorLogTable } from '@/components/admin/ErrorLogTable';
 import { ChannelHealthTable } from '@/components/admin/ChannelHealthTable';
 import { Text } from '@/components/ui/text';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslations } from 'next-intl';
 
 type TabType = 'organizations' | 'channel-health' | 'error-logs';
 
 export default function MonitoringControlCenterPage() {
+  const t = useTranslations('superadmin.monitoring');
   const { user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [cronJobStatus, setCronJobStatus] = useState<any>(null);
@@ -38,7 +40,7 @@ export default function MonitoringControlCenterPage() {
 
       if (!statsResponse.ok || !statusResponse.ok) {
         const errorData = await statsResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Zugriff verweigert');
+        throw new Error(errorData.error || t('errors.accessDenied'));
       }
 
       const statsData = await statsResponse.json();
@@ -48,11 +50,11 @@ export default function MonitoringControlCenterPage() {
       setCronJobStatus(statusData);
     } catch (err: any) {
       console.error('Error loading monitoring data:', err);
-      setError(err.message || 'Fehler beim Laden der Daten');
+      setError(err.message || t('errors.loadingData'));
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     if (user) {
@@ -102,7 +104,7 @@ export default function MonitoringControlCenterPage() {
       },
       body: JSON.stringify({ action: 'trigger_all' })
     });
-    alert('Crawler gestartet! Ergebnisse erscheinen in wenigen Minuten.');
+    alert(t('alerts.crawlerStarted'));
     setTimeout(() => loadData(), 2000);
   };
 
@@ -127,7 +129,7 @@ export default function MonitoringControlCenterPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Lade Monitoring-Daten...</Text>
+        <Text className="ml-3">{t('loading')}</Text>
       </div>
     );
   }
@@ -136,10 +138,10 @@ export default function MonitoringControlCenterPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <Text className="text-red-800 font-medium">Zugriff verweigert</Text>
+          <Text className="text-red-800 font-medium">{t('errors.accessDeniedTitle')}</Text>
           <Text className="text-red-600 mt-2">{error}</Text>
           <Text className="text-red-500 text-sm mt-4">
-            Diese Seite ist nur für Super-Admins zugänglich.
+            {t('errors.superAdminOnly')}
           </Text>
         </div>
       </div>
@@ -148,7 +150,7 @@ export default function MonitoringControlCenterPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <Heading>Monitoring & Control Center</Heading>
+      <Heading>{t('title')}</Heading>
 
       {/* System Overview */}
       {stats && (
@@ -185,7 +187,7 @@ export default function MonitoringControlCenterPage() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Organizations
+                  {t('tabs.organizations')}
                 </button>
                 <button
                   type="button"
@@ -196,7 +198,7 @@ export default function MonitoringControlCenterPage() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Channel Health
+                  {t('tabs.channelHealth')}
                 </button>
                 <button
                   type="button"
@@ -207,7 +209,7 @@ export default function MonitoringControlCenterPage() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Error Logs ({stats?.errorLogs?.length || 0})
+                  {t('tabs.errorLogs', { count: stats?.errorLogs?.length || 0 })}
                 </button>
               </div>
             </div>

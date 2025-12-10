@@ -8,6 +8,7 @@ import { PlayIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toDate } from '@/lib/utils/timestamp-utils';
+import { useTranslations } from 'next-intl';
 
 interface OrganizationStatsTableProps {
   organizations: Array<{
@@ -25,20 +26,22 @@ export function OrganizationStatsTable({
   organizations,
   onTriggerOrgCrawl
 }: OrganizationStatsTableProps) {
+  const t = useTranslations('superadmin.monitoring.organizationStats');
+
   const handleTrigger = async (orgId: string) => {
     try {
       await onTriggerOrgCrawl(orgId);
-      alert('Org-Crawler gestartet!');
+      alert(t('crawlerStarted'));
     } catch (error) {
       console.error('Error triggering org crawl:', error);
-      alert('Fehler beim Starten des Crawlers');
+      alert(t('crawlerError'));
     }
   };
 
   if (organizations.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <Text className="text-gray-500">Keine Organizations mit aktiven Trackern gefunden</Text>
+        <Text className="text-gray-500">{t('empty')}</Text>
       </div>
     );
   }
@@ -47,12 +50,12 @@ export function OrganizationStatsTable({
     <Table>
       <TableHead>
         <TableRow>
-          <TableHeader>Organization</TableHeader>
-          <TableHeader>Aktive Tracker</TableHeader>
-          <TableHeader>Artikel gefunden</TableHeader>
-          <TableHeader>Auto-Confirm Rate</TableHeader>
-          <TableHeader>Letzte Aktivität</TableHeader>
-          <TableHeader>Aktionen</TableHeader>
+          <TableHeader>{t('headers.organization')}</TableHeader>
+          <TableHeader>{t('headers.activeTrackers')}</TableHeader>
+          <TableHeader>{t('headers.articlesFound')}</TableHeader>
+          <TableHeader>{t('headers.autoConfirmRate')}</TableHeader>
+          <TableHeader>{t('headers.lastActivity')}</TableHeader>
+          <TableHeader>{t('headers.actions')}</TableHeader>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -90,7 +93,7 @@ export function OrganizationStatsTable({
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white text-sm py-1 px-3"
               >
                 <PlayIcon className="h-4 w-4 mr-1" />
-                Crawl starten
+                {t('startCrawl')}
               </Button>
             </TableCell>
           </TableRow>

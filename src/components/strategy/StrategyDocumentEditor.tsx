@@ -9,6 +9,7 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -43,6 +44,7 @@ export default function StrategyDocumentEditor({
   onCancel,
   isLoading = false
 }: StrategyDocumentEditorProps) {
+  const t = useTranslations('strategy.editor');
   const [title, setTitle] = useState(document?.title || '');
   const [isSaving, setIsSaving] = useState(false);
   const [, setUpdateTrigger] = useState(0);
@@ -60,7 +62,7 @@ export default function StrategyDocumentEditor({
       TableHeader,
       TableCell,
     ],
-    content: document?.content || '<p>Beginnen Sie hier mit der Erstellung Ihres Strategiedokuments...</p>',
+    content: document?.content || `<p>${t('placeholder')}</p>`,
     editable: true,
     onUpdate: () => {
       // Trigger re-render für Toolbar-Button States
@@ -93,7 +95,7 @@ export default function StrategyDocumentEditor({
   };
 
   if (!editor) {
-    return <div>Editor wird geladen...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   return (
@@ -105,7 +107,7 @@ export default function StrategyDocumentEditor({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Dokumenttitel eingeben..."
+            placeholder={t('titlePlaceholder')}
             className="text-xl font-semibold w-full border-none outline-none bg-transparent"
           />
         </div>
@@ -117,14 +119,14 @@ export default function StrategyDocumentEditor({
             className="flex items-center space-x-2"
           >
             <DocumentIcon className="w-4 h-4" />
-            <span>{isSaving ? 'Speichern...' : 'Speichern'}</span>
+            <span>{isSaving ? t('saving') : t('save')}</span>
           </Button>
-          
+
           <Button
             onClick={onCancel}
             plain
           >
-            Abbrechen
+            {t('cancel')}
           </Button>
         </div>
       </div>
@@ -136,7 +138,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('bold') ? 'bg-blue-100 text-blue-700 font-bold' : ''
           }`}
-          title="Fett (Strg+B)"
+          title={t('toolbar.bold')}
         >
           <strong>B</strong>
         </button>
@@ -146,7 +148,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('italic') ? 'bg-blue-100 text-blue-700' : ''
           }`}
-          title="Kursiv (Strg+I)"
+          title={t('toolbar.italic')}
         >
           <em>I</em>
         </button>
@@ -158,7 +160,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 text-blue-700 font-bold' : ''
           }`}
-          title="Überschrift 1"
+          title={t('toolbar.heading1')}
         >
           H1
         </button>
@@ -168,7 +170,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('heading', { level: 2 }) ? 'bg-blue-100 text-blue-700 font-semibold' : ''
           }`}
-          title="Überschrift 2"
+          title={t('toolbar.heading2')}
         >
           H2
         </button>
@@ -180,7 +182,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('bulletList') ? 'bg-blue-100 text-blue-700' : ''
           }`}
-          title="Aufzählungsliste"
+          title={t('toolbar.bulletList')}
         >
           <ListBulletIcon className="w-4 h-4" />
         </button>
@@ -190,7 +192,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('orderedList') ? 'bg-blue-100 text-blue-700 font-semibold' : ''
           }`}
-          title="Nummerierte Liste"
+          title={t('toolbar.orderedList')}
         >
           1.
         </button>
@@ -202,7 +204,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors text-lg ${
             editor.isActive('blockquote') ? 'bg-blue-100 text-blue-700' : ''
           }`}
-          title="Zitat"
+          title={t('toolbar.blockquote')}
         >
           "
         </button>
@@ -212,7 +214,7 @@ export default function StrategyDocumentEditor({
           className={`p-2 rounded hover:bg-gray-200 transition-colors ${
             editor.isActive('codeBlock') ? 'bg-blue-100 text-blue-700' : ''
           }`}
-          title="Code-Block"
+          title={t('toolbar.codeBlock')}
         >
           <CodeBracketIcon className="w-4 h-4" />
         </button>
@@ -222,7 +224,7 @@ export default function StrategyDocumentEditor({
         <button
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
           className="p-2 rounded hover:bg-gray-200"
-          title="Tabelle einfügen (3x3)"
+          title={t('toolbar.insertTable')}
         >
           <TableCellsIcon className="w-4 h-4" />
         </button>
@@ -232,49 +234,49 @@ export default function StrategyDocumentEditor({
             <button
               onClick={() => editor.chain().focus().addColumnBefore().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Spalte links hinzufügen"
+              title={t('toolbar.addColumnBefore')}
             >
               +C◄
             </button>
             <button
               onClick={() => editor.chain().focus().addColumnAfter().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Spalte rechts hinzufügen"
+              title={t('toolbar.addColumnAfter')}
             >
               +C►
             </button>
             <button
               onClick={() => editor.chain().focus().deleteColumn().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Spalte löschen"
+              title={t('toolbar.deleteColumn')}
             >
               -C
             </button>
             <button
               onClick={() => editor.chain().focus().addRowBefore().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Zeile oben hinzufügen"
+              title={t('toolbar.addRowBefore')}
             >
               +R▲
             </button>
             <button
               onClick={() => editor.chain().focus().addRowAfter().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Zeile unten hinzufügen"
+              title={t('toolbar.addRowAfter')}
             >
               +R▼
             </button>
             <button
               onClick={() => editor.chain().focus().deleteRow().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs"
-              title="Zeile löschen"
+              title={t('toolbar.deleteRow')}
             >
               -R
             </button>
             <button
               onClick={() => editor.chain().focus().deleteTable().run()}
               className="p-2 rounded hover:bg-gray-200 text-xs text-red-600"
-              title="Tabelle löschen"
+              title={t('toolbar.deleteTable')}
             >
               ✕T
             </button>
@@ -441,15 +443,15 @@ export default function StrategyDocumentEditor({
       {/* Status Bar */}
       <div className="p-2 border-t bg-gray-50 text-xs text-gray-500 flex justify-between">
         <span>
-          {document ? 'Bearbeitung' : 'Neues Dokument'} • 
-          Typ: {document?.type || 'strategy'} •
-          {editor.storage.characterCount?.characters() || 0} Zeichen
+          {document ? t('statusBar.editing') : t('statusBar.newDocument')} •
+          {t('statusBar.type')}: {document?.type || 'strategy'} •
+          {editor.storage.characterCount?.characters() || 0} {t('statusBar.characters')}
         </span>
-        
+
         {document && (
           <span>
-            Version {document.version} • 
-            Zuletzt bearbeitet: {document.updatedAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+            {t('statusBar.version')} {document.version} •
+            {t('statusBar.lastEdited')}: {document.updatedAt?.toDate?.()?.toLocaleDateString('de-DE') || t('statusBar.unknown')}
           </span>
         )}
       </div>

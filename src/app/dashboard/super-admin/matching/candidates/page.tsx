@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
@@ -36,6 +37,7 @@ import CandidatesTable from './CandidatesTable';
 import CandidateFilters from './CandidateFilters';
 
 export default function MatchingCandidatesPage() {
+  const t = useTranslations('superadmin.matching.candidatesPage');
   const router = useRouter();
 
   // State
@@ -197,10 +199,10 @@ export default function MatchingCandidatesPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-          Matching-Kandidaten
+          {t('title')}
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Journalisten die von mehreren Organisationen erfasst wurden
+          {t('description')}
         </p>
       </div>
 
@@ -208,7 +210,7 @@ export default function MatchingCandidatesPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Gesamt
+            {t('stats.total')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
             {stats.total}
@@ -217,7 +219,7 @@ export default function MatchingCandidatesPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Pending
+            {t('stats.pending')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-yellow-600">
             {stats.pending}
@@ -226,7 +228,7 @@ export default function MatchingCandidatesPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Importiert
+            {t('stats.imported')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-green-600">
             {stats.imported}
@@ -235,7 +237,7 @@ export default function MatchingCandidatesPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Übersprungen
+            {t('stats.skipped')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-zinc-500">
             {stats.skipped}
@@ -244,7 +246,7 @@ export default function MatchingCandidatesPage() {
 
         <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Abgelehnt
+            {t('stats.rejected')}
           </div>
           <div className="mt-1 text-2xl font-semibold text-red-600">
             {stats.rejected}
@@ -284,18 +286,18 @@ export default function MatchingCandidatesPage() {
         <div className="mt-8 text-center">
           <MagnifyingGlassIcon className="mx-auto size-12 text-zinc-400" />
           <h3 className="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">
-            Keine Kandidaten gefunden
+            {t('emptyState.title')}
           </h3>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {filters.status && filters.status.length > 0
-              ? 'Versuche andere Filter oder führe einen neuen Scan aus.'
-              : 'Führe einen Scan aus, um Kandidaten zu finden.'}
+              ? t('emptyState.tryDifferentFilters')
+              : t('emptyState.runScan')}
           </p>
           {filters.status?.length === 1 && filters.status[0] === 'pending' && (
             <div className="mt-6">
               <Button color="indigo" onClick={handleScan}>
                 <ArrowPathIcon className="size-4" />
-                Jetzt scannen
+                {t('emptyState.scanButton')}
               </Button>
             </div>
           )}
