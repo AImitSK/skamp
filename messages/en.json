@@ -235,6 +235,72 @@
         "title": "Delete Email Address",
         "message": "Are you sure you want to delete the email address {email}? This action cannot be undone.",
         "deleting": "Deleting..."
+      },
+      "step3": {
+        "close": "Close",
+        "assetLinkGenerated": "{count, plural, one {Asset link generated for # file} other {Asset link generated for # files}}",
+        "validation": {
+          "emailRequired": "Email address is required",
+          "emailInvalid": "Invalid email address"
+        },
+        "scheduling": {
+          "dateTimeRequired": "Please select date and time for scheduled sending"
+        },
+        "errors": {
+          "noSenderEmail": "No sender email address selected"
+        },
+        "testSend": {
+          "title": "Test Send",
+          "label": "Send test email to:",
+          "placeholder": "test@example.com",
+          "sending": "Sending...",
+          "send": "Send Test",
+          "success": "Test email sent successfully",
+          "description": "Send a test email to check formatting and variables. The test email includes all attachments."
+        },
+        "finalSend": {
+          "title": "Final Send",
+          "sendTime": "Send Time",
+          "sendNow": "Send Now",
+          "sendScheduled": "Schedule Send",
+          "date": "Date",
+          "time": "Time",
+          "minScheduleNote": "Sending must be at least 15 minutes in the future.",
+          "sendToRecipients": "Send now to {count} recipients",
+          "scheduleSend": "Schedule Send"
+        },
+        "preview": {
+          "title": "Email Preview",
+          "desktopView": "Desktop View",
+          "mobileView": "Mobile View",
+          "from": "From:",
+          "to": "To:",
+          "subject": "Subject:",
+          "preheader": "Preview:",
+          "attachments": "Attachments:",
+          "notSelected": "Not selected",
+          "recipients": "{count} recipients",
+          "files": "{count, plural, one {# file} other {# files}}",
+          "iframeTitle": "Email Preview"
+        },
+        "status": {
+          "alreadySent": "This campaign has already been sent.",
+          "alreadyScheduled": "This campaign is already scheduled for sending.",
+          "sending": "This campaign is currently being sent."
+        },
+        "confirmDialog": {
+          "titleSendNow": "Send email now?",
+          "titleSchedule": "Schedule email send?",
+          "messageSendNow": "You are about to send this email to {count} recipients.",
+          "messageSchedule": "You are scheduling this email to {count} recipients.",
+          "attachmentInfo": "The email contains {count, plural, one {# attachment} other {# attachments}}.",
+          "scheduledFor": "Scheduled for: <strong>{datetime}</strong>",
+          "cannotUndo": "This action cannot be undone.",
+          "cancel": "Cancel",
+          "processing": "Processing...",
+          "confirmSendNow": "Send Now",
+          "confirmSchedule": "Schedule Send"
+        }
       }
     },
     "branding": {
@@ -3476,6 +3542,49 @@
         "cancelButton": "Cancel",
         "addButton": "Add"
       }
+    },
+    "step2": {
+      "recipients": {
+        "title": "Recipients"
+      },
+      "sender": {
+        "title": "Sender"
+      },
+      "replies": {
+        "title": "Reply Management",
+        "tooltip": "Decide where replies to your campaign should be sent.",
+        "systemInbox": {
+          "label": "Use CeleroPress Inbox",
+          "recommended": "Recommended",
+          "feature1": "Replies land in the CeleroPress Inbox",
+          "feature2": "Team collaboration possible",
+          "feature3": "Project tracking active",
+          "feature4": "Automatic archiving"
+        },
+        "external": {
+          "label": "Use your own email client",
+          "feature1": "Replies land in your mailbox",
+          "feature2": "You work with Outlook/Thunderbird/etc.",
+          "feature3": "No project tracking in CeleroPress"
+        },
+        "externalWarning": {
+          "label": "Note",
+          "message": "Replies go directly to the sender address. No tracking occurs in the CeleroPress Inbox."
+        }
+      },
+      "emailDetails": {
+        "title": "Email Details",
+        "subject": {
+          "label": "Subject",
+          "placeholder": "e.g., Press Release: {{campaignTitle}}"
+        },
+        "preheader": {
+          "label": "Preview Text (Pre-Header)",
+          "placeholder": "Brief summary for the email preview"
+        }
+      },
+      "listsLoadedSuccess": "{count} distribution list(s) loaded",
+      "listsLoadedError": "Error loading distribution lists"
     }
   }
 }

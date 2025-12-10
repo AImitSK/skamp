@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ export default function Step2Details({
   validation,
   campaign
 }: Step2DetailsProps) {
+  const t = useTranslations('email.step2');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const hasInitialized = useRef(false);
@@ -95,13 +97,13 @@ export default function Step2Details({
               totalCount: 0, // Wird von RecipientManager berechnet
               validCount: 0
             });
-            toastService.success(`${allListIds.length} Verteilerliste(n) geladen`);
+            toastService.success(t('listsLoadedSuccess', { count: allListIds.length }));
           } else {
             console.log('⚠️ Step2Details: Keine Liste-IDs gefunden!');
           }
         }
       } catch (error) {
-        toastService.error('Fehler beim Laden der Verteilerlisten');
+        toastService.error(t('listsLoadedError'));
       } finally {
         setLoadingProject(false);
       }
@@ -120,7 +122,7 @@ export default function Step2Details({
         <div className="border rounded-lg p-6">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-            Empfänger
+            {t('recipients.title')}
           </h3>
           
           <RecipientManager
@@ -152,7 +154,7 @@ export default function Step2Details({
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <UserIcon className="h-5 w-5 text-gray-500" />
-            Absender
+            {t('sender.title')}
           </h3>
 
           <EmailAddressSelector
@@ -170,8 +172,8 @@ export default function Step2Details({
         <div className="border rounded-lg p-6 bg-blue-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-            Antworten-Verwaltung
-            <InfoTooltip content="Entscheide, wo Antworten auf deine Kampagne landen sollen." />
+            {t('replies.title')}
+            <InfoTooltip content={t('replies.tooltip')} />
           </h3>
 
           <div className="space-y-3">
@@ -186,14 +188,14 @@ export default function Step2Details({
               />
               <div className="flex-1">
                 <div className="font-medium text-sm flex items-center gap-2">
-                  CeleroPress Inbox verwenden
-                  <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Empfohlen</span>
+                  {t('replies.systemInbox.label')}
+                  <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">{t('replies.systemInbox.recommended')}</span>
                 </div>
                 <ul className="text-xs text-gray-600 mt-1 space-y-1">
-                  <li>✓ Antworten landen in der CeleroPress Inbox</li>
-                  <li>✓ Team-Zusammenarbeit möglich</li>
-                  <li>✓ Projekt-Tracking aktiv</li>
-                  <li>✓ Automatische Archivierung</li>
+                  <li>✓ {t('replies.systemInbox.feature1')}</li>
+                  <li>✓ {t('replies.systemInbox.feature2')}</li>
+                  <li>✓ {t('replies.systemInbox.feature3')}</li>
+                  <li>✓ {t('replies.systemInbox.feature4')}</li>
                 </ul>
               </div>
             </label>
@@ -209,12 +211,12 @@ export default function Step2Details({
               />
               <div className="flex-1">
                 <div className="font-medium text-sm">
-                  Eigene Mail-Software verwenden
+                  {t('replies.external.label')}
                 </div>
                 <ul className="text-xs text-gray-600 mt-1 space-y-1">
-                  <li>• Antworten landen in deinem Postfach</li>
-                  <li>• Du arbeitest mit Outlook/Thunderbird/etc.</li>
-                  <li>• Kein Projekt-Tracking in CeleroPress</li>
+                  <li>• {t('replies.external.feature1')}</li>
+                  <li>• {t('replies.external.feature2')}</li>
+                  <li>• {t('replies.external.feature3')}</li>
                 </ul>
               </div>
             </label>
@@ -224,8 +226,7 @@ export default function Step2Details({
           {metadata.useSystemInbox === false && (
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                <strong>Hinweis:</strong> Antworten gehen direkt an die Absender-Adresse.
-                Es erfolgt kein Tracking in der CeleroPress Inbox.
+                <strong>{t('replies.externalWarning.label')}:</strong> {t('replies.externalWarning.message')}
               </p>
             </div>
           )}
@@ -235,20 +236,20 @@ export default function Step2Details({
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <DocumentTextIcon className="h-5 w-5 text-gray-500" />
-            E-Mail Details
+            {t('emailDetails.title')}
           </h3>
           
           <div className="space-y-4">
             <div>
               <label htmlFor="subject" className="block text-sm font-medium mb-1">
-                Betreff
+                {t('emailDetails.subject.label')}
               </label>
               <Input
                 id="subject"
                 type="text"
                 value={metadata.subject}
                 onChange={(e) => onMetadataChange({ subject: e.target.value })}
-                placeholder="z.B. Pressemitteilung: {{campaignTitle}}"
+                placeholder={t('emailDetails.subject.placeholder')}
               />
               {validation.errors.subject && (
                 <p className="text-sm text-red-600 mt-1">{validation.errors.subject}</p>
@@ -257,14 +258,14 @@ export default function Step2Details({
             
             <div>
               <label htmlFor="preheader" className="block text-sm font-medium mb-1">
-                Vorschautext (Pre-Header)
+                {t('emailDetails.preheader.label')}
               </label>
               <Input
                 id="preheader"
                 type="text"
                 value={metadata.preheader}
                 onChange={(e) => onMetadataChange({ preheader: e.target.value })}
-                placeholder="Kurze Zusammenfassung für die E-Mail-Vorschau"
+                placeholder={t('emailDetails.preheader.placeholder')}
                 maxLength={150}
               />
               <div className="flex justify-end mt-1">

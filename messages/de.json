@@ -235,6 +235,72 @@
         "title": "E-Mail-Adresse löschen",
         "message": "Sind Sie sicher, dass Sie die E-Mail-Adresse {email} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
         "deleting": "Löschen..."
+      },
+      "step3": {
+        "close": "Schließen",
+        "assetLinkGenerated": "{count, plural, one {Asset-Link für # Datei wurde generiert} other {Asset-Link für # Dateien wurde generiert}}",
+        "validation": {
+          "emailRequired": "E-Mail-Adresse ist erforderlich",
+          "emailInvalid": "Ungültige E-Mail-Adresse"
+        },
+        "scheduling": {
+          "dateTimeRequired": "Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand"
+        },
+        "errors": {
+          "noSenderEmail": "Keine Absender-E-Mail-Adresse ausgewählt"
+        },
+        "testSend": {
+          "title": "Test-Versand",
+          "label": "Test-E-Mail senden an:",
+          "placeholder": "test@example.com",
+          "sending": "Sende...",
+          "send": "Test senden",
+          "success": "Test-E-Mail wurde erfolgreich versendet",
+          "description": "Senden Sie eine Test-E-Mail um die Formatierung und Variablen zu überprüfen. Die Test-E-Mail enthält alle Anhänge."
+        },
+        "finalSend": {
+          "title": "Finaler Versand",
+          "sendTime": "Versand-Zeitpunkt",
+          "sendNow": "Jetzt senden",
+          "sendScheduled": "Versand planen",
+          "date": "Datum",
+          "time": "Uhrzeit",
+          "minScheduleNote": "Der Versand muss mindestens 15 Minuten in der Zukunft liegen.",
+          "sendToRecipients": "Jetzt an {count} Empfänger senden",
+          "scheduleSend": "Versand planen"
+        },
+        "preview": {
+          "title": "E-Mail-Vorschau",
+          "desktopView": "Desktop-Ansicht",
+          "mobileView": "Mobile Ansicht",
+          "from": "Von:",
+          "to": "An:",
+          "subject": "Betreff:",
+          "preheader": "Vorschau:",
+          "attachments": "Anhänge:",
+          "notSelected": "Nicht ausgewählt",
+          "recipients": "{count} Empfänger",
+          "files": "{count, plural, one {# Datei} other {# Dateien}}",
+          "iframeTitle": "E-Mail Vorschau"
+        },
+        "status": {
+          "alreadySent": "Diese Kampagne wurde bereits versendet.",
+          "alreadyScheduled": "Diese Kampagne ist bereits für den Versand geplant.",
+          "sending": "Diese Kampagne wird gerade versendet."
+        },
+        "confirmDialog": {
+          "titleSendNow": "E-Mail jetzt versenden?",
+          "titleSchedule": "E-Mail-Versand planen?",
+          "messageSendNow": "Sie sind dabei, diese E-Mail an {count} Empfänger zu versenden.",
+          "messageSchedule": "Sie planen den Versand dieser E-Mail an {count} Empfänger.",
+          "attachmentInfo": "Die E-Mail enthält {count, plural, one {# Anhang} other {# Anhänge}}.",
+          "scheduledFor": "Geplanter Versand: <strong>{datetime}</strong>",
+          "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
+          "cancel": "Abbrechen",
+          "processing": "Wird verarbeitet...",
+          "confirmSendNow": "Jetzt senden",
+          "confirmSchedule": "Versand planen"
+        }
       }
     },
     "branding": {
@@ -3442,6 +3508,27 @@
         "subjectRequired": "Betreff erforderlich"
       }
     },
+    "addressSelector": {
+      "label": "Absender-Email",
+      "labelRequired": "Absender-Email *",
+      "loading": "Lade Email-Adressen...",
+      "selectPlaceholder": "Bitte wählen...",
+      "errors": {
+        "notLoggedIn": "Nicht eingeloggt",
+        "loadFailed": "Fehler beim Laden der Email-Adressen",
+        "noAddresses": "Keine verifizierten Email-Adressen gefunden.",
+        "noAddressesDescription": "Bitte fügen Sie zuerst eine Email-Adresse unter {link} hinzu und verifizieren Sie diese.",
+        "settingsLink": "Einstellungen → Email"
+      },
+      "selectedInfo": "Antworten werden automatisch an die generierte Reply-To-Adresse weitergeleitet.",
+      "tips": {
+        "setDefault": "Tipp: Sie können in den {link} eine Standard-Absender-Adresse festlegen.",
+        "emailSettingsLink": "Email-Einstellungen"
+      },
+      "badges": {
+        "default": "[Standard]"
+      }
+    },
     "recipientManager": {
       "noListsDefined": "Keine Verteilerlisten für diese Kampagne definiert",
       "additionalRecipients": "Zusätzliche Empfänger",
@@ -3476,6 +3563,49 @@
         "cancelButton": "Abbrechen",
         "addButton": "Hinzufügen"
       }
+    },
+    "step2": {
+      "recipients": {
+        "title": "Empfänger"
+      },
+      "sender": {
+        "title": "Absender"
+      },
+      "replies": {
+        "title": "Antworten-Verwaltung",
+        "tooltip": "Entscheide, wo Antworten auf deine Kampagne landen sollen.",
+        "systemInbox": {
+          "label": "CeleroPress Inbox verwenden",
+          "recommended": "Empfohlen",
+          "feature1": "Antworten landen in der CeleroPress Inbox",
+          "feature2": "Team-Zusammenarbeit möglich",
+          "feature3": "Projekt-Tracking aktiv",
+          "feature4": "Automatische Archivierung"
+        },
+        "external": {
+          "label": "Eigene Mail-Software verwenden",
+          "feature1": "Antworten landen in deinem Postfach",
+          "feature2": "Du arbeitest mit Outlook/Thunderbird/etc.",
+          "feature3": "Kein Projekt-Tracking in CeleroPress"
+        },
+        "externalWarning": {
+          "label": "Hinweis",
+          "message": "Antworten gehen direkt an die Absender-Adresse. Es erfolgt kein Tracking in der CeleroPress Inbox."
+        }
+      },
+      "emailDetails": {
+        "title": "E-Mail Details",
+        "subject": {
+          "label": "Betreff",
+          "placeholder": "z.B. Pressemitteilung: {{campaignTitle}}"
+        },
+        "preheader": {
+          "label": "Vorschautext (Pre-Header)",
+          "placeholder": "Kurze Zusammenfassung für die E-Mail-Vorschau"
+        }
+      },
+      "listsLoadedSuccess": "{count} Verteilerliste(n) geladen",
+      "listsLoadedError": "Fehler beim Laden der Verteilerlisten"
     }
   }
 }
