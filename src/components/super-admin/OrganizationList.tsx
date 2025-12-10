@@ -14,19 +14,13 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { Organization } from '@/types/organization';
+import { useTranslations } from 'next-intl';
 
 const accountTypeIcons = {
   regular: UserGroupIcon,
   promo: StarIcon,
   beta: BeakerIcon,
   internal: BoltIcon,
-};
-
-const accountTypeLabels = {
-  regular: 'Regular',
-  promo: 'Promo',
-  beta: 'Beta',
-  internal: 'Internal',
 };
 
 const accountTypeColors = {
@@ -37,6 +31,7 @@ const accountTypeColors = {
 };
 
 export default function OrganizationList() {
+  const t = useTranslations('superadmin.organizationList');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +59,7 @@ export default function OrganizationList() {
       setOrganizations(data.organizations || []);
     } catch (error: any) {
       console.error('Error loading organizations:', error);
-      setError(error.message || 'Fehler beim Laden der Organizations');
+      setError(error.message || t('errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -83,11 +78,11 @@ export default function OrganizationList() {
         <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
           <div className="flex items-center gap-3">
             <BuildingOfficeIcon className="h-5 w-5 text-zinc-700" />
-            <h3 className="text-base font-semibold text-zinc-900">Organizations</h3>
+            <h3 className="text-base font-semibold text-zinc-900">{t('title')}</h3>
           </div>
         </div>
         <div className="p-6">
-          <p className="text-zinc-500">Lade Organizations...</p>
+          <p className="text-zinc-500">{t('loading')}</p>
         </div>
       </div>
     );
@@ -99,11 +94,11 @@ export default function OrganizationList() {
         <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
           <div className="flex items-center gap-3">
             <BuildingOfficeIcon className="h-5 w-5 text-zinc-700" />
-            <h3 className="text-base font-semibold text-zinc-900">Organizations</h3>
+            <h3 className="text-base font-semibold text-zinc-900">{t('title')}</h3>
           </div>
         </div>
         <div className="p-6">
-          <p className="text-red-600">Fehler: {error}</p>
+          <p className="text-red-600">{t('errorPrefix')}: {error}</p>
         </div>
       </div>
     );
@@ -116,7 +111,7 @@ export default function OrganizationList() {
         <div className="flex items-center gap-3">
           <BuildingOfficeIcon className="h-5 w-5 text-zinc-700" />
           <h3 className="text-base font-semibold text-zinc-900">
-            Organizations ({organizations.length})
+            {t('titleWithCount', { count: organizations.length })}
           </h3>
         </div>
       </div>
@@ -124,12 +119,12 @@ export default function OrganizationList() {
       {/* Card Body */}
       <div className="p-6">
         {organizations.length === 0 ? (
-          <p className="text-zinc-500">Keine Organizations gefunden</p>
+          <p className="text-zinc-500">{t('empty')}</p>
         ) : (
           <div className="space-y-2">
             {organizations.map((org) => {
               const Icon = accountTypeIcons[org.accountType];
-              const label = accountTypeLabels[org.accountType];
+              const label = t(`accountType.${org.accountType}`);
               const colorClass = accountTypeColors[org.accountType];
 
               return (
@@ -151,16 +146,18 @@ export default function OrganizationList() {
                     <p className="text-sm text-zinc-600 mt-1">{org.adminEmail}</p>
                     {org.promoDetails && (
                       <p className="text-xs text-purple-600 mt-1">
-                        Promo: {org.promoDetails.code}
+                        {t('promoInfo', { code: org.promoDetails.code })}
                         {org.promoDetails.expiresAt && (
                           <span className="ml-2">
-                            • Läuft ab: {(() => {
-                              const expiresAt = org.promoDetails.expiresAt;
-                              if (typeof expiresAt === 'object' && expiresAt !== null && 'toDate' in expiresAt) {
-                                return (expiresAt as any).toDate().toLocaleDateString('de-DE');
-                              }
-                              return new Date(expiresAt as any).toLocaleDateString('de-DE');
-                            })()}
+                            • {t('expiresAt', {
+                              date: (() => {
+                                const expiresAt = org.promoDetails.expiresAt;
+                                if (typeof expiresAt === 'object' && expiresAt !== null && 'toDate' in expiresAt) {
+                                  return (expiresAt as any).toDate().toLocaleDateString('de-DE');
+                                }
+                                return new Date(expiresAt as any).toLocaleDateString('de-DE');
+                              })()
+                            })}
                           </span>
                         )}
                       </p>

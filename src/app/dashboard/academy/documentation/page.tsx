@@ -3,10 +3,10 @@
 
 import { Heading } from "@/components/ui/heading";
 import Link from "next/link";
-import { 
-  BookOpenIcon, 
-  RocketLaunchIcon, 
-  UserGroupIcon, 
+import {
+  BookOpenIcon,
+  RocketLaunchIcon,
+  UserGroupIcon,
   EnvelopeIcon,
   AcademicCapIcon,
   LightBulbIcon,
@@ -15,128 +15,82 @@ import {
   ArchiveBoxIcon,
   UserIcon
 } from "@heroicons/react/24/outline";
-
-const sections = [
-  {
-    title: "🚀 Erste Schritte",
-    description: "Der perfekte Einstieg in CeleroPress",
-    href: "/dashboard/academy/documentation/erste-schritte",
-    icon: RocketLaunchIcon,
-    color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
-    items: [
-      "Willkommen bei CeleroPress",
-      "Account einrichten",
-      "Erste Kampagne erstellen",
-      "Team einladen"
-    ]
-  },
-  {
-    title: "👥 CRM & Kontakte",
-    description: "CRM-System, Unternehmen & Personen verwalten",
-    href: "/dashboard/academy/documentation/handbuch/crm",
-    icon: UserGroupIcon,
-    color: "bg-green-50 text-green-600 hover:bg-green-100",
-    items: [
-      "CRM-Dashboard nutzen",
-      "Unternehmen verwalten",
-      "Personen-Management", 
-      "Verteilerlisten erstellen"
-    ]
-  },
-  {
-    title: "📚 Bibliothek",
-    description: "Publikationen & Werbemittel verwalten",
-    href: "/dashboard/academy/documentation/handbuch/bibliothek/publikationen",
-    icon: ArchiveBoxIcon,
-    color: "bg-purple-50 text-purple-600 hover:bg-purple-100",
-    items: [
-      "Publikationen verwalten",
-      "Werbemittel organisieren",
-      "Asset-Management",
-      "Freigabe-Prozesse"
-    ]
-  },
-  {
-    title: "📢 PR-Tools",
-    description: "Kampagnen, Freigaben, Kalender & Mediathek",
-    href: "/dashboard/academy/documentation/handbuch/pr-tools/kampagnen",
-    icon: MegaphoneIcon,
-    color: "bg-yellow-50 text-yellow-600 hover:bg-yellow-100",
-    items: [
-      "Kampagnen erstellen",
-      "Textbausteine nutzen",
-      "Redaktionskalender",
-      "Mediathek verwalten",
-      "Freigabe-Workflows"
-    ]
-  },
-  {
-    title: "💬 Kommunikation",
-    description: "Inbox & Benachrichtigungen verwalten",
-    href: "/dashboard/academy/documentation/handbuch/kommunikation/inbox",
-    icon: EnvelopeIcon,
-    color: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100",
-    items: [
-      "Kampagnen-Inbox nutzen",
-      "E-Mail-Verwaltung",
-      "Benachrichtigungen",
-      "Response-Tracking"
-    ]
-  },
-  {
-    title: "⚙️ Einstellungen",
-    description: "System-Konfiguration & Team-Management",
-    href: "/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen",
-    icon: Cog6ToothIcon,
-    color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
-    items: [
-      "Benachrichtigungen einrichten",
-      "Branding & Design anpassen",
-      "Domain-Verwaltung",
-      "E-Mail-Konfiguration",
-      "Team-Administration",
-      "Import/Export-Tools"
-    ]
-  },
-  {
-    title: "👤 Admin-Center",
-    description: "Profil, Vertrag & API-Management",
-    href: "/dashboard/academy/documentation/handbuch/admin/profil",
-    icon: UserIcon,
-    color: "bg-red-50 text-red-600 hover:bg-red-100",
-    items: [
-      "Profil verwalten",
-      "Vertrags-Details",
-      "Abrechnungs-Center",
-      "API-Dokumentation"
-    ]
-  }
-];
-
-const quickLinks = [
-  { 
-    label: "🎯 Schnellstart-Guide", 
-    href: "/dashboard/academy/documentation/quickstart",
-    description: "In 10 Minuten startklar"
-  },
-  { 
-    label: "📊 Was ist neu?", 
-    href: "/dashboard/academy/documentation/changelog",
-    description: "Aktuelle Updates & Features"
-  },
-  { 
-    label: "🔌 API-Dokumentation", 
-    href: "/dashboard/academy/documentation/api",
-    description: "Für Entwickler & Integrationen"
-  },
-  { 
-    label: "💡 Use Cases", 
-    href: "/dashboard/academy/documentation/use-cases",
-    description: "Erfolgsgeschichten & Beispiele"
-  }
-];
+import { useTranslations } from "next-intl";
 
 export default function AcademyOverviewPage() {
+  const t = useTranslations("academy");
+
+  const sections = [
+    {
+      key: "gettingStarted",
+      href: "/dashboard/academy/documentation/erste-schritte",
+      icon: RocketLaunchIcon,
+      color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
+      items: ["welcome", "setupAccount", "firstCampaign", "inviteTeam"]
+    },
+    {
+      key: "crm",
+      href: "/dashboard/academy/documentation/handbuch/crm",
+      icon: UserGroupIcon,
+      color: "bg-green-50 text-green-600 hover:bg-green-100",
+      items: ["dashboard", "companies", "people", "lists"]
+    },
+    {
+      key: "library",
+      href: "/dashboard/academy/documentation/handbuch/bibliothek/publikationen",
+      icon: ArchiveBoxIcon,
+      color: "bg-purple-50 text-purple-600 hover:bg-purple-100",
+      items: ["publications", "marketing", "assets", "approval"]
+    },
+    {
+      key: "prTools",
+      href: "/dashboard/academy/documentation/handbuch/pr-tools/kampagnen",
+      icon: MegaphoneIcon,
+      color: "bg-yellow-50 text-yellow-600 hover:bg-yellow-100",
+      items: ["campaigns", "textModules", "calendar", "media", "approval"]
+    },
+    {
+      key: "communication",
+      href: "/dashboard/academy/documentation/handbuch/kommunikation/inbox",
+      icon: EnvelopeIcon,
+      color: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100",
+      items: ["inbox", "email", "notifications", "tracking"]
+    },
+    {
+      key: "settings",
+      href: "/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen",
+      icon: Cog6ToothIcon,
+      color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
+      items: ["notifications", "branding", "domains", "email", "team", "importExport"]
+    },
+    {
+      key: "admin",
+      href: "/dashboard/academy/documentation/handbuch/admin/profil",
+      icon: UserIcon,
+      color: "bg-red-50 text-red-600 hover:bg-red-100",
+      items: ["profile", "contract", "billing", "api"]
+    }
+  ];
+
+  const quickLinks = [
+    {
+      key: "quickstart",
+      href: "/dashboard/academy/documentation/quickstart",
+    },
+    {
+      key: "changelog",
+      href: "/dashboard/academy/documentation/changelog",
+    },
+    {
+      key: "api",
+      href: "/dashboard/academy/documentation/api",
+    },
+    {
+      key: "useCases",
+      href: "/dashboard/academy/documentation/use-cases",
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -146,16 +100,15 @@ export default function AcademyOverviewPage() {
             <AcademicCapIcon className="h-12 w-12 text-blue-600" />
           </div>
         </div>
-        <Heading level={1}>CeleroPress Academy</Heading>
+        <Heading level={1}>{t("title")}</Heading>
         <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-          Willkommen in der CeleroPress Academy! Hier findest du alles, was du brauchst, 
-          um das Maximum aus deiner PR-Software herauszuholen.
+          {t("subtitle")}
         </p>
       </div>
 
       {/* Quick Links */}
       <div className="mb-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Schnellzugriff</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("quickAccess.title")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickLinks.map((link) => (
             <Link
@@ -163,8 +116,8 @@ export default function AcademyOverviewPage() {
               href={link.href}
               className="bg-white rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <div className="font-medium text-gray-900">{link.label}</div>
-              <div className="text-sm text-gray-500 mt-1">{link.description}</div>
+              <div className="font-medium text-gray-900">{t(`quickAccess.${link.key}.label`)}</div>
+              <div className="text-sm text-gray-500 mt-1">{t(`quickAccess.${link.key}.description`)}</div>
             </Link>
           ))}
         </div>
@@ -186,19 +139,19 @@ export default function AcademyOverviewPage() {
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            
+
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {section.title}
+              {t(`sections.${section.key}.title`)}
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              {section.description}
+              {t(`sections.${section.key}.description`)}
             </p>
-            
+
             <ul className="space-y-1">
-              {section.items.map((item, index) => (
-                <li key={index} className="text-sm text-gray-500 flex items-center">
+              {section.items.map((item) => (
+                <li key={item} className="text-sm text-gray-500 flex items-center">
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                  {item}
+                  {t(`sections.${section.key}.items.${item}`)}
                 </li>
               ))}
             </ul>
@@ -210,23 +163,23 @@ export default function AcademyOverviewPage() {
       <div className="bg-gray-50 rounded-2xl p-8 text-center">
         <LightBulbIcon className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Brauchst du persönliche Hilfe?
+          {t("help.title")}
         </h2>
         <p className="text-gray-600 mb-6">
-          Unser Support-Team hilft dir gerne bei allen Fragen rund um CeleroPress.
+          {t("help.description")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/dashboard/academy/documentation/support"
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
           >
-            Support kontaktieren
+            {t("help.contact")}
           </Link>
           <Link
             href="/dashboard/academy/documentation/faq"
             className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
-            FAQ durchsuchen
+            {t("help.faq")}
           </Link>
         </div>
       </div>
@@ -235,7 +188,7 @@ export default function AcademyOverviewPage() {
       <div className="mt-12">
         <div className="max-w-xl mx-auto">
           <label htmlFor="search" className="sr-only">
-            Dokumentation durchsuchen
+            {t("search.label")}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -248,7 +201,7 @@ export default function AcademyOverviewPage() {
               name="search"
               id="search"
               className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Durchsuche die Dokumentation..."
+              placeholder={t("search.placeholder")}
             />
           </div>
         </div>

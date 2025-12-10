@@ -5,6 +5,7 @@
 
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Organization } from '@/types/organization';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function OrganizationStats({ organizations }: Props) {
+  const t = useTranslations('superadmin.stats');
+
   const stats = {
     total: organizations.length,
     starter: organizations.filter((o) => o.tier === 'STARTER').length,
@@ -49,42 +52,42 @@ export default function OrganizationStats({ organizations }: Props) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
       <StatCard
-        label="Total Organizations"
+        label={t('totalOrganizations')}
         value={stats.total}
         color="text-zinc-900"
       />
       <StatCard
-        label="STARTER"
+        label={t('starter')}
         value={stats.starter}
         percentage={calculatePercentage(stats.starter)}
         color="text-[#005fab]"
       />
       <StatCard
-        label="BUSINESS"
+        label={t('business')}
         value={stats.business}
         percentage={calculatePercentage(stats.business)}
         color="text-[#005fab]"
       />
       <StatCard
-        label="AGENTUR"
+        label={t('agentur')}
         value={stats.agentur}
         percentage={calculatePercentage(stats.agentur)}
         color="text-purple-600"
       />
       <StatCard
-        label="Promo"
+        label={t('promo')}
         value={stats.promo}
         percentage={calculatePercentage(stats.promo)}
         color="text-yellow-600"
       />
       <StatCard
-        label="Beta"
+        label={t('beta')}
         value={stats.beta}
         percentage={calculatePercentage(stats.beta)}
         color="text-green-600"
       />
       <StatCard
-        label="Internal"
+        label={t('internal')}
         value={stats.internal}
         percentage={calculatePercentage(stats.internal)}
         color="text-zinc-600"

@@ -108,7 +108,7 @@ Kernfunktionalität der App.
 | ✅ | `src/app/dashboard/admin/profile/page.tsx` | `admin.profile` | 2025-12-10 |
 | ✅ | `src/app/dashboard/admin/billing/page.tsx` | `admin.billing` | 2025-12-10 |
 | ✅ | `src/app/dashboard/admin/integrations/page.tsx` | `admin.integrations` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/admin/api/page.tsx` | `admin.api` | - |
+| ✅ | `src/app/dashboard/admin/api/page.tsx` | `admin.api` | 2025-12-10 |
 
 ---
 
@@ -116,11 +116,11 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/projects/[projectId]/page.tsx` | `projects` | - |
-| ⬜ | `src/app/dashboard/contacts/crm/contacts/[contactId]/page.tsx` | `contacts` | - |
-| ⬜ | `src/app/dashboard/contacts/crm/companies/[companyId]/page.tsx` | `companies` | - |
-| ⬜ | `src/app/dashboard/contacts/lists/[listId]/page.tsx` | `lists` | - |
-| ⬜ | `src/app/dashboard/library/publications/[publicationId]/page.tsx` | `publications` | - |
+| ✅ | `src/app/dashboard/projects/[projectId]/page.tsx` | `projects.detail` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/crm/contacts/[contactId]/page.tsx` | `contacts.detail` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/crm/companies/[companyId]/page.tsx` | `companies.detail` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/lists/[listId]/page.tsx` | `lists.detail` | 2025-12-10 |
+| ✅ | `src/app/dashboard/library/publications/[publicationId]/page.tsx` | `publications.detail` | 2025-12-10 |
 
 ---
 
@@ -128,7 +128,7 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/communication/inbox/page.tsx` | `inbox` | - |
+| ✅ | `src/app/dashboard/communication/inbox/page.tsx` | `inbox` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/communication/notifications/page.tsx` | `notifications` | - |
 | ⬜ | `src/app/dashboard/academy/documentation/page.tsx` | `academy` | - |
 | ⬜ | `src/app/dashboard/strategy-documents/[documentId]/page.tsx` | `strategy` | - |
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 33 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting, Settings Team, Settings Branding, Settings Email, Settings Notifications, Settings Templates, Settings Domain, Settings Monitoring, Settings Import-Export, Settings Spam-Blocklist, Admin Profile, Admin Billing, Admin Integrations)
+- **Abgeschlossen:** 40 (+ Admin API, Project Detail, Contact Detail, Company Detail, Lists Detail, Publications Detail, Inbox mit Komponenten)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~22
+- **Ausstehend:** ~15
 
 ---
 

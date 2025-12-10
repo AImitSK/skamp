@@ -13,8 +13,10 @@ import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import PromoCodeManager from '@/components/super-admin/PromoCodeManager';
 import OrganizationList from '@/components/super-admin/OrganizationList';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function SuperAdminAccountsPage() {
+  const t = useTranslations('superadmin.accounts');
   const { user } = useAuth();
   const router = useRouter();
   const { isSuperAdmin, isGlobalTeamMember } = useAutoGlobal();
@@ -35,7 +37,7 @@ export default function SuperAdminAccountsPage() {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-gray-600">Überprüfe Zugriffsrechte...</p>
+          <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );
@@ -46,18 +48,18 @@ export default function SuperAdminAccountsPage() {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-          <h2 className="text-xl font-bold text-red-800 mb-2">Zugriff verweigert</h2>
+          <h2 className="text-xl font-bold text-red-800 mb-2">{t('accessDenied.title')}</h2>
           <p className="text-red-700 mb-2">
-            Nur Super-Admins haben Zugang zu dieser Seite.
+            {t('accessDenied.message')}
           </p>
           <p className="text-red-600 text-sm">
-            Super-Admin = Mitglieder der Organization von <strong>info@sk-online-marketing.de</strong>
+            {t('accessDenied.hint')} <strong>info@sk-online-marketing.de</strong>
           </p>
           <button
             onClick={() => router.push('/dashboard')}
             className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
           >
-            Zurück zum Dashboard
+            {t('accessDenied.backButton')}
           </button>
         </div>
       </div>
@@ -69,9 +71,9 @@ export default function SuperAdminAccountsPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-zinc-900">Account Management</h1>
+        <h1 className="text-3xl font-bold text-zinc-900">{t('title')}</h1>
         <p className="mt-2 text-zinc-600">
-          Verwalten Sie Special Accounts und Promo-Codes
+          {t('description')}
         </p>
       </div>
 

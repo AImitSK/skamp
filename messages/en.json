@@ -656,7 +656,39 @@
       "title": "Notifications",
       "empty": "No notifications",
       "new": "New",
-      "recently": "Recently"
+      "recently": "Recently",
+      "page": {
+        "title": "Notifications",
+        "settings": "Settings"
+      },
+      "list": {
+        "loading": "Loading notifications...",
+        "errorTitle": "Error loading notifications",
+        "emptyTitle": "No notifications",
+        "emptyDescription": "Your notifications will appear here.",
+        "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}",
+        "markAllSuccess": "All marked as read",
+        "markAllAsRead": "Mark all as read",
+        "marking": "Marking...",
+        "loadMore": "Load more notifications"
+      },
+      "item": {
+        "deleteAriaLabel": "Delete notification",
+        "metadata": {
+          "recipients": "{count, plural, one {# recipient} other {# recipients}}",
+          "daysOverdue": "{days, plural, one {# day overdue} other {# days overdue}}"
+        },
+        "timeAgo": {
+          "justNow": "just now",
+          "second": "{count, plural, one {# second ago} other {# seconds ago}}",
+          "minute": "{count, plural, one {# minute ago} other {# minutes ago}}",
+          "hour": "{count, plural, one {# hour ago} other {# hours ago}}",
+          "day": "{count, plural, one {# day ago} other {# days ago}}",
+          "week": "{count, plural, one {# week ago} other {# weeks ago}}",
+          "month": "{count, plural, one {# month ago} other {# months ago}}",
+          "year": "{count, plural, one {# year ago} other {# years ago}}"
+        }
+      }
     },
     "emailPerformance": {
       "title": "Email Performance",
@@ -2806,6 +2838,253 @@
         "send": "Send",
         "sending": "Sending..."
       }
+    }
+  },
+  "academy": {
+    "title": "CeleroPress Academy",
+    "subtitle": "Welcome to the CeleroPress Academy! Here you'll find everything you need to get the most out of your PR software.",
+    "quickAccess": {
+      "title": "Quick Access",
+      "quickstart": {
+        "label": "🎯 Quickstart Guide",
+        "description": "Get started in 10 minutes"
+      },
+      "changelog": {
+        "label": "📊 What's New?",
+        "description": "Latest updates & features"
+      },
+      "api": {
+        "label": "🔌 API Documentation",
+        "description": "For developers & integrations"
+      },
+      "useCases": {
+        "label": "💡 Use Cases",
+        "description": "Success stories & examples"
+      }
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "🚀 Getting Started",
+        "description": "The perfect introduction to CeleroPress",
+        "items": {
+          "welcome": "Welcome to CeleroPress",
+          "setupAccount": "Set up account",
+          "firstCampaign": "Create first campaign",
+          "inviteTeam": "Invite team"
+        }
+      },
+      "crm": {
+        "title": "👥 CRM & Contacts",
+        "description": "CRM system, manage companies & people",
+        "items": {
+          "dashboard": "Use CRM dashboard",
+          "companies": "Manage companies",
+          "people": "People management",
+          "lists": "Create distribution lists"
+        }
+      },
+      "library": {
+        "title": "📚 Library",
+        "description": "Manage publications & marketing materials",
+        "items": {
+          "publications": "Manage publications",
+          "marketing": "Organize marketing materials",
+          "assets": "Asset management",
+          "approval": "Approval processes"
+        }
+      },
+      "prTools": {
+        "title": "📢 PR Tools",
+        "description": "Campaigns, approvals, calendar & media library",
+        "items": {
+          "campaigns": "Create campaigns",
+          "textModules": "Use text modules",
+          "calendar": "Editorial calendar",
+          "media": "Manage media library",
+          "approval": "Approval workflows"
+        }
+      },
+      "communication": {
+        "title": "💬 Communication",
+        "description": "Manage inbox & notifications",
+        "items": {
+          "inbox": "Use campaign inbox",
+          "email": "Email management",
+          "notifications": "Notifications",
+          "tracking": "Response tracking"
+        }
+      },
+      "settings": {
+        "title": "⚙️ Settings",
+        "description": "System configuration & team management",
+        "items": {
+          "notifications": "Set up notifications",
+          "branding": "Customize branding & design",
+          "domains": "Domain management",
+          "email": "Email configuration",
+          "team": "Team administration",
+          "importExport": "Import/export tools"
+        }
+      },
+      "admin": {
+        "title": "👤 Admin Center",
+        "description": "Profile, contract & API management",
+        "items": {
+          "profile": "Manage profile",
+          "contract": "Contract details",
+          "billing": "Billing center",
+          "api": "API documentation"
+        }
+      }
+    },
+    "help": {
+      "title": "Need Personal Help?",
+      "description": "Our support team is happy to help with any questions about CeleroPress.",
+      "contact": "Contact support",
+      "faq": "Browse FAQ"
+    },
+    "search": {
+      "label": "Search documentation",
+      "placeholder": "Search the documentation..."
+    }
+  },
+  "superadmin": {
+    "accounts": {
+      "title": "Account Management",
+      "description": "Manage Special Accounts and Promo Codes",
+      "loading": "Verifying access rights...",
+      "accessDenied": {
+        "title": "Access Denied",
+        "message": "Only Super Admins have access to this page.",
+        "hint": "Super Admin = Members of the organization of",
+        "backButton": "Back to Dashboard"
+      }
+    },
+    "promoCodeManager": {
+      "form": {
+        "title": "Create Promo Code",
+        "codeLabel": "Code",
+        "codePlaceholder": "LAUNCH2025",
+        "tierLabel": "Tier",
+        "tierBusiness": "BUSINESS (€149/month)",
+        "tierAgentur": "AGENTUR (€399/month)",
+        "maxUsesLabel": "Max. Uses",
+        "maxUsesHint": "-1 for unlimited uses",
+        "validityLabel": "Validity (Months)",
+        "validityPlaceholder": "Leave empty for unlimited",
+        "validityHint": "Leave empty for unlimited validity",
+        "submitButton": "Create Promo Code",
+        "submitting": "Creating...",
+        "successMessage": "Promo Code \"{code}\" created!",
+        "errorMessage": "Error creating code",
+        "networkError": "Network error"
+      },
+      "list": {
+        "title": "Existing Promo Codes ({count})",
+        "loading": "Loading promo codes...",
+        "empty": "No promo codes available",
+        "usageInfo": "{current} / {max} used",
+        "validityInfo": "{months} months validity"
+      }
+    },
+    "organizationList": {
+      "title": "Organizations",
+      "titleWithCount": "Organizations ({count})",
+      "loading": "Loading organizations...",
+      "errorLoading": "Error loading organizations",
+      "errorPrefix": "Error",
+      "empty": "No organizations found",
+      "accountType": {
+        "regular": "Regular",
+        "promo": "Promo",
+        "beta": "Beta",
+        "internal": "Internal"
+      },
+      "promoInfo": "Promo: {code}",
+      "expiresAt": "Expires: {date}"
+    },
+    "organizations": {
+      "title": "Organizations Overview",
+      "subtitle": "Manage all organizations and their subscriptions",
+      "checkingAccess": "Checking access rights...",
+      "accessDenied": "Access Denied",
+      "accessDeniedMessage": "Only Super-Admins have access to this page.",
+      "accessDeniedHint": "Super-Admin = Members of the organization info@sk-online-marketing.de",
+      "backToDashboard": "Back to Dashboard",
+      "exportCSV": "Export CSV",
+      "csvExported": "CSV exported",
+      "loadError": "Error loading organizations"
+    },
+    "stats": {
+      "totalOrganizations": "Total Organizations",
+      "starter": "STARTER",
+      "business": "BUSINESS",
+      "agentur": "AGENCY",
+      "promo": "Promo",
+      "beta": "Beta",
+      "internal": "Internal"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Name, Email, ID...",
+      "tier": "Tier",
+      "allTiers": "All Tiers",
+      "accountType": "Account Type",
+      "allTypes": "All Types",
+      "regular": "Regular",
+      "promo": "Promo",
+      "beta": "Beta",
+      "internal": "Internal",
+      "status": "Status",
+      "all": "All",
+      "promoExpiring": "Promo expiring (7 days)",
+      "resetFilters": "Reset Filters"
+    },
+    "table": {
+      "organization": "Organization",
+      "tier": "Tier",
+      "type": "Type",
+      "emails": "Emails",
+      "storage": "Storage",
+      "status": "Status",
+      "actions": "Actions",
+      "expiresIn": "Exp: {days}d",
+      "expired": "Expired",
+      "viewDetails": "View details",
+      "noOrganizations": "No organizations found"
+    },
+    "modal": {
+      "basicInfo": "Basic Info",
+      "adminEmail": "Admin Email",
+      "created": "Created",
+      "tier": "Tier",
+      "accountType": "Account Type",
+      "stripeCustomer": "Stripe Customer",
+      "usageDetails": "Usage Details",
+      "emails": "Emails",
+      "contacts": "Contacts",
+      "storage": "Storage",
+      "aiWords": "AI Words",
+      "teamMembers": "Team Members",
+      "unlimited": "Unlimited ∞",
+      "quickActions": "Quick Actions",
+      "changeTier": "Change Tier...",
+      "extend1Month": "+1 Month",
+      "extend3Months": "+3 Months",
+      "viewInStripe": "View in Stripe",
+      "supportNotes": "Support Notes (Internal)",
+      "notesPlaceholder": "Notes for internal use...",
+      "saveNote": "Save Note",
+      "confirmChangeTier": "Change tier to {tier}?",
+      "tierChangedSuccess": "Tier successfully changed",
+      "tierChangedError": "Error changing tier",
+      "confirmExtendPromo": "Extend promo by {months} months?",
+      "promoExtendedSuccess": "Promo successfully extended",
+      "promoExtendedError": "Error extending promo",
+      "noteRequired": "Please enter a note",
+      "noteSaved": "Note saved",
+      "noteSaveError": "Error saving note",
+      "networkError": "Network error"
     }
   }
 }

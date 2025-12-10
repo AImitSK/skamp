@@ -1,27 +1,30 @@
 // src/components/notifications/NotificationList.tsx
+"use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { NotificationItem } from './NotificationItem';
 import { useNotifications } from '@/hooks/use-notifications';
-import { 
-  BellSlashIcon, 
+import {
+  BellSlashIcon,
   CheckIcon,
-  ExclamationCircleIcon 
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 export function NotificationList() {
-  const { 
-    notifications, 
-    loading, 
-    error, 
-    markAsRead, 
+  const t = useTranslations('notifications');
+  const {
+    notifications,
+    loading,
+    error,
+    markAsRead,
     markAllAsRead,
     deleteNotification,
-    unreadCount 
+    unreadCount
   } = useNotifications();
-  
+
   const [markingAll, setMarkingAll] = useState(false);
   const [showMarkAllSuccess, setShowMarkAllSuccess] = useState(false);
 
@@ -48,7 +51,7 @@ export function NotificationList() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span className="ml-2 text-gray-500">Benachrichtigungen werden geladen...</span>
+            <span className="ml-2 text-gray-500">{t('list.loading')}</span>
           </div>
         </div>
       </div>
@@ -62,7 +65,7 @@ export function NotificationList() {
           <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-red-800">
-              Fehler beim Laden der Benachrichtigungen
+              {t('list.errorTitle')}
             </h3>
             <div className="mt-2 text-sm text-red-700">{error}</div>
           </div>
@@ -76,10 +79,10 @@ export function NotificationList() {
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <BellSlashIcon className="h-12 w-12 text-gray-300" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">
-          Keine Benachrichtigungen
+          {t('list.emptyTitle')}
         </h3>
         <p className="mt-1 text-sm text-gray-500">
-          Hier werden deine Benachrichtigungen angezeigt.
+          {t('list.emptyDescription')}
         </p>
       </div>
     );
@@ -91,13 +94,13 @@ export function NotificationList() {
       {unreadCount > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
           <span className="text-sm text-gray-600">
-            {unreadCount} ungelesene Benachrichtigung{unreadCount !== 1 ? 'en' : ''}
+            {t('list.unreadCount', { count: unreadCount })}
           </span>
           <div className="flex items-center gap-2">
             {showMarkAllSuccess && (
               <span className="text-sm text-green-600 flex items-center gap-1">
                 <CheckIcon className="h-4 w-4" />
-                Alle als gelesen markiert
+                {t('list.markAllSuccess')}
               </span>
             )}
             <Button
@@ -112,12 +115,12 @@ export function NotificationList() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Markiere...
+                  {t('list.marking')}
                 </>
               ) : (
                 <>
                   <CheckIcon className="h-4 w-4 mr-1" />
-                  Alle als gelesen markieren
+                  {t('list.markAllAsRead')}
                 </>
               )}
             </Button>
@@ -149,7 +152,7 @@ export function NotificationList() {
               // TODO: Implement pagination
             }}
           >
-            Weitere Benachrichtigungen laden
+            {t('list.loadMore')}
           </Button>
         </div>
       )}

@@ -9,8 +9,10 @@ import { useState, useEffect } from 'react';
 import { TicketIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { PromoCode } from '@/types/promo-code';
+import { useTranslations } from 'next-intl';
 
 export default function PromoCodeManager() {
+  const t = useTranslations('superadmin.promoCodeManager');
   const [code, setCode] = useState('');
   const [tier, setTier] = useState<'BUSINESS' | 'AGENTUR'>('BUSINESS');
   const [maxUses, setMaxUses] = useState(10);
@@ -80,14 +82,14 @@ export default function PromoCodeManager() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`Promo-Code "${code}" erstellt!`);
+        toast.success(t('form.successMessage', { code }));
         setCode('');
         loadPromoCodes(); // Refresh list
       } else {
-        toast.error(data.error || 'Fehler beim Erstellen');
+        toast.error(data.error || t('form.errorMessage'));
       }
     } catch (error) {
-      toast.error('Netzwerkfehler');
+      toast.error(t('form.networkError'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ export default function PromoCodeManager() {
           <div className="flex items-center gap-3">
             <TicketIcon className="h-5 w-5 text-zinc-700" />
             <h3 className="text-base font-semibold text-zinc-900">
-              Promo-Code erstellen
+              {t('form.title')}
             </h3>
           </div>
         </div>
@@ -112,13 +114,13 @@ export default function PromoCodeManager() {
           <form onSubmit={handleCreatePromoCode} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                Code
+                {t('form.codeLabel')}
               </label>
               <input
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="LAUNCH2025"
+                placeholder={t('form.codePlaceholder')}
                 className="block w-full rounded-lg border border-zinc-300 bg-white
                            px-3 py-2 text-sm uppercase
                            placeholder:text-zinc-300
@@ -130,7 +132,7 @@ export default function PromoCodeManager() {
 
             <div>
               <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                Tier
+                {t('form.tierLabel')}
               </label>
               <select
                 value={tier}
@@ -139,14 +141,14 @@ export default function PromoCodeManager() {
                            px-3 py-2 text-sm h-10
                            focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="BUSINESS">BUSINESS (€149/Monat)</option>
-                <option value="AGENTUR">AGENTUR (€399/Monat)</option>
+                <option value="BUSINESS">{t('form.tierBusiness')}</option>
+                <option value="AGENTUR">{t('form.tierAgentur')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                Max. Nutzungen
+                {t('form.maxUsesLabel')}
               </label>
               <input
                 type="number"
@@ -158,13 +160,13 @@ export default function PromoCodeManager() {
                 min="1"
               />
               <p className="text-xs text-zinc-500 mt-1">
-                -1 für unbegrenzte Nutzungen
+                {t('form.maxUsesHint')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                Gültigkeit (Monate)
+                {t('form.validityLabel')}
               </label>
               <input
                 type="number"
@@ -172,7 +174,7 @@ export default function PromoCodeManager() {
                 onChange={(e) =>
                   setValidityMonths(e.target.value ? parseInt(e.target.value) : null)
                 }
-                placeholder="Leer lassen für unbegrenzt"
+                placeholder={t('form.validityPlaceholder')}
                 className="block w-full rounded-lg border border-zinc-300 bg-white
                            px-3 py-2 text-sm h-10
                            placeholder:text-zinc-300
@@ -180,7 +182,7 @@ export default function PromoCodeManager() {
                 min="1"
               />
               <p className="text-xs text-zinc-500 mt-1">
-                Leer lassen für unbegrenzte Gültigkeit
+                {t('form.validityHint')}
               </p>
             </div>
 
@@ -193,7 +195,7 @@ export default function PromoCodeManager() {
                          h-10 px-6 rounded-lg transition-colors
                          disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Erstelle...' : 'Promo-Code erstellen'}
+              {loading ? t('form.submitting') : t('form.submitButton')}
             </button>
           </form>
         </div>
@@ -206,7 +208,7 @@ export default function PromoCodeManager() {
           <div className="flex items-center gap-3">
             <TicketIcon className="h-5 w-5 text-zinc-700" />
             <h3 className="text-base font-semibold text-zinc-900">
-              Bestehende Promo-Codes ({promoCodes.length})
+              {t('list.title', { count: promoCodes.length })}
             </h3>
           </div>
         </div>
@@ -214,9 +216,9 @@ export default function PromoCodeManager() {
         {/* Card Body */}
         <div className="p-6">
           {loadingList ? (
-            <p className="text-zinc-500">Lade Promo-Codes...</p>
+            <p className="text-zinc-500">{t('list.loading')}</p>
           ) : promoCodes.length === 0 ? (
-            <p className="text-zinc-500">Keine Promo-Codes vorhanden</p>
+            <p className="text-zinc-500">{t('list.empty')}</p>
           ) : (
             <div className="space-y-2">
               {promoCodes.map((promo) => (
@@ -239,9 +241,12 @@ export default function PromoCodeManager() {
                       )}
                     </div>
                     <div className="text-xs text-zinc-600 mt-1">
-                      {promo.currentUses} / {promo.maxUses === -1 ? '∞' : promo.maxUses} genutzt
+                      {t('list.usageInfo', {
+                        current: promo.currentUses,
+                        max: promo.maxUses === -1 ? '∞' : promo.maxUses
+                      })}
                       {promo.validityMonths && (
-                        <span className="ml-2">• {promo.validityMonths} Monate Gültigkeit</span>
+                        <span className="ml-2">• {t('list.validityInfo', { months: promo.validityMonths })}</span>
                       )}
                     </div>
                   </div>

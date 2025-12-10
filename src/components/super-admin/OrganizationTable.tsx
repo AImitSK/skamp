@@ -5,6 +5,7 @@
 
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Organization } from '@/types/organization';
 import { getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
@@ -27,6 +28,8 @@ function toDate(timestamp: any): Date {
 }
 
 export default function OrganizationTable({ organizations, onViewDetails }: Props) {
+  const t = useTranslations('superadmin.table');
+
   const getUsageEmoji = (percentage: number) => {
     if (percentage < 80) return '🟢';
     if (percentage < 95) return '🟡';
@@ -64,13 +67,13 @@ export default function OrganizationTable({ organizations, onViewDetails }: Prop
     if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
       return (
         <span className="text-xs text-orange-600 flex items-center gap-1">
-          ⚠️ Exp: {daysUntilExpiry}d
+          ⚠️ {t('expiresIn', { days: daysUntilExpiry })}
         </span>
       );
     }
 
     if (daysUntilExpiry <= 0) {
-      return <span className="text-xs text-red-600">❌ Expired</span>;
+      return <span className="text-xs text-red-600">❌ {t('expired')}</span>;
     }
 
     return null;
@@ -92,25 +95,25 @@ export default function OrganizationTable({ organizations, onViewDetails }: Prop
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Organization
+                {t('organization')}
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase">
-                Tier
+                {t('tier')}
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase">
-                Type
+                {t('type')}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">
-                Emails
+                {t('emails')}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">
-                Storage
+                {t('storage')}
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase">
-                Status
+                {t('status')}
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-zinc-500 uppercase">
-                Actions
+                {t('actions')}
               </th>
             </tr>
           </thead>
@@ -188,7 +191,7 @@ export default function OrganizationTable({ organizations, onViewDetails }: Prop
                       <button
                         onClick={() => onViewDetails(org)}
                         className="p-1.5 text-[#005fab] hover:bg-[#005fab]/10 rounded transition"
-                        title="Details anzeigen"
+                        title={t('viewDetails')}
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
@@ -203,7 +206,7 @@ export default function OrganizationTable({ organizations, onViewDetails }: Prop
 
       {organizations.length === 0 && (
         <div className="p-12 text-center text-zinc-500">
-          Keine Organizations gefunden
+          {t('noOrganizations')}
         </div>
       )}
     </div>

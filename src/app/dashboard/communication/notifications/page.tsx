@@ -1,6 +1,7 @@
 // src/app/dashboard/communication/notifications/page.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Heading } from "@/components/ui/heading";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const t = useTranslations('notifications');
 
   return (
     <div className="h-full flex flex-col">
@@ -16,16 +18,16 @@ export default function NotificationsPage() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
             <BellIcon className="h-6 w-6 text-gray-400" />
-            <Heading>Benachrichtigungen</Heading>
+            <Heading>{t('page.title')}</Heading>
           </div>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
-          <Button 
+          <Button
             plain
             onClick={() => router.push('/dashboard/settings/notifications')}
           >
             <Cog6ToothIcon className="h-4 w-4" />
-            Einstellungen
+            {t('page.settings')}
           </Button>
         </div>
       </div>

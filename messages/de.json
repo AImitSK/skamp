@@ -656,7 +656,39 @@
       "title": "Benachrichtigungen",
       "empty": "Keine Benachrichtigungen",
       "new": "Neu",
-      "recently": "Kürzlich"
+      "recently": "Kürzlich",
+      "page": {
+        "title": "Benachrichtigungen",
+        "settings": "Einstellungen"
+      },
+      "list": {
+        "loading": "Benachrichtigungen werden geladen...",
+        "errorTitle": "Fehler beim Laden der Benachrichtigungen",
+        "emptyTitle": "Keine Benachrichtigungen",
+        "emptyDescription": "Hier werden deine Benachrichtigungen angezeigt.",
+        "unreadCount": "{count, plural, one {# ungelesene Benachrichtigung} other {# ungelesene Benachrichtigungen}}",
+        "markAllSuccess": "Alle als gelesen markiert",
+        "markAllAsRead": "Alle als gelesen markieren",
+        "marking": "Markiere...",
+        "loadMore": "Weitere Benachrichtigungen laden"
+      },
+      "item": {
+        "deleteAriaLabel": "Benachrichtigung löschen",
+        "metadata": {
+          "recipients": "{count, plural, one {# Empfänger} other {# Empfänger}}",
+          "daysOverdue": "{days, plural, one {# Tag überfällig} other {# Tage überfällig}}"
+        },
+        "timeAgo": {
+          "justNow": "gerade eben",
+          "second": "{count, plural, one {vor # Sekunde} other {vor # Sekunden}}",
+          "minute": "{count, plural, one {vor # Minute} other {vor # Minuten}}",
+          "hour": "{count, plural, one {vor # Stunde} other {vor # Stunden}}",
+          "day": "{count, plural, one {vor # Tag} other {vor # Tagen}}",
+          "week": "{count, plural, one {vor # Woche} other {vor # Wochen}}",
+          "month": "{count, plural, one {vor # Monat} other {vor # Monaten}}",
+          "year": "{count, plural, one {vor # Jahr} other {vor # Jahren}}"
+        }
+      }
     },
     "emailPerformance": {
       "title": "E-Mail Performance",
@@ -2806,6 +2838,253 @@
         "send": "Senden",
         "sending": "Wird gesendet..."
       }
+    }
+  },
+  "academy": {
+    "title": "CeleroPress Academy",
+    "subtitle": "Willkommen in der CeleroPress Academy! Hier findest du alles, was du brauchst, um das Maximum aus deiner PR-Software herauszuholen.",
+    "quickAccess": {
+      "title": "Schnellzugriff",
+      "quickstart": {
+        "label": "🎯 Schnellstart-Guide",
+        "description": "In 10 Minuten startklar"
+      },
+      "changelog": {
+        "label": "📊 Was ist neu?",
+        "description": "Aktuelle Updates & Features"
+      },
+      "api": {
+        "label": "🔌 API-Dokumentation",
+        "description": "Für Entwickler & Integrationen"
+      },
+      "useCases": {
+        "label": "💡 Use Cases",
+        "description": "Erfolgsgeschichten & Beispiele"
+      }
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "🚀 Erste Schritte",
+        "description": "Der perfekte Einstieg in CeleroPress",
+        "items": {
+          "welcome": "Willkommen bei CeleroPress",
+          "setupAccount": "Account einrichten",
+          "firstCampaign": "Erste Kampagne erstellen",
+          "inviteTeam": "Team einladen"
+        }
+      },
+      "crm": {
+        "title": "👥 CRM & Kontakte",
+        "description": "CRM-System, Unternehmen & Personen verwalten",
+        "items": {
+          "dashboard": "CRM-Dashboard nutzen",
+          "companies": "Unternehmen verwalten",
+          "people": "Personen-Management",
+          "lists": "Verteilerlisten erstellen"
+        }
+      },
+      "library": {
+        "title": "📚 Bibliothek",
+        "description": "Publikationen & Werbemittel verwalten",
+        "items": {
+          "publications": "Publikationen verwalten",
+          "marketing": "Werbemittel organisieren",
+          "assets": "Asset-Management",
+          "approval": "Freigabe-Prozesse"
+        }
+      },
+      "prTools": {
+        "title": "📢 PR-Tools",
+        "description": "Kampagnen, Freigaben, Kalender & Mediathek",
+        "items": {
+          "campaigns": "Kampagnen erstellen",
+          "textModules": "Textbausteine nutzen",
+          "calendar": "Redaktionskalender",
+          "media": "Mediathek verwalten",
+          "approval": "Freigabe-Workflows"
+        }
+      },
+      "communication": {
+        "title": "💬 Kommunikation",
+        "description": "Inbox & Benachrichtigungen verwalten",
+        "items": {
+          "inbox": "Kampagnen-Inbox nutzen",
+          "email": "E-Mail-Verwaltung",
+          "notifications": "Benachrichtigungen",
+          "tracking": "Response-Tracking"
+        }
+      },
+      "settings": {
+        "title": "⚙️ Einstellungen",
+        "description": "System-Konfiguration & Team-Management",
+        "items": {
+          "notifications": "Benachrichtigungen einrichten",
+          "branding": "Branding & Design anpassen",
+          "domains": "Domain-Verwaltung",
+          "email": "E-Mail-Konfiguration",
+          "team": "Team-Administration",
+          "importExport": "Import/Export-Tools"
+        }
+      },
+      "admin": {
+        "title": "👤 Admin-Center",
+        "description": "Profil, Vertrag & API-Management",
+        "items": {
+          "profile": "Profil verwalten",
+          "contract": "Vertrags-Details",
+          "billing": "Abrechnungs-Center",
+          "api": "API-Dokumentation"
+        }
+      }
+    },
+    "help": {
+      "title": "Brauchst du persönliche Hilfe?",
+      "description": "Unser Support-Team hilft dir gerne bei allen Fragen rund um CeleroPress.",
+      "contact": "Support kontaktieren",
+      "faq": "FAQ durchsuchen"
+    },
+    "search": {
+      "label": "Dokumentation durchsuchen",
+      "placeholder": "Durchsuche die Dokumentation..."
+    }
+  },
+  "superadmin": {
+    "accounts": {
+      "title": "Account Management",
+      "description": "Verwalten Sie Special Accounts und Promo-Codes",
+      "loading": "Überprüfe Zugriffsrechte...",
+      "accessDenied": {
+        "title": "Zugriff verweigert",
+        "message": "Nur Super-Admins haben Zugang zu dieser Seite.",
+        "hint": "Super-Admin = Mitglieder der Organization von",
+        "backButton": "Zurück zum Dashboard"
+      }
+    },
+    "promoCodeManager": {
+      "form": {
+        "title": "Promo-Code erstellen",
+        "codeLabel": "Code",
+        "codePlaceholder": "LAUNCH2025",
+        "tierLabel": "Tier",
+        "tierBusiness": "BUSINESS (€149/Monat)",
+        "tierAgentur": "AGENTUR (€399/Monat)",
+        "maxUsesLabel": "Max. Nutzungen",
+        "maxUsesHint": "-1 für unbegrenzte Nutzungen",
+        "validityLabel": "Gültigkeit (Monate)",
+        "validityPlaceholder": "Leer lassen für unbegrenzt",
+        "validityHint": "Leer lassen für unbegrenzte Gültigkeit",
+        "submitButton": "Promo-Code erstellen",
+        "submitting": "Erstelle...",
+        "successMessage": "Promo-Code \"{code}\" erstellt!",
+        "errorMessage": "Fehler beim Erstellen",
+        "networkError": "Netzwerkfehler"
+      },
+      "list": {
+        "title": "Bestehende Promo-Codes ({count})",
+        "loading": "Lade Promo-Codes...",
+        "empty": "Keine Promo-Codes vorhanden",
+        "usageInfo": "{current} / {max} genutzt",
+        "validityInfo": "{months} Monate Gültigkeit"
+      }
+    },
+    "organizationList": {
+      "title": "Organizations",
+      "titleWithCount": "Organizations ({count})",
+      "loading": "Lade Organizations...",
+      "errorLoading": "Fehler beim Laden der Organizations",
+      "errorPrefix": "Fehler",
+      "empty": "Keine Organizations gefunden",
+      "accountType": {
+        "regular": "Regular",
+        "promo": "Promo",
+        "beta": "Beta",
+        "internal": "Internal"
+      },
+      "promoInfo": "Promo: {code}",
+      "expiresAt": "Läuft ab: {date}"
+    },
+    "organizations": {
+      "title": "Organizations Overview",
+      "subtitle": "Verwalten Sie alle Organizations und deren Subscriptions",
+      "checkingAccess": "Überprüfe Zugriffsrechte...",
+      "accessDenied": "Zugriff verweigert",
+      "accessDeniedMessage": "Nur Super-Admins haben Zugang zu dieser Seite.",
+      "accessDeniedHint": "Super-Admin = Mitglieder der Organization von info@sk-online-marketing.de",
+      "backToDashboard": "Zurück zum Dashboard",
+      "exportCSV": "Export CSV",
+      "csvExported": "CSV exportiert",
+      "loadError": "Fehler beim Laden der Organizations"
+    },
+    "stats": {
+      "totalOrganizations": "Total Organizations",
+      "starter": "STARTER",
+      "business": "BUSINESS",
+      "agentur": "AGENTUR",
+      "promo": "Promo",
+      "beta": "Beta",
+      "internal": "Internal"
+    },
+    "filters": {
+      "search": "Suche",
+      "searchPlaceholder": "Name, Email, ID...",
+      "tier": "Tier",
+      "allTiers": "Alle Tiers",
+      "accountType": "Account Type",
+      "allTypes": "Alle Types",
+      "regular": "Regular",
+      "promo": "Promo",
+      "beta": "Beta",
+      "internal": "Internal",
+      "status": "Status",
+      "all": "Alle",
+      "promoExpiring": "Promo läuft ab (7 Tage)",
+      "resetFilters": "Filter zurücksetzen"
+    },
+    "table": {
+      "organization": "Organization",
+      "tier": "Tier",
+      "type": "Type",
+      "emails": "Emails",
+      "storage": "Storage",
+      "status": "Status",
+      "actions": "Actions",
+      "expiresIn": "Exp: {days}d",
+      "expired": "Expired",
+      "viewDetails": "Details anzeigen",
+      "noOrganizations": "Keine Organizations gefunden"
+    },
+    "modal": {
+      "basicInfo": "Basic Info",
+      "adminEmail": "Admin Email",
+      "created": "Created",
+      "tier": "Tier",
+      "accountType": "Account Type",
+      "stripeCustomer": "Stripe Customer",
+      "usageDetails": "Usage Details",
+      "emails": "Emails",
+      "contacts": "Kontakte",
+      "storage": "Storage",
+      "aiWords": "AI Words",
+      "teamMembers": "Team Members",
+      "unlimited": "Unlimited ∞",
+      "quickActions": "Quick Actions",
+      "changeTier": "Change Tier...",
+      "extend1Month": "+1 Monat",
+      "extend3Months": "+3 Monate",
+      "viewInStripe": "View in Stripe",
+      "supportNotes": "Support Notes (Internal)",
+      "notesPlaceholder": "Notizen für interne Zwecke...",
+      "saveNote": "Save Note",
+      "confirmChangeTier": "Tier zu {tier} ändern?",
+      "tierChangedSuccess": "Tier erfolgreich geändert",
+      "tierChangedError": "Fehler beim Ändern des Tiers",
+      "confirmExtendPromo": "Promo um {months} Monate verlängern?",
+      "promoExtendedSuccess": "Promo erfolgreich verlängert",
+      "promoExtendedError": "Fehler beim Verlängern",
+      "noteRequired": "Bitte geben Sie eine Note ein",
+      "noteSaved": "Note gespeichert",
+      "noteSaveError": "Fehler beim Speichern",
+      "networkError": "Netzwerkfehler"
     }
   }
 }

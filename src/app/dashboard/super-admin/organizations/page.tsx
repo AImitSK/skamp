@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ function toDate(timestamp: any): Date {
 }
 
 export default function SuperAdminOrganizationsPage() {
+  const t = useTranslations('superadmin.organizations');
   const { user } = useAuth();
   const router = useRouter();
   const { isSuperAdmin, isGlobalTeamMember } = useAutoGlobal();
@@ -89,7 +91,7 @@ export default function SuperAdminOrganizationsPage() {
       setOrganizations(data.organizations || []);
     } catch (error: any) {
       console.error('Error loading organizations:', error);
-      toast.error(error.message || 'Fehler beim Laden der Organizations');
+      toast.error(error.message || t('loadError'));
     }
   };
 
@@ -140,7 +142,7 @@ export default function SuperAdminOrganizationsPage() {
     // Generate CSV from filteredOrgs
     const csv = generateCSV(filteredOrgs);
     downloadCSV(csv, `organizations-export-${new Date().toISOString().split('T')[0]}.csv`);
-    toast.success('CSV exportiert');
+    toast.success(t('csvExported'));
   };
 
   // Loading state
@@ -148,7 +150,7 @@ export default function SuperAdminOrganizationsPage() {
     return (
       <div className="p-6 max-w-[1600px] mx-auto">
         <div className="bg-white rounded-lg border border-zinc-200 p-8 text-center">
-          <p className="text-zinc-600">Überprüfe Zugriffsrechte...</p>
+          <p className="text-zinc-600">{t('checkingAccess')}</p>
         </div>
       </div>
     );
@@ -159,18 +161,18 @@ export default function SuperAdminOrganizationsPage() {
     return (
       <div className="p-6 max-w-[1600px] mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-          <h2 className="text-xl font-bold text-red-800 mb-2">Zugriff verweigert</h2>
+          <h2 className="text-xl font-bold text-red-800 mb-2">{t('accessDenied')}</h2>
           <p className="text-red-700 mb-2">
-            Nur Super-Admins haben Zugang zu dieser Seite.
+            {t('accessDeniedMessage')}
           </p>
           <p className="text-red-600 text-sm">
-            Super-Admin = Mitglieder der Organization von <strong>info@sk-online-marketing.de</strong>
+            {t('accessDeniedHint')}
           </p>
           <button
             onClick={() => router.push('/dashboard')}
             className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
           >
-            Zurück zum Dashboard
+            {t('backToDashboard')}
           </button>
         </div>
       </div>
@@ -184,10 +186,10 @@ export default function SuperAdminOrganizationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-zinc-900">
-            🏢 Organizations Overview
+            🏢 {t('title')}
           </h1>
           <p className="mt-2 text-zinc-600">
-            Verwalten Sie alle Organizations und deren Subscriptions
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -196,7 +198,7 @@ export default function SuperAdminOrganizationsPage() {
           className="px-4 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition
                      flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          📊 Export CSV
+          📊 {t('exportCSV')}
         </button>
       </div>
 

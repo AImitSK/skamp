@@ -1,6 +1,8 @@
 // src/components/notifications/NotificationItem.tsx
+"use client";
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import {
   CheckCircleIcon,
@@ -37,39 +39,39 @@ const iconMap = {
   TEAM_CHAT_MENTION: AtSymbolIcon
 };
 
-// Helper function to format relative time in German
-function formatRelativeTime(date: Date): string {
+// Helper function to format relative time with i18n
+function formatRelativeTime(date: Date, t: (key: string, params?: any) => string): string {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   const intervals = [
-    { label: 'Jahr', seconds: 31536000 },
-    { label: 'Monat', seconds: 2592000 },
-    { label: 'Woche', seconds: 604800 },
-    { label: 'Tag', seconds: 86400 },
-    { label: 'Stunde', seconds: 3600 },
-    { label: 'Minute', seconds: 60 },
-    { label: 'Sekunde', seconds: 1 }
+    { key: 'year', seconds: 31536000 },
+    { key: 'month', seconds: 2592000 },
+    { key: 'week', seconds: 604800 },
+    { key: 'day', seconds: 86400 },
+    { key: 'hour', seconds: 3600 },
+    { key: 'minute', seconds: 60 },
+    { key: 'second', seconds: 1 }
   ];
-  
+
   for (const interval of intervals) {
     const count = Math.floor(seconds / interval.seconds);
     if (count > 0) {
-      const plural = count === 1 ? '' : (interval.label === 'Monat' ? 'en' : 'n');
-      return `vor ${count} ${interval.label}${plural}`;
+      return t(`item.timeAgo.${interval.key}`, { count });
     }
   }
-  
-  return 'gerade eben';
+
+  return t('item.timeAgo.justNow');
 }
 
 export function NotificationItem({ notification, onMarkAsRead, onDelete }: NotificationItemProps) {
   const router = useRouter();
+  const t = useTranslations('notifications');
   const Icon = iconMap[notification.type as keyof typeof iconMap];
   const colorClasses = NOTIFICATION_COLORS[notification.type as keyof typeof NOTIFICATION_COLORS];
-  
+
   // Format timestamp
-  const timeAgo = formatRelativeTime(notification.createdAt.toDate());
+  const timeAgo = formatRelativeTime(notification.createdAt.toDate(), t);
 
   const handleClick = async (e: React.MouseEvent) => {
     // Verhindere Navigation wenn Delete-Button geklickt wurde
@@ -136,7 +138,7 @@ export function NotificationItem({ notification, onMarkAsRead, onDelete }: Notif
             <button
               onClick={handleDelete}
               className="delete-button p-1 rounded hover:bg-gray-100 transition-colors group"
-              aria-label="Benachrichtigung löschen"
+              aria-label={t('item.deleteAriaLabel')}
             >
               <TrashIcon className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
             </button>
@@ -153,12 +155,12 @@ export function NotificationItem({ notification, onMarkAsRead, onDelete }: Notif
             )}
             {notification.metadata.recipientCount && (
               <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 font-medium text-blue-700">
-                {notification.metadata.recipientCount} Empfänger
+                {t('item.metadata.recipients', { count: notification.metadata.recipientCount })}
               </span>
             )}
             {notification.metadata.daysOverdue && (
               <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-1 font-medium text-red-700">
-                {notification.metadata.daysOverdue} Tage überfällig
+                {t('item.metadata.daysOverdue', { days: notification.metadata.daysOverdue })}
               </span>
             )}
           </div>
