@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { AVESettings, DEFAULT_AVE_SETTINGS } from '@/types/monitoring';
 import { toastService } from '@/lib/utils/toast';
 
 export default function MonitoringSettingsPage() {
+  const t = useTranslations('settings.monitoring');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -135,9 +137,9 @@ export default function MonitoringSettingsPage() {
       <div className="flex-1">
         <div className="md:flex md:items-center md:justify-between mb-8">
           <div className="min-w-0 flex-1">
-            <Heading level={1}>Monitoring & AVE-Berechnung</Heading>
+            <Heading level={1}>{t('title')}</Heading>
             <Text className="mt-2 text-gray-600">
-              Konfigurieren Sie die AVE-Faktoren (Advertising Value Equivalent) für verschiedene Medientypen
+              {t('description')}
             </Text>
           </div>
         </div>
@@ -148,15 +150,15 @@ export default function MonitoringSettingsPage() {
               <div className="px-4 py-6 sm:p-8">
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-4">AVE-Faktoren pro Medientyp</h3>
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">{t('aveFactors.title')}</h3>
                     <p className="text-sm text-gray-600 mb-6">
-                      Diese Faktoren werden mit der Reichweite multipliziert. Formel: <code className="bg-gray-100 px-2 py-1 rounded">AVE = Reichweite × Faktor × Sentiment-Multiplikator</code>
+                      {t('aveFactors.formula')} <code className="bg-gray-100 px-2 py-1 rounded">AVE = {t('aveFactors.formulaCode')}</code>
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Field>
-                        <Label>Print (€ pro Reichweite)</Label>
-                        <Description>Faktor für Printmedien (Zeitungen, Magazine)</Description>
+                        <Label>{t('aveFactors.print.label')}</Label>
+                        <Description>{t('aveFactors.print.description')}</Description>
                         <Input
                           type="number"
                           step="0.001"
@@ -167,8 +169,8 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Online (€ pro Reichweite)</Label>
-                        <Description>Faktor für Online-Medien</Description>
+                        <Label>{t('aveFactors.online.label')}</Label>
+                        <Description>{t('aveFactors.online.description')}</Description>
                         <Input
                           type="number"
                           step="0.001"
@@ -179,8 +181,8 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Broadcast (€ pro Reichweite)</Label>
-                        <Description>Faktor für TV und Radio</Description>
+                        <Label>{t('aveFactors.broadcast.label')}</Label>
+                        <Description>{t('aveFactors.broadcast.description')}</Description>
                         <Input
                           type="number"
                           step="0.001"
@@ -191,8 +193,8 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Audio/Podcast (€ pro Download)</Label>
-                        <Description>Faktor für Podcasts (monatliche Downloads)</Description>
+                        <Label>{t('aveFactors.audio.label')}</Label>
+                        <Description>{t('aveFactors.audio.description')}</Description>
                         <Input
                           type="number"
                           step="0.001"
@@ -205,15 +207,15 @@ export default function MonitoringSettingsPage() {
                   </div>
 
                   <div className="border-t border-gray-200 pt-8">
-                    <h3 className="text-base font-semibold text-gray-900 mb-4">Sentiment-Multiplikatoren</h3>
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">{t('sentimentMultipliers.title')}</h3>
                     <p className="text-sm text-gray-600 mb-6">
-                      Diese Werte werden je nach Tonalität der Berichterstattung angewendet
+                      {t('sentimentMultipliers.description')}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <Field>
-                        <Label>Positiv</Label>
-                        <Description>Faktor für positive Berichterstattung</Description>
+                        <Label>{t('sentimentMultipliers.positive.label')}</Label>
+                        <Description>{t('sentimentMultipliers.positive.description')}</Description>
                         <Input
                           type="number"
                           step="0.1"
@@ -225,8 +227,8 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Neutral</Label>
-                        <Description>Faktor für neutrale Berichterstattung</Description>
+                        <Label>{t('sentimentMultipliers.neutral.label')}</Label>
+                        <Description>{t('sentimentMultipliers.neutral.description')}</Description>
                         <Input
                           type="number"
                           step="0.1"
@@ -238,8 +240,8 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Negativ</Label>
-                        <Description>Faktor für negative Berichterstattung</Description>
+                        <Label>{t('sentimentMultipliers.negative.label')}</Label>
+                        <Description>{t('sentimentMultipliers.negative.description')}</Description>
                         <Input
                           type="number"
                           step="0.1"
@@ -254,11 +256,16 @@ export default function MonitoringSettingsPage() {
 
                   <div className="border-t border-gray-200 pt-6">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-blue-900 mb-2">Berechnungsbeispiel</h4>
+                      <h4 className="text-sm font-semibold text-blue-900 mb-2">{t('example.title')}</h4>
                       <p className="text-sm text-blue-800">
-                        Ein <strong>positiver Online-Artikel</strong> mit <strong>1.000.000 Reichweite</strong> hätte einen AVE von:<br />
+                        {t('example.description')}<br />
                         <code className="bg-white px-2 py-1 rounded mt-2 inline-block">
-                          1.000.000 × {formData.onlineFactor} × {formData.positiveMultiplier} = {(1000000 * formData.onlineFactor * formData.positiveMultiplier).toLocaleString('de-DE')} €
+                          {t('example.calculation', {
+                            reach: '1.000.000',
+                            onlineFactor: formData.onlineFactor,
+                            positiveMultiplier: formData.positiveMultiplier,
+                            result: (1000000 * formData.onlineFactor * formData.positiveMultiplier).toLocaleString('de-DE')
+                          })}
                         </code>
                       </p>
                     </div>
@@ -268,10 +275,10 @@ export default function MonitoringSettingsPage() {
 
               <div className="flex items-center justify-between gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
                 <Button type="button" plain onClick={handleReset}>
-                  Auf Standard zurücksetzen
+                  {t('actions.reset')}
                 </Button>
                 <Button type="submit" disabled={saving}>
-                  {saving ? 'Speichern...' : 'Einstellungen speichern'}
+                  {saving ? t('actions.saving') : t('actions.save')}
                 </Button>
               </div>
             </div>

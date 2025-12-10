@@ -1,23 +1,26 @@
 // src/app/dashboard/admin/integrations/page.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Heading, Subheading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
-import { 
-  LinkIcon, 
-  EnvelopeIcon, 
-  ChartBarIcon, 
-  CogIcon 
+import {
+  LinkIcon,
+  EnvelopeIcon,
+  ChartBarIcon,
+  CogIcon
 } from "@heroicons/react/24/outline";
 
 export default function IntegrationsPage() {
+  const t = useTranslations("admin.integrations");
+
   return (
     <div>
-      <Heading>Integrationen</Heading>
+      <Heading>{t("title")}</Heading>
       <Text className="mt-2">
-        Verbinde CeleroPress mit deinen bestehenden Tools und Services
+        {t("description")}
       </Text>
 
       <Divider className="my-8" />
@@ -29,15 +32,15 @@ export default function IntegrationsPage() {
           <div className="flex items-center gap-3 mb-4">
             <EnvelopeIcon className="h-8 w-8 text-blue-600" />
             <div>
-              <Text className="font-semibold">E-Mail-Services</Text>
-              <Text className="text-sm text-zinc-500">SendGrid, Mailgun, AWS SES</Text>
+              <Text className="font-semibold">{t("cards.email.title")}</Text>
+              <Text className="text-sm text-zinc-500">{t("cards.email.providers")}</Text>
             </div>
           </div>
           <Text className="text-sm mb-4">
-            Konfiguriere professionelle E-Mail-Versand-Services für deine Kampagnen
+            {t("cards.email.description")}
           </Text>
           <Button plain disabled className="w-full">
-            Konfigurieren
+            {t("cards.email.action")}
           </Button>
         </div>
 
@@ -46,15 +49,15 @@ export default function IntegrationsPage() {
           <div className="flex items-center gap-3 mb-4">
             <ChartBarIcon className="h-8 w-8 text-green-600" />
             <div>
-              <Text className="font-semibold">Analytics</Text>
-              <Text className="text-sm text-zinc-500">Google Analytics, Mixpanel</Text>
+              <Text className="font-semibold">{t("cards.analytics.title")}</Text>
+              <Text className="text-sm text-zinc-500">{t("cards.analytics.providers")}</Text>
             </div>
           </div>
           <Text className="text-sm mb-4">
-            Verknüpfe deine Analytics-Tools für detailliertes Tracking
+            {t("cards.analytics.description")}
           </Text>
           <Button plain disabled className="w-full">
-            Verbinden
+            {t("cards.analytics.action")}
           </Button>
         </div>
 
@@ -63,15 +66,15 @@ export default function IntegrationsPage() {
           <div className="flex items-center gap-3 mb-4">
             <LinkIcon className="h-8 w-8 text-purple-600" />
             <div>
-              <Text className="font-semibold">CRM-Integration</Text>
-              <Text className="text-sm text-zinc-500">Salesforce, HubSpot, Pipedrive</Text>
+              <Text className="font-semibold">{t("cards.crm.title")}</Text>
+              <Text className="text-sm text-zinc-500">{t("cards.crm.providers")}</Text>
             </div>
           </div>
           <Text className="text-sm mb-4">
-            Synchronisiere Kontakte mit deinem bestehenden CRM-System
+            {t("cards.crm.description")}
           </Text>
           <Button plain disabled className="w-full">
-            Einrichten
+            {t("cards.crm.action")}
           </Button>
         </div>
 
@@ -80,31 +83,31 @@ export default function IntegrationsPage() {
           <div className="flex items-center gap-3 mb-4">
             <CogIcon className="h-8 w-8 text-orange-600" />
             <div>
-              <Text className="font-semibold">Webhooks</Text>
-              <Text className="text-sm text-zinc-500">Custom API-Endpunkte</Text>
+              <Text className="font-semibold">{t("cards.webhooks.title")}</Text>
+              <Text className="text-sm text-zinc-500">{t("cards.webhooks.providers")}</Text>
             </div>
           </div>
           <Text className="text-sm mb-4">
-            Erstelle benutzerdefinierte Webhook-Integrationen
+            {t("cards.webhooks.description")}
           </Text>
           <Button plain disabled className="w-full">
-            Webhook erstellen
+            {t("cards.webhooks.action")}
           </Button>
         </div>
       </div>
 
       {/* Status */}
       <div className="mb-8">
-        <Subheading level={2}>Aktive Verbindungen</Subheading>
+        <Subheading level={2}>{t("activeConnections.title")}</Subheading>
         <Text className="mt-2 text-zinc-500 dark:text-zinc-400">
-          Derzeit sind keine Integrationen konfiguriert
+          {t("activeConnections.subtitle")}
         </Text>
-        
+
         <div className="mt-6 p-6 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
           <div className="text-center">
-            <Text className="font-medium">Keine aktiven Integrationen</Text>
+            <Text className="font-medium">{t("activeConnections.empty")}</Text>
             <Text className="text-sm text-zinc-500 mt-1">
-              Integrationen werden in einer zukünftigen Version verfügbar sein
+              {t("activeConnections.futureAvailability")}
             </Text>
           </div>
         </div>
@@ -113,10 +116,10 @@ export default function IntegrationsPage() {
       {/* Aktionen */}
       <div className="flex gap-3">
         <Button color="indigo" disabled>
-          Integration hinzufügen
+          {t("actions.addIntegration")}
         </Button>
         <Button plain disabled>
-          Dokumentation öffnen
+          {t("actions.openDocumentation")}
         </Button>
       </div>
     </div>

@@ -352,6 +352,139 @@
         "hint": "Keine Sorge, wir führen Sie Schritt für Schritt durch den Prozess."
       }
     },
+    "import": {
+      "title": "Import & Export",
+      "description": "Verwalten Sie Ihre Daten - importieren, exportieren oder Test-Daten anlegen",
+      "import": {
+        "title": "Daten importieren",
+        "description": "Importieren Sie Kontakte und Firmen aus CSV-Dateien",
+        "button": "Zum Import"
+      },
+      "export": {
+        "title": "Daten exportieren",
+        "description": "Exportieren Sie Ihre Daten als CSV für Backups oder Analysen",
+        "button": "Zum Export"
+      },
+      "testData": {
+        "title": "Test-Daten",
+        "description": "Legen Sie Beispieldaten für Tests und Demos an",
+        "button": "Test-Daten anlegen",
+        "buttonSeeding": "Wird angelegt...",
+        "successMessage": "Test-Daten erfolgreich angelegt!"
+      },
+      "errors": {
+        "notLoggedIn": "Sie müssen angemeldet sein!",
+        "seedDataFailed": "Fehler beim Anlegen der Test-Daten"
+      },
+      "hints": {
+        "title": "Hinweise",
+        "csvEncoding": "CSV-Dateien sollten UTF-8 kodiert sein",
+        "importDuplicates": "Beim Import können Sie wählen, ob Duplikate übersprungen oder aktualisiert werden",
+        "exportFields": "Exportierte Daten enthalten alle sichtbaren Felder",
+        "testDataDevOnly": "Test-Daten sind nur in der Entwicklungsumgebung verfügbar"
+      }
+    },
+    "monitoring": {
+      "title": "Monitoring & AVE-Berechnung",
+      "description": "Konfigurieren Sie die AVE-Faktoren (Advertising Value Equivalent) für verschiedene Medientypen",
+      "aveFactors": {
+        "title": "AVE-Faktoren pro Medientyp",
+        "formula": "Diese Faktoren werden mit der Reichweite multipliziert. Formel:",
+        "formulaCode": "Reichweite × Faktor × Sentiment-Multiplikator",
+        "print": {
+          "label": "Print (€ pro Reichweite)",
+          "description": "Faktor für Printmedien (Zeitungen, Magazine)"
+        },
+        "online": {
+          "label": "Online (€ pro Reichweite)",
+          "description": "Faktor für Online-Medien"
+        },
+        "broadcast": {
+          "label": "Broadcast (€ pro Reichweite)",
+          "description": "Faktor für TV und Radio"
+        },
+        "audio": {
+          "label": "Audio/Podcast (€ pro Download)",
+          "description": "Faktor für Podcasts (monatliche Downloads)"
+        }
+      },
+      "sentimentMultipliers": {
+        "title": "Sentiment-Multiplikatoren",
+        "description": "Diese Werte werden je nach Tonalität der Berichterstattung angewendet",
+        "positive": {
+          "label": "Positiv",
+          "description": "Faktor für positive Berichterstattung"
+        },
+        "neutral": {
+          "label": "Neutral",
+          "description": "Faktor für neutrale Berichterstattung"
+        },
+        "negative": {
+          "label": "Negativ",
+          "description": "Faktor für negative Berichterstattung"
+        }
+      },
+      "example": {
+        "title": "Berechnungsbeispiel",
+        "description": "Ein positiver Online-Artikel mit 1.000.000 Reichweite hätte einen AVE von:",
+        "calculation": "{reach} × {onlineFactor} × {positiveMultiplier} = {result} €"
+      },
+      "actions": {
+        "reset": "Auf Standard zurücksetzen",
+        "save": "Einstellungen speichern",
+        "saving": "Speichern..."
+      }
+    },
+    "spam": {
+      "title": "Globale Spam-Blocklist",
+      "description": "Filtere unerwünschte Veröffentlichungs-Vorschläge organisationsweit",
+      "loading": "Lade Spam-Patterns...",
+      "addPattern": "Pattern hinzufügen",
+      "deleteConfirm": "Möchten Sie dieses Pattern wirklich löschen?",
+      "types": {
+        "urlDomain": "URL Domain",
+        "keywordTitle": "Keyword (Titel)",
+        "outletName": "Medium Name"
+      },
+      "badges": {
+        "regex": "RegEx",
+        "inactive": "Inaktiv"
+      },
+      "table": {
+        "type": "Typ",
+        "pattern": "Pattern",
+        "matches": "Matches",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "empty": {
+        "title": "Noch keine Spam-Patterns definiert",
+        "description": "Erstellen Sie Ihr erstes Pattern, um unerwünschte Monitoring-Vorschläge zu filtern"
+      },
+      "dialog": {
+        "title": "Spam-Pattern hinzufügen",
+        "type": {
+          "label": "Typ",
+          "hint": "Wählen Sie den Typ des Filters"
+        },
+        "pattern": {
+          "label": "Pattern",
+          "placeholder": "z.B. spam-domain.com oder 'pressemitteilung'",
+          "hint": "Das Pattern, nach dem gesucht werden soll"
+        },
+        "regex": {
+          "label": "RegEx Pattern",
+          "hint": "Regulärer Ausdruck für erweiterte Muster"
+        },
+        "description": {
+          "label": "Beschreibung (optional)",
+          "placeholder": "Warum ist das Spam?",
+          "hint": "Hilfreiche Notiz für andere Team-Mitglieder"
+        },
+        "cancel": "Abbrechen",
+        "add": "Hinzufügen"
+      }
+    },
     "team": {
       "title": "Team-Verwaltung",
       "description": "Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein",
@@ -1752,7 +1885,48 @@
       "ariaLabel": "Admin Navigation",
       "profile": "Profil",
       "billing": "Abrechnung",
-      "apiManagement": "API-Verwaltung"
+      "apiManagement": "API-Verwaltung",
+      "integrations": "Integrationen"
+    },
+    "integrations": {
+      "title": "Integrationen",
+      "description": "Verbinde CeleroPress mit deinen bestehenden Tools und Services",
+      "cards": {
+        "email": {
+          "title": "E-Mail-Services",
+          "providers": "SendGrid, Mailgun, AWS SES",
+          "description": "Konfiguriere professionelle E-Mail-Versand-Services für deine Kampagnen",
+          "action": "Konfigurieren"
+        },
+        "analytics": {
+          "title": "Analytics",
+          "providers": "Google Analytics, Mixpanel",
+          "description": "Verknüpfe deine Analytics-Tools für detailliertes Tracking",
+          "action": "Verbinden"
+        },
+        "crm": {
+          "title": "CRM-Integration",
+          "providers": "Salesforce, HubSpot, Pipedrive",
+          "description": "Synchronisiere Kontakte mit deinem bestehenden CRM-System",
+          "action": "Einrichten"
+        },
+        "webhooks": {
+          "title": "Webhooks",
+          "providers": "Custom API-Endpunkte",
+          "description": "Erstelle benutzerdefinierte Webhook-Integrationen",
+          "action": "Webhook erstellen"
+        }
+      },
+      "activeConnections": {
+        "title": "Aktive Verbindungen",
+        "subtitle": "Derzeit sind keine Integrationen konfiguriert",
+        "empty": "Keine aktiven Integrationen",
+        "futureAvailability": "Integrationen werden in einer zukünftigen Version verfügbar sein"
+      },
+      "actions": {
+        "addIntegration": "Integration hinzufügen",
+        "openDocumentation": "Dokumentation öffnen"
+      }
     },
     "profile": {
       "title": "Profil",

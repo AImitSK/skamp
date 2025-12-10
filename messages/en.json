@@ -283,6 +283,38 @@
         "hint": "Don't worry, we'll guide you step by step through the process."
       }
     },
+    "import": {
+      "title": "Import & Export",
+      "description": "Manage your data - import, export, or create test data",
+      "import": {
+        "title": "Import Data",
+        "description": "Import contacts and companies from CSV files",
+        "button": "Go to Import"
+      },
+      "export": {
+        "title": "Export Data",
+        "description": "Export your data as CSV for backups or analysis",
+        "button": "Go to Export"
+      },
+      "testData": {
+        "title": "Test Data",
+        "description": "Create sample data for testing and demos",
+        "button": "Create Test Data",
+        "buttonSeeding": "Creating...",
+        "successMessage": "Test data successfully created!"
+      },
+      "errors": {
+        "notLoggedIn": "You must be logged in!",
+        "seedDataFailed": "Error creating test data"
+      },
+      "hints": {
+        "title": "Notes",
+        "csvEncoding": "CSV files should be UTF-8 encoded",
+        "importDuplicates": "During import, you can choose whether duplicates are skipped or updated",
+        "exportFields": "Exported data contains all visible fields",
+        "testDataDevOnly": "Test data is only available in the development environment"
+      }
+    },
     "language": {
       "title": "Language",
       "uiLanguage": "UI Language",
@@ -301,6 +333,56 @@
       "german": "German",
       "context": "Context",
       "contextOptional": "Context (optional)"
+    },
+    "spam": {
+      "title": "Global Spam Blocklist",
+      "description": "Filter unwanted publication suggestions organization-wide",
+      "loading": "Loading spam patterns...",
+      "addPattern": "Add Pattern",
+      "deleteConfirm": "Do you really want to delete this pattern?",
+      "types": {
+        "urlDomain": "URL Domain",
+        "keywordTitle": "Keyword (Title)",
+        "outletName": "Outlet Name"
+      },
+      "badges": {
+        "regex": "RegEx",
+        "inactive": "Inactive"
+      },
+      "table": {
+        "type": "Type",
+        "pattern": "Pattern",
+        "matches": "Matches",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty": {
+        "title": "No spam patterns defined yet",
+        "description": "Create your first pattern to filter unwanted monitoring suggestions"
+      },
+      "dialog": {
+        "title": "Add Spam Pattern",
+        "type": {
+          "label": "Type",
+          "hint": "Select the type of filter"
+        },
+        "pattern": {
+          "label": "Pattern",
+          "placeholder": "e.g. spam-domain.com or 'press release'",
+          "hint": "The pattern to search for"
+        },
+        "regex": {
+          "label": "RegEx Pattern",
+          "hint": "Regular expression for advanced patterns"
+        },
+        "description": {
+          "label": "Description (optional)",
+          "placeholder": "Why is this spam?",
+          "hint": "Helpful note for other team members"
+        },
+        "cancel": "Cancel",
+        "add": "Add"
+      }
     },
     "team": {
       "title": "Team Management",
@@ -395,6 +477,57 @@
         "youBecomeMember": "You become Member",
         "cancel": "Cancel",
         "confirm": "Yes, Transfer Owner Role"
+      }
+    },
+    "monitoring": {
+      "title": "Monitoring & AVE Calculation",
+      "description": "Configure AVE factors (Advertising Value Equivalent) for different media types",
+      "aveFactors": {
+        "title": "AVE Factors per Media Type",
+        "formula": "These factors are multiplied by the reach. Formula:",
+        "formulaCode": "Reach × Factor × Sentiment Multiplier",
+        "print": {
+          "label": "Print (€ per Reach)",
+          "description": "Factor for print media (newspapers, magazines)"
+        },
+        "online": {
+          "label": "Online (€ per Reach)",
+          "description": "Factor for online media"
+        },
+        "broadcast": {
+          "label": "Broadcast (€ per Reach)",
+          "description": "Factor for TV and radio"
+        },
+        "audio": {
+          "label": "Audio/Podcast (€ per Download)",
+          "description": "Factor for podcasts (monthly downloads)"
+        }
+      },
+      "sentimentMultipliers": {
+        "title": "Sentiment Multipliers",
+        "description": "These values are applied depending on the tone of the coverage",
+        "positive": {
+          "label": "Positive",
+          "description": "Factor for positive coverage"
+        },
+        "neutral": {
+          "label": "Neutral",
+          "description": "Factor for neutral coverage"
+        },
+        "negative": {
+          "label": "Negative",
+          "description": "Factor for negative coverage"
+        }
+      },
+      "example": {
+        "title": "Calculation Example",
+        "description": "A positive online article with 1,000,000 reach would have an AVE of:",
+        "calculation": "{reach} × {onlineFactor} × {positiveMultiplier} = {result} €"
+      },
+      "actions": {
+        "reset": "Reset to Default",
+        "save": "Save Settings",
+        "saving": "Saving..."
       }
     },
     "notifications": {
@@ -1752,7 +1885,48 @@
       "ariaLabel": "Admin Navigation",
       "profile": "Profile",
       "billing": "Billing",
-      "apiManagement": "API Management"
+      "apiManagement": "API Management",
+      "integrations": "Integrations"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "Connect CeleroPress with your existing tools and services",
+      "cards": {
+        "email": {
+          "title": "Email Services",
+          "providers": "SendGrid, Mailgun, AWS SES",
+          "description": "Configure professional email delivery services for your campaigns",
+          "action": "Configure"
+        },
+        "analytics": {
+          "title": "Analytics",
+          "providers": "Google Analytics, Mixpanel",
+          "description": "Connect your analytics tools for detailed tracking",
+          "action": "Connect"
+        },
+        "crm": {
+          "title": "CRM Integration",
+          "providers": "Salesforce, HubSpot, Pipedrive",
+          "description": "Synchronize contacts with your existing CRM system",
+          "action": "Set up"
+        },
+        "webhooks": {
+          "title": "Webhooks",
+          "providers": "Custom API Endpoints",
+          "description": "Create custom webhook integrations",
+          "action": "Create webhook"
+        }
+      },
+      "activeConnections": {
+        "title": "Active Connections",
+        "subtitle": "No integrations are currently configured",
+        "empty": "No active integrations",
+        "futureAvailability": "Integrations will be available in a future version"
+      },
+      "actions": {
+        "addIntegration": "Add integration",
+        "openDocumentation": "Open documentation"
+      }
     },
     "profile": {
       "title": "Profile",

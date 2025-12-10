@@ -5,21 +5,23 @@ import { useState } from 'react';
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { SettingsNav } from '@/components/SettingsNav'; // ✨ Hinzugefügt
-import { PencilIcon, RocketLaunchIcon, CircleStackIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/20/solid";
+import { SettingsNav } from '@/components/SettingsNav';
+import { CircleStackIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/20/solid";
 import { seedDummyDataEnhanced } from 'src/scripts/seed-dummy-data';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function ImportExportPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const t = useTranslations('settings.import');
   const [isSeeding, setIsSeeding] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleSeedData = async () => {
     if (!user) {
-      setMessage({ type: 'error', text: 'Sie müssen angemeldet sein!' });
+      setMessage({ type: 'error', text: t('errors.notLoggedIn') });
       return;
     }
 
@@ -28,7 +30,7 @@ export default function ImportExportPage() {
 
     try {
       await seedDummyDataEnhanced(user.uid);
-      setMessage({ type: 'success', text: 'Test-Daten erfolgreich angelegt!' });
+      setMessage({ type: 'success', text: t('testData.successMessage') });
 
       // Nach 2 Sekunden zur CRM-Seite navigieren
       setTimeout(() => {
@@ -36,7 +38,7 @@ export default function ImportExportPage() {
       }, 2000);
     } catch (error) {
       console.error(error);
-      setMessage({ type: 'error', text: 'Fehler beim Anlegen der Test-Daten' });
+      setMessage({ type: 'error', text: t('errors.seedDataFailed') });
     } finally {
       setIsSeeding(false);
     }
@@ -54,9 +56,9 @@ export default function ImportExportPage() {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <Heading>Import & Export</Heading>
+            <Heading>{t('title')}</Heading>
             <Text className="mt-2 text-zinc-600 dark:text-zinc-400">
-              Verwalten Sie Ihre Daten - importieren, exportieren oder Test-Daten anlegen
+              {t('description')}
             </Text>
           </div>
         </div>
@@ -78,16 +80,16 @@ export default function ImportExportPage() {
               <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/20">
                 <ArrowUpTrayIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold">Daten importieren</h3>
+              <h3 className="text-lg font-semibold">{t('import.title')}</h3>
             </div>
             <Text className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              Importieren Sie Kontakte und Firmen aus CSV-Dateien
+              {t('import.description')}
             </Text>
             <Button
               href="/dashboard/contacts/crm?import=true"
               className="w-full justify-center"
             >
-              Zum Import
+              {t('import.button')}
             </Button>
           </div>
 
@@ -97,16 +99,16 @@ export default function ImportExportPage() {
               <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/20">
                 <ArrowDownTrayIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-lg font-semibold">Daten exportieren</h3>
+              <h3 className="text-lg font-semibold">{t('export.title')}</h3>
             </div>
             <Text className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              Exportieren Sie Ihre Daten als CSV für Backups oder Analysen
+              {t('export.description')}
             </Text>
             <Button
               href="/dashboard/contacts/crm"
               className="w-full justify-center"
             >
-              Zum Export
+              {t('export.button')}
             </Button>
           </div>
 
@@ -117,17 +119,17 @@ export default function ImportExportPage() {
                 <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/20">
                   <CircleStackIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <h3 className="text-lg font-semibold">Test-Daten</h3>
+                <h3 className="text-lg font-semibold">{t('testData.title')}</h3>
               </div>
               <Text className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Legen Sie Beispieldaten für Tests und Demos an
+                {t('testData.description')}
               </Text>
               <Button
                 onClick={handleSeedData}
                 disabled={isSeeding}
                 className="w-full justify-center bg-purple-600 hover:bg-purple-700 text-white"
               >
-                {isSeeding ? 'Wird angelegt...' : 'Test-Daten anlegen'}
+                {isSeeding ? t('testData.buttonSeeding') : t('testData.button')}
               </Button>
             </div>
           )}
@@ -135,13 +137,13 @@ export default function ImportExportPage() {
 
         {/* Additional Info */}
         <div className="rounded-lg bg-zinc-50 p-6 dark:bg-zinc-900/50">
-          <h3 className="text-sm font-semibold mb-2">Hinweise</h3>
+          <h3 className="text-sm font-semibold mb-2">{t('hints.title')}</h3>
           <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <li>• CSV-Dateien sollten UTF-8 kodiert sein</li>
-            <li>• Beim Import können Sie wählen, ob Duplikate übersprungen oder aktualisiert werden</li>
-            <li>• Exportierte Daten enthalten alle sichtbaren Felder</li>
+            <li>• {t('hints.csvEncoding')}</li>
+            <li>• {t('hints.importDuplicates')}</li>
+            <li>• {t('hints.exportFields')}</li>
             {process.env.NODE_ENV === 'development' && (
-              <li>• Test-Daten sind nur in der Entwicklungsumgebung verfügbar</li>
+              <li>• {t('hints.testDataDevOnly')}</li>
             )}
           </ul>
         </div>

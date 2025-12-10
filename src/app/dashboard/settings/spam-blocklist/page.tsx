@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toastService } from '@/lib/utils/toast';
 
 export default function SpamBlocklistPage() {
+  const t = useTranslations('settings.spam');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [patterns, setPatterns] = useState<SpamPattern[]>([]);
@@ -87,7 +89,7 @@ export default function SpamBlocklistPage() {
   };
 
   const handleDelete = async (patternId: string) => {
-    if (!confirm('Möchten Sie dieses Pattern wirklich löschen?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
 
     try {
       await spamPatternService.delete(patternId);
@@ -117,9 +119,9 @@ export default function SpamBlocklistPage() {
 
   const getTypeLabel = (type: SpamPattern['type']) => {
     switch (type) {
-      case 'url_domain': return 'URL Domain';
-      case 'keyword_title': return 'Keyword (Titel)';
-      case 'outlet_name': return 'Medium Name';
+      case 'url_domain': return t('types.urlDomain');
+      case 'keyword_title': return t('types.keywordTitle');
+      case 'outlet_name': return t('types.outletName');
       default: return type;
     }
   };
@@ -138,7 +140,7 @@ export default function SpamBlocklistPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-                <Text className="mt-4">Lade Spam-Patterns...</Text>
+                <Text className="mt-4">{t('loading')}</Text>
               </div>
             </div>
           ) : (
@@ -146,9 +148,9 @@ export default function SpamBlocklistPage() {
               {/* Header */}
               <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="min-w-0 flex-1">
-                  <Heading level={1}>Globale Spam-Blocklist</Heading>
+                  <Heading level={1}>{t('title')}</Heading>
                   <Text className="mt-2 text-gray-600">
-                    Filtere unerwünschte Veröffentlichungs-Vorschläge organisationsweit
+                    {t('description')}
                   </Text>
                 </div>
                 <div className="mt-4 md:mt-0">
@@ -157,7 +159,7 @@ export default function SpamBlocklistPage() {
                     className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                   >
                     <PlusIcon className="w-4 h-4 mr-2" />
-                    Pattern hinzufügen
+                    {t('addPattern')}
                   </Button>
                 </div>
               </div>
@@ -168,19 +170,19 @@ export default function SpamBlocklistPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Typ
+                        {t('table.type')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Pattern
+                        {t('table.pattern')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Matches
+                        {t('table.matches')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        {t('table.status')}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Aktionen
+                        {t('table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -198,10 +200,10 @@ export default function SpamBlocklistPage() {
                               {pattern.pattern}
                             </code>
                             {pattern.isRegex && (
-                              <Badge color="indigo" className="ml-2">RegEx</Badge>
+                              <Badge color="indigo" className="ml-2">{t('badges.regex')}</Badge>
                             )}
                             {!pattern.isActive && (
-                              <Badge color="zinc" className="ml-2">Inaktiv</Badge>
+                              <Badge color="zinc" className="ml-2">{t('badges.inactive')}</Badge>
                             )}
                             {pattern.description && (
                               <p className="text-xs text-gray-500 mt-2">{pattern.description}</p>
@@ -232,9 +234,9 @@ export default function SpamBlocklistPage() {
 
                 {patterns.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">Noch keine Spam-Patterns definiert</p>
+                    <p className="text-gray-500">{t('empty.title')}</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      Erstellen Sie Ihr erstes Pattern, um unerwünschte Monitoring-Vorschläge zu filtern
+                      {t('empty.description')}
                     </p>
                   </div>
                 )}
@@ -246,34 +248,34 @@ export default function SpamBlocklistPage() {
 
       {/* Add Pattern Dialog */}
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-        <DialogTitle>Spam-Pattern hinzufügen</DialogTitle>
+        <DialogTitle>{t('dialog.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             <Field>
-              <Label>Typ</Label>
+              <Label>{t('dialog.type.label')}</Label>
               <Select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as SpamPattern['type'] })}
               >
-                <option value="url_domain">URL Domain</option>
-                <option value="keyword_title">Keyword (Titel)</option>
-                <option value="outlet_name">Medium Name</option>
+                <option value="url_domain">{t('types.urlDomain')}</option>
+                <option value="keyword_title">{t('types.keywordTitle')}</option>
+                <option value="outlet_name">{t('types.outletName')}</option>
               </Select>
               <Text className="text-xs text-gray-500 mt-1">
-                Wählen Sie den Typ des Filters
+                {t('dialog.type.hint')}
               </Text>
             </Field>
 
             <Field>
-              <Label>Pattern</Label>
+              <Label>{t('dialog.pattern.label')}</Label>
               <Input
                 type="text"
                 value={formData.pattern}
                 onChange={(e) => setFormData({ ...formData, pattern: e.target.value })}
-                placeholder="z.B. spam-domain.com oder 'pressemitteilung'"
+                placeholder={t('dialog.pattern.placeholder')}
               />
               <Text className="text-xs text-gray-500 mt-1">
-                Das Pattern, nach dem gesucht werden soll
+                {t('dialog.pattern.hint')}
               </Text>
             </Field>
 
@@ -283,33 +285,33 @@ export default function SpamBlocklistPage() {
                 onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
               />
               <div>
-                <div className="font-medium text-sm text-gray-900">RegEx Pattern</div>
+                <div className="font-medium text-sm text-gray-900">{t('dialog.regex.label')}</div>
                 <Text className="text-xs text-gray-500">
-                  Regulärer Ausdruck für erweiterte Muster
+                  {t('dialog.regex.hint')}
                 </Text>
               </div>
             </div>
 
             <Field>
-              <Label>Beschreibung (optional)</Label>
+              <Label>{t('dialog.description.label')}</Label>
               <Input
                 type="text"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Warum ist das Spam?"
+                placeholder={t('dialog.description.placeholder')}
               />
               <Text className="text-xs text-gray-500 mt-1">
-                Hilfreiche Notiz für andere Team-Mitglieder
+                {t('dialog.description.hint')}
               </Text>
             </Field>
           </div>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setIsDialogOpen(false)}>
-            Abbrechen
+            {t('dialog.cancel')}
           </Button>
           <Button onClick={handleAdd} disabled={!formData.pattern.trim()}>
-            Hinzufügen
+            {t('dialog.add')}
           </Button>
         </DialogActions>
       </Dialog>

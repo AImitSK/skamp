@@ -94,10 +94,10 @@ Kernfunktionalität der App.
 | ✅ | `src/app/dashboard/settings/email/page.tsx` | `settings.email` | 2025-12-10 |
 | ✅ | `src/app/dashboard/settings/notifications/page.tsx` | `settings.notifications` | 2025-12-10 |
 | ✅ | `src/app/dashboard/settings/templates/page.tsx` | `settings.templates` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/settings/monitoring/page.tsx` | `settings.monitoring` | - |
+| ✅ | `src/app/dashboard/settings/monitoring/page.tsx` | `settings.monitoring` | 2025-12-10 |
 | ✅ | `src/app/dashboard/settings/domain/page.tsx` | `settings.domain` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/settings/import-export/page.tsx` | `settings.import` | - |
-| ⬜ | `src/app/dashboard/settings/spam-blocklist/page.tsx` | `settings.spam` | - |
+| ✅ | `src/app/dashboard/settings/import-export/page.tsx` | `settings.import` | 2025-12-10 |
+| ✅ | `src/app/dashboard/settings/spam-blocklist/page.tsx` | `settings.spam` | 2025-12-10 |
 
 ---
 
@@ -107,7 +107,7 @@ Kernfunktionalität der App.
 |--------|-------|-----------|-------|
 | ✅ | `src/app/dashboard/admin/profile/page.tsx` | `admin.profile` | 2025-12-10 |
 | ✅ | `src/app/dashboard/admin/billing/page.tsx` | `admin.billing` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/admin/integrations/page.tsx` | `admin.integrations` | - |
+| ✅ | `src/app/dashboard/admin/integrations/page.tsx` | `admin.integrations` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/admin/api/page.tsx` | `admin.api` | - |
 
 ---
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 29 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting, Settings Team, Settings Branding, Settings Email, Settings Notifications, Settings Templates, Settings Domain, Admin Profile, Admin Billing)
+- **Abgeschlossen:** 33 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting, Settings Team, Settings Branding, Settings Email, Settings Notifications, Settings Templates, Settings Domain, Settings Monitoring, Settings Import-Export, Settings Spam-Blocklist, Admin Profile, Admin Billing, Admin Integrations)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~26
+- **Ausstehend:** ~22
 
 ---
 

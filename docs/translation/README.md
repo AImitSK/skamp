@@ -1,7 +1,7 @@
 # Internationalisierung - Masterplan
 
 **Status:** In Implementierung
-**Zuletzt aktualisiert:** 2025-12-08
+**Zuletzt aktualisiert:** 2025-12-10
 
 ---
 
@@ -17,7 +17,13 @@ Dieses Verzeichnis enthält die vollständige Dokumentation zur Internationalisi
 | [02-UI-INTERNATIONALIZATION.md](./02-UI-INTERNATIONALIZATION.md) | UI-Sprachen (DE/EN) + Settings-Seite | 📝 Konzept |
 | [03-AI-TRANSLATION.md](./03-AI-TRANSLATION.md) | KI-Übersetzung für Projekte | ✅ Implementiert |
 | [05-GLOSSARY.md](./05-GLOSSARY.md) | Kunden-spezifisches Fachbegriff-Glossar | ✅ Implementiert |
-| [06-MIGRATION-GUIDE.md](./06-MIGRATION-GUIDE.md) | Refactoring-Template für Seiten | ⏳ Ausstehend |
+| [06-MIGRATION-GUIDE.md](./06-MIGRATION-GUIDE.md) | Refactoring-Template für Seiten | 🔄 In Nutzung |
+| [09-MIGRATION-CHECKLIST.md](./09-MIGRATION-CHECKLIST.md) | UI-Migration Fortschritt (29/57) | 🔄 In Arbeit |
+| [10-MIGRATION-WORKFLOW.md](./10-MIGRATION-WORKFLOW.md) | Workflow für parallele Migration | ✅ Fertig |
+| [11-AI-PRESS-RELEASE-I18N.md](./11-AI-PRESS-RELEASE-I18N.md) | KI-Assistent mehrsprachig machen | 📝 Konzept |
+| [12-SEND-MODAL-LANGUAGE-DEFAULTS.md](./12-SEND-MODAL-LANGUAGE-DEFAULTS.md) | Versand-Modal Sprach-Defaults | 📝 Konzept |
+| [13-SYSTEM-EMAILS-I18N.md](./13-SYSTEM-EMAILS-I18N.md) | System-Emails (Freigabe, Reports) | 📝 Konzept |
+| [14-PUBLIC-PAGES-I18N.md](./14-PUBLIC-PAGES-I18N.md) | Öffentliche Seiten (Freigabe, Share) | 📝 Konzept |
 
 > **Hinweis:** `04-NATIVE-MULTILINGUAL.md` wurde entfernt - Boilerplates werden jetzt direkt mit dem Hauptinhalt übersetzt, was eine separate mehrsprachige Boilerplate-Verwaltung überflüssig macht.
 
@@ -82,10 +88,17 @@ Die zentrale Sprachverwaltung erfolgt unter `/settings/language` mit zwei Bereic
 - [x] Versand-Modal mit Sprachauswahl
 - [x] PDF-Generierung mehrsprachig
 
-### Phase 3: UI-Migration ⏳ AUSSTEHEND
-- [ ] Seiten schrittweise migrieren (nach Template)
-- [ ] Email-Templates internationalisieren
+### Phase 3: UI-Migration 🔄 IN ARBEIT
+- [x] Dashboard-Seiten migrieren (29 von 57 fertig)
+- [x] Navigation (SettingsNav, AdminNav, Dashboard-Layout)
+- [ ] ~28 Seiten noch ausstehend
 - [ ] Toast Service i18n (zentral in toast.ts)
+
+### Phase 4: Erweiterte Internationalisierung 📝 KONZEPT
+- [ ] KI-Assistent mehrsprachig (11-AI-PRESS-RELEASE-I18N.md)
+- [ ] Versand-Modal Sprach-Defaults (12-SEND-MODAL-LANGUAGE-DEFAULTS.md)
+- [ ] System-Emails übersetzen (13-SYSTEM-EMAILS-I18N.md)
+- [ ] Öffentliche Seiten übersetzen (14-PUBLIC-PAGES-I18N.md)
 
 ---
 
