@@ -9,6 +9,7 @@ import {
   PhoneIcon,
   NewspaperIcon
 } from "@heroicons/react/24/outline";
+import { useTranslations } from 'next-intl';
 import { LANGUAGE_NAMES } from "@/types/international";
 import { PreviewSectionProps, formatContactName } from './types';
 
@@ -18,18 +19,20 @@ export function PreviewSection({
   loadingPreview,
   listType
 }: PreviewSectionProps) {
+  const t = useTranslations('lists.sections.preview');
+
   return (
     <div className="sticky top-6 border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">Live-Vorschau</h3>
+        <h3 className="font-medium text-gray-900">{t('title')}</h3>
         {loadingPreview ? (
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-            <span>Lade...</span>
+            <span>{t('loading')}</span>
           </div>
         ) : (
           <Badge color="blue" className="whitespace-nowrap">
-            {previewCount.toLocaleString()} Kontakte
+            {t('contactCount', { count: previewCount })}
           </Badge>
         )}
       </div>
@@ -47,12 +50,12 @@ export function PreviewSection({
                 </div>
                 <div className="text-xs text-gray-500">
                   {contact.position && `${contact.position} • `}
-                  {contact.companyName || 'Keine Firma'}
+                  {contact.companyName || t('noCompany')}
                 </div>
                 {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
                   <div className="text-xs text-blue-600 mt-0.5">
                     <NewspaperIcon className="h-3 w-3 inline mr-1" />
-                    Journalist
+                    {t('journalist')}
                     {(contact as any).mediaProfile.beats?.length ? ` • ${(contact as any).mediaProfile.beats.join(', ')}` : ''}
                   </div>
                 )}
@@ -60,16 +63,18 @@ export function PreviewSection({
               <div className="flex items-center gap-1">
                 {(('emails' in contact && contact.emails && contact.emails.length > 0) ||
                   ('email' in contact && contact.email)) && (
-                  <EnvelopeIcon className="h-3 w-3 text-primary" title="Hat E-Mail" />
+                  <EnvelopeIcon className="h-3 w-3 text-primary" title={t('emailTitle')} />
                 )}
                 {(('phones' in contact && contact.phones && contact.phones.length > 0) ||
                   ('phone' in contact && contact.phone)) && (
-                  <PhoneIcon className="h-3 w-3 text-green-600" title="Hat Telefon" />
+                  <PhoneIcon className="h-3 w-3 text-green-600" title={t('phoneTitle')} />
                 )}
                 {'communicationPreferences' in contact && (contact as any).communicationPreferences?.preferredLanguage && (
                   <span
                     className="text-xs text-gray-500"
-                    title={`Sprache: ${LANGUAGE_NAMES[(contact as any).communicationPreferences.preferredLanguage] || (contact as any).communicationPreferences.preferredLanguage}`}
+                    title={t('languageTitle', {
+                      language: LANGUAGE_NAMES[(contact as any).communicationPreferences.preferredLanguage] || (contact as any).communicationPreferences.preferredLanguage
+                    })}
                   >
                     {(contact as any).communicationPreferences.preferredLanguage.toUpperCase()}
                   </span>
@@ -79,7 +84,7 @@ export function PreviewSection({
           ))}
           {previewCount > 10 && (
             <Text className="text-sm text-center pt-2">
-              ... und {(previewCount - 10).toLocaleString()} weitere Kontakte
+              {t('moreContacts', { count: previewCount - 10 })}
             </Text>
           )}
         </div>
@@ -88,8 +93,8 @@ export function PreviewSection({
           <UsersIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
           <Text className="text-sm">
             {listType === 'dynamic'
-              ? "Keine Kontakte entsprechen den Filtern."
-              : "Noch keine Kontakte ausgewählt."
+              ? t('noDynamicMatch')
+              : t('noStaticSelection')
             }
           </Text>
         </div>

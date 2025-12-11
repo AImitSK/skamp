@@ -10,6 +10,7 @@ import { Text } from "@/components/ui/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { ContactEnhanced } from "@/types/crm-enhanced";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 
 interface ContactSelectorModalProps {
   initialSelectedIds: string[];
@@ -22,6 +23,7 @@ export default function ContactSelectorModal({
   onClose,
   onSave,
 }: ContactSelectorModalProps) {
+  const t = useTranslations('lists.contactSelector');
   const { contacts: allContacts, loading } = useCrmData();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds));
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,15 +77,15 @@ export default function ContactSelectorModal({
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
       <DialogTitle className="px-6 py-4 text-lg font-semibold">
-        Kontakte auswählen
+        {t('title')}
       </DialogTitle>
-      
+
       <div className="px-6 py-4 border-b border-t">
         <div className="relative">
           <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
           <Input
             type="search"
-            placeholder="Kontakte durchsuchen..."
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -95,18 +97,18 @@ export default function ContactSelectorModal({
         {loading ? (
           <div className="p-6 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <Text className="mt-2">Lade Kontakte...</Text>
+            <Text className="mt-2">{t('loading')}</Text>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredContacts.map(contact => (
-              <div 
-                key={contact.id} 
+              <div
+                key={contact.id}
                 onClick={() => handleToggleSelection(contact.id!)}
                 className="flex items-center gap-4 px-6 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
               >
-                <Checkbox 
-                  checked={selectedIds.has(contact.id!)} 
+                <Checkbox
+                  checked={selectedIds.has(contact.id!)}
                   onChange={() => {}}
                   className="text-primary focus:ring-primary"
                 />
@@ -114,7 +116,7 @@ export default function ContactSelectorModal({
                   <p className="font-medium">{getContactName(contact)}</p>
                   <p className="text-sm text-gray-500">
                     {contact.position}
-                    {contact.companyName && ` bei ${contact.companyName}`}
+                    {contact.companyName && ` ${t('atCompany')} ${contact.companyName}`}
                   </p>
                   {/* Show email if available */}
                   {getContactEmail(contact) && (
@@ -125,7 +127,7 @@ export default function ContactSelectorModal({
             ))}
             {filteredContacts.length === 0 && (
               <div className="p-6 text-center">
-                <Text>Keine Kontakte gefunden</Text>
+                <Text>{t('empty')}</Text>
               </div>
             )}
           </div>
@@ -134,17 +136,17 @@ export default function ContactSelectorModal({
       
       <DialogActions className="px-6 py-4 flex justify-between items-center bg-gray-50">
         <Text className="text-sm">
-          {selectedIds.size} Kontakte ausgewählt
+          {t('selectedCount', { count: selectedIds.size })}
         </Text>
         <div className="flex gap-3">
           <Button plain onClick={onClose} className="whitespace-nowrap">
-            Abbrechen
+            {t('cancel')}
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
             color="primary"
           >
-            Auswahl übernehmen
+            {t('confirm')}
           </Button>
         </div>
       </DialogActions>

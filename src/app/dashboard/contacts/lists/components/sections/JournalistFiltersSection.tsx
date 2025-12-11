@@ -3,6 +3,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { NewspaperIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { useCrmData } from "@/context/CrmDataContext";
@@ -15,6 +16,7 @@ interface JournalistFiltersSectionProps extends SectionProps {
 }
 
 export function JournalistFiltersSection({ formData, onFilterChange, organizationId }: JournalistFiltersSectionProps) {
+  const t = useTranslations('lists.sections.journalistFilters');
   const { contacts } = useCrmData();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loadingPublications, setLoadingPublications] = useState(false);
@@ -29,7 +31,7 @@ export function JournalistFiltersSection({ formData, onFilterChange, organizatio
         const pubs = await publicationService.getAll(organizationId);
         setPublications(pubs);
       } catch (error) {
-        console.error('Fehler beim Laden der Publikationen:', error);
+        console.error(t('loadError'), error);
       } finally {
         setLoadingPublications(false);
       }
@@ -70,7 +72,7 @@ export function JournalistFiltersSection({ formData, onFilterChange, organizatio
     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
         <NewspaperIcon className="h-4 w-4 text-gray-400" />
-        Journalisten-Filter
+        {t('title')}
       </div>
 
       <div className="space-y-4">
@@ -82,15 +84,15 @@ export function JournalistFiltersSection({ formData, onFilterChange, organizatio
           />
           <label className="ml-3 flex items-center text-sm text-gray-900">
             <NewspaperIcon className="h-4 w-4 mr-1 text-gray-400" />
-            Nur Journalisten
+            {t('onlyJournalists')}
           </label>
         </div>
 
         {/* Ressorts/Beats */}
         {availableBeats.length > 0 && (
           <MultiSelectDropdown
-            label="Ressorts/Beats"
-            placeholder="Alle Ressorts"
+            label={t('beatsLabel')}
+            placeholder={t('beatsPlaceholder')}
             options={beatOptions}
             selectedValues={formData.filters?.beats || []}
             onChange={(values) => onFilterChange('beats', values)}
@@ -100,8 +102,8 @@ export function JournalistFiltersSection({ formData, onFilterChange, organizatio
         {/* Verknüpfte Publikationen */}
         {publications.length > 0 && (
           <MultiSelectDropdown
-            label="Verknüpfte Publikationen"
-            placeholder={loadingPublications ? "Laden..." : "Alle Publikationen"}
+            label={t('publicationsLabel')}
+            placeholder={loadingPublications ? t('loading') : t('publicationsPlaceholder')}
             options={publicationOptions}
             selectedValues={formData.filters?.linkedPublicationIds || []}
             onChange={(values) => onFilterChange('linkedPublicationIds', values)}

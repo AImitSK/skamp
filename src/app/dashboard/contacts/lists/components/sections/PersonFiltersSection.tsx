@@ -3,6 +3,7 @@
 
 import { useMemo } from "react";
 import { UsersIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from 'next-intl';
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { useCrmData } from "@/context/CrmDataContext";
@@ -11,6 +12,7 @@ import { CONTACT_STATUS_OPTIONS } from "@/types/crm-enhanced";
 import { SectionProps } from './types';
 
 export function PersonFiltersSection({ formData, onFilterChange }: SectionProps) {
+  const t = useTranslations('lists.sections.personFilters');
   const { contacts, tags } = useCrmData();
 
   // Extract available languages from contacts
@@ -69,14 +71,14 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
         <UsersIcon className="h-4 w-4 text-gray-400" />
-        Personen-Filter
+        {t('title')}
       </div>
 
       <div className="space-y-4">
         {/* Tags - wichtigstes Filter */}
         <MultiSelectDropdown
-          label="Kontakt-Tags"
-          placeholder="Alle Tags"
+          label={t('contactTags')}
+          placeholder={t('allTags')}
           options={tagOptions}
           selectedValues={formData.filters?.contactTagIds || []}
           onChange={(values) => onFilterChange('contactTagIds', values)}
@@ -85,8 +87,8 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
         {/* Positionen */}
         {availablePositions.length > 0 && (
           <MultiSelectDropdown
-            label="Positionen"
-            placeholder="Alle Positionen"
+            label={t('positions')}
+            placeholder={t('allPositions')}
             options={positionOptions}
             selectedValues={formData.filters?.positions || []}
             onChange={(values) => onFilterChange('positions', values)}
@@ -95,8 +97,8 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
 
         {/* Status */}
         <MultiSelectDropdown
-          label="Kontakt-Status"
-          placeholder="Alle Status"
+          label={t('contactStatus')}
+          placeholder={t('allStatus')}
           options={statusOptions}
           selectedValues={formData.filters?.contactStatus || []}
           onChange={(values) => onFilterChange('contactStatus', values)}
@@ -105,8 +107,8 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
         {/* Sprachen */}
         {availableLanguages.length > 0 && (
           <MultiSelectDropdown
-            label="Bevorzugte Sprachen"
-            placeholder="Alle Sprachen"
+            label={t('languages')}
+            placeholder={t('allLanguages')}
             options={languageOptions}
             selectedValues={formData.filters?.languages || []}
             onChange={(values) => onFilterChange('languages', values)}
@@ -122,7 +124,7 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
             />
             <label className="ml-3 flex items-center text-sm text-gray-900">
               <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-400" />
-              Hat E-Mail
+              {t('hasEmail')}
             </label>
           </div>
           <div className="relative flex items-center">
@@ -132,7 +134,7 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
             />
             <label className="ml-3 flex items-center text-sm text-gray-900">
               <PhoneIcon className="h-4 w-4 mr-1 text-gray-400" />
-              Hat Telefon
+              {t('hasPhone')}
             </label>
           </div>
         </div>

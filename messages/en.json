@@ -1921,6 +1921,70 @@
       "previous": "Previous",
       "next": "Next"
     },
+    "importModal": {
+      "title": "Import Publications",
+      "badge": {
+        "fileSelected": "1 file selected",
+        "noFile": "No file"
+      },
+      "instructions": {
+        "title": "Publication Import",
+        "description": "Upload a CSV file to import publications. The file should be UTF-8 encoded and use semicolon (;) as delimiter (Excel standard for Germany).",
+        "downloadTemplate": "Download template"
+      },
+      "publisherInfo": {
+        "title": "Publisher Assignment (optional)",
+        "message": "You can import publications without a publisher and assign them later. Optional: Enter the name in the CSV column 'Publisher' - if the publisher exists in the CRM, it will be linked automatically."
+      },
+      "duplicateHandling": {
+        "label": "Duplicate Handling",
+        "skip": "Skip duplicates",
+        "update": "Update existing entries"
+      },
+      "fileUpload": {
+        "label": "Select CSV File",
+        "clickHere": "Click here",
+        "orDrag": "or drag a file here",
+        "hint": "CSV file (max. 10MB)",
+        "selectedFile": "Selected file: {name}",
+        "reset": "Reset"
+      },
+      "preview": {
+        "title": "Preview (first 5 rows)"
+      },
+      "progress": {
+        "parsing": "Reading file...",
+        "validating": "Validating data...",
+        "importing": "Importing {current} of {total}...",
+        "done": "Import completed!"
+      },
+      "errors": {
+        "noFile": "Please select a file.",
+        "missingTitle": "Title missing",
+        "missingType": "Type missing",
+        "parsingError": "Parsing error",
+        "importFailed": "Import failed. {count} errors found.",
+        "generalError": "An error occurred. Please check the file format.",
+        "fileReadError": "Error reading file: {message}"
+      },
+      "result": {
+        "success": "Import successful!",
+        "withWarnings": "Import completed with warnings",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped",
+        "errorsFound": "{count} errors found",
+        "errorRow": "Row {row}: {error}",
+        "moreErrors": "... and {count} more errors",
+        "startNewImport": "Start new import"
+      },
+      "actions": {
+        "close": "Close",
+        "cancel": "Cancel",
+        "importing": "Importing...",
+        "startImport": "Start Import"
+      }
+    },
     "export": {
       "columns": {
         "title": "Title",
@@ -2599,6 +2663,80 @@
         "publications": "Publication filters"
       }
     },
+    "sections": {
+      "basicInfo": {
+        "nameLabel": "List Name *",
+        "namePlaceholder": "e.g. Tech Journalists Germany",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Brief description of the list...",
+        "categoryLabel": "Category",
+        "typeLabel": "List Type",
+        "dynamicLabel": "Dynamic List",
+        "dynamicDescription": "Contacts are automatically updated based on filters.",
+        "staticLabel": "Static List",
+        "staticDescription": "Contacts are manually selected and remain fixed."
+      },
+      "companyFilters": {
+        "title": "Company Filters",
+        "companyTypes": {
+          "label": "Company Types",
+          "placeholder": "All Types"
+        },
+        "industries": {
+          "label": "Industries",
+          "placeholder": "All Industries"
+        },
+        "tags": {
+          "label": "Tags",
+          "placeholder": "All Tags"
+        },
+        "countries": {
+          "label": "Countries",
+          "placeholder": "All Countries"
+        }
+      },
+      "personFilters": {
+        "title": "Person Filters",
+        "contactTags": "Contact Tags",
+        "allTags": "All Tags",
+        "positions": "Positions",
+        "allPositions": "All Positions",
+        "contactStatus": "Contact Status",
+        "allStatus": "All Status",
+        "languages": "Preferred Languages",
+        "allLanguages": "All Languages",
+        "hasEmail": "Has Email",
+        "hasPhone": "Has Phone"
+      },
+      "journalistFilters": {
+        "title": "Journalist Filters",
+        "onlyJournalists": "Journalists Only",
+        "beatsLabel": "Beats/Topics",
+        "beatsPlaceholder": "All Beats",
+        "publicationsLabel": "Linked Publications",
+        "publicationsPlaceholder": "All Publications",
+        "loading": "Loading...",
+        "loadError": "Error loading publications:"
+      },
+      "preview": {
+        "title": "Live Preview",
+        "loading": "Updating...",
+        "contactCount": "{count, plural, =0 {No contacts} one {# contact} other {# contacts}}",
+        "noCompany": "No company",
+        "journalist": "Journalist",
+        "emailTitle": "Has Email",
+        "phoneTitle": "Has Phone",
+        "languageTitle": "Language: {language}",
+        "moreContacts": "... and {count} more contacts",
+        "noDynamicMatch": "No contacts match the filters.",
+        "noStaticSelection": "No contacts selected yet."
+      },
+      "contactSelector": {
+        "title": "Manual Contact Selection",
+        "description": "Add contacts manually to this list. The selection remains unchanged until you adjust it again.",
+        "button": "{count, plural, =0 {Select contacts} one {Select # contact} other {Select # contacts}}"
+      }
+    },
     "detail": {
       "loading": "Loading list details...",
       "notFound": "List could not be found.",
@@ -2700,6 +2838,26 @@
         "updateSuccess": "List successfully updated",
         "updateError": "List could not be updated"
       }
+    },
+    "companyTypeLabels": {
+      "customer": "Customer",
+      "competitor": "Competitor",
+      "partner": "Partner",
+      "supplier": "Supplier",
+      "other": "Other",
+      "publisher": "Publisher",
+      "media_house": "Media House",
+      "agency": "Agency"
+    },
+    "contactSelector": {
+      "title": "Select Contacts",
+      "searchPlaceholder": "Search contacts...",
+      "loading": "Loading contacts...",
+      "empty": "No contacts found",
+      "atCompany": "at",
+      "selectedCount": "{count, plural, =0 {No contacts selected} one {# contact selected} other {# contacts selected}}",
+      "cancel": "Cancel",
+      "confirm": "Apply Selection"
     }
   },
   "campaigns": {
@@ -3441,6 +3599,27 @@
         "title": "Delete folder",
         "message": "Do you really want to delete the folder \"{name}\"?"
       }
+    },
+    "uploadModal": {
+      "title": "Upload Media",
+      "targetFolder": "Files will be uploaded to: <strong>{folderName}</strong>",
+      "selectFiles": "Select Files",
+      "supportedFormats": "Supported formats: Images (JPG, PNG, GIF), Videos (MP4, MOV), Documents (PDF, DOCX)",
+      "chooseFiles": "Choose files",
+      "orDragDrop": "or drag & drop",
+      "fileHint": "PNG, JPG, GIF, MP4, PDF up to 10MB",
+      "selectedFiles": "Selected Files ({count})",
+      "uploadProgress": "{progress}% uploaded",
+      "summary": {
+        "title": "Upload Summary:",
+        "files": "Files:",
+        "targetFolder": "Target Folder:",
+        "root": "Root",
+        "totalSize": "Total Size:"
+      },
+      "cancel": "Cancel",
+      "uploading": "Uploading...",
+      "uploadFiles": "{count, plural, =1 {Upload 1 file} other {Upload # files}}"
     }
   },
   "monitoring": {

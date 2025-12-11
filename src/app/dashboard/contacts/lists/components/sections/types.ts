@@ -52,17 +52,6 @@ export const extendedCompanyTypeLabels = {
 } as const;
 
 /**
- * Category Options
- */
-export const categoryOptions = [
-  { value: 'press', label: 'Presse' },
-  { value: 'customers', label: 'Kunden' },
-  { value: 'partners', label: 'Partner' },
-  { value: 'leads', label: 'Leads' },
-  { value: 'custom', label: 'Benutzerdefiniert' }
-] as const;
-
-/**
  * Format Contact Name Helper
  */
 export function formatContactName(contact: any): string {

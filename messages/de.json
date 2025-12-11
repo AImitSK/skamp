@@ -1921,6 +1921,70 @@
       "previous": "Zurück",
       "next": "Weiter"
     },
+    "importModal": {
+      "title": "Publikationen importieren",
+      "badge": {
+        "fileSelected": "1 Datei ausgewählt",
+        "noFile": "Keine Datei"
+      },
+      "instructions": {
+        "title": "Publikationen-Import",
+        "description": "Laden Sie eine CSV-Datei hoch, um Publikationen zu importieren. Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).",
+        "downloadTemplate": "Vorlage herunterladen"
+      },
+      "publisherInfo": {
+        "title": "Verlagszuordnung (optional)",
+        "message": "Sie können Publikationen ohne Verlag importieren und diesen später zuordnen. Optional: Geben Sie in der CSV-Spalte 'Verlag' den Namen an - wenn der Verlag im CRM existiert, wird er automatisch verknüpft."
+      },
+      "duplicateHandling": {
+        "label": "Duplikate-Behandlung",
+        "skip": "Duplikate überspringen",
+        "update": "Bestehende Einträge aktualisieren"
+      },
+      "fileUpload": {
+        "label": "CSV-Datei auswählen",
+        "clickHere": "Klicken Sie hier",
+        "orDrag": "oder ziehen Sie eine Datei hierher",
+        "hint": "CSV-Datei (max. 10MB)",
+        "selectedFile": "Ausgewählte Datei: {name}",
+        "reset": "Zurücksetzen"
+      },
+      "preview": {
+        "title": "Vorschau (erste 5 Zeilen)"
+      },
+      "progress": {
+        "parsing": "Datei wird gelesen...",
+        "validating": "Daten werden validiert...",
+        "importing": "Importiere {current} von {total}...",
+        "done": "Import abgeschlossen!"
+      },
+      "errors": {
+        "noFile": "Bitte wählen Sie eine Datei aus.",
+        "missingTitle": "Titel fehlt",
+        "missingType": "Typ fehlt",
+        "parsingError": "Parsing-Fehler",
+        "importFailed": "Import fehlgeschlagen. {count} Fehler gefunden.",
+        "generalError": "Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.",
+        "fileReadError": "Fehler beim Lesen der Datei: {message}"
+      },
+      "result": {
+        "success": "Import erfolgreich!",
+        "withWarnings": "Import mit Warnungen abgeschlossen",
+        "created": "Neu erstellt",
+        "updated": "Aktualisiert",
+        "skipped": "Übersprungen",
+        "errorsFound": "{count} Fehler gefunden",
+        "errorRow": "Zeile {row}: {error}",
+        "moreErrors": "... und {count} weitere Fehler",
+        "startNewImport": "Neuen Import starten"
+      },
+      "actions": {
+        "close": "Schließen",
+        "cancel": "Abbrechen",
+        "importing": "Importiere...",
+        "startImport": "Import starten"
+      }
+    },
     "export": {
       "columns": {
         "title": "Titel",
@@ -2599,6 +2663,80 @@
         "publications": "Publikations-Filter"
       }
     },
+    "sections": {
+      "basicInfo": {
+        "nameLabel": "Listen-Name *",
+        "namePlaceholder": "z.B. Tech-Journalisten Deutschland",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Kurze Beschreibung der Liste...",
+        "categoryLabel": "Kategorie",
+        "typeLabel": "Listen-Typ",
+        "dynamicLabel": "Dynamische Liste",
+        "dynamicDescription": "Kontakte werden automatisch basierend auf Filtern aktualisiert.",
+        "staticLabel": "Statische Liste",
+        "staticDescription": "Kontakte werden manuell ausgewählt und bleiben fest."
+      },
+      "companyFilters": {
+        "title": "Firmen-Filter",
+        "companyTypes": {
+          "label": "Firmentypen",
+          "placeholder": "Alle Typen"
+        },
+        "industries": {
+          "label": "Branchen",
+          "placeholder": "Alle Branchen"
+        },
+        "tags": {
+          "label": "Tags",
+          "placeholder": "Alle Tags"
+        },
+        "countries": {
+          "label": "Länder",
+          "placeholder": "Alle Länder"
+        }
+      },
+      "personFilters": {
+        "title": "Personen-Filter",
+        "contactTags": "Kontakt-Tags",
+        "allTags": "Alle Tags",
+        "positions": "Positionen",
+        "allPositions": "Alle Positionen",
+        "contactStatus": "Kontakt-Status",
+        "allStatus": "Alle Status",
+        "languages": "Bevorzugte Sprachen",
+        "allLanguages": "Alle Sprachen",
+        "hasEmail": "Hat E-Mail",
+        "hasPhone": "Hat Telefon"
+      },
+      "journalistFilters": {
+        "title": "Journalisten-Filter",
+        "onlyJournalists": "Nur Journalisten",
+        "beatsLabel": "Ressorts/Beats",
+        "beatsPlaceholder": "Alle Ressorts",
+        "publicationsLabel": "Verknüpfte Publikationen",
+        "publicationsPlaceholder": "Alle Publikationen",
+        "loading": "Laden...",
+        "loadError": "Fehler beim Laden der Publikationen:"
+      },
+      "preview": {
+        "title": "Live-Vorschau",
+        "loading": "Aktualisiere...",
+        "contactCount": "{count, plural, =0 {Keine Kontakte} one {# Kontakt} other {# Kontakte}}",
+        "noCompany": "Keine Firma",
+        "journalist": "Journalist",
+        "emailTitle": "Hat E-Mail",
+        "phoneTitle": "Hat Telefon",
+        "languageTitle": "Sprache: {language}",
+        "moreContacts": "... und {count} weitere Kontakte",
+        "noDynamicMatch": "Keine Kontakte entsprechen den Filtern.",
+        "noStaticSelection": "Noch keine Kontakte ausgewählt."
+      },
+      "contactSelector": {
+        "title": "Manuelle Kontaktauswahl",
+        "description": "Füge Kontakte manuell zu dieser Liste hinzu. Die Auswahl bleibt unverändert, bis du sie wieder anpasst.",
+        "button": "{count, plural, =0 {Kontakte auswählen} one {# Kontakt auswählen} other {# Kontakte auswählen}}"
+      }
+    },
     "detail": {
       "loading": "Lade Listendetails...",
       "notFound": "Liste konnte nicht gefunden werden.",
@@ -2700,6 +2838,26 @@
         "updateSuccess": "Liste erfolgreich aktualisiert",
         "updateError": "Liste konnte nicht aktualisiert werden"
       }
+    },
+    "companyTypeLabels": {
+      "customer": "Kunde",
+      "competitor": "Wettbewerber",
+      "partner": "Partner",
+      "supplier": "Lieferant",
+      "other": "Sonstiges",
+      "publisher": "Verlag",
+      "media_house": "Medienhaus",
+      "agency": "Agentur"
+    },
+    "contactSelector": {
+      "title": "Kontakte auswählen",
+      "searchPlaceholder": "Kontakte durchsuchen...",
+      "loading": "Lade Kontakte...",
+      "empty": "Keine Kontakte gefunden",
+      "atCompany": "bei",
+      "selectedCount": "{count, plural, =0 {Keine Kontakte ausgewählt} one {# Kontakt ausgewählt} other {# Kontakte ausgewählt}}",
+      "cancel": "Abbrechen",
+      "confirm": "Auswahl übernehmen"
     }
   },
   "campaigns": {
@@ -3441,6 +3599,27 @@
         "title": "Ordner löschen",
         "message": "Möchten Sie den Ordner \"{name}\" wirklich löschen?"
       }
+    },
+    "uploadModal": {
+      "title": "Medien hochladen",
+      "targetFolder": "Dateien werden hochgeladen nach: <strong>{folderName}</strong>",
+      "selectFiles": "Dateien auswählen",
+      "supportedFormats": "Unterstützte Formate: Bilder (JPG, PNG, GIF), Videos (MP4, MOV), Dokumente (PDF, DOCX)",
+      "chooseFiles": "Dateien auswählen",
+      "orDragDrop": "oder per Drag & Drop",
+      "fileHint": "PNG, JPG, GIF, MP4, PDF bis 10MB",
+      "selectedFiles": "Ausgewählte Dateien ({count})",
+      "uploadProgress": "{progress}% hochgeladen",
+      "summary": {
+        "title": "Upload-Zusammenfassung:",
+        "files": "Dateien:",
+        "targetFolder": "Zielordner:",
+        "root": "Root",
+        "totalSize": "Gesamtgröße:"
+      },
+      "cancel": "Abbrechen",
+      "uploading": "Uploading...",
+      "uploadFiles": "{count, plural, =1 {1 Datei hochladen} other {# Dateien hochladen}}"
     }
   },
   "monitoring": {

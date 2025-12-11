@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -76,19 +77,26 @@ function Alert({
 
 // Progress Bar Component
 function ProgressBar({ progress }: { progress: ImportProgress }) {
+  const t = useTranslations('publications.importModal');
   const percentage = progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
 
-  const statusText = {
-    parsing: 'Datei wird gelesen...',
-    validating: 'Daten werden validiert...',
-    importing: `Importiere ${progress.current} von ${progress.total}...`,
-    done: 'Import abgeschlossen!'
+  const getStatusText = () => {
+    switch (progress.status) {
+      case 'parsing':
+        return t('progress.parsing');
+      case 'validating':
+        return t('progress.validating');
+      case 'importing':
+        return t('progress.importing', { current: progress.current, total: progress.total });
+      case 'done':
+        return t('progress.done');
+    }
   };
 
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{statusText[progress.status]}</span>
+        <span className="text-gray-600">{getStatusText()}</span>
         <span className="text-gray-500">{Math.round(percentage)}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
@@ -124,6 +132,7 @@ interface Props {
 }
 
 export default function PublicationImportModal({ onClose, onImportSuccess }: Props) {
+  const t = useTranslations('publications.importModal');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
@@ -432,7 +441,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
 
   const handleImport = async () => {
     if (!file || !user) {
-      setError('Bitte wählen Sie eine Datei aus.');
+      setError(t('errors.noFile'));
       return;
     }
 
@@ -467,7 +476,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
               if (!row["Titel*"] && !row["Titel"]) {
                 parseErrors.push({
                   row: index + 2,
-                  error: 'Titel fehlt'
+                  error: t('errors.missingTitle')
                 });
                 return;
               }
@@ -475,7 +484,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
               if (!row["Typ*"] && !row["Typ"]) {
                 parseErrors.push({
                   row: index + 2,
-                  error: 'Typ fehlt'
+                  error: t('errors.missingType')
                 });
                 return;
               }
@@ -485,13 +494,13 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             } catch (err) {
               parseErrors.push({
                 row: index + 2,
-                error: err instanceof Error ? err.message : 'Parsing-Fehler'
+                error: err instanceof Error ? err.message : t('errors.parsingError')
               });
             }
           });
 
           if (publications.length === 0 && parseErrors.length > 0) {
-            setError(`Import fehlgeschlagen. ${parseErrors.length} Fehler gefunden.`);
+            setError(t('errors.importFailed', { count: parseErrors.length }));
             setImportResult({
               created: 0,
               updated: 0,
@@ -534,13 +543,13 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             onImportSuccess();
           }
         } catch (err) {
-          setError("Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.");
+          setError(t('errors.generalError'));
         } finally {
           setIsImporting(false);
         }
       },
       error: (error) => {
-        setError(`Fehler beim Lesen der Datei: ${error.message}`);
+        setError(t('errors.fileReadError', { message: error.message }));
         setIsImporting(false);
       }
     });
@@ -561,8 +570,8 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
     <Dialog open={true} onClose={onClose} size="5xl">
       <DialogTitle className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold">Publikationen importieren</span>
-          <Badge color="blue" className="shrink-0">{file ? '1 Datei ausgewählt' : 'Keine Datei'}</Badge>
+          <span className="text-lg font-semibold">{t('title')}</span>
+          <Badge color="blue" className="shrink-0">{file ? t('badge.fileSelected') : t('badge.noFile')}</Badge>
         </div>
       </DialogTitle>
 
@@ -577,11 +586,10 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                 </div>
                 <div className="ml-3">
                   <Text className="text-sm font-medium text-blue-800">
-                    Publikationen-Import
+                    {t('instructions.title')}
                   </Text>
                   <Text className="mt-1 text-sm text-blue-700">
-                    Laden Sie eine CSV-Datei hoch, um Publikationen zu importieren.
-                    Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).
+                    {t('instructions.description')}
                   </Text>
                   <div className="mt-2">
                     <button
@@ -589,7 +597,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                       className="text-sm font-medium text-blue-800 hover:text-blue-900"
                     >
                       <DocumentArrowDownIcon className="inline h-4 w-4 mr-1" />
-                      Vorlage herunterladen
+                      {t('instructions.downloadTemplate')}
                     </button>
                   </div>
                 </div>
@@ -599,14 +607,14 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             {/* Info über Verlagszuordnung */}
             <Alert
               type="info"
-              title="Verlagszuordnung (optional)"
-              message="Sie können Publikationen ohne Verlag importieren und diesen später zuordnen. Optional: Geben Sie in der CSV-Spalte 'Verlag' den Namen an - wenn der Verlag im CRM existiert, wird er automatisch verknüpft."
+              title={t('publisherInfo.title')}
+              message={t('publisherInfo.message')}
             />
 
             {/* Duplikate-Behandlung */}
             <FieldGroup>
               <Field>
-                <Label>Duplikate-Behandlung</Label>
+                <Label>{t('duplicateHandling.label')}</Label>
                 <div className="mt-2 space-y-2">
                   <label className="flex items-center">
                     <input
@@ -616,7 +624,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                       onChange={(e) => setDuplicateHandling(e.target.value as 'skip' | 'update')}
                       className="h-4 w-4 text-[#005fab] focus:ring-[#005fab]"
                     />
-                    <span className="ml-2 text-sm">Duplikate überspringen</span>
+                    <span className="ml-2 text-sm">{t('duplicateHandling.skip')}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -626,7 +634,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                       onChange={(e) => setDuplicateHandling(e.target.value as 'skip' | 'update')}
                       className="h-4 w-4 text-[#005fab] focus:ring-[#005fab]"
                     />
-                    <span className="ml-2 text-sm">Bestehende Einträge aktualisieren</span>
+                    <span className="ml-2 text-sm">{t('duplicateHandling.update')}</span>
                   </label>
                 </div>
               </Field>
@@ -635,16 +643,16 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             {/* File Upload */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 mb-2">
-                CSV-Datei auswählen
+                {t('fileUpload.label')}
               </h3>
               <div className="flex items-center justify-center w-full">
                 <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <ArrowUpTrayIcon className="w-8 h-8 mb-3 text-gray-400" />
                     <Text className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Klicken Sie hier</span> oder ziehen Sie eine Datei hierher
+                      <span className="font-semibold">{t('fileUpload.clickHere')}</span> {t('fileUpload.orDrag')}
                     </Text>
-                    <Text className="text-xs text-gray-500">CSV-Datei (max. 10MB)</Text>
+                    <Text className="text-xs text-gray-500">{t('fileUpload.hint')}</Text>
                   </div>
                   <input
                     ref={fileInputRef}
@@ -659,9 +667,9 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
               </div>
               {file && (
                 <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
-                  <span>Ausgewählte Datei: <span className="font-medium">{file.name}</span></span>
+                  <span>{t('fileUpload.selectedFile', { name: file.name })}</span>
                   <Button plain onClick={resetImport}>
-                    Zurücksetzen
+                    {t('fileUpload.reset')}
                   </Button>
                 </div>
               )}
@@ -670,7 +678,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             {/* Preview */}
             {previewData.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Vorschau (erste 5 Zeilen)</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">{t('preview.title')}</h3>
                 <div className="mt-2 overflow-x-auto border rounded-lg">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -724,12 +732,12 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
               {importResult.errors.length === 0 ? (
                 <>
                   <CheckCircleIcon className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                  <h3 className="text-lg font-semibold">Import erfolgreich!</h3>
+                  <h3 className="text-lg font-semibold">{t('result.success')}</h3>
                 </>
               ) : (
                 <>
                   <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-                  <h3 className="text-lg font-semibold">Import mit Warnungen abgeschlossen</h3>
+                  <h3 className="text-lg font-semibold">{t('result.withWarnings')}</h3>
                 </>
               )}
             </div>
@@ -738,15 +746,15 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-green-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-green-700">{importResult.created}</div>
-                <div className="text-sm text-green-600">Neu erstellt</div>
+                <div className="text-sm text-green-600">{t('result.created')}</div>
               </div>
               <div className="bg-blue-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-blue-700">{importResult.updated}</div>
-                <div className="text-sm text-blue-600">Aktualisiert</div>
+                <div className="text-sm text-blue-600">{t('result.updated')}</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-gray-700">{importResult.skipped}</div>
-                <div className="text-sm text-gray-600">Übersprungen</div>
+                <div className="text-sm text-gray-600">{t('result.skipped')}</div>
               </div>
             </div>
 
@@ -756,18 +764,18 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                 <div className="flex items-center mb-2">
                   <XCircleIcon className="h-5 w-5 text-red-400 mr-2" />
                   <Text className="font-medium text-red-800">
-                    {importResult.errors.length} Fehler gefunden
+                    {t('result.errorsFound', { count: importResult.errors.length })}
                   </Text>
                 </div>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {importResult.errors.slice(0, 10).map((error, index) => (
                     <Text key={index} className="text-sm text-red-700">
-                      Zeile {error.row}: {error.error}
+                      {t('result.errorRow', { row: error.row, error: error.error })}
                     </Text>
                   ))}
                   {importResult.errors.length > 10 && (
                     <Text className="text-sm text-red-700 font-medium">
-                      ... und {importResult.errors.length - 10} weitere Fehler
+                      {t('result.moreErrors', { count: importResult.errors.length - 10 })}
                     </Text>
                   )}
                 </div>
@@ -778,7 +786,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             <div className="flex justify-center gap-4">
               <Button plain onClick={resetImport}>
                 <ArrowPathIcon className="h-4 w-4 mr-2" />
-                Neuen Import starten
+                {t('result.startNewImport')}
               </Button>
             </div>
           </div>
@@ -787,7 +795,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
 
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          {importResult ? 'Schließen' : 'Abbrechen'}
+          {importResult ? t('actions.close') : t('actions.cancel')}
         </Button>
         {!importResult && (
           <Button
@@ -798,10 +806,10 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             {isImporting ? (
               <>
                 <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                Importiere...
+                {t('actions.importing')}
               </>
             ) : (
-              'Import starten'
+              t('actions.startImport')
             )}
           </Button>
         )}

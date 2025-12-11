@@ -14,6 +14,7 @@ import {
   FolderIcon
 } from "@heroicons/react/24/outline";
 import { toastService } from '@/lib/utils/toast';
+import { useTranslations } from 'next-intl';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -32,6 +33,7 @@ export default function UploadModal({
   organizationId,
   userId,
 }: UploadModalProps) {
+  const t = useTranslations('media.uploadModal');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
@@ -132,7 +134,7 @@ export default function UploadModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
-      <DialogTitle>Medien hochladen</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
 
       <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
         <FieldGroup>
@@ -142,16 +144,16 @@ export default function UploadModal({
                 <div className="flex items-center gap-2 text-sm">
                   <FolderIcon className="h-4 w-4 text-blue-600" />
                   <Text className="text-blue-800">
-                    Dateien werden hochgeladen nach: <strong>{folderName}</strong>
+                    {t('targetFolder', { folderName })}
                   </Text>
                 </div>
               </div>
             )}
 
             <Field>
-              <Label>Dateien auswählen</Label>
+              <Label>{t('selectFiles')}</Label>
               <Description>
-                Unterstützte Formate: Bilder (JPG, PNG, GIF), Videos (MP4, MOV), Dokumente (PDF, DOCX)
+                {t('supportedFormats')}
               </Description>
 
               {/* Drag & Drop Bereich */}
@@ -167,7 +169,7 @@ export default function UploadModal({
                       htmlFor="file-upload"
                       className="relative cursor-pointer rounded-md bg-white font-semibold text-[#005fab] hover:text-[#004a8c] focus-within:outline-none focus-within:ring-2 focus-within:ring-[#005fab] focus-within:ring-offset-2"
                     >
-                      <span>Dateien auswählen</span>
+                      <span>{t('chooseFiles')}</span>
                       <input
                         id="file-upload"
                         name="file-upload"
@@ -178,9 +180,9 @@ export default function UploadModal({
                         className="sr-only"
                       />
                     </label>
-                    <p className="pl-1">oder per Drag & Drop</p>
+                    <p className="pl-1">{t('orDragDrop')}</p>
                   </div>
-                  <p className="text-xs leading-5 text-gray-600 mt-2">PNG, JPG, GIF, MP4, PDF bis 10MB</p>
+                  <p className="text-xs leading-5 text-gray-600 mt-2">{t('fileHint')}</p>
                 </div>
               </div>
             </Field>
@@ -189,7 +191,7 @@ export default function UploadModal({
             {selectedFiles.length > 0 && (
               <div className="mt-4">
                 <Text className="text-sm font-medium text-gray-900 mb-2">
-                  Ausgewählte Dateien ({selectedFiles.length})
+                  {t('selectedFiles', { count: selectedFiles.length })}
                 </Text>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {selectedFiles.map((file, index) => {
@@ -216,7 +218,7 @@ export default function UploadModal({
                                   />
                                 </div>
                                 <Text className="text-xs text-gray-500 mt-1">
-                                  {Math.round(progress)}% hochgeladen
+                                  {t('uploadProgress', { progress: Math.round(progress) })}
                                 </Text>
                               </div>
                             )}
@@ -240,11 +242,11 @@ export default function UploadModal({
             {/* Upload-Summary */}
             {selectedFiles.length > 0 && (
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <Text className="text-sm font-medium text-gray-900 mb-2">Upload-Zusammenfassung:</Text>
+                <Text className="text-sm font-medium text-gray-900 mb-2">{t('summary.title')}</Text>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li><strong>Dateien:</strong> {selectedFiles.length}</li>
-                  <li><strong>Zielordner:</strong> {folderName || 'Root'}</li>
-                  <li><strong>Gesamtgröße:</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
+                  <li><strong>{t('summary.files')}</strong> {selectedFiles.length}</li>
+                  <li><strong>{t('summary.targetFolder')}</strong> {folderName || t('summary.root')}</li>
+                  <li><strong>{t('summary.totalSize')}</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
                 </ul>
               </div>
             )}
@@ -253,14 +255,14 @@ export default function UploadModal({
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={uploading}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleUpload}
           disabled={selectedFiles.length === 0 || uploading}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {uploading ? 'Uploading...' : `${selectedFiles.length} Datei(en) hochladen`}
+          {uploading ? t('uploading') : t('uploadFiles', { count: selectedFiles.length })}
         </Button>
       </DialogActions>
     </Dialog>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { BuildingOfficeIcon } from "@heroicons/react/24/outline";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { useCrmData } from "@/context/CrmDataContext";
@@ -9,12 +10,17 @@ import { COUNTRY_NAMES } from "@/types/international";
 import { SectionProps, extendedCompanyTypeLabels } from './types';
 
 export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps) {
+  const t = useTranslations('lists.sections.companyFilters');
+  const tLabels = useTranslations('lists.companyTypeLabels');
   const { companies, tags } = useCrmData();
 
-  // Memoize company type options
+  // Memoize company type options with i18n labels
   const companyTypeOptions = useMemo(() =>
-    Object.entries(extendedCompanyTypeLabels).map(([value, label]) => ({ value, label })),
-    []
+    Object.keys(extendedCompanyTypeLabels).map((key) => ({
+      value: key,
+      label: tLabels(key as any)
+    })),
+    [tLabels]
   );
 
   // Extract unique values from Enhanced Model
@@ -59,37 +65,37 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
         <BuildingOfficeIcon className="h-4 w-4 text-gray-400" />
-        Firmen-Filter
+        {t('title')}
       </div>
 
       <div className="space-y-4">
         <MultiSelectDropdown
-          label="Firmentypen"
-          placeholder="Alle Typen"
+          label={t('companyTypes.label')}
+          placeholder={t('companyTypes.placeholder')}
           options={companyTypeOptions}
           selectedValues={formData.filters?.companyTypes || []}
           onChange={(values) => onFilterChange('companyTypes', values)}
         />
 
         <MultiSelectDropdown
-          label="Branchen"
-          placeholder="Alle Branchen"
+          label={t('industries.label')}
+          placeholder={t('industries.placeholder')}
           options={industryOptions}
           selectedValues={formData.filters?.industries || []}
           onChange={(values) => onFilterChange('industries', values)}
         />
 
         <MultiSelectDropdown
-          label="Tags"
-          placeholder="Alle Tags"
+          label={t('tags.label')}
+          placeholder={t('tags.placeholder')}
           options={tagOptions}
           selectedValues={formData.filters?.tagIds || []}
           onChange={(values) => onFilterChange('tagIds', values)}
         />
 
         <MultiSelectDropdown
-          label="Länder"
-          placeholder="Alle Länder"
+          label={t('countries.label')}
+          placeholder={t('countries.placeholder')}
           options={countryOptions}
           selectedValues={formData.filters?.countries || []}
           onChange={(values) => onFilterChange('countries', values)}
