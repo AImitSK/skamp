@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -31,6 +32,7 @@ const mockShareLink = {
 };
 
 export default function TestNotificationsPage() {
+  const t = useTranslations('admin.testNotifications');
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<NotificationType>("APPROVAL_GRANTED");
   const [creating, setCreating] = useState(false);
@@ -47,15 +49,15 @@ export default function TestNotificationsPage() {
   });
 
   const notificationTypes: { value: NotificationType; label: string }[] = [
-    { value: "APPROVAL_GRANTED", label: "Freigabe erteilt" },
-    { value: "CHANGES_REQUESTED", label: "Änderungen erbeten" },
-    { value: "OVERDUE_APPROVAL", label: "Überfällige Freigabe" },
-    { value: "EMAIL_SENT_SUCCESS", label: "E-Mail erfolgreich versendet" },
-    { value: "EMAIL_BOUNCED", label: "E-Mail Bounce" },
-    { value: "TASK_OVERDUE", label: "Task überfällig" },
-    { value: "MEDIA_FIRST_ACCESS", label: "Erster Media-Zugriff" },
-    { value: "MEDIA_DOWNLOADED", label: "Media heruntergeladen" },
-    { value: "MEDIA_LINK_EXPIRED", label: "Media-Link abgelaufen" }
+    { value: "APPROVAL_GRANTED", label: t('types.approvalGranted') },
+    { value: "CHANGES_REQUESTED", label: t('types.changesRequested') },
+    { value: "OVERDUE_APPROVAL", label: t('types.overdueApproval') },
+    { value: "EMAIL_SENT_SUCCESS", label: t('types.emailSentSuccess') },
+    { value: "EMAIL_BOUNCED", label: t('types.emailBounced') },
+    { value: "TASK_OVERDUE", label: t('types.taskOverdue') },
+    { value: "MEDIA_FIRST_ACCESS", label: t('types.mediaFirstAccess') },
+    { value: "MEDIA_DOWNLOADED", label: t('types.mediaDownloaded') },
+    { value: "MEDIA_LINK_EXPIRED", label: t('types.mediaLinkExpired') }
   ];
 
   const handleCreateNotification = async () => {
@@ -135,7 +137,7 @@ export default function TestNotificationsPage() {
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error("Error creating test notification:", err);
-      setError(err.message || "Fehler beim Erstellen der Benachrichtigung");
+      setError(err.message || t('errors.createNotification'));
     } finally {
       setCreating(false);
     }
@@ -157,7 +159,7 @@ export default function TestNotificationsPage() {
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error("Error testing cron job:", err);
-      setError(err.message || "Fehler beim Testen des Cron Jobs");
+      setError(err.message || t('errors.testCronJob'));
     } finally {
       setTestingCron(false);
     }
@@ -166,18 +168,18 @@ export default function TestNotificationsPage() {
   // Helper functions
   const getNotificationTitle = (type: NotificationType): string => {
     const titles: Record<NotificationType, string> = {
-      APPROVAL_GRANTED: "Freigabe erteilt",
-      CHANGES_REQUESTED: "Änderungen erbeten",
-      OVERDUE_APPROVAL: "Überfällige Freigabe",
-      EMAIL_SENT_SUCCESS: "E-Mail versendet",
-      EMAIL_BOUNCED: "E-Mail Bounce",
-      TASK_OVERDUE: "Task überfällig",
-      MEDIA_FIRST_ACCESS: "Media-Zugriff",
-      MEDIA_DOWNLOADED: "Media Download",
-      MEDIA_LINK_EXPIRED: "Link abgelaufen",
-      FIRST_VIEW: "Erste Ansicht",
-      TEAM_CHAT_MENTION: "Chat-Erwähnung",
-      project_assignment: "Projekt-Zuweisung"
+      APPROVAL_GRANTED: t('titles.approvalGranted'),
+      CHANGES_REQUESTED: t('titles.changesRequested'),
+      OVERDUE_APPROVAL: t('titles.overdueApproval'),
+      EMAIL_SENT_SUCCESS: t('titles.emailSent'),
+      EMAIL_BOUNCED: t('titles.emailBounced'),
+      TASK_OVERDUE: t('titles.taskOverdue'),
+      MEDIA_FIRST_ACCESS: t('titles.mediaAccess'),
+      MEDIA_DOWNLOADED: t('titles.mediaDownload'),
+      MEDIA_LINK_EXPIRED: t('titles.linkExpired'),
+      FIRST_VIEW: t('titles.firstView'),
+      TEAM_CHAT_MENTION: t('titles.chatMention'),
+      project_assignment: t('titles.projectAssignment')
     };
     return titles[type];
   };
@@ -272,9 +274,9 @@ export default function TestNotificationsPage() {
           <div className="flex items-center gap-3">
             <BeakerIcon className="h-8 w-8 text-purple-500" />
             <div>
-              <Heading level={1}>Test Benachrichtigungen</Heading>
+              <Heading level={1}>{t('title')}</Heading>
               <Text className="mt-1 text-gray-600">
-                Erstelle Test-Benachrichtigungen für Entwicklung und Tests
+                {t('description')}
               </Text>
             </div>
           </div>
@@ -288,7 +290,7 @@ export default function TestNotificationsPage() {
             <CheckCircleIcon className="h-5 w-5 text-green-400" />
             <div className="ml-3">
               <Text className="text-sm font-medium text-green-800">
-                Test-Benachrichtigung erfolgreich erstellt!
+                {t('alerts.success')}
               </Text>
             </div>
           </div>
@@ -309,11 +311,11 @@ export default function TestNotificationsPage() {
       <div className="max-w-2xl space-y-6">
         {/* Create Test Notification */}
         <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Test-Benachrichtigung erstellen</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('sections.createNotification.title')}</h2>
           
           <div className="space-y-4">
             <Field>
-              <Label>Benachrichtigungstyp</Label>
+              <Label>{t('fields.notificationType')}</Label>
               <Select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as NotificationType)}
@@ -329,7 +331,7 @@ export default function TestNotificationsPage() {
             {/* Dynamic fields based on notification type */}
             {["APPROVAL_GRANTED", "CHANGES_REQUESTED"].includes(selectedType) && (
               <Field>
-                <Label>Absender Name</Label>
+                <Label>{t('fields.senderName')}</Label>
                 <Input
                   type="text"
                   value={customValues.senderName}
@@ -340,7 +342,7 @@ export default function TestNotificationsPage() {
 
             {selectedType === "EMAIL_SENT_SUCCESS" && (
               <Field>
-                <Label>Anzahl Empfänger</Label>
+                <Label>{t('fields.recipientCount')}</Label>
                 <Input
                   type="number"
                   value={customValues.recipientCount}
@@ -351,7 +353,7 @@ export default function TestNotificationsPage() {
 
             {selectedType === "EMAIL_BOUNCED" && (
               <Field>
-                <Label>Bounce E-Mail</Label>
+                <Label>{t('fields.bounceEmail')}</Label>
                 <Input
                   type="email"
                   value={customValues.bouncedEmail}
@@ -362,7 +364,7 @@ export default function TestNotificationsPage() {
 
             {selectedType === "OVERDUE_APPROVAL" && (
               <Field>
-                <Label>Tage überfällig</Label>
+                <Label>{t('fields.daysOverdue')}</Label>
                 <Input
                   type="number"
                   value={customValues.daysOverdue}
@@ -373,7 +375,7 @@ export default function TestNotificationsPage() {
 
             {/* Preview */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <Text className="text-sm font-medium text-gray-700 mb-1">Vorschau:</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-1">{t('preview.label')}</Text>
               <Text className="text-sm text-gray-600">
                 {getNotificationMessage(selectedType, customValues)}
               </Text>
@@ -385,16 +387,16 @@ export default function TestNotificationsPage() {
               className="w-full"
             >
               <RocketLaunchIcon className="h-4 w-4" />
-              {creating ? "Erstelle..." : "Test-Benachrichtigung erstellen"}
+              {creating ? t('buttons.creating') : t('buttons.createNotification')}
             </Button>
           </div>
         </div>
 
         {/* Test Cron Job */}
         <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Cron Job testen</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('sections.cronTest.title')}</h2>
           <Text className="text-sm text-gray-600 mb-4">
-            Erstellt eine Test-Benachrichtigung direkt ohne API Route
+            {t('sections.cronTest.description')}
           </Text>
           <Button
             onClick={handleTestCronJob}
@@ -402,15 +404,14 @@ export default function TestNotificationsPage() {
             className="w-full"
             color="zinc"
           >
-            {testingCron ? "Teste..." : "Test Cron Benachrichtigung erstellen"}
+            {testingCron ? t('buttons.testing') : t('buttons.testCron')}
           </Button>
         </div>
 
         {/* Info */}
         <div className="bg-blue-50 rounded-lg p-4">
           <Text className="text-sm text-blue-800">
-            <strong>Hinweis:</strong> Diese Seite ist nur für Entwicklungszwecke gedacht. 
-            In der Produktion sollten Benachrichtigungen nur durch echte Ereignisse ausgelöst werden.
+            <strong>{t('info.noteLabel')}</strong> {t('info.noteText')}
           </Text>
         </div>
       </div>

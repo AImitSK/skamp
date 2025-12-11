@@ -2288,6 +2288,12 @@
           "poor": "poor"
         },
         "removeKeyword": "Remove keyword"
+      },
+      "breakdown": {
+        "headline": "Headline: {score}/100",
+        "keywords": "Keywords: {score}/100",
+        "structure": "Structure: {score}/100",
+        "social": "Social: {score}/100"
       }
     },
     "project": {
@@ -3635,6 +3641,101 @@
         "stripeSubscription": "Stripe Subscription",
         "notAvailable": "Not available"
       }
+    },
+    "fixTimestamps": {
+      "title": "Timestamp Repair Tool",
+      "description": "This tool corrects faulty serverTimestamp() placeholders in PR campaigns.",
+      "warning": {
+        "title": "⚠️ Important Notice",
+        "message": "This action will correct all campaigns with faulty timestamps. The operation cannot be undone. Make sure you have a backup."
+      },
+      "button": {
+        "start": "Start Timestamp Repair",
+        "repairing": "Repairing Timestamps...",
+        "toCampaigns": "Go to Campaigns",
+        "checkAgain": "Check Again"
+      },
+      "progress": {
+        "notAuthenticated": "❌ Not authenticated",
+        "loading": "🔍 Loading campaigns...",
+        "found": "📊 {total} campaigns found. Starting repair...",
+        "fixing": "⚙️ Fixing campaign {current}/{total}: \"{title}\"",
+        "completed": "✅ Migration completed!",
+        "error": "❌ Error: {message}"
+      },
+      "results": {
+        "completed": "Migration completed!",
+        "total": "📊 Total: {count} campaigns",
+        "fixed": "✅ Fixed: {count} campaigns",
+        "skipped": "⏭️ Skipped: {count} campaigns (already correct)",
+        "errors": "❌ Errors: {count}",
+        "errorsOccurred": "Errors occurred:"
+      }
+    },
+    "testNotifications": {
+      "title": "Test Notifications",
+      "description": "Create test notifications for development and testing",
+      "types": {
+        "approvalGranted": "Approval granted",
+        "changesRequested": "Changes requested",
+        "overdueApproval": "Overdue approval",
+        "emailSentSuccess": "Email sent successfully",
+        "emailBounced": "Email bounced",
+        "taskOverdue": "Task overdue",
+        "mediaFirstAccess": "First media access",
+        "mediaDownloaded": "Media downloaded",
+        "mediaLinkExpired": "Media link expired"
+      },
+      "titles": {
+        "approvalGranted": "Approval granted",
+        "changesRequested": "Changes requested",
+        "overdueApproval": "Overdue approval",
+        "emailSent": "Email sent",
+        "emailBounced": "Email bounced",
+        "taskOverdue": "Task overdue",
+        "mediaAccess": "Media access",
+        "mediaDownload": "Media download",
+        "linkExpired": "Link expired",
+        "firstView": "First view",
+        "chatMention": "Chat mention",
+        "projectAssignment": "Project assignment"
+      },
+      "fields": {
+        "notificationType": "Notification type",
+        "senderName": "Sender name",
+        "recipientCount": "Recipient count",
+        "bounceEmail": "Bounce email",
+        "daysOverdue": "Days overdue"
+      },
+      "preview": {
+        "label": "Preview:"
+      },
+      "buttons": {
+        "createNotification": "Create test notification",
+        "creating": "Creating...",
+        "testCron": "Create test cron notification",
+        "testing": "Testing..."
+      },
+      "sections": {
+        "createNotification": {
+          "title": "Create test notification"
+        },
+        "cronTest": {
+          "title": "Test cron job",
+          "description": "Creates a test notification directly without API route"
+        }
+      },
+      "alerts": {
+        "success": "Test notification created successfully!"
+      },
+      "errors": {
+        "createNotification": "Error creating notification",
+        "testCronJob": "Error testing cron job"
+      },
+      "info": {
+        "noteLabel": "Note:",
+        "noteText": "This page is for development purposes only. In production, notifications should only be triggered by real events."
+      }
     }
   },
   "inbox": {
@@ -4547,6 +4648,97 @@
         },
         "processing": "Please wait while the files are being organized into the project structure..."
       }
+    },
+    "customerReview": {
+      "communication": {
+        "timeAgo": {
+          "unknown": "unknown",
+          "justNow": "just now",
+          "minutesAgo": "{minutes} min. ago",
+          "hoursAgo": "{hours} hr. ago",
+          "daysAgo": "{days} day(s) ago"
+        },
+        "dateUnknown": "Unknown",
+        "type": {
+          "feedback": "Feedback",
+          "comment": "Comment",
+          "approvalRequest": "Approval Request",
+          "question": "Question",
+          "message": "Message"
+        },
+        "empty": {
+          "title": "No communication yet",
+          "description": "Messages and feedback will appear here"
+        },
+        "latest": {
+          "title": "Latest Message",
+          "from": "From:"
+        },
+        "status": {
+          "approved": "Approved",
+          "manuallyApproved": "Manually approved",
+          "changesRequested": "Changes requested",
+          "manuallyUnlocked": "Manually unlocked"
+        },
+        "history": {
+          "title": "Complete Communication History",
+          "attachments": "Attachments:"
+        }
+      }
+    }
+  },
+  "customerReview": {
+    "media": {
+      "empty": "No media attached",
+      "infoLabel": "Note:",
+      "infoText": "These media files will be automatically sent to the media distributors along with the press release after your approval.",
+      "viewFullscreen": "View fullscreen",
+      "viewFullscreenAria": "View {filename} in fullscreen",
+      "download": "Download",
+      "downloadAria": "Download {filename}"
+    },
+    "decision": {
+      "subtitle": "Approve or request changes",
+      "approve": "Approve",
+      "approving": "Approving...",
+      "requestChanges": "Request Changes",
+      "formTitle": "Request Changes",
+      "formDescription": "Please describe specifically which changes you would like:",
+      "formPlaceholder": "Please describe the desired changes here...",
+      "characterCount": "{count} characters",
+      "sendChanges": "Send Changes",
+      "sending": "Sending...",
+      "infoTitle": "Your Options:",
+      "optionApprove": {
+        "title": "Approve:",
+        "description": "The press release will be approved and can be sent."
+      },
+      "optionRequestChanges": {
+        "title": "Request Changes:",
+        "description": "You can communicate specific change requests."
+      },
+      "optionReject": {
+        "title": "Reject:",
+        "description": "The press release will be completely rejected."
+      },
+      "cancel": "Cancel"
+    },
+    "pdfHistory": {
+      "status": {
+        "draft": "Draft",
+        "pendingCustomer": "For Review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "emptyState": "No PDF versions available",
+      "currentVersionLabel": "Current Version:",
+      "versionFrom": "Version {version} from {date}",
+      "historyDescription": "Here you can see the complete version history of this press release.",
+      "versionLabel": "Version {version}",
+      "currentBadge": "Current",
+      "createdLabel": "Created:",
+      "changesLabel": "Changes:",
+      "downloadButton": "Download"
     }
   }
 }

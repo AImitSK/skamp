@@ -2288,6 +2288,12 @@
           "poor": "schlecht"
         },
         "removeKeyword": "Keyword entfernen"
+      },
+      "breakdown": {
+        "headline": "Headline: {score}/100",
+        "keywords": "Keywords: {score}/100",
+        "structure": "Struktur: {score}/100",
+        "social": "Social: {score}/100"
       }
     },
     "project": {
@@ -3635,6 +3641,101 @@
         "stripeSubscription": "Stripe Subscription",
         "notAvailable": "Nicht vorhanden"
       }
+    },
+    "fixTimestamps": {
+      "title": "Timestamp Reparatur Tool",
+      "description": "Dieses Tool korrigiert fehlerhafte serverTimestamp() Platzhalter in PR Kampagnen.",
+      "warning": {
+        "title": "⚠️ Wichtiger Hinweis",
+        "message": "Diese Aktion wird alle Kampagnen mit fehlerhaften Timestamps korrigieren. Die Operation kann nicht rückgängig gemacht werden. Stelle sicher, dass du ein Backup hast."
+      },
+      "button": {
+        "start": "Timestamp Reparatur starten",
+        "repairing": "Repariere Timestamps...",
+        "toCampaigns": "Zu den Kampagnen",
+        "checkAgain": "Erneut prüfen"
+      },
+      "progress": {
+        "notAuthenticated": "❌ Nicht angemeldet",
+        "loading": "🔍 Lade Kampagnen...",
+        "found": "📊 {total} Kampagnen gefunden. Starte Korrektur...",
+        "fixing": "⚙️ Korrigiere Kampagne {current}/{total}: \"{title}\"",
+        "completed": "✅ Migration abgeschlossen!",
+        "error": "❌ Fehler: {message}"
+      },
+      "results": {
+        "completed": "Migration abgeschlossen!",
+        "total": "📊 Gesamt: {count} Kampagnen",
+        "fixed": "✅ Korrigiert: {count} Kampagnen",
+        "skipped": "⏭️ Übersprungen: {count} Kampagnen (bereits korrekt)",
+        "errors": "❌ Fehler: {count}",
+        "errorsOccurred": "Fehler aufgetreten:"
+      }
+    },
+    "testNotifications": {
+      "title": "Test Benachrichtigungen",
+      "description": "Erstelle Test-Benachrichtigungen für Entwicklung und Tests",
+      "types": {
+        "approvalGranted": "Freigabe erteilt",
+        "changesRequested": "Änderungen erbeten",
+        "overdueApproval": "Überfällige Freigabe",
+        "emailSentSuccess": "E-Mail erfolgreich versendet",
+        "emailBounced": "E-Mail Bounce",
+        "taskOverdue": "Task überfällig",
+        "mediaFirstAccess": "Erster Media-Zugriff",
+        "mediaDownloaded": "Media heruntergeladen",
+        "mediaLinkExpired": "Media-Link abgelaufen"
+      },
+      "titles": {
+        "approvalGranted": "Freigabe erteilt",
+        "changesRequested": "Änderungen erbeten",
+        "overdueApproval": "Überfällige Freigabe",
+        "emailSent": "E-Mail versendet",
+        "emailBounced": "E-Mail Bounce",
+        "taskOverdue": "Task überfällig",
+        "mediaAccess": "Media-Zugriff",
+        "mediaDownload": "Media Download",
+        "linkExpired": "Link abgelaufen",
+        "firstView": "Erste Ansicht",
+        "chatMention": "Chat-Erwähnung",
+        "projectAssignment": "Projekt-Zuweisung"
+      },
+      "fields": {
+        "notificationType": "Benachrichtigungstyp",
+        "senderName": "Absender Name",
+        "recipientCount": "Anzahl Empfänger",
+        "bounceEmail": "Bounce E-Mail",
+        "daysOverdue": "Tage überfällig"
+      },
+      "preview": {
+        "label": "Vorschau:"
+      },
+      "buttons": {
+        "createNotification": "Test-Benachrichtigung erstellen",
+        "creating": "Erstelle...",
+        "testCron": "Test Cron Benachrichtigung erstellen",
+        "testing": "Teste..."
+      },
+      "sections": {
+        "createNotification": {
+          "title": "Test-Benachrichtigung erstellen"
+        },
+        "cronTest": {
+          "title": "Cron Job testen",
+          "description": "Erstellt eine Test-Benachrichtigung direkt ohne API Route"
+        }
+      },
+      "alerts": {
+        "success": "Test-Benachrichtigung erfolgreich erstellt!"
+      },
+      "errors": {
+        "createNotification": "Fehler beim Erstellen der Benachrichtigung",
+        "testCronJob": "Fehler beim Testen des Cron Jobs"
+      },
+      "info": {
+        "noteLabel": "Hinweis:",
+        "noteText": "Diese Seite ist nur für Entwicklungszwecke gedacht. In der Produktion sollten Benachrichtigungen nur durch echte Ereignisse ausgelöst werden."
+      }
     }
   },
   "inbox": {
@@ -4547,6 +4648,97 @@
         },
         "processing": "Bitte warten Sie, während die Dateien in die Projekt-Struktur organisiert werden..."
       }
+    },
+    "customerReview": {
+      "communication": {
+        "timeAgo": {
+          "unknown": "unbekannt",
+          "justNow": "gerade eben",
+          "minutesAgo": "vor {minutes} Min.",
+          "hoursAgo": "vor {hours} Std.",
+          "daysAgo": "vor {days} Tag(en)"
+        },
+        "dateUnknown": "Unbekannt",
+        "type": {
+          "feedback": "Feedback",
+          "comment": "Kommentar",
+          "approvalRequest": "Freigabe-Anfrage",
+          "question": "Frage",
+          "message": "Nachricht"
+        },
+        "empty": {
+          "title": "Noch keine Kommunikation vorhanden",
+          "description": "Hier erscheinen Nachrichten und Rückmeldungen"
+        },
+        "latest": {
+          "title": "Neueste Nachricht",
+          "from": "Von:"
+        },
+        "status": {
+          "approved": "Freigabe erteilt",
+          "manuallyApproved": "Manuell freigegeben",
+          "changesRequested": "Änderungen erbeten",
+          "manuallyUnlocked": "Manuell entsperrt"
+        },
+        "history": {
+          "title": "Vollständige Kommunikationshistorie",
+          "attachments": "Anhänge:"
+        }
+      }
+    }
+  },
+  "customerReview": {
+    "media": {
+      "empty": "Keine Medien angehängt",
+      "infoLabel": "Hinweis:",
+      "infoText": "Diese Medien werden nach Ihrer Freigabe automatisch mit der Pressemitteilung an die Medien-Verteiler gesendet.",
+      "viewFullscreen": "Vollbild anzeigen",
+      "viewFullscreenAria": "{filename} in Vollbild anzeigen",
+      "download": "Herunterladen",
+      "downloadAria": "{filename} herunterladen"
+    },
+    "decision": {
+      "subtitle": "Erteilen Sie die Freigabe oder fordern Sie Änderungen an",
+      "approve": "Freigabe erteilen",
+      "approving": "Freigabe wird erteilt...",
+      "requestChanges": "Änderungen anfordern",
+      "formTitle": "Änderungen anfordern",
+      "formDescription": "Beschreiben Sie bitte konkret, welche Änderungen Sie wünschen:",
+      "formPlaceholder": "Bitte beschreiben Sie hier die gewünschten Änderungen...",
+      "characterCount": "{count} Zeichen",
+      "sendChanges": "Änderungen senden",
+      "sending": "Wird gesendet...",
+      "infoTitle": "Ihre Optionen:",
+      "optionApprove": {
+        "title": "Freigabe erteilen:",
+        "description": "Die Pressemitteilung wird freigegeben und kann versendet werden."
+      },
+      "optionRequestChanges": {
+        "title": "Änderungen anfordern:",
+        "description": "Sie können spezifische Änderungswünsche mitteilen."
+      },
+      "optionReject": {
+        "title": "Ablehnen:",
+        "description": "Die Pressemitteilung wird vollständig abgelehnt."
+      },
+      "cancel": "Abbrechen"
+    },
+    "pdfHistory": {
+      "status": {
+        "draft": "Entwurf",
+        "pendingCustomer": "Zur Prüfung",
+        "approved": "Freigegeben",
+        "rejected": "Abgelehnt"
+      },
+      "emptyState": "Keine PDF-Versionen verfügbar",
+      "currentVersionLabel": "Aktuelle Version:",
+      "versionFrom": "Version {version} vom {date}",
+      "historyDescription": "Hier sehen Sie die komplette Versionshistorie dieser Pressemitteilung.",
+      "versionLabel": "Version {version}",
+      "currentBadge": "Aktuell",
+      "createdLabel": "Erstellt:",
+      "changesLabel": "Änderungen:",
+      "downloadButton": "Download"
     }
   }
 }

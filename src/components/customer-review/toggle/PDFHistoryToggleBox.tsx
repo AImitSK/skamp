@@ -2,6 +2,7 @@
 
 import React, { useCallback, memo, useMemo } from 'react';
 import { DocumentTextIcon, ArrowDownTrayIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { ToggleBox } from './ToggleBox';
 import { PDFHistoryToggleBoxProps, PDFVersion } from '@/types/customer-review';
 
@@ -23,6 +24,8 @@ function PDFHistoryToggleBoxComponent({
   className = '',
   ...props
 }: PDFHistoryToggleBoxProps) {
+  const t = useTranslations('customerReview.pdfHistory');
+  const tCommon = useTranslations('common');
 
   const handleDownload = useCallback((pdfVersion: PDFVersion) => {
     // Download logic
@@ -47,7 +50,7 @@ function PDFHistoryToggleBoxComponent({
           color: 'text-gray-500',
           bgColor: 'bg-gray-100',
           textColor: 'text-gray-700',
-          label: 'Entwurf'
+          label: t('status.draft')
         };
       case 'pending_customer':
         return {
@@ -55,7 +58,7 @@ function PDFHistoryToggleBoxComponent({
           color: 'text-yellow-500',
           bgColor: 'bg-yellow-100',
           textColor: 'text-yellow-700',
-          label: 'Zur Prüfung'
+          label: t('status.pendingCustomer')
         };
       case 'approved':
         return {
@@ -63,7 +66,7 @@ function PDFHistoryToggleBoxComponent({
           color: 'text-green-500',
           bgColor: 'bg-green-100',
           textColor: 'text-green-700',
-          label: 'Freigegeben'
+          label: t('status.approved')
         };
       case 'rejected':
         return {
@@ -71,7 +74,7 @@ function PDFHistoryToggleBoxComponent({
           color: 'text-red-500',
           bgColor: 'bg-red-100',
           textColor: 'text-red-700',
-          label: 'Abgelehnt'
+          label: t('status.rejected')
         };
       default:
         return {
@@ -79,15 +82,15 @@ function PDFHistoryToggleBoxComponent({
           color: 'text-gray-500',
           bgColor: 'bg-gray-100',
           textColor: 'text-gray-700',
-          label: 'Unbekannt'
+          label: tCommon('unknown')
         };
     }
   };
 
   const formatDate = (date: Date | string) => {
-    if (!date) return 'Unbekannt';
+    if (!date) return tCommon('unknown');
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    if (!dateObj || isNaN(dateObj.getTime())) return 'Unbekannt';
+    if (!dateObj || isNaN(dateObj.getTime())) return tCommon('unknown');
     return dateObj.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
@@ -136,7 +139,7 @@ function PDFHistoryToggleBoxComponent({
       {pdfVersions.length === 0 ? (
         <div className="text-center py-8">
           <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Keine PDF-Versionen verfügbar</p>
+          <p className="text-gray-500">{t('emptyState')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -145,10 +148,10 @@ function PDFHistoryToggleBoxComponent({
             <div className="flex">
               <div className="ml-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Aktuelle Version:</strong> Version {currentVersion?.version} vom {currentVersion ? formatDate(currentVersion.createdAt) : ''}
+                  <strong>{t('currentVersionLabel')}</strong> {t('versionFrom', { version: currentVersion?.version, date: currentVersion ? formatDate(currentVersion.createdAt) : '' })}
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  Hier sehen Sie die komplette Versionshistorie dieser Pressemitteilung.
+                  {t('historyDescription')}
                 </p>
               </div>
             </div>
@@ -184,26 +187,26 @@ function PDFHistoryToggleBoxComponent({
                       <div className="flex-grow min-w-0">
                         <div className="flex items-center space-x-2">
                           <h4 className="font-medium text-gray-900">
-                            Version {pdfVersion.version}
+                            {t('versionLabel', { version: pdfVersion.version })}
                           </h4>
                           {isLatest && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Aktuell
+                              {t('currentBadge')}
                             </span>
                           )}
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor}`}>
                             {statusConfig.label}
                           </span>
                         </div>
-                        
+
                         <div className="mt-1 text-sm text-gray-600">
-                          <div>Erstellt: {formatDate(pdfVersion.createdAt)}</div>
+                          <div>{t('createdLabel')} {formatDate(pdfVersion.createdAt)}</div>
                         </div>
 
                         {/* Änderungen/Kommentar */}
                         {pdfVersion.comment && (
                           <div className="mt-2 text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                            <strong>Änderungen:</strong> {pdfVersion.comment}
+                            <strong>{t('changesLabel')}</strong> {pdfVersion.comment}
                           </div>
                         )}
                       </div>
@@ -217,7 +220,7 @@ function PDFHistoryToggleBoxComponent({
                         data-testid={`pdf-download-${pdfVersion.id}`}
                       >
                         <ArrowDownTrayIcon className="h-4 w-4 mr-1.5" />
-                        Download
+                        {t('downloadButton')}
                       </button>
                     </div>
                   </div>

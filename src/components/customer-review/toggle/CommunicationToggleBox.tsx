@@ -2,6 +2,7 @@
 
 import React, { useCallback, memo, useMemo } from 'react';
 import { ChatBubbleLeftRightIcon, UserCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { ToggleBox } from './ToggleBox';
 import { CommunicationToggleBoxProps, CommunicationItem } from '@/types/customer-review';
 
@@ -22,6 +23,7 @@ function CommunicationToggleBoxComponent({
   className = '',
   ...props
 }: CommunicationToggleBoxProps) {
+  const t = useTranslations('customerReview.communication');
 
   const handleReply = useCallback((communication: CommunicationItem) => {
     onReply?.(communication);
@@ -29,27 +31,27 @@ function CommunicationToggleBoxComponent({
 
   const formatTimeAgo = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     // Validierung: Prüfe ob Datum gültig ist
     if (!dateObj || isNaN(dateObj.getTime())) {
-      return 'unbekannt';
+      return t('timeAgo.unknown');
     }
-    
+
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));
-    
+
     // Zusätzliche Validierung für negative Zeiten
-    if (diffInMinutes < 0) return 'gerade eben';
-    if (diffInMinutes < 1) return 'gerade eben';
-    if (diffInMinutes < 60) return `vor ${diffInMinutes} Min.`;
-    if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)} Std.`;
-    return `vor ${Math.floor(diffInMinutes / 1440)} Tag(en)`;
+    if (diffInMinutes < 0) return t('timeAgo.justNow');
+    if (diffInMinutes < 1) return t('timeAgo.justNow');
+    if (diffInMinutes < 60) return t('timeAgo.minutesAgo', { minutes: diffInMinutes });
+    if (diffInMinutes < 1440) return t('timeAgo.hoursAgo', { hours: Math.floor(diffInMinutes / 60) });
+    return t('timeAgo.daysAgo', { days: Math.floor(diffInMinutes / 1440) });
   };
 
   const formatDate = (date: Date | string) => {
-    if (!date) return 'Unbekannt';
+    if (!date) return t('dateUnknown');
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    if (!dateObj || isNaN(dateObj.getTime())) return 'Unbekannt';
+    if (!dateObj || isNaN(dateObj.getTime())) return t('dateUnknown');
     return dateObj.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
@@ -77,15 +79,15 @@ function CommunicationToggleBoxComponent({
   const getTypeLabel = (type: CommunicationItem['type']) => {
     switch (type) {
       case 'feedback':
-        return 'Feedback';
+        return t('type.feedback');
       case 'comment':
-        return 'Kommentar';
+        return t('type.comment');
       case 'approval_request':
-        return 'Freigabe-Anfrage';
+        return t('type.approvalRequest');
       case 'question':
-        return 'Frage';
+        return t('type.question');
       default:
-        return 'Nachricht';
+        return t('type.message');
     }
   };
 
@@ -128,9 +130,9 @@ function CommunicationToggleBoxComponent({
       {communications.length === 0 ? (
         <div className="text-center py-8">
           <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Noch keine Kommunikation vorhanden</p>
+          <p className="text-gray-500">{t('empty.title')}</p>
           <p className="text-sm text-gray-400 mt-1">
-            Hier erscheinen Nachrichten und Rückmeldungen
+            {t('empty.description')}
           </p>
         </div>
       ) : (
@@ -154,7 +156,7 @@ function CommunicationToggleBoxComponent({
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="font-medium text-blue-900">
-                      Neueste Nachricht
+                      {t('latest.title')}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {getTypeLabel(latestMessage.type)}
@@ -162,22 +164,22 @@ function CommunicationToggleBoxComponent({
                     {latestMessage.manualApproval && (
                       <>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                          Freigabe erteilt
+                          {t('status.approved')}
                         </span>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                          Manuell freigegeben
+                          {t('status.manuallyApproved')}
                         </span>
                       </>
                     )}
                     {latestMessage.manualChangesRequested && (
                       <>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          Änderungen erbeten
+                          {t('status.changesRequested')}
                         </span>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                          Manuell entsperrt
+                          {t('status.manuallyUnlocked')}
                         </span>
                       </>
                     )}
@@ -186,7 +188,7 @@ function CommunicationToggleBoxComponent({
                     </span>
                   </div>
                   <div className="text-sm text-blue-800 mb-2">
-                    <strong>Von:</strong> {latestMessage.senderName || latestMessage.sender?.name}
+                    <strong>{t('latest.from')}</strong> {latestMessage.senderName || latestMessage.sender?.name}
                   </div>
                   <div className="text-sm text-blue-900 whitespace-pre-wrap">
                     {latestMessage.message || latestMessage.content}
@@ -199,9 +201,9 @@ function CommunicationToggleBoxComponent({
           {/* Kommunikations-Historie */}
           <div>
             <h4 className="font-medium text-gray-900 mb-3">
-              Vollständige Kommunikationshistorie
+              {t('history.title')}
             </h4>
-            
+
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {displayedCommunications.map((communication, index) => {
                 const isLatest = latestMessage?.id === communication.id;
@@ -244,22 +246,22 @@ function CommunicationToggleBoxComponent({
                           {communication.manualApproval && (
                             <>
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                Freigabe erteilt
+                                {t('status.approved')}
                               </span>
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                                Manuell freigegeben
+                                {t('status.manuallyApproved')}
                               </span>
                             </>
                           )}
                           {communication.manualChangesRequested && (
                             <>
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                Änderungen erbeten
+                                {t('status.changesRequested')}
                               </span>
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                                Manuell entsperrt
+                                {t('status.manuallyUnlocked')}
                               </span>
                             </>
                           )}
@@ -277,7 +279,7 @@ function CommunicationToggleBoxComponent({
                         {/* Anhänge */}
                         {communication.attachments && communication.attachments.length > 0 && (
                           <div className="text-sm text-gray-600 mb-2">
-                            <strong>Anhänge:</strong>{' '}
+                            <strong>{t('history.attachments')}</strong>{' '}
                             {communication.attachments.map((attachment, idx) => (
                               <span key={idx} className="mr-2">
                                 📎 {attachment.name || attachment.filename}

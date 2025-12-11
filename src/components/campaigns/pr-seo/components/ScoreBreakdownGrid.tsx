@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ScoreBreakdownGridProps } from '../types';
 
 /**
@@ -9,6 +10,8 @@ import type { ScoreBreakdownGridProps } from '../types';
  * Zeigt Score-Aufschlüsselung in 4 Boxen an
  */
 export const ScoreBreakdownGrid = React.memo(function ScoreBreakdownGrid({ breakdown }: ScoreBreakdownGridProps) {
+  const t = useTranslations('campaigns.prSeo.breakdown');
+
   const getScoreColor = (score: number): string => {
     if (score >= 70) return 'bg-green-500';
     if (score >= 40) return 'bg-orange-500';
@@ -30,7 +33,7 @@ export const ScoreBreakdownGrid = React.memo(function ScoreBreakdownGrid({ break
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scoreColors.headline}`}></div>
         <div className="flex-1">
           <div className="text-sm font-semibold text-gray-900">
-            Headline: {breakdown.headline}/100
+            {t('headline', { score: breakdown.headline })}
           </div>
         </div>
       </div>
@@ -40,7 +43,7 @@ export const ScoreBreakdownGrid = React.memo(function ScoreBreakdownGrid({ break
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scoreColors.keywords}`}></div>
         <div className="flex-1">
           <div className="text-sm font-semibold text-gray-900">
-            Keywords: {breakdown.keywords}/100
+            {t('keywords', { score: breakdown.keywords })}
           </div>
         </div>
       </div>
@@ -50,7 +53,7 @@ export const ScoreBreakdownGrid = React.memo(function ScoreBreakdownGrid({ break
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scoreColors.structure}`}></div>
         <div className="flex-1">
           <div className="text-sm font-semibold text-gray-900">
-            Struktur: {Math.round(breakdown.structure)}/100
+            {t('structure', { score: Math.round(breakdown.structure) })}
           </div>
         </div>
       </div>
@@ -60,7 +63,7 @@ export const ScoreBreakdownGrid = React.memo(function ScoreBreakdownGrid({ break
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scoreColors.social}`}></div>
         <div className="flex-1">
           <div className="text-sm font-semibold text-gray-900">
-            Social: {Math.round(breakdown.social)}/100
+            {t('social', { score: Math.round(breakdown.social) })}
           </div>
         </div>
       </div>

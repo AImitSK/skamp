@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, memo } from 'react';
 import { CheckCircleIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { ToggleBox } from './ToggleBox';
 import { DecisionToggleBoxProps } from '@/types/customer-review';
 
@@ -21,11 +22,12 @@ function DecisionToggleBoxComponent({
   onRequestChanges,
   disabled = false,
   className = '',
-  approveButtonText = 'Freigabe erteilen',
-  rejectButtonText = 'Ablehnen',
-  requestChangesButtonText = 'Änderungen anfordern',
+  approveButtonText,
+  rejectButtonText,
+  requestChangesButtonText,
   ...props
 }: DecisionToggleBoxProps) {
+  const t = useTranslations('customerReview.decision');
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changesText, setChangesText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,7 +72,7 @@ function DecisionToggleBoxComponent({
     <ToggleBox
       id={id}
       title={title}
-      subtitle="Erteilen Sie die Freigabe oder fordern Sie Änderungen an"
+      subtitle={t('subtitle')}
       defaultOpen={true}
       icon={CheckCircleIcon}
       iconColor="text-blue-600"
@@ -100,7 +102,7 @@ function DecisionToggleBoxComponent({
               data-testid="approve-button"
             >
               <CheckCircleIcon className="h-6 w-6 mr-3" />
-              {isSubmitting ? 'Freigabe wird erteilt...' : approveButtonText}
+              {isSubmitting ? t('approving') : (approveButtonText || t('approve'))}
             </button>
 
             {/* Änderungen anfordern - als einzelner Button */}
@@ -118,7 +120,7 @@ function DecisionToggleBoxComponent({
               data-testid="request-changes-button"
             >
               <PencilIcon className="h-5 w-5 mr-2" />
-              {requestChangesButtonText}
+              {requestChangesButtonText || t('requestChanges')}
             </button>
           </div>
         )}
@@ -128,10 +130,10 @@ function DecisionToggleBoxComponent({
           <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div>
               <h4 className="font-medium text-blue-900 mb-2">
-                Änderungen anfordern
+                {t('formTitle')}
               </h4>
               <p className="text-sm text-blue-800 mb-4">
-                Beschreiben Sie bitte konkret, welche Änderungen Sie wünschen:
+                {t('formDescription')}
               </p>
             </div>
 
@@ -140,14 +142,14 @@ function DecisionToggleBoxComponent({
               <textarea
                 value={changesText}
                 onChange={(e) => setChangesText(e.target.value)}
-                placeholder="Bitte beschreiben Sie hier die gewünschten Änderungen..."
+                placeholder={t('formPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 rows={4}
                 disabled={disabled || isSubmitting}
                 data-testid="changes-textarea"
               />
               <div className="text-xs text-gray-500 mt-1">
-                {changesText.length} Zeichen
+                {t('characterCount', { count: changesText.length })}
               </div>
             </div>
 
@@ -159,7 +161,7 @@ function DecisionToggleBoxComponent({
                 className="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-150"
                 data-testid="cancel-changes-button"
               >
-                Abbrechen
+                {t('cancel')}
               </button>
               <button
                 onClick={handleSubmitChanges}
@@ -174,7 +176,7 @@ function DecisionToggleBoxComponent({
                 `}
                 data-testid="submit-changes-button"
               >
-                {isSubmitting ? 'Wird gesendet...' : 'Änderungen senden'}
+                {isSubmitting ? t('sending') : t('sendChanges')}
               </button>
             </div>
           </div>
@@ -185,12 +187,12 @@ function DecisionToggleBoxComponent({
           <div className="flex">
             <div className="ml-3">
               <h4 className="text-sm font-medium text-gray-900 mb-2">
-                Ihre Optionen:
+                {t('infoTitle')}
               </h4>
               <ul className="text-sm text-gray-700 space-y-1">
-                <li><strong>Freigabe erteilen:</strong> Die Pressemitteilung wird freigegeben und kann versendet werden.</li>
-                <li><strong>Änderungen anfordern:</strong> Sie können spezifische Änderungswünsche mitteilen.</li>
-                <li><strong>Ablehnen:</strong> Die Pressemitteilung wird vollständig abgelehnt.</li>
+                <li><strong>{t('optionApprove.title')}</strong> {t('optionApprove.description')}</li>
+                <li><strong>{t('optionRequestChanges.title')}</strong> {t('optionRequestChanges.description')}</li>
+                <li><strong>{t('optionReject.title')}</strong> {t('optionReject.description')}</li>
               </ul>
             </div>
           </div>

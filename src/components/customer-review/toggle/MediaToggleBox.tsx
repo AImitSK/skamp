@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, memo, useMemo } from 'react';
 import { PaperClipIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { ToggleBox } from './ToggleBox';
 import { MediaToggleBoxProps, MediaItem } from '@/types/customer-review';
 
@@ -23,6 +24,7 @@ function MediaToggleBoxComponent({
   className = '',
   ...props
 }: MediaToggleBoxProps) {
+  const t = useTranslations('customerReview.media');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   const handleMediaClick = useCallback((mediaItem: MediaItem) => {
@@ -80,7 +82,7 @@ function MediaToggleBoxComponent({
         {displayItems.length === 0 ? (
           <div className="text-center py-8">
             <PaperClipIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Keine Medien angehängt</p>
+            <p className="text-gray-500">{t('empty')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -89,8 +91,7 @@ function MediaToggleBoxComponent({
               <div className="flex">
                 <div className="ml-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Hinweis:</strong> Diese Medien werden nach Ihrer Freigabe automatisch 
-                    mit der Pressemitteilung an die Medien-Verteiler gesendet.
+                    <strong>{t('infoLabel')}</strong> {t('infoText')}
                   </p>
                 </div>
               </div>
@@ -131,16 +132,16 @@ function MediaToggleBoxComponent({
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex space-x-2">
                         <button
                           className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors"
-                          title="Vollbild anzeigen"
-                          aria-label={`${filename} in Vollbild anzeigen`}
+                          title={t('viewFullscreen')}
+                          aria-label={t('viewFullscreenAria', { filename })}
                         >
                           <EyeIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={(e) => handleDownload(e, mediaItem)}
                           className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors"
-                          title="Herunterladen"
-                          aria-label={`${filename} herunterladen`}
+                          title={t('download')}
+                          aria-label={t('downloadAria', { filename })}
                         >
                           <ArrowDownTrayIcon className="h-5 w-5" />
                         </button>

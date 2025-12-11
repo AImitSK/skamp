@@ -1,23 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/common/Alert";
-import { 
-  collection, 
-  getDocs, 
-  updateDoc, 
-  doc, 
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
   Timestamp,
   writeBatch
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 
 export default function FixTimestampsPage() {
+  const t = useTranslations('admin.fixTimestamps');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
@@ -31,25 +33,25 @@ export default function FixTimestampsPage() {
 
   const fixTimestamps = async () => {
     if (!user || !currentOrganization) {
-      setProgress("❌ Nicht angemeldet");
+      setProgress(t('progress.notAuthenticated'));
       return;
     }
 
     setLoading(true);
-    setProgress("🔍 Lade Kampagnen...");
+    setProgress(t('progress.loading'));
     setResults(null);
 
     try {
       // Hole alle PR Kampagnen
       const campaignsRef = collection(db, 'pr_campaigns');
       const snapshot = await getDocs(campaignsRef);
-      
+
       const total = snapshot.size;
       let fixed = 0;
       let skipped = 0;
       const errors: string[] = [];
-      
-      setProgress(`📊 ${total} Kampagnen gefunden. Starte Korrektur...`);
+
+      setProgress(t('progress.found', { total }));
 
       // Batch für Updates
       const batch = writeBatch(db);
@@ -98,15 +100,15 @@ export default function FixTimestampsPage() {
           updates.updatedAt = updates.createdAt || Timestamp.now();
           needsUpdate = true;
         }
-        
+
         // Update zur Batch hinzufügen
         if (needsUpdate) {
           batch.update(doc(db, 'pr_campaigns', docSnap.id), updates);
           batchCount++;
           fixed++;
-          
-          setProgress(`⚙️ Korrigiere Kampagne ${fixed}/${total}: "${data.title}"`);
-          
+
+          setProgress(t('progress.fixing', { current: fixed, total, title: data.title }));
+
           // Commit batch alle 500 Dokumente (Firestore Limit)
           if (batchCount >= 500) {
             await batch.commit();
@@ -117,25 +119,25 @@ export default function FixTimestampsPage() {
           skipped++;
         }
       }
-      
+
       // Commit verbleibende Updates
       if (batchCount > 0) {
         await batch.commit();
         console.log(`💾 Finaler Batch mit ${batchCount} Updates committed`);
       }
-      
+
       setResults({
         total,
         fixed,
         skipped,
         errors
       });
-      
-      setProgress("✅ Migration abgeschlossen!");
-      
+
+      setProgress(t('progress.completed'));
+
     } catch (error: any) {
       console.error('❌ Migration fehlgeschlagen:', error);
-      setProgress(`❌ Fehler: ${error.message}`);
+      setProgress(t('progress.error', { message: error.message }));
       setResults({
         total: 0,
         fixed: 0,
@@ -150,27 +152,26 @@ export default function FixTimestampsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <Heading>Timestamp Reparatur Tool</Heading>
+        <Heading>{t('title')}</Heading>
         <Text className="mt-2 mb-6">
-          Dieses Tool korrigiert fehlerhafte serverTimestamp() Platzhalter in PR Kampagnen.
+          {t('description')}
         </Text>
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Wichtiger Hinweis</h3>
+          <h3 className="font-semibold text-yellow-900 mb-2">{t('warning.title')}</h3>
           <p className="text-yellow-800 text-sm">
-            Diese Aktion wird alle Kampagnen mit fehlerhaften Timestamps korrigieren. 
-            Die Operation kann nicht rückgängig gemacht werden. Stelle sicher, dass du ein Backup hast.
+            {t('warning.message')}
           </p>
         </div>
 
         {!results && (
           <div className="space-y-4">
-            <Button 
-              onClick={fixTimestamps} 
+            <Button
+              onClick={fixTimestamps}
               disabled={loading}
               className="w-full"
             >
-              {loading ? "Repariere Timestamps..." : "Timestamp Reparatur starten"}
+              {loading ? t('button.repairing') : t('button.start')}
             </Button>
 
             {progress && (
@@ -185,13 +186,13 @@ export default function FixTimestampsPage() {
           <div className="space-y-4">
             <div className={`rounded-lg p-4 ${results.fixed > 0 ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
               <div className="space-y-2">
-                <p className="font-semibold">Migration abgeschlossen!</p>
+                <p className="font-semibold">{t('results.completed')}</p>
                 <ul className="text-sm space-y-1">
-                  <li>📊 Gesamt: {results.total} Kampagnen</li>
-                  <li>✅ Korrigiert: {results.fixed} Kampagnen</li>
-                  <li>⏭️ Übersprungen: {results.skipped} Kampagnen (bereits korrekt)</li>
+                  <li>{t('results.total', { count: results.total })}</li>
+                  <li>{t('results.fixed', { count: results.fixed })}</li>
+                  <li>{t('results.skipped', { count: results.skipped })}</li>
                   {results.errors.length > 0 && (
-                    <li>❌ Fehler: {results.errors.length}</li>
+                    <li>{t('results.errors', { count: results.errors.length })}</li>
                   )}
                 </ul>
               </div>
@@ -200,7 +201,7 @@ export default function FixTimestampsPage() {
             {results.errors.length > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="space-y-2">
-                  <p className="font-semibold text-red-900">Fehler aufgetreten:</p>
+                  <p className="font-semibold text-red-900">{t('results.errorsOccurred')}</p>
                   <ul className="text-sm space-y-1 text-red-800">
                     {results.errors.map((error, i) => (
                       <li key={i}>{error}</li>
@@ -211,21 +212,21 @@ export default function FixTimestampsPage() {
             )}
 
             <div className="flex gap-4">
-              <Button 
+              <Button
                 onClick={() => window.location.href = '/dashboard/pr-tools/campaigns'}
                 className="flex-1"
               >
-                Zu den Kampagnen
+                {t('button.toCampaigns')}
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   setResults(null);
                   setProgress("");
                 }}
-color="zinc"
+                color="zinc"
                 className="flex-1"
               >
-                Erneut prüfen
+                {t('button.checkAgain')}
               </Button>
             </div>
           </div>
