@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +47,9 @@ export function EnhancedCompanyTable({
   tags = new Map(),
   viewMode = 'compact'
 }: EnhancedCompanyTableProps) {
+  const t = useTranslations('crm.companyTable');
+  const tCommon = useTranslations('common');
+
   const allSelected = companies.length > 0 && companies.every(c => selectedIds.has(c.id!));
   const someSelected = companies.some(c => selectedIds.has(c.id!)) && !allSelected;
 
@@ -92,23 +96,23 @@ export function EnhancedCompanyTable({
                 onChange={onSelectAll}
               />
               <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Firma
+                {t('headers.company')}
               </span>
             </div>
             <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Status / Lifecycle
+              {t('headers.statusLifecycle')}
             </div>
             <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Branche
+              {t('headers.industry')}
             </div>
             <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Umsatz / Mitarbeiter
+              {t('headers.revenueEmployees')}
             </div>
             <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Standort
+              {t('headers.location')}
             </div>
             <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-              Kontakt
+              {t('headers.contact')}
             </div>
           </div>
         </div>
@@ -137,7 +141,7 @@ export function EnhancedCompanyTable({
                       </Badge>
                       {company.tradingName && company.tradingName !== company.name && (
                         <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                          dba {company.tradingName}
+                          {t('dba')} {company.tradingName}
                         </span>
                       )}
                     </div>
@@ -233,14 +237,14 @@ export function EnhancedCompanyTable({
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => onView(company)}>
-                        Anzeigen
+                        {tCommon('view')}
                       </DropdownItem>
                       <DropdownItem onClick={() => onEdit(company)}>
-                        Bearbeiten
+                        {tCommon('edit')}
                       </DropdownItem>
                       <DropdownDivider />
                       <DropdownItem onClick={() => onDelete(company)}>
-                        <span className="text-red-600">Löschen</span>
+                        <span className="text-red-600">{tCommon('delete')}</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
@@ -266,17 +270,17 @@ export function EnhancedCompanyTable({
               onChange={onSelectAll}
             />
             <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Firma
+              {t('headers.company')}
             </span>
           </div>
           <div className="hidden md:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Branche
+            {t('headers.industry')}
           </div>
           <div className="hidden lg:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Tags
+            {t('headers.tags')}
           </div>
           <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-            Kontakt
+            {t('headers.contact')}
           </div>
         </div>
       </div>
@@ -351,14 +355,14 @@ export function EnhancedCompanyTable({
                   </DropdownButton>
                   <DropdownMenu anchor="bottom end">
                     <DropdownItem onClick={() => onView(company)}>
-                      Anzeigen
+                      {tCommon('view')}
                     </DropdownItem>
                     <DropdownItem onClick={() => onEdit(company)}>
-                      Bearbeiten
+                      {tCommon('edit')}
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={() => onDelete(company)}>
-                      <span className="text-red-600">Löschen</span>
+                      <span className="text-red-600">{tCommon('delete')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>

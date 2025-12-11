@@ -8,6 +8,7 @@ import { EnhancedApprovalData, TeamApprover, isEnhancedApprovalData } from "@/ty
 import { statusConfig } from "@/utils/campaignStatus";
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import { 
   UserGroupIcon,
   BuildingOfficeIcon,
@@ -74,10 +75,12 @@ function HoverTooltip({
 
 // Approval-Tooltip Inhalt (separiert für bessere Organisation)
 function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaign; teamMembers?: any[] }) {
+  const t = useTranslations('campaigns.status.tooltip');
+
   if (!campaign.approvalData || !isEnhancedApprovalData(campaign.approvalData)) {
     return (
       <div className="p-3 min-w-64">
-        <Text className="text-sm text-gray-600">Keine erweiterten Freigabe-Daten verfügbar</Text>
+        <Text className="text-sm text-gray-600">{t('noEnhancedData')}</Text>
       </div>
     );
   }
@@ -91,10 +94,10 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
       <div className="p-3 min-w-64">
         <div className="flex items-center gap-2 mb-2">
           <CheckCircleIcon className="h-4 w-4 text-green-500" />
-          <Text className="font-medium text-sm">Keine Freigabe erforderlich</Text>
+          <Text className="font-medium text-sm">{t('noApprovalRequired')}</Text>
         </div>
         <Text className="text-xs text-gray-600">
-          Diese Kampagne kann direkt versendet werden.
+          {t('noApprovalRequiredDesc')}
         </Text>
       </div>
     );
@@ -108,7 +111,7 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
           <div>
             <div className="flex items-center gap-2 mb-3">
               <UserGroupIcon className="h-4 w-4 text-gray-900" />
-              <Text className="font-bold text-sm">Team-Freigabe</Text>
+              <Text className="font-bold text-sm">{t('teamApproval')}</Text>
             </div>
             
             <div className="space-y-2">
@@ -139,21 +142,21 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                     </div>
                     <div className="flex items-center">
                       {approver.status === 'approved' && (
-                        <CheckCircleIcon 
-                          className="h-4 w-4 text-green-500" 
-                          title="Freigegeben"
+                        <CheckCircleIcon
+                          className="h-4 w-4 text-green-500"
+                          title={t('statusIcons.approved')}
                         />
                       )}
                       {approver.status === 'rejected' && (
-                        <XCircleIcon 
-                          className="h-4 w-4 text-red-500" 
-                          title="Abgelehnt"
+                        <XCircleIcon
+                          className="h-4 w-4 text-red-500"
+                          title={t('statusIcons.rejected')}
                         />
                       )}
                       {approver.status === 'pending' && (
-                        <ClockIcon 
-                          className="h-4 w-4 text-yellow-500" 
-                          title="Ausstehend"
+                        <ClockIcon
+                          className="h-4 w-4 text-yellow-500"
+                          title={t('statusIcons.pending')}
                         />
                       )}
                     </div>
@@ -169,9 +172,9 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
           <div>
             <div className="flex items-center gap-2 mb-3">
               <BuildingOfficeIcon className="h-4 w-4 text-gray-900" />
-              <Text className="font-bold text-sm">Kunden-Freigabe</Text>
+              <Text className="font-bold text-sm">{t('customerApproval')}</Text>
             </div>
-            
+
             {approvalData.customerContact ? (
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
@@ -183,14 +186,14 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                   </Text>
                 </div>
                 <div className="flex items-center">
-                  <ClockIcon className="h-4 w-4 text-yellow-500" title="Ausstehend" />
+                  <ClockIcon className="h-4 w-4 text-yellow-500" title={t('statusIcons.pending')} />
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2 p-2 bg-amber-50 rounded">
                 <ExclamationCircleIcon className="h-4 w-4 text-amber-500" />
                 <Text className="text-xs text-amber-700">
-                  Kunde noch nicht ausgewählt
+                  {t('customerNotSelected')}
                 </Text>
               </div>
             )}
@@ -200,10 +203,10 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
         {/* Aktueller Workflow-Stand */}
         <div className="pt-2 border-t border-gray-200">
           <Text className="text-xs text-gray-500">
-            <strong>Aktuelle Stufe:</strong> {
-              approvalData.currentStage === 'team' ? 'Team-Freigabe' :
-              approvalData.currentStage === 'customer' ? 'Kunden-Freigabe' :
-              'Abgeschlossen'
+            <strong>{t('currentStage')}:</strong> {
+              approvalData.currentStage === 'team' ? t('stages.team') :
+              approvalData.currentStage === 'customer' ? t('stages.customer') :
+              t('stages.completed')
             }
           </Text>
         </div>
@@ -212,14 +215,15 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
   );
 }
 
-export function StatusBadge({ 
-  status, 
-  showDescription = false, 
+export function StatusBadge({
+  status,
+  showDescription = false,
   className = "",
   campaign,
   showApprovalTooltip = false,
   teamMembers
 }: StatusBadgeProps) {
+  const t = useTranslations('campaigns.status');
   const config = statusConfig[status];
   const Icon = config.icon;
   
@@ -319,8 +323,8 @@ export function StatusBadge({
       onMouseEnter={showApprovalTooltip && hasApprovalInfo ? handleMouseEnter : undefined}
       onMouseLeave={showApprovalTooltip && hasApprovalInfo ? handleMouseLeave : undefined}
     >
-      <Badge 
-        color={config.color} 
+      <Badge
+        color={config.color}
         className={clsx(
           "inline-flex items-center gap-1 whitespace-nowrap",
           showApprovalTooltip && hasApprovalInfo && "cursor-help",
@@ -328,7 +332,7 @@ export function StatusBadge({
         )}
       >
         <Icon className="h-3 w-3" />
-        {config.label}
+        {t(`labels.${status}`)}
       </Badge>
     </div>
   );
@@ -338,9 +342,7 @@ export function StatusBadge({
       {showDescription ? (
         <div className={`flex items-center gap-3`}>
           {badgeContent}
-          {config.description && (
-            <Text className="text-sm text-gray-500">{config.description}</Text>
-          )}
+          <Text className="text-sm text-gray-500">{t(`descriptions.${status}`)}</Text>
         </div>
       ) : (
         badgeContent

@@ -3,18 +3,19 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { 
-  ClockIcon, 
-  UserGroupIcon, 
-  CheckCircleIcon, 
-  CogIcon, 
+import {
+  ClockIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  CogIcon,
   LockClosedIcon,
   PencilIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
-import { 
-  PRCampaign, 
-  EDIT_LOCK_CONFIG 
+import {
+  PRCampaign,
+  EDIT_LOCK_CONFIG
 } from '@/types/pr';
 
 // Icon-Mapping für dynamische Icon-Anzeige
@@ -52,15 +53,16 @@ export function EditLockStatusIndicator({
   className = "",
   variant = 'default'
 }: EditLockStatusIndicatorProps) {
-  
+  const t = useTranslations('campaigns.editLock');
+
   // Bestimme Lock-Status und Config
   const isLocked = campaign.editLocked === true;
   const lockReason = campaign.editLockedReason;
-  
+
   if (!isLocked && variant === 'minimal') {
     return null; // Minimal-Variante zeigt nur Locks an
   }
-  
+
   const config = lockReason ? EDIT_LOCK_CONFIG[lockReason] : null;
   
   // Size-Classes für verschiedene Größen
@@ -91,13 +93,13 @@ export function EditLockStatusIndicator({
   if (variant === 'badge') {
     if (!isLocked || !config) {
       return (
-        <Badge 
-          color="green" 
+        <Badge
+          color="green"
           className={clsx(currentSizeClasses.badge, className)}
           data-testid="edit-lock-badge"
         >
           <PencilIcon className={clsx(currentSizeClasses.icon, "mr-1")} />
-          Bearbeitbar
+          {t('editable')}
         </Badge>
       );
     }
@@ -120,16 +122,16 @@ export function EditLockStatusIndicator({
   if (!isLocked || !config) {
     // Unlocked State
     if (variant === 'minimal') return null;
-    
+
     return (
-      <div 
+      <div
         className={clsx(
-          "inline-flex items-center", 
-          currentSizeClasses.spacing, 
+          "inline-flex items-center",
+          currentSizeClasses.spacing,
           className
         )}
         data-testid="edit-lock-status"
-        title="Kampagne ist bearbeitbar"
+        title={t('campaignEditable')}
       >
         {showIcon && (
           <PencilIcon className={clsx(
@@ -137,13 +139,13 @@ export function EditLockStatusIndicator({
             "text-green-500"
           )} />
         )}
-        
+
         {showLabel && (
           <span className={clsx(
             currentSizeClasses.text,
             "font-medium text-green-700"
           )}>
-            Bearbeitbar
+            {t('editable')}
           </span>
         )}
       </div>
@@ -223,9 +225,10 @@ export function QuickLockStatus({ campaign }: { campaign: PRCampaign }) {
  * 🆕 UTILITY-KOMPONENTE: Detaillierte Status-Card für Dashboard
  */
 export function DetailedLockStatus({ campaign }: { campaign: PRCampaign }) {
+  const t = useTranslations('campaigns.editLock');
   const isLocked = campaign.editLocked === true;
   const config = campaign.editLockedReason ? EDIT_LOCK_CONFIG[campaign.editLockedReason] : null;
-  
+
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
       <EditLockStatusIndicator
@@ -235,13 +238,13 @@ export function DetailedLockStatus({ campaign }: { campaign: PRCampaign }) {
         showIcon={true}
         variant="default"
       />
-      
+
       <div className="text-xs text-gray-500">
         {isLocked && config && (
           <span>Severity: {config.severity}</span>
         )}
         {!isLocked && (
-          <span>Bearbeitungen erlaubt</span>
+          <span>{t('editingAllowed')}</span>
         )}
       </div>
     </div>

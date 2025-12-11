@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { Textarea } from '@/components/ui/textarea';
 import { Text } from '@/components/ui/text';
@@ -42,7 +43,8 @@ export function ApprovalSettings({
   previousFeedback = [],
   currentApproval
 }: SimplifiedApprovalSettingsProps) {
-  
+
+  const t = useTranslations('campaigns.new.approval');
   const [localData, setLocalData] = useState<SimplifiedApprovalData>(value);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -89,10 +91,10 @@ export function ApprovalSettings({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h4 className="text-sm font-medium text-gray-900">
-            Kundenfreigabe erforderlich
+            {t('customerApprovalRequired')}
           </h4>
           <Text className="text-sm text-gray-600 mt-1">
-            Kampagne muss vom Kunden freigegeben werden
+            {t('customerApprovalDescription')}
           </Text>
         </div>
         <SimpleSwitch
@@ -121,10 +123,10 @@ export function ApprovalSettings({
                   <InformationCircleIcon className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <Text className="text-sm text-amber-800 font-medium">
-                      Kontakt erforderlich
+                      {t('contactRequired')}
                     </Text>
                     <Text className="text-xs text-amber-700 mt-1">
-                      Bitte wählen Sie einen Kontakt aus. Die Kampagne kann erst gespeichert werden, wenn ein Freigabe-Kontakt ausgewählt wurde.
+                      {t('contactRequiredDescription')}
                     </Text>
                   </div>
                 </div>
@@ -133,7 +135,7 @@ export function ApprovalSettings({
           ) : (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
               <Text className="text-sm text-yellow-800">
-                Bitte wählen Sie zuerst einen Kunden aus, um Kontakte für die Freigabe festzulegen.
+                {t('selectClientFirst')}
               </Text>
             </div>
           )}
@@ -142,7 +144,7 @@ export function ApprovalSettings({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Neue Nachricht an den Kunden (optional)
+              {t('newMessageLabel')}
             </label>
             <Textarea
               value={value.customerApprovalMessage || ''}
@@ -151,10 +153,10 @@ export function ApprovalSettings({
                 customerApprovalMessage: e.target.value
               })}
               rows={2}
-              placeholder="Neue Nachricht für die erneute Freigabe-Anfrage..."
+              placeholder={t('newMessagePlaceholder')}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Diese Nachricht wird als erste im Feedback-Chat angezeigt.
+              {t('messageHint')}
             </p>
           </div>
 
@@ -167,7 +169,7 @@ export function ApprovalSettings({
                 className="flex items-center gap-2 text-sm px-3 py-1.5"
               >
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                Chat-Verlauf anzeigen
+                {t('showChatHistory')}
               </Button>
             </div>
           )}
@@ -178,7 +180,7 @@ export function ApprovalSettings({
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">Chat-Verlauf</h3>
+              <h3 className="text-lg font-semibold">{t('chatHistory')}</h3>
               <button
                 onClick={() => setShowHistoryModal(false)}
                 className="text-gray-400 hover:text-gray-600"

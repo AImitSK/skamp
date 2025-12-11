@@ -923,7 +923,61 @@
   },
   "crm": {
     "redirecting": "Redirecting...",
+    "contactTable": {
+      "headers": {
+        "namePosition": "Name & Position",
+        "fullNamePosition": "Full Name / Position",
+        "company": "Company",
+        "phone": "Phone",
+        "publications": "Publications",
+        "tagsBeats": "Tags / Beats",
+        "status": "Status",
+        "contact": "Contact"
+      },
+      "journalist": "Journalist",
+      "statusActive": "Active"
+    },
+    "companyTable": {
+      "headers": {
+        "company": "Company",
+        "statusLifecycle": "Status / Lifecycle",
+        "industry": "Industry",
+        "revenueEmployees": "Revenue / Employees",
+        "location": "Location",
+        "contact": "Contact",
+        "tags": "Tags"
+      },
+      "dba": "dba"
+    },
     "contactModal": {
+      "titleEdit": "Edit Person",
+      "titleAdd": "Add New Person",
+      "tabs": {
+        "general": {
+          "label": "General",
+          "description": "Basic information about the person"
+        },
+        "communication": {
+          "label": "Communication",
+          "description": "Contact details and preferences"
+        },
+        "media": {
+          "label": "Media",
+          "description": "Journalist profiles and publications"
+        },
+        "professional": {
+          "label": "Professional",
+          "description": "Position, education, memberships"
+        },
+        "gdpr": {
+          "label": "GDPR",
+          "description": "Consents and data protection"
+        },
+        "personal": {
+          "label": "Personal",
+          "description": "Personal information"
+        }
+      },
       "general": {
         "labels": {
           "salutation": "Salutation",
@@ -969,7 +1023,26 @@
       },
       "professional": {
         "biography": "Biography",
-        "biographyPlaceholder": "Professional background..."
+        "biographyPlaceholder": "Professional background...",
+        "education": {
+          "title": "Education",
+          "addButton": "Add Education",
+          "degree": "Degree",
+          "degreePlaceholder": "e.g., Bachelor, Master, PhD",
+          "institution": "Institution",
+          "institutionPlaceholder": "e.g., University of Hamburg",
+          "year": "Year",
+          "yearPlaceholder": "2020",
+          "empty": "No education added"
+        },
+        "certifications": {
+          "title": "Certifications",
+          "placeholder": "One certification per line..."
+        },
+        "memberships": {
+          "title": "Memberships",
+          "placeholder": "One membership per line..."
+        }
       },
       "communication": {
         "title": "Communication",
@@ -1038,7 +1111,8 @@
             "ja": "Japanese",
             "ko": "Korean",
             "zh": "Chinese"
-          }
+          },
+          "doNotContact": "Do Not Contact"
         },
         "primary": "Primary"
       },
@@ -1047,7 +1121,7 @@
         "nationality": "Nationality",
         "nationalityPlaceholder": "Select nationality...",
         "interests": "Interests",
-        "interestsPlaceholder": "e.g., Golf, Technology, Travel (comma-separated)",
+        "interestsPlaceholder": "One interest per line...",
         "internalNotes": "Internal Notes",
         "internalNotesPlaceholder": "Internal notes for the team (not visible to external contacts)...",
         "countries": {
@@ -1081,7 +1155,88 @@
           "MX": "Mexico",
           "RU": "Russia",
           "TR": "Turkey"
+        },
+        "languages": {
+          "title": "Languages",
+          "placeholder": "Select language..."
+        },
+        "personalNotes": "Personal Notes",
+        "personalNotesPlaceholder": "Personal notes (hobbies, family, etc.)..."
+      },
+      "media": {
+        "types": {
+          "title": "Media Types",
+          "empty": "No media types selected"
+        },
+        "beats": {
+          "title": "Beats/Areas",
+          "empty": "No beats selected"
+        },
+        "formats": {
+          "title": "Preferred Formats",
+          "empty": "No formats selected"
+        },
+        "guidelines": {
+          "title": "Submission Guidelines",
+          "placeholder": "Special requirements or notes for submissions..."
         }
+      },
+      "gdpr": {
+        "title": "GDPR Consents",
+        "addButton": "Add Consent",
+        "empty": "No GDPR consents recorded",
+        "consentNumber": "Consent {number}",
+        "fields": {
+          "purpose": "Purpose",
+          "purposePlaceholder": "e.g., Marketing Newsletter",
+          "status": "Status",
+          "legalBasis": "Legal Basis",
+          "method": "Method"
+        },
+        "status": {
+          "pending": "Pending",
+          "granted": "Granted",
+          "revoked": "Revoked"
+        },
+        "legalBasis": {
+          "consent": "Consent",
+          "contract": "Contract",
+          "legal_obligation": "Legal Obligation",
+          "vital_interests": "Vital Interests",
+          "public_task": "Public Task",
+          "legitimate_interests": "Legitimate Interests"
+        },
+        "method": {
+          "webform": "Web Form",
+          "email": "Email",
+          "phone": "Phone",
+          "written": "Written",
+          "double_opt_in": "Double Opt-In",
+          "import": "Import"
+        },
+        "consentGranted": "Consent granted",
+        "marketing": {
+          "title": "Marketing Communication",
+          "description": "Permission for marketing emails and calls"
+        },
+        "newsletter": {
+          "title": "Newsletter",
+          "description": "Permission for newsletter subscription"
+        },
+        "phoneContact": {
+          "title": "Phone Contact",
+          "description": "Permission for phone calls"
+        }
+      },
+      "validation": {
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "invalidEmail": "Invalid email address",
+        "errorPrefix": "Error: {message}",
+        "generalError": "An error occurred. Please try again."
+      },
+      "actions": {
+        "saving": "Saving..."
       }
     },
     "companyModal": {
@@ -1228,6 +1383,28 @@
         "ultimateParent": "Ultimate Parent Company",
         "ultimateParentTooltip": "Top-level parent company in the corporate structure",
         "noUltimateParent": "No ultimate parent company"
+      }
+    },
+    "companyMedia": {
+      "title": "Media",
+      "status": {
+        "noMedia": "No media assigned yet",
+        "summary": "{folderCount, plural, =0 {} one {# folder} other {# folders}}{folderCount, plural, =0 {} other {, }}{fileCount, plural, =0 {} one {# file} other {# files}}{total, plural, =0 {} other { ({total} total)}}"
+      },
+      "actions": {
+        "toLibrary": "To Media Library",
+        "uploadFor": "For {companyName}"
+      },
+      "empty": {
+        "title": "No media yet",
+        "description": "Upload files or create folders for {companyName}.",
+        "uploadButton": "Start first upload"
+      },
+      "sections": {
+        "folders": "Folders ({count})",
+        "folderType": "Folder",
+        "recentFiles": "Recent files ({count}{total, plural, =0 {} other { of {total}}})",
+        "showAll": "Show all {total} media"
       }
     }
   },
@@ -2231,7 +2408,17 @@
         "pipelineActivating": "Project pipeline approval will be activated",
         "workflowReady": "✅ PDF workflow ready",
         "workflowDescription": "When saving, a complete approval workflow will be activated automatically:",
-        "workflowTip": "💡 Tip: After saving, you will find all approval links and the current status in Step 4 \"Preview\"."
+        "workflowTip": "💡 Tip: After saving, you will find all approval links and the current status in Step 4 \"Preview\".",
+        "customerApprovalRequired": "Customer approval required",
+        "customerApprovalDescription": "Campaign must be approved by the customer",
+        "contactRequired": "Contact required",
+        "contactRequiredDescription": "Please select a contact. The campaign can only be saved once an approval contact has been selected.",
+        "selectClientFirst": "Please select a client first to set contacts for approval.",
+        "newMessageLabel": "New message to the customer (optional)",
+        "newMessagePlaceholder": "New message for the re-approval request...",
+        "messageHint": "This message will be displayed first in the feedback chat.",
+        "showChatHistory": "Show chat history",
+        "chatHistory": "Chat History"
       },
       "pdf": {
         "preview": "PDF Preview",
@@ -2310,7 +2497,54 @@
       "campaignIdNotFound": "Campaign ID not found",
       "unknownUser": "Unknown",
       "unlockRequestSent": "Your unlock request has been sent to the administrators.",
-      "unlockRequestFailed": "The unlock request could not be sent."
+      "unlockRequestFailed": "The unlock request could not be sent.",
+      "editable": "Editable",
+      "campaignEditable": "Campaign is editable",
+      "editingAllowed": "Editing allowed",
+      "banner": {
+        "title": "Editing locked - {label}",
+        "lockedBy": "Locked by: <strong>{name}</strong>",
+        "action": "Action: <strong>{action}</strong>",
+        "lockedAt": "Locked at: <strong>{date}</strong>"
+      },
+      "actions": {
+        "requestChanges": "Request Changes",
+        "grantApproval": "Grant Approval"
+      },
+      "modal": {
+        "changes": {
+          "title": "Request Changes",
+          "description": "Please document the requested changes:",
+          "placeholder": "e.g. 'Customer called on 10.11.2025: Use different images and...'",
+          "hint": {
+            "title": "Note",
+            "text": "This action sets the status to \"Changes Requested\" and releases the edit lock. The campaign can then be edited. The reason will be documented in the approval history."
+          },
+          "submit": "Request Changes",
+          "submitting": "Setting..."
+        },
+        "approval": {
+          "title": "Grant Approval",
+          "description": "Please document the reason for manual approval:",
+          "placeholder": "e.g. 'Customer approved by phone on 10.11.2025: Yes, let's do it!'",
+          "hint": {
+            "title": "Note",
+            "text": "This action grants approval. The campaign remains locked to prevent unauthorized changes. The reason will be documented in the approval history and is visible to the customer."
+          },
+          "submit": "Grant Approval",
+          "submitting": "Granting..."
+        },
+        "approvalReason": {
+          "ariaLabel": "Reason for approval"
+        },
+        "changesReason": {
+          "ariaLabel": "Reason for changes"
+        }
+      },
+      "error": {
+        "approvalGrantError": "Error granting approval:",
+        "changesRequestError": "Error requesting changes:"
+      }
     },
     "approval": {
       "noRequestFound": "No approval request found",
@@ -2412,6 +2646,49 @@
         },
         "chatHistory": {
           "title": "Chat History"
+        }
+      }
+    },
+    "status": {
+      "labels": {
+        "draft": "Draft",
+        "generating_preview": "Generating Preview",
+        "in_review": "In Review",
+        "changes_requested": "Changes Requested",
+        "approved": "Approved",
+        "scheduled": "Scheduled",
+        "sending": "Sending",
+        "sent": "Sent",
+        "archived": "Archived"
+      },
+      "descriptions": {
+        "draft": "The campaign is still being edited",
+        "generating_preview": "PDF preview is being generated (temporary)",
+        "in_review": "The campaign is being reviewed by the customer",
+        "changes_requested": "The customer has requested changes",
+        "approved": "The campaign has been approved by the customer",
+        "scheduled": "The campaign is scheduled for sending",
+        "sending": "The campaign is currently being sent",
+        "sent": "The campaign was successfully sent",
+        "archived": "The campaign has been archived"
+      },
+      "tooltip": {
+        "noEnhancedData": "No extended approval data available",
+        "noApprovalRequired": "No approval required",
+        "noApprovalRequiredDesc": "This campaign can be sent directly.",
+        "teamApproval": "Team Approval",
+        "customerApproval": "Customer Approval",
+        "customerNotSelected": "Customer not selected yet",
+        "currentStage": "Current Stage",
+        "stages": {
+          "team": "Team Approval",
+          "customer": "Customer Approval",
+          "completed": "Completed"
+        },
+        "statusIcons": {
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "pending": "Pending"
         }
       }
     }

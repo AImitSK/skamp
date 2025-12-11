@@ -5,6 +5,7 @@ import { FieldGroup } from "@/components/ui/fieldset";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Text } from "@/components/ui/text";
 import { ContactModalSectionProps } from "./types";
+import { useTranslations } from "next-intl";
 
 /**
  * GDPR Section für ContactModal
@@ -12,6 +13,7 @@ import { ContactModalSectionProps } from "./types";
  * Enthält: GDPR-Einwilligungen (Marketing, Newsletter, Telefonische Kontaktaufnahme)
  */
 export function GdprSection({ formData, setFormData }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.gdpr');
   const updateGdprConsent = (purpose: string, granted: boolean) => {
     const existingConsents = formData.gdprConsents || [];
     const existingIndex = existingConsents.findIndex(c => c.purpose === purpose);
@@ -44,15 +46,15 @@ export function GdprSection({ formData, setFormData }: ContactModalSectionProps)
         <div className="border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="font-medium">Marketing-Kommunikation</Text>
-              <Text className="text-sm text-gray-500">Erlaubnis für Marketing-E-Mails und -Anrufe</Text>
+              <Text className="font-medium">{t('marketing.title')}</Text>
+              <Text className="text-sm text-gray-500">{t('marketing.description')}</Text>
             </div>
             <label className="flex items-center">
               <Checkbox
                 checked={formData.gdprConsents?.some(c => c.purpose === 'Marketing' && c.status === 'granted') || false}
                 onChange={(checked) => updateGdprConsent('Marketing', checked)}
               />
-              <span className="ml-2">Einwilligung erteilt</span>
+              <span className="ml-2">{t('consentGranted')}</span>
             </label>
           </div>
         </div>
@@ -60,15 +62,15 @@ export function GdprSection({ formData, setFormData }: ContactModalSectionProps)
         <div className="border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="font-medium">Newsletter</Text>
-              <Text className="text-sm text-gray-500">Erlaubnis für Newsletter-Versand</Text>
+              <Text className="font-medium">{t('newsletter.title')}</Text>
+              <Text className="text-sm text-gray-500">{t('newsletter.description')}</Text>
             </div>
             <label className="flex items-center">
               <Checkbox
                 checked={formData.gdprConsents?.some(c => c.purpose === 'Newsletter' && c.status === 'granted') || false}
                 onChange={(checked) => updateGdprConsent('Newsletter', checked)}
               />
-              <span className="ml-2">Einwilligung erteilt</span>
+              <span className="ml-2">{t('consentGranted')}</span>
             </label>
           </div>
         </div>
@@ -76,15 +78,15 @@ export function GdprSection({ formData, setFormData }: ContactModalSectionProps)
         <div className="border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="font-medium">Telefonische Kontaktaufnahme</Text>
-              <Text className="text-sm text-gray-500">Erlaubnis für Anrufe</Text>
+              <Text className="font-medium">{t('phoneContact.title')}</Text>
+              <Text className="text-sm text-gray-500">{t('phoneContact.description')}</Text>
             </div>
             <label className="flex items-center">
               <Checkbox
                 checked={formData.gdprConsents?.some(c => c.purpose === 'Telefonische Kontaktaufnahme' && c.status === 'granted') || false}
                 onChange={(checked) => updateGdprConsent('Telefonische Kontaktaufnahme', checked)}
               />
-              <span className="ml-2">Einwilligung erteilt</span>
+              <span className="ml-2">{t('consentGranted')}</span>
             </label>
           </div>
         </div>

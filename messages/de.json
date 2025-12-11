@@ -923,7 +923,61 @@
   },
   "crm": {
     "redirecting": "Weiterleitung...",
+    "contactTable": {
+      "headers": {
+        "namePosition": "Name & Position",
+        "fullNamePosition": "Vollständiger Name / Position",
+        "company": "Firma",
+        "phone": "Telefon",
+        "publications": "Publikationen",
+        "tagsBeats": "Tags / Ressort",
+        "status": "Status",
+        "contact": "Kontakt"
+      },
+      "journalist": "Journalist",
+      "statusActive": "Aktiv"
+    },
+    "companyTable": {
+      "headers": {
+        "company": "Firma",
+        "statusLifecycle": "Status / Lifecycle",
+        "industry": "Branche",
+        "revenueEmployees": "Umsatz / Mitarbeiter",
+        "location": "Standort",
+        "contact": "Kontakt",
+        "tags": "Tags"
+      },
+      "dba": "dba"
+    },
     "contactModal": {
+      "titleEdit": "Person bearbeiten",
+      "titleAdd": "Neue Person hinzufügen",
+      "tabs": {
+        "general": {
+          "label": "Allgemein",
+          "description": "Basis-Informationen zur Person"
+        },
+        "communication": {
+          "label": "Kommunikation",
+          "description": "Kontaktdaten und Präferenzen"
+        },
+        "media": {
+          "label": "Medien",
+          "description": "Journalisten-Profile und Publikationen"
+        },
+        "professional": {
+          "label": "Beruflich",
+          "description": "Position, Ausbildung, Mitgliedschaften"
+        },
+        "gdpr": {
+          "label": "DSGVO",
+          "description": "Einwilligungen und Datenschutz"
+        },
+        "personal": {
+          "label": "Persönlich",
+          "description": "Persönliche Informationen"
+        }
+      },
       "general": {
         "labels": {
           "salutation": "Anrede",
@@ -969,7 +1023,26 @@
       },
       "professional": {
         "biography": "Biografie",
-        "biographyPlaceholder": "Beruflicher Werdegang..."
+        "biographyPlaceholder": "Beruflicher Werdegang...",
+        "education": {
+          "title": "Ausbildung",
+          "addButton": "Ausbildung hinzufügen",
+          "degree": "Abschluss",
+          "degreePlaceholder": "z.B. Bachelor, Master, Dr.",
+          "institution": "Institution",
+          "institutionPlaceholder": "z.B. Universität Hamburg",
+          "year": "Jahr",
+          "yearPlaceholder": "2020",
+          "empty": "Keine Ausbildung hinzugefügt"
+        },
+        "certifications": {
+          "title": "Zertifizierungen",
+          "placeholder": "Eine Zertifizierung pro Zeile..."
+        },
+        "memberships": {
+          "title": "Mitgliedschaften",
+          "placeholder": "Eine Mitgliedschaft pro Zeile..."
+        }
       },
       "communication": {
         "title": "Kommunikation",
@@ -1038,7 +1111,8 @@
             "ja": "日本語",
             "ko": "한국어",
             "zh": "中文"
-          }
+          },
+          "doNotContact": "Nicht kontaktieren"
         },
         "primary": "Primär"
       },
@@ -1047,7 +1121,7 @@
         "nationality": "Nationalität",
         "nationalityPlaceholder": "Nationalität auswählen...",
         "interests": "Interessen",
-        "interestsPlaceholder": "z.B. Golf, Technologie, Reisen (kommagetrennt)",
+        "interestsPlaceholder": "Ein Interesse pro Zeile...",
         "internalNotes": "Interne Notizen",
         "internalNotesPlaceholder": "Interne Notizen für das Team (nicht sichtbar für externe Kontakte)...",
         "countries": {
@@ -1081,7 +1155,88 @@
           "MX": "Mexiko",
           "RU": "Russland",
           "TR": "Türkei"
+        },
+        "languages": {
+          "title": "Sprachen",
+          "placeholder": "Sprache auswählen..."
+        },
+        "personalNotes": "Persönliche Notizen",
+        "personalNotesPlaceholder": "Persönliche Notizen (Hobbies, Familie, etc.)..."
+      },
+      "media": {
+        "types": {
+          "title": "Medientypen",
+          "empty": "Keine Medientypen ausgewählt"
+        },
+        "beats": {
+          "title": "Ressorts/Themengebiete",
+          "empty": "Keine Ressorts ausgewählt"
+        },
+        "formats": {
+          "title": "Bevorzugte Formate",
+          "empty": "Keine Formate ausgewählt"
+        },
+        "guidelines": {
+          "title": "Einreichungsrichtlinien",
+          "placeholder": "Spezielle Anforderungen oder Hinweise für Einreichungen..."
         }
+      },
+      "gdpr": {
+        "title": "DSGVO Einwilligungen",
+        "addButton": "Einwilligung hinzufügen",
+        "empty": "Keine DSGVO Einwilligungen erfasst",
+        "consentNumber": "Einwilligung {number}",
+        "fields": {
+          "purpose": "Zweck",
+          "purposePlaceholder": "z.B. Marketing-Newsletter",
+          "status": "Status",
+          "legalBasis": "Rechtsgrundlage",
+          "method": "Methode"
+        },
+        "status": {
+          "pending": "Ausstehend",
+          "granted": "Erteilt",
+          "revoked": "Widerrufen"
+        },
+        "legalBasis": {
+          "consent": "Einwilligung",
+          "contract": "Vertrag",
+          "legal_obligation": "Rechtliche Verpflichtung",
+          "vital_interests": "Lebenswichtige Interessen",
+          "public_task": "Öffentliche Aufgabe",
+          "legitimate_interests": "Berechtigte Interessen"
+        },
+        "method": {
+          "webform": "Web-Formular",
+          "email": "E-Mail",
+          "phone": "Telefon",
+          "written": "Schriftlich",
+          "double_opt_in": "Double Opt-In",
+          "import": "Import"
+        },
+        "consentGranted": "Einwilligung erteilt",
+        "marketing": {
+          "title": "Marketing-Kommunikation",
+          "description": "Erlaubnis für Marketing-E-Mails und -Anrufe"
+        },
+        "newsletter": {
+          "title": "Newsletter",
+          "description": "Erlaubnis für Newsletter-Versand"
+        },
+        "phoneContact": {
+          "title": "Telefonische Kontaktaufnahme",
+          "description": "Erlaubnis für Anrufe"
+        }
+      },
+      "validation": {
+        "firstNameRequired": "Vorname ist erforderlich",
+        "lastNameRequired": "Nachname ist erforderlich",
+        "invalidEmail": "Ungültige E-Mail-Adresse",
+        "errorPrefix": "Fehler: {message}",
+        "generalError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      },
+      "actions": {
+        "saving": "Speichern..."
       }
     },
     "companyModal": {
@@ -1228,6 +1383,28 @@
         "valuePlaceholder": "Wert eingeben...",
         "authorityPlaceholder": "Land/Behörde",
         "noIdentifiers": "Keine Kennungen hinzugefügt"
+      }
+    },
+    "companyMedia": {
+      "title": "Medien",
+      "status": {
+        "noMedia": "Noch keine Medien zugeordnet",
+        "summary": "{folderCount, plural, =0 {} one {# Ordner} other {# Ordner}}{folderCount, plural, =0 {} other {, }}{fileCount, plural, =0 {} one {# Datei} other {# Dateien}}{total, plural, =0 {} other { ({total} gesamt)}}"
+      },
+      "actions": {
+        "toLibrary": "Zur Mediathek",
+        "uploadFor": "Für {companyName}"
+      },
+      "empty": {
+        "title": "Noch keine Medien",
+        "description": "Laden Sie Dateien hoch oder erstellen Sie Ordner für {companyName}.",
+        "uploadButton": "Ersten Upload starten"
+      },
+      "sections": {
+        "folders": "Ordner ({count})",
+        "folderType": "Ordner",
+        "recentFiles": "Letzte Dateien ({count}{total, plural, =0 {} other { von {total}}})",
+        "showAll": "Alle {total} Medien anzeigen"
       }
     }
   },
@@ -2231,7 +2408,17 @@
         "pipelineActivating": "Projekt-Pipeline-Freigabe wird aktiviert",
         "workflowReady": "✅ PDF-Workflow bereit",
         "workflowDescription": "Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:",
-        "workflowTip": "💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen Status in Step 4 \"Vorschau\"."
+        "workflowTip": "💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen Status in Step 4 \"Vorschau\".",
+        "customerApprovalRequired": "Kundenfreigabe erforderlich",
+        "customerApprovalDescription": "Kampagne muss vom Kunden freigegeben werden",
+        "contactRequired": "Kontakt erforderlich",
+        "contactRequiredDescription": "Bitte wählen Sie einen Kontakt aus. Die Kampagne kann erst gespeichert werden, wenn ein Freigabe-Kontakt ausgewählt wurde.",
+        "selectClientFirst": "Bitte wählen Sie zuerst einen Kunden aus, um Kontakte für die Freigabe festzulegen.",
+        "newMessageLabel": "Neue Nachricht an den Kunden (optional)",
+        "newMessagePlaceholder": "Neue Nachricht für die erneute Freigabe-Anfrage...",
+        "messageHint": "Diese Nachricht wird als erste im Feedback-Chat angezeigt.",
+        "showChatHistory": "Chat-Verlauf anzeigen",
+        "chatHistory": "Chat-Verlauf"
       },
       "pdf": {
         "preview": "PDF-Vorschau",
@@ -2310,7 +2497,54 @@
       "campaignIdNotFound": "Campaign-ID nicht gefunden",
       "unknownUser": "Unbekannt",
       "unlockRequestSent": "Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.",
-      "unlockRequestFailed": "Die Entsperr-Anfrage konnte nicht gesendet werden."
+      "unlockRequestFailed": "Die Entsperr-Anfrage konnte nicht gesendet werden.",
+      "editable": "Bearbeitbar",
+      "campaignEditable": "Kampagne ist bearbeitbar",
+      "editingAllowed": "Bearbeitungen erlaubt",
+      "banner": {
+        "title": "Bearbeitung gesperrt - {label}",
+        "lockedBy": "Gesperrt von: <strong>{name}</strong>",
+        "action": "Aktion: <strong>{action}</strong>",
+        "lockedAt": "Gesperrt am: <strong>{date}</strong>"
+      },
+      "actions": {
+        "requestChanges": "Änderungen erbeten",
+        "grantApproval": "Freigabe erteilen"
+      },
+      "modal": {
+        "changes": {
+          "title": "Änderungen erbeten",
+          "description": "Bitte dokumentieren Sie die gewünschten Änderungen:",
+          "placeholder": "z.B. 'Kunde hat am 10.11.2025 telefonisch angerufen: Andere Bilder verwenden und...'",
+          "hint": {
+            "title": "Hinweis",
+            "text": "Diese Aktion setzt den Status auf \"Änderungen erbeten\" und hebt den Edit-Lock auf. Die Kampagne kann dann bearbeitet werden. Die Begründung wird im Freigabe-Verlauf dokumentiert."
+          },
+          "submit": "Änderungen erbeten",
+          "submitting": "Wird gesetzt..."
+        },
+        "approval": {
+          "title": "Freigabe erteilen",
+          "description": "Bitte dokumentieren Sie die Begründung für die manuelle Freigabe:",
+          "placeholder": "z.B. 'Kunde hat am 10.11.2025 telefonisch freigegeben: Ja, das machen wir so!'",
+          "hint": {
+            "title": "Hinweis",
+            "text": "Diese Aktion erteilt die Freigabe. Die Kampagne bleibt gesperrt, um ungenehmigte Änderungen zu verhindern. Die Begründung wird im Freigabe-Verlauf dokumentiert und ist für den Kunden sichtbar."
+          },
+          "submit": "Freigabe erteilen",
+          "submitting": "Wird erteilt..."
+        },
+        "approvalReason": {
+          "ariaLabel": "Begründung für Freigabe"
+        },
+        "changesReason": {
+          "ariaLabel": "Begründung für Änderungen"
+        }
+      },
+      "error": {
+        "approvalGrantError": "Fehler bei der Freigabe-Erteilung:",
+        "changesRequestError": "Fehler bei der Änderungsanfrage:"
+      }
     },
     "approval": {
       "noRequestFound": "Keine Freigabe-Anfrage gefunden",
@@ -2412,6 +2646,49 @@
         },
         "chatHistory": {
           "title": "Chat-Verlauf"
+        }
+      }
+    },
+    "status": {
+      "labels": {
+        "draft": "Entwurf",
+        "generating_preview": "Generiere Vorschau",
+        "in_review": "In Prüfung",
+        "changes_requested": "Änderung erbeten",
+        "approved": "Freigegeben",
+        "scheduled": "Geplant",
+        "sending": "Wird gesendet",
+        "sent": "Gesendet",
+        "archived": "Archiviert"
+      },
+      "descriptions": {
+        "draft": "Die Kampagne ist noch in Bearbeitung",
+        "generating_preview": "PDF-Vorschau wird generiert (temporär)",
+        "in_review": "Die Kampagne wird vom Kunden geprüft",
+        "changes_requested": "Der Kunde hat Änderungen angefordert",
+        "approved": "Die Kampagne wurde vom Kunden freigegeben",
+        "scheduled": "Die Kampagne ist für den Versand geplant",
+        "sending": "Die Kampagne wird gerade versendet",
+        "sent": "Die Kampagne wurde erfolgreich versendet",
+        "archived": "Die Kampagne wurde archiviert"
+      },
+      "tooltip": {
+        "noEnhancedData": "Keine erweiterten Freigabe-Daten verfügbar",
+        "noApprovalRequired": "Keine Freigabe erforderlich",
+        "noApprovalRequiredDesc": "Diese Kampagne kann direkt versendet werden.",
+        "teamApproval": "Team-Freigabe",
+        "customerApproval": "Kunden-Freigabe",
+        "customerNotSelected": "Kunde noch nicht ausgewählt",
+        "currentStage": "Aktuelle Stufe",
+        "stages": {
+          "team": "Team-Freigabe",
+          "customer": "Kunden-Freigabe",
+          "completed": "Abgeschlossen"
+        },
+        "statusIcons": {
+          "approved": "Freigegeben",
+          "rejected": "Abgelehnt",
+          "pending": "Ausstehend"
         }
       }
     }

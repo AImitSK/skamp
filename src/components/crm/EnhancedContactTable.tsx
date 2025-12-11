@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,6 +49,8 @@ export function EnhancedContactTable({
   publications = new Map(),
   viewMode = 'compact'
 }: EnhancedContactTableProps) {
+  const t = useTranslations('crm.contactTable');
+  const tCommon = useTranslations('common');
   const allSelected = contacts.length > 0 && contacts.every(c => selectedIds.has(c.id!));
   const someSelected = contacts.some(c => selectedIds.has(c.id!)) && !allSelected;
 
@@ -117,23 +120,23 @@ export function EnhancedContactTable({
                 onChange={onSelectAll}
               />
               <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Name & Position
+                {t('headers.namePosition')}
               </span>
             </div>
             <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Firma
+              {t('headers.company')}
             </div>
             <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Publikationen
+              {t('headers.publications')}
             </div>
             <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Tags/Ressort
+              {t('headers.tagsBeats')}
             </div>
             <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Status
+              {t('headers.status')}
             </div>
             <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-              Kontakt
+              {t('headers.contact')}
             </div>
           </div>
         </div>
@@ -203,7 +206,7 @@ export function EnhancedContactTable({
                     ) : isJournalist(contact) ? (
                       <Badge color="zinc" className="text-xs">
                         <NewspaperIcon className="h-3 w-3 mr-1" />
-                        Journalist
+                        {t('journalist')}
                       </Badge>
                     ) : (
                       <span className="text-sm text-zinc-400">—</span>
@@ -253,7 +256,7 @@ export function EnhancedContactTable({
                   {/* Status */}
                   <div className="w-[10%]">
                     <Badge color={getStatusColor(contact.status)} className="text-xs whitespace-nowrap">
-                      {CONTACT_STATUS_OPTIONS.find(opt => opt.value === contact.status)?.label || 'Aktiv'}
+                      {CONTACT_STATUS_OPTIONS.find(opt => opt.value === contact.status)?.label || t('statusActive')}
                     </Badge>
                   </div>
 
@@ -296,14 +299,14 @@ export function EnhancedContactTable({
                       </DropdownButton>
                       <DropdownMenu anchor="bottom end">
                         <DropdownItem onClick={() => onView(contact)}>
-                          Anzeigen
+                          {tCommon('view')}
                         </DropdownItem>
                         <DropdownItem onClick={() => onEdit(contact)}>
-                          Bearbeiten
+                          {tCommon('edit')}
                         </DropdownItem>
                         <DropdownDivider />
                         <DropdownItem onClick={() => onDelete(contact)}>
-                          <span className="text-red-600">Löschen</span>
+                          <span className="text-red-600">{tCommon('delete')}</span>
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
@@ -330,20 +333,20 @@ export function EnhancedContactTable({
               onChange={onSelectAll}
             />
             <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Vollständiger Name / Position
+              {t('headers.fullNamePosition')}
             </span>
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Firma
+            {t('headers.company')}
           </div>
           <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Telefon
+            {t('headers.phone')}
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Publikation(en)
+            {t('headers.publications')}
           </div>
           <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Tags / Ressort
+            {t('headers.tagsBeats')}
           </div>
           <div className="w-16"></div>
         </div>
@@ -467,14 +470,14 @@ export function EnhancedContactTable({
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => onView(contact)}>
-                        Anzeigen
+                        {tCommon('view')}
                       </DropdownItem>
                       <DropdownItem onClick={() => onEdit(contact)}>
-                        Bearbeiten
+                        {tCommon('edit')}
                       </DropdownItem>
                       <DropdownDivider />
                       <DropdownItem onClick={() => onDelete(contact)}>
-                        <span className="text-red-600">Löschen</span>
+                        <span className="text-red-600">{tCommon('delete')}</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>

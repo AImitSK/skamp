@@ -67,7 +67,10 @@
       "Bash(node scripts/find-campaign-for-project.js:*)",
       "Bash(git pull:*)",
       "Bash(npm run lint:*)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(node:*)",
+      "Bash(node temp-update-en.js:*)",
+      "Bash(del temp-update-de.js temp-update-en.js)"
     ]
   },
   "enableAllProjectMcpServers": true,

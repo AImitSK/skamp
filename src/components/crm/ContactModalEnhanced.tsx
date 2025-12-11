@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -21,9 +22,9 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { CountrySelector } from "@/components/ui/country-selector";
 import { LanguageSelector, LanguageSelectorMulti } from "@/components/ui/language-selector";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { 
-  PlusIcon, 
-  TrashIcon, 
+import {
+  PlusIcon,
+  TrashIcon,
   InformationCircleIcon,
   UserIcon,
   ShieldCheckIcon,
@@ -41,49 +42,35 @@ type TabId = 'general' | 'communication' | 'media' | 'professional' | 'gdpr' | '
 
 interface TabConfig {
   id: TabId;
-  label: string;
   icon: React.ComponentType<{ className?: string }>;
-  description: string;
   visible?: (formData: Partial<ContactEnhanced>) => boolean;
 }
 
-const TABS: TabConfig[] = [
-  { 
-    id: 'general', 
-    label: 'Allgemein', 
-    icon: UserIcon,
-    description: 'Basis-Informationen zur Person' 
+const TAB_CONFIGS: TabConfig[] = [
+  {
+    id: 'general',
+    icon: UserIcon
   },
-  { 
-    id: 'communication', 
-    label: 'Kommunikation', 
-    icon: ChatBubbleLeftRightIcon,
-    description: 'Kontaktdaten und Präferenzen' 
+  {
+    id: 'communication',
+    icon: ChatBubbleLeftRightIcon
   },
-  { 
-    id: 'media', 
-    label: 'Medien', 
+  {
+    id: 'media',
     icon: NewspaperIcon,
-    description: 'Journalisten-Profile und Publikationen',
     visible: (formData) => formData.mediaProfile?.isJournalist === true
   },
-  { 
-    id: 'professional', 
-    label: 'Beruflich', 
-    icon: BriefcaseIcon,
-    description: 'Position, Ausbildung, Mitgliedschaften' 
+  {
+    id: 'professional',
+    icon: BriefcaseIcon
   },
-  { 
-    id: 'gdpr', 
-    label: 'DSGVO', 
-    icon: ShieldCheckIcon,
-    description: 'Einwilligungen und Datenschutz' 
+  {
+    id: 'gdpr',
+    icon: ShieldCheckIcon
   },
-  { 
-    id: 'personal', 
-    label: 'Persönlich', 
-    icon: CalendarIcon,
-    description: 'Persönliche Informationen' 
+  {
+    id: 'personal',
+    icon: CalendarIcon
   }
 ];
 
@@ -141,6 +128,8 @@ export default function ContactModalEnhanced({
   userId,
   organizationId
 }: ContactModalProps) {
+  const t = useTranslations('crm.contactModal');
+  const tCommon = useTranslations('common');
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
@@ -310,7 +299,7 @@ export default function ContactModalEnhanced({
     return tab.visible(formData);
   };
 
-  const visibleTabs = TABS.filter(isTabVisible);
+  const visibleTabs = TAB_CONFIGS.filter(isTabVisible);
 
   // Handler functions
   const handleCompanyChange = (companyId: string) => {
@@ -382,19 +371,19 @@ export default function ContactModalEnhanced({
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const errors: string[] = [];
     if (!formData.name?.firstName?.trim()) {
-      errors.push('Vorname ist erforderlich');
+      errors.push(t('validation.firstNameRequired'));
     }
     if (!formData.name?.lastName?.trim()) {
-      errors.push('Nachname ist erforderlich');
+      errors.push(t('validation.lastNameRequired'));
     }
     if (formData.emails?.some(e => e.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email))) {
-      errors.push('Ungültige E-Mail-Adresse');
+      errors.push(t('validation.invalidEmail'));
     }
-    
+
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
@@ -474,9 +463,9 @@ const handleSubmit = async (e: React.FormEvent) => {
     } catch (error) {
       console.error('Error saving contact:', error);
       if (error instanceof Error) {
-        setValidationErrors([`Fehler: ${error.message}`]);
+        setValidationErrors([t('validation.errorPrefix', { message: error.message })]);
       } else {
-        setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+        setValidationErrors([t('validation.generalError')]);
       }
     } finally {
       setLoading(false);
@@ -489,7 +478,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     <Dialog open={true} onClose={onClose} size="5xl">
       <form ref={formRef} onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
-          {contact ? 'Person bearbeiten' : 'Neue Person hinzufügen'}
+          {contact ? t('titleEdit') : t('titleAdd')}
         </DialogTitle>
         
         <DialogBody className="p-0">
@@ -522,7 +511,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                         activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
                       )}
                     />
-                    {tab.label}
+                    {t(`tabs.${tab.id}.label`)}
                   </button>
                 );
               })}
@@ -536,27 +525,27 @@ const handleSubmit = async (e: React.FormEvent) => {
               <FieldGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Vorname *</Label>
-                    <Input 
-                      value={formData.name?.firstName || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                    <Label>{t('general.labels.firstName')} {t('general.required')}</Label>
+                    <Input
+                      value={formData.name?.firstName || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
                         name: { ...formData.name!, firstName: e.target.value },
                         displayName: `${e.target.value} ${formData.name?.lastName || ''}`
-                      })} 
-                      required 
+                      })}
+                      required
                       autoFocus
                     />
                   </Field>
                   <Field>
-                    <Label>Nachname *</Label>
-                    <Input 
-                      value={formData.name?.lastName || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                    <Label>{t('general.labels.lastName')} {t('general.required')}</Label>
+                    <Input
+                      value={formData.name?.lastName || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
                         name: { ...formData.name!, lastName: e.target.value },
                         displayName: `${formData.name?.firstName || ''} ${e.target.value}`
-                      })} 
+                      })}
                       required
                     />
                   </Field>
@@ -564,45 +553,45 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Anrede</Label>
-                    <Select 
-                      value={formData.name?.salutation || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                    <Label>{t('general.labels.salutation')}</Label>
+                    <Select
+                      value={formData.name?.salutation || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
                         name: { ...formData.name!, salutation: e.target.value }
                       })}
                     >
-                      <option value="">Keine</option>
-                      <option value="Herr">Herr</option>
-                      <option value="Frau">Frau</option>
-                      <option value="Dr.">Dr.</option>
-                      <option value="Prof.">Prof.</option>
-                      <option value="Prof. Dr.">Prof. Dr.</option>
+                      <option value="">{t('general.salutations.none')}</option>
+                      <option value="Herr">{t('general.salutations.mr')}</option>
+                      <option value="Frau">{t('general.salutations.ms')}</option>
+                      <option value="Dr.">{t('general.salutations.dr')}</option>
+                      <option value="Prof.">{t('general.salutations.prof')}</option>
+                      <option value="Prof. Dr.">{t('general.salutations.profDr')}</option>
                     </Select>
                   </Field>
                   <Field>
-                    <Label>Titel</Label>
-                    <Input 
-                      value={formData.name?.title || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                    <Label>{t('general.labels.title')}</Label>
+                    <Input
+                      value={formData.name?.title || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
                         name: { ...formData.name!, title: e.target.value }
                       })}
-                      placeholder="z.B. Dr., MBA"
+                      placeholder={t('general.placeholders.titleExample')}
                     />
                   </Field>
                 </div>
 
                 <Field>
                   <Label>
-                    Firma
-                    <InfoTooltip content="Wählen Sie die Firma aus, bei der diese Person arbeitet" className="ml-1.5 inline-flex align-text-top" />
+                    {t('general.labels.company')}
+                    <InfoTooltip content={t('general.company.tooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
                   <Select
                     value={formData.companyId || ''}
                     onChange={(e) => handleCompanyChange(e.target.value)}
                   >
-                    <option value="">Keine Firma zugeordnet</option>
+                    <option value="">{t('general.company.none')}</option>
                     {companies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name}
@@ -613,39 +602,39 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Position</Label>
+                    <Label>{t('general.labels.position')}</Label>
                     <Input
                       value={formData.position || ''}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      placeholder="z.B. Geschäftsführer, Redakteur"
+                      placeholder={t('general.placeholders.positionExample')}
                     />
                   </Field>
                   <Field>
-                    <Label>Abteilung</Label>
+                    <Label>{t('general.labels.department')}</Label>
                     <Input
                       value={formData.department || ''}
                       onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                      placeholder="z.B. Marketing, Redaktion"
+                      placeholder={t('general.placeholders.departmentExample')}
                     />
                   </Field>
                 </div>
 
                 <Field>
-                  <Label>Status</Label>
-                  <Select 
-                    value={formData.status} 
+                  <Label>{t('general.labels.status')}</Label>
+                  <Select
+                    value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                   >
                     {CONTACT_STATUS_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>{t(`general.contactStatus.${opt.value}`)}</option>
                     ))}
                   </Select>
                 </Field>
 
                 <Field>
                   <Label>
-                    Ist Journalist/Redakteur
-                    <InfoTooltip content="Aktiviert zusätzliche Medien-spezifische Felder" className="ml-1.5 inline-flex align-text-top" />
+                    {t('general.journalist.label')}
+                    <InfoTooltip content={t('general.journalist.tooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
                   <Checkbox
                     checked={formData.mediaProfile?.isJournalist || false}
@@ -658,12 +647,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Tags */}
                 <Field>
-                  <Label>Tags</Label>
-                  <TagInput 
-                    selectedTagIds={formData.tagIds || []} 
-                    availableTags={tags} 
-                    onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
-                    onCreateTag={handleCreateTag} 
+                  <Label>{t('general.labels.tags')}</Label>
+                  <TagInput
+                    selectedTagIds={formData.tagIds || []}
+                    availableTags={tags}
+                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                    onCreateTag={handleCreateTag}
                   />
                 </Field>
               </FieldGroup>
@@ -675,41 +664,41 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {/* Email Addresses */}
                 <div className="space-y-4 rounded-md border p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+                    <div className="text-sm font-medium text-gray-900">{t('communication.emails.title')}</div>
                     <Button type="button" onClick={addEmailField} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      E-Mail hinzufügen
+                      {t('communication.emails.addButton')}
                     </Button>
                   </div>
-                  
+
                   {formData.emails && formData.emails.length > 0 ? (
                     <div className="space-y-2">
                       {formData.emails.map((email, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-center">
                           <div className="col-span-3">
-                            <Select 
-                              value={email.type} 
+                            <Select
+                              value={email.type}
                               onChange={(e) => {
                                 const updated = [...formData.emails!];
                                 updated[index].type = e.target.value as any;
                                 setFormData({ ...formData, emails: updated });
                               }}
                             >
-                              <option value="business">Geschäftlich</option>
-                              <option value="private">Privat</option>
-                              <option value="other">Sonstige</option>
+                              <option value="business">{t('communication.emails.types.business')}</option>
+                              <option value="private">{t('communication.emails.types.private')}</option>
+                              <option value="other">{t('communication.emails.types.other')}</option>
                             </Select>
                           </div>
                           <div className="col-span-7">
-                            <Input 
+                            <Input
                               type="email"
-                              value={email.email} 
+                              value={email.email}
                               onChange={(e) => {
                                 const updated = [...formData.emails!];
                                 updated[index].email = e.target.value;
                                 setFormData({ ...formData, emails: updated });
                               }}
-                              placeholder="email@beispiel.de" 
+                              placeholder={t('communication.emails.placeholder')}
                             />
                           </div>
                           <div className="col-span-1 flex items-center">
@@ -722,7 +711,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 });
                                 setFormData({ ...formData, emails: updated });
                               }}
-                              aria-label="Primär"
+                              aria-label={t('communication.primary')}
                             />
                           </div>
                           <div className="col-span-1">
@@ -734,38 +723,38 @@ const handleSubmit = async (e: React.FormEvent) => {
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine E-Mail-Adressen hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('communication.emails.empty')}</Text>
                   )}
                 </div>
 
                 {/* Phone Numbers */}
                 <div className="space-y-4 rounded-md border p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
+                    <div className="text-sm font-medium text-gray-900">{t('communication.phones.title')}</div>
                     <Button type="button" onClick={addPhoneField} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      Nummer hinzufügen
+                      {t('communication.phones.addButton')}
                     </Button>
                   </div>
-                  
+
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
                       {formData.phones.map((phone, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-3">
-                            <Select 
-                              value={phone.type} 
+                            <Select
+                              value={phone.type}
                               onChange={(e) => {
                                 const updated = [...formData.phones!];
                                 updated[index].type = e.target.value as any;
                                 setFormData({ ...formData, phones: updated });
                               }}
                             >
-                              <option value="business">Geschäftlich</option>
-                              <option value="mobile">Mobil</option>
-                              <option value="private">Privat</option>
-                              <option value="fax">Fax</option>
-                              <option value="other">Sonstige</option>
+                              <option value="business">{t('communication.phones.types.business')}</option>
+                              <option value="mobile">{t('communication.phones.types.mobile')}</option>
+                              <option value="private">{t('communication.phones.types.private')}</option>
+                              <option value="fax">{t('communication.phones.types.fax')}</option>
+                              <option value="other">{t('communication.phones.types.other')}</option>
                             </Select>
                           </div>
                           <div className="col-span-7">
@@ -789,7 +778,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 });
                                 setFormData({ ...formData, phones: updated });
                               }}
-                              aria-label="Primär"
+                              aria-label={t('communication.primary')}
                             />
                           </div>
                           <div className="col-span-1 pt-2">
@@ -801,13 +790,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('communication.phones.empty')}</Text>
                   )}
                 </div>
 
                 {/* Social Profiles */}
                 <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+                  <div className="text-sm font-medium text-gray-900">{t('communication.social.title')}</div>
                   {(formData.socialProfiles || []).map((profile, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-5">
@@ -844,17 +833,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                   ))}
                   <Button type="button" onClick={addSocialProfile} plain className="w-full">
                     <PlusIcon className="h-4 w-4" />
-                    Profil hinzufügen
+                    {t('communication.social.addButton')}
                   </Button>
                 </div>
 
                 {/* Communication Preferences */}
                 <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Kommunikationspräferenzen</div>
-                  
+                  <div className="text-sm font-medium text-gray-900">{t('communication.preferences.title')}</div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field>
-                      <Label>Bevorzugter Kanal</Label>
+                      <Label>{t('communication.preferences.preferredChannel')}</Label>
                       <Select 
                         value={formData.communicationPreferences?.preferredChannel || 'email'} 
                         onChange={(e) => setFormData({ 
@@ -871,33 +860,33 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </Select>
                     </Field>
                     <Field>
-                      <Label>Bevorzugte Sprache</Label>
+                      <Label>{t('communication.preferences.preferredLanguage')}</Label>
                       <LanguageSelector
                         value={formData.communicationPreferences?.preferredLanguage || null}
-                        onChange={(lang) => setFormData({ 
-                          ...formData, 
-                          communicationPreferences: { 
-                            ...formData.communicationPreferences!, 
+                        onChange={(lang) => setFormData({
+                          ...formData,
+                          communicationPreferences: {
+                            ...formData.communicationPreferences!,
                             preferredLanguage: lang || undefined
                           }
                         })}
                       />
                     </Field>
                   </div>
-                  
+
                   <Field>
                     <Label className="flex items-center gap-2">
                       <Checkbox
                         checked={formData.communicationPreferences?.doNotContact || false}
-                        onChange={(checked) => setFormData({ 
-                          ...formData, 
-                          communicationPreferences: { 
-                            ...formData.communicationPreferences!, 
-                            doNotContact: checked 
+                        onChange={(checked) => setFormData({
+                          ...formData,
+                          communicationPreferences: {
+                            ...formData.communicationPreferences!,
+                            doNotContact: checked
                           }
                         })}
                       />
-                      Nicht kontaktieren
+                      {t('communication.preferences.doNotContact')}
                     </Label>
                   </Field>
                 </div>
@@ -1336,13 +1325,13 @@ const handleSubmit = async (e: React.FormEvent) => {
         </DialogBody>
 
         <DialogActions className="px-6 py-4">
-          <Button plain onClick={onClose}>Abbrechen</Button>
-          <Button 
-            type="submit" 
+          <Button plain onClick={onClose}>{tCommon('cancel')}</Button>
+          <Button
+            type="submit"
             disabled={loading}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
-            {loading ? 'Speichern...' : 'Speichern'}
+            {loading ? t('actions.saving') : tCommon('save')}
           </Button>
         </DialogActions>
       </form>

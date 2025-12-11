@@ -3,11 +3,11 @@
 
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { 
-  ClockIcon, 
-  UserGroupIcon, 
-  CheckCircleIcon, 
-  CogIcon, 
+import {
+  ClockIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  CogIcon,
   LockClosedIcon,
   KeyIcon,
   ArrowPathIcon,
@@ -16,16 +16,17 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
-import { 
-  PRCampaign, 
-  EditLockReason, 
-  EDIT_LOCK_CONFIG, 
-  UnlockRequest 
+import {
+  PRCampaign,
+  EditLockReason,
+  EDIT_LOCK_CONFIG,
+  UnlockRequest
 } from '@/types/pr';
 
 // Icon-Mapping für dynamische Icon-Anzeige
@@ -36,24 +37,6 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
   CogIcon,
   LockClosedIcon
 };
-
-// Übersetzung für Action-Labels
-const ACTION_LABELS: Record<string, string> = {
-  'customer_approval_lock': 'Kundenfreigabe angefordert',
-  'customer_approval_requested': 'Kundenfreigabe angefordert',
-  'Freigabe erteilt': 'Freigabe erteilt',
-  'Freigabe angefordert': 'Freigabe angefordert',
-  'PDF-Generierung': 'PDF-Generierung',
-  'Änderungen durch Kunde erbeten': 'Änderungen durch Kunde erbeten',
-  'manual_lock': 'Manuell gesperrt'
-};
-
-/**
- * Übersetzt Action-Labels in lesbare deutsche Texte
- */
-function translateAction(action: string): string {
-  return ACTION_LABELS[action] || action;
-}
 
 interface EditLockBannerProps {
   campaign: PRCampaign;
@@ -82,17 +65,20 @@ export function EditLockBanner({
   className = "",
   showDetails = true
 }: EditLockBannerProps) {
+  const t = useTranslations('campaigns.editLock');
+  const tCommon = useTranslations('common');
+
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showChangesModal, setShowChangesModal] = useState(false);
   const [approvalReason, setApprovalReason] = useState('');
   const [changesReason, setChangesReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Früher Return wenn kein Edit-Lock aktiv
   if (!campaign.editLocked || !campaign.editLockedReason) {
     return null;
   }
-  
+
   const config = EDIT_LOCK_CONFIG[campaign.editLockedReason];
   const IconComponent = ICON_MAP[config.icon] || LockClosedIcon;
 
@@ -105,7 +91,7 @@ export function EditLockBanner({
       setShowApprovalModal(false);
       setApprovalReason('');
     } catch (error) {
-      console.error('Fehler bei der Freigabe-Erteilung:', error);
+      console.error(t('error.approvalGrantError'), error);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,14 +106,14 @@ export function EditLockBanner({
       setShowChangesModal(false);
       setChangesReason('');
     } catch (error) {
-      console.error('Fehler bei der Änderungsanfrage:', error);
+      console.error(t('error.changesRequestError'), error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unbekannt';
+    if (!timestamp) return tCommon('unknown');
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleString('de-DE');
   };
@@ -166,20 +152,20 @@ export function EditLockBanner({
                   config.color === 'red' && "text-red-900",
                   config.color === 'yellow' && "text-yellow-900",
                   config.color === 'blue' && "text-blue-900",
-                  config.color === 'green' && "text-green-900", 
+                  config.color === 'green' && "text-green-900",
                   config.color === 'zinc' && "text-gray-900"
                 )}>
-                  Bearbeitung gesperrt - {config.label}
+                  {t('banner.title', { label: config.label })}
                 </h4>
-                
-                <Badge 
-                  color={config.color} 
+
+                <Badge
+                  color={config.color}
                   className="text-xs uppercase font-bold"
                 >
                   {config.severity}
                 </Badge>
               </div>
-              
+
               <p className={clsx(
                 "text-sm mb-3",
                 config.color === 'red' && "text-red-700",
@@ -190,27 +176,36 @@ export function EditLockBanner({
               )}>
                 {config.description}
               </p>
-              
+
               {/* 🆕 Lock-Details (optional anzeigbar) */}
               {showDetails && campaign.lockedBy && (
                 <div className="text-xs space-y-1 mb-3 p-3 bg-white/50 rounded border border-dashed">
                   <div className="flex items-center gap-2">
                     <UserIcon className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">
-                      Gesperrt von: <strong>{campaign.lockedBy.displayName}</strong>
+                      {t.rich('banner.lockedBy', {
+                        name: campaign.lockedBy.displayName,
+                        strong: (chunks) => <strong>{chunks}</strong>
+                      })}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <ClockIcon className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">
-                      Aktion: <strong>{translateAction(campaign.lockedBy.action)}</strong>
+                      {t.rich('banner.action', {
+                        action: campaign.lockedBy.action,
+                        strong: (chunks) => <strong>{chunks}</strong>
+                      })}
                     </span>
                   </div>
                   {campaign.lockedAt && (
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">
-                        Gesperrt am: <strong>{formatDate(campaign.lockedAt)}</strong>
+                        {t.rich('banner.lockedAt', {
+                          date: formatDate(campaign.lockedAt),
+                          strong: (chunks) => <strong>{chunks}</strong>
+                        })}
                       </span>
                     </div>
                   )}
@@ -226,10 +221,10 @@ export function EditLockBanner({
                 onClick={() => setShowChangesModal(true)}
                 className="whitespace-nowrap transition-colors text-sm bg-yellow-600 hover:bg-yellow-700 text-white"
                 data-testid="request-changes-button"
-                aria-label="Änderungen erbeten"
+                aria-label={t('actions.requestChanges')}
               >
                 <InformationCircleIcon className="h-4 w-4 mr-1" />
-                Änderungen erbeten
+                {t('actions.requestChanges')}
               </Button>
             )}
             {onGrantApproval && (
@@ -237,10 +232,10 @@ export function EditLockBanner({
                 onClick={() => setShowApprovalModal(true)}
                 className="whitespace-nowrap transition-colors text-sm bg-yellow-600 hover:bg-yellow-700 text-white"
                 data-testid="grant-approval-button"
-                aria-label="Freigabe erteilen"
+                aria-label={t('actions.grantApproval')}
               >
                 <CheckCircleIcon className="h-4 w-4 mr-1" />
-                Freigabe erteilen
+                {t('actions.grantApproval')}
               </Button>
             )}
           </div>
@@ -253,23 +248,23 @@ export function EditLockBanner({
         onClose={() => !isSubmitting && setShowChangesModal(false)}
         className="relative z-50"
       >
-        <DialogTitle>Änderungen erbeten</DialogTitle>
+        <DialogTitle>{t('modal.changes.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             <Text className="text-sm text-gray-600">
-              Bitte dokumentieren Sie die gewünschten Änderungen:
+              {t('modal.changes.description')}
             </Text>
 
             <Textarea
               value={changesReason}
               onChange={(e) => setChangesReason(e.target.value)}
               rows={4}
-              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch angerufen: Andere Bilder verwenden und...'"
+              placeholder={t('modal.changes.placeholder')}
               className="w-full"
               autoFocus
               disabled={isSubmitting}
               data-testid="changes-reason-input"
-              aria-label="Begründung für Änderungen"
+              aria-label={t('modal.changesReason.ariaLabel')}
             />
 
             <div className="p-3 bg-amber-50 rounded border border-amber-200">
@@ -277,11 +272,10 @@ export function EditLockBanner({
                 <InformationCircleIcon className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <Text className="text-sm text-amber-800 font-medium mb-1">
-                    Hinweis
+                    {t('modal.changes.hint.title')}
                   </Text>
                   <Text className="text-xs text-amber-700">
-                    Diese Aktion setzt den Status auf "Änderungen erbeten" und hebt den Edit-Lock auf.
-                    Die Kampagne kann dann bearbeitet werden. Die Begründung wird im Freigabe-Verlauf dokumentiert.
+                    {t('modal.changes.hint.text')}
                   </Text>
                 </div>
               </div>
@@ -294,7 +288,7 @@ export function EditLockBanner({
             onClick={() => setShowChangesModal(false)}
             disabled={isSubmitting}
           >
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button
             onClick={handleRequestChanges}
@@ -305,10 +299,10 @@ export function EditLockBanner({
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Wird gesetzt...
+                {t('modal.changes.submitting')}
               </>
             ) : (
-              'Änderungen erbeten'
+              t('modal.changes.submit')
             )}
           </Button>
         </DialogActions>
@@ -320,23 +314,23 @@ export function EditLockBanner({
         onClose={() => !isSubmitting && setShowApprovalModal(false)}
         className="relative z-50"
       >
-        <DialogTitle>Freigabe erteilen</DialogTitle>
+        <DialogTitle>{t('modal.approval.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             <Text className="text-sm text-gray-600">
-              Bitte dokumentieren Sie die Begründung für die manuelle Freigabe:
+              {t('modal.approval.description')}
             </Text>
 
             <Textarea
               value={approvalReason}
               onChange={(e) => setApprovalReason(e.target.value)}
               rows={4}
-              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch freigegeben: Ja, das machen wir so!'"
+              placeholder={t('modal.approval.placeholder')}
               className="w-full"
               autoFocus
               disabled={isSubmitting}
               data-testid="approval-reason-input"
-              aria-label="Begründung für Freigabe"
+              aria-label={t('modal.approvalReason.ariaLabel')}
             />
 
             <div className="p-3 bg-green-50 rounded border border-green-200">
@@ -344,11 +338,10 @@ export function EditLockBanner({
                 <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <Text className="text-sm text-green-800 font-medium mb-1">
-                    Hinweis
+                    {t('modal.approval.hint.title')}
                   </Text>
                   <Text className="text-xs text-green-700">
-                    Diese Aktion erteilt die Freigabe. Die Kampagne bleibt gesperrt, um ungenehmigte Änderungen zu verhindern.
-                    Die Begründung wird im Freigabe-Verlauf dokumentiert und ist für den Kunden sichtbar.
+                    {t('modal.approval.hint.text')}
                   </Text>
                 </div>
               </div>
@@ -361,7 +354,7 @@ export function EditLockBanner({
             onClick={() => setShowApprovalModal(false)}
             disabled={isSubmitting}
           >
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button
             onClick={handleGrantApproval}
@@ -372,10 +365,10 @@ export function EditLockBanner({
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Wird erteilt...
+                {t('modal.approval.submitting')}
               </>
             ) : (
-              'Freigabe erteilen'
+              t('modal.approval.submit')
             )}
           </Button>
         </DialogActions>

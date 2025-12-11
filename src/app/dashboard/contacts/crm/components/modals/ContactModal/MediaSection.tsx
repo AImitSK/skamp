@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/ContactModal/MediaSection.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Field, Label } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,7 @@ import { ContactModalSectionProps } from "./types";
  * Nur sichtbar wenn mediaProfile.isJournalist = true
  */
 export function MediaSection({ formData, setFormData, publications = [] }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.media');
   // Beat handlers
   const addBeat = (beat: string) => {
     if (!beat.trim()) return;
@@ -48,11 +50,11 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
       {/* Publikationen */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-900">Publikationen</h3>
+          <h3 className="text-sm font-medium text-gray-900">{t('publications.title')}</h3>
           <p className="text-xs text-gray-500">
             {formData.companyId ?
-              'Wählen Sie die Publikationen dieser Firma aus, für die der Journalist arbeitet.' :
-              'Wählen Sie zuerst eine Firma aus, um deren Publikationen anzuzeigen.'
+              t('publications.description') :
+              t('publications.selectCompanyFirst')
             }
           </p>
         </div>
@@ -82,30 +84,30 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-gray-900">{pub.title}</div>
                       <div className="text-xs text-gray-500">
-                        {pub.type === 'magazine' ? 'Magazin' :
-                         pub.type === 'newspaper' ? 'Zeitung' :
-                         pub.type === 'website' ? 'Website' :
-                         pub.type === 'blog' ? 'Blog' :
-                         pub.type === 'trade_journal' ? 'Fachzeitschrift' :
-                         pub.type} • {pub.format === 'print' ? 'Print' : pub.format === 'online' ? 'Online' : 'Print & Online'}
+                        {pub.type === 'magazine' ? t('publicationTypes.magazine') :
+                         pub.type === 'newspaper' ? t('publicationTypes.newspaper') :
+                         pub.type === 'website' ? t('publicationTypes.website') :
+                         pub.type === 'blog' ? t('publicationTypes.blog') :
+                         pub.type === 'trade_journal' ? t('publicationTypes.trade_journal') :
+                         pub.type} • {pub.format === 'print' ? t('publicationFormats.print') : pub.format === 'online' ? t('publicationFormats.online') : t('publicationFormats.both')}
                       </div>
                     </div>
                     {pub.verified && (
-                      <Badge color="green" className="text-xs">Verifiziert</Badge>
+                      <Badge color="green" className="text-xs">{t('publications.verified')}</Badge>
                     )}
                   </label>
                 ))}
               </div>
             ) : (
               <Text className="text-sm text-gray-500 text-center py-4">
-                Diese Firma hat noch keine Publikationen.
+                {t('publications.empty')}
               </Text>
             )}
           </div>
         ) : (
           <div className="rounded-lg bg-amber-50 p-4">
             <Text className="text-sm text-amber-800">
-              Bitte wählen Sie zuerst eine Firma im Tab &ldquo;Allgemein&rdquo; aus.
+              {t('publications.selectCompanyWarning')}
             </Text>
           </div>
         )}
@@ -114,14 +116,14 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
       {/* Ressorts/Beats */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-900">Ressorts & Themengebiete</h3>
-          <p className="text-xs text-gray-500">Über welche Themen berichtet dieser Journalist?</p>
+          <h3 className="text-sm font-medium text-gray-900">{t('beats.title')}</h3>
+          <p className="text-xs text-gray-500">{t('beats.description')}</p>
         </div>
 
         <div className="space-y-3">
           <div className="flex gap-2">
             <Input
-              placeholder="z.B. Technologie, Wirtschaft, Politik..."
+              placeholder={t('beats.placeholder')}
               onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -141,7 +143,7 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
               }}
               className="whitespace-nowrap"
             >
-              Hinzufügen
+              {t('beats.addButton')}
             </Button>
           </div>
 
@@ -161,7 +163,7 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
               ))}
             </div>
           ) : (
-            <Text className="text-xs text-gray-500">Noch keine Ressorts hinzugefügt</Text>
+            <Text className="text-xs text-gray-500">{t('beats.empty')}</Text>
           )}
         </div>
       </div>
@@ -171,8 +173,8 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
         {/* Media Types */}
         <div className="space-y-4 rounded-md border p-4 bg-gray-50">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-900">Medientypen</h3>
-            <p className="text-xs text-gray-500">In welchen Medien arbeitet der Journalist?</p>
+            <h3 className="text-sm font-medium text-gray-900">{t('mediaTypes.title')}</h3>
+            <p className="text-xs text-gray-500">{t('mediaTypes.description')}</p>
           </div>
 
           <div className="space-y-2">
@@ -194,7 +196,7 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
                     });
                   }}
                 />
-                <span>{type.label}</span>
+                <span>{t(`mediaTypes.types.${type.value}`)}</span>
               </label>
             ))}
           </div>
@@ -203,8 +205,8 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
         {/* Submission Formats */}
         <div className="space-y-4 rounded-md border p-4 bg-gray-50">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-900">Bevorzugte Formate</h3>
-            <p className="text-xs text-gray-500">Welche Inhaltsformate werden bevorzugt?</p>
+            <h3 className="text-sm font-medium text-gray-900">{t('preferredFormats.title')}</h3>
+            <p className="text-xs text-gray-500">{t('preferredFormats.description')}</p>
           </div>
 
           <div className="space-y-2">
@@ -226,7 +228,7 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
                     });
                   }}
                 />
-                <span>{format.label}</span>
+                <span>{t(`preferredFormats.formats.${format.value}`)}</span>
               </label>
             ))}
           </div>
@@ -236,8 +238,8 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
       {/* Submission Guidelines */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="space-y-1">
-          <h3 className="text-sm font-medium text-gray-900">Einreichungs-Richtlinien</h3>
-          <p className="text-xs text-gray-500">Spezielle Anforderungen oder Hinweise für die Kontaktaufnahme</p>
+          <h3 className="text-sm font-medium text-gray-900">{t('submissionGuidelines.title')}</h3>
+          <p className="text-xs text-gray-500">{t('submissionGuidelines.description')}</p>
         </div>
 
         <Textarea
@@ -250,7 +252,7 @@ export function MediaSection({ formData, setFormData, publications = [] }: Conta
             }
           })}
           rows={3}
-          placeholder="z.B. Bevorzugte Kontaktzeiten, spezielle Anforderungen an Pressemitteilungen, Deadlines..."
+          placeholder={t('submissionGuidelines.placeholder')}
         />
       </div>
     </div>
