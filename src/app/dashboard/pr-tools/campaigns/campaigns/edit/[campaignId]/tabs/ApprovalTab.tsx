@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { FieldGroup } from '@/components/ui/fieldset';
 import ApprovalSettings from '@/components/campaigns/ApprovalSettings';
 import { useCampaign } from '../context/CampaignContext';
@@ -18,6 +19,8 @@ export default React.memo(function ApprovalTab({
   organizationId,
   campaignId
 }: ApprovalTabProps) {
+  const t = useTranslations('campaigns.edit.tabs.approval');
+
   // Phase 3: Get all state from Context
   const {
     selectedCompanyId: clientId,
@@ -66,22 +69,22 @@ export default React.memo(function ApprovalTab({
     const estimatedSteps: string[] = [];
 
     if (enabled) {
-      estimatedSteps.push('1. PDF wird automatisch generiert');
-      estimatedSteps.push('2. Freigabe-Link wird an Kunde versendet');
-      estimatedSteps.push('3. Kunde kann PDF prüfen und freigeben');
+      estimatedSteps.push(t('workflow.step1'));
+      estimatedSteps.push(t('workflow.step2'));
+      estimatedSteps.push(t('workflow.step3'));
     }
 
     return { enabled, estimatedSteps };
-  }, [approvalData]);
+  }, [approvalData, t]);
   return (
     <div className="bg-white rounded-lg border p-6">
       <FieldGroup>
         {/* Freigabe-Einstellungen */}
         <div className="mb-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('title')}</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.
+              {t('description')}
             </p>
           </div>
           <ApprovalSettings

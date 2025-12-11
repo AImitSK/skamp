@@ -2,6 +2,7 @@
 "use client";
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -32,10 +33,13 @@ export const MonitoringSection = memo(function MonitoringSection({
   setShowManualRssInput,
   publication
 }: MonitoringSectionProps) {
+  const t = useTranslations('publications.modal.monitoring');
+  const tToast = useTranslations('toasts');
+
   // RSS Auto-Detection Function
   const handleRssAutoDetect = async () => {
     if (!monitoringConfig.websiteUrl) {
-      toastService.warning('Bitte geben Sie zuerst eine Website URL ein.');
+      toastService.warning(tToast('rss.urlRequired'));
       return;
     }
 
@@ -57,7 +61,7 @@ export const MonitoringSection = memo(function MonitoringSection({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Fehler bei der RSS Feed Erkennung');
+        throw new Error(data.error || tToast('rss.detectionError'));
       }
 
       if (data.foundFeeds && data.foundFeeds.length > 0) {
@@ -74,7 +78,7 @@ export const MonitoringSection = memo(function MonitoringSection({
       }
     } catch (error) {
       console.error('RSS Auto-Detection Error:', error);
-      toastService.error('Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut.');
+      toastService.error(tToast('rss.detectionErrorRetry'));
       setRssDetectionStatus('not_found');
       setShowManualRssInput(true);
     }
@@ -96,9 +100,9 @@ export const MonitoringSection = memo(function MonitoringSection({
       {/* Enable Monitoring */}
       <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-lg">
         <div>
-          <h4 className="font-medium text-zinc-900">Monitoring aktivieren</h4>
+          <h4 className="font-medium text-zinc-900">{t('enableTitle')}</h4>
           <p className="text-sm text-zinc-500 mt-1">
-            Überwache automatisch neue Veröffentlichungen dieser Publikation
+            {t('enableDescription')}
           </p>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
@@ -120,7 +124,7 @@ export const MonitoringSection = memo(function MonitoringSection({
           {/* Website URL mit Check Button */}
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Website URL
+              {t('websiteLabel')}
             </label>
             <div className="flex gap-2">
               <Input
@@ -137,7 +141,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                     setDetectedFeeds([]);
                   }
                 }}
-                placeholder="https://www.example.com"
+                placeholder={t('websitePlaceholder')}
                 className="flex-1"
               />
               <Button
@@ -145,11 +149,11 @@ export const MonitoringSection = memo(function MonitoringSection({
                 onClick={handleRssAutoDetect}
                 disabled={!monitoringConfig.websiteUrl || rssDetectionStatus === 'checking'}
               >
-                {rssDetectionStatus === 'checking' ? 'Suche...' : 'RSS-Feed suchen'}
+                {rssDetectionStatus === 'checking' ? t('searching') : t('searchButton')}
               </Button>
             </div>
             <p className="text-xs text-zinc-500 mt-1">
-              Klicken Sie "RSS-Feed suchen" um automatisch Feeds zu erkennen
+              {t('searchHint')}
             </p>
           </div>
 
@@ -161,11 +165,11 @@ export const MonitoringSection = memo(function MonitoringSection({
                   <div className="flex items-center">
                     <CheckIcon className="h-5 w-5 text-green-600 mr-2" />
                     <h4 className="text-sm font-medium text-green-900">
-                      RSS Feeds gefunden!
+                      {t('rssFound.title')}
                     </h4>
                   </div>
                   <div className="mt-2 text-sm text-green-700">
-                    <p className="font-medium mb-1">Gefundene Feeds:</p>
+                    <p className="font-medium mb-1">{t('rssFound.feedsLabel')}</p>
                     <ul className="list-disc list-inside space-y-1">
                       {detectedFeeds.map((feed, index) => (
                         <li key={index} className="text-xs">{feed}</li>
@@ -179,7 +183,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                   onClick={handleDisconnectAutoFeeds}
                   className="ml-4"
                 >
-                  Zurücksetzen
+                  {t('rssFound.reset')}
                 </Button>
               </div>
             </div>
@@ -192,10 +196,10 @@ export const MonitoringSection = memo(function MonitoringSection({
                 <XMarkIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-yellow-900">
-                    Keine RSS Feeds gefunden
+                    {t('rssNotFound.title')}
                   </h4>
                   <p className="text-sm text-yellow-700 mt-1">
-                    Sie können die Feed URLs unten manuell eintragen.
+                    {t('rssNotFound.hint')}
                   </p>
                 </div>
               </div>
@@ -206,7 +210,7 @@ export const MonitoringSection = memo(function MonitoringSection({
           {(showManualRssInput || rssDetectionStatus === 'not_found') && (
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-2">
-                RSS Feed URLs (manuell)
+                {t('manualRss.label')}
               </label>
               <div className="space-y-2">
                 {monitoringConfig.rssFeedUrls.map((url, index) => (
@@ -222,7 +226,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                           rssFeedUrls: updated
                         });
                       }}
-                      placeholder="https://www.example.com/feed"
+                      placeholder={t('manualRss.feedPlaceholder')}
                       className="flex-1"
                     />
                     <Button
@@ -251,7 +255,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                   }}
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  RSS Feed hinzufügen
+                  {t('manualRss.addButton')}
                 </Button>
               </div>
             </div>
@@ -260,9 +264,9 @@ export const MonitoringSection = memo(function MonitoringSection({
           {/* Statistics (read-only) */}
           {publication && monitoringConfig.totalArticlesFound > 0 && (
             <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-medium text-blue-900 mb-1">Statistiken</h4>
+              <h4 className="text-sm font-medium text-blue-900 mb-1">{t('stats.title')}</h4>
               <p className="text-sm text-blue-700">
-                {monitoringConfig.totalArticlesFound} Artikel gefunden
+                {t('stats.articlesFound', { count: monitoringConfig.totalArticlesFound })}
               </p>
             </div>
           )}

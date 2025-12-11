@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { FieldGroup } from '@/components/ui/fieldset';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ export default React.memo(function AttachmentsTab({
   organizationId,
   onOpenAssetSelector
 }: AttachmentsTabProps) {
+  const t = useTranslations('campaigns.edit.tabs.attachments');
+
   // Phase 3: Get all state from Context
   const {
     selectedCompanyId: clientId,
@@ -49,7 +52,7 @@ export default React.memo(function AttachmentsTab({
         <div className="mt-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('mediaTitle')}</h3>
               <Button
                 type="button"
                 onClick={onOpenAssetSelector}
@@ -57,7 +60,7 @@ export default React.memo(function AttachmentsTab({
                 className="text-sm px-3 py-1.5"
               >
                 <PlusIcon className="h-4 w-4 mr-1" />
-                Medien hinzufügen
+                {t('addMedia')}
               </Button>
             </div>
 

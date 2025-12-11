@@ -2,6 +2,7 @@
 "use client";
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
@@ -68,30 +69,32 @@ export const BasicInfoSection = memo(function BasicInfoSection({
   loadingPublishers,
   onPublisherChange
 }: BasicInfoSectionProps) {
+  const t = useTranslations('publications.modal.basicInfo');
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Titel der Publikation *
+            {t('titleLabel')}
           </label>
           <Input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
-            placeholder="z.B. Süddeutsche Zeitung"
+            placeholder={t('titlePlaceholder')}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Untertitel / Claim
+            {t('subtitleLabel')}
           </label>
           <Input
             type="text"
             value={formData.subtitle}
             onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-            placeholder="z.B. Die große Tageszeitung"
+            placeholder={t('subtitlePlaceholder')}
           />
         </div>
       </div>
@@ -100,7 +103,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       <div>
         <label className="block text-sm font-medium text-zinc-700 mb-1">
           <BuildingOfficeIcon className="inline h-4 w-4 mr-1" />
-          Verlag / Medienhaus *
+          {t('publisherLabel')}
         </label>
         {loadingPublishers ? (
           <div className="animate-pulse">
@@ -110,7 +113,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           <div>
             <Alert
               type="warning"
-              message="Keine Verlage oder Medienhäuser gefunden. Bitte legen Sie zuerst eine Firma vom Typ 'Verlag', 'Medienhaus' oder 'Partner' im CRM an."
+              message={t('publisherEmpty')}
             />
             <Button
               type="button"
@@ -118,7 +121,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
               onClick={() => window.location.href = '/dashboard/contacts/crm?tab=companies'}
               className="mt-2 text-sm"
             >
-              Zum CRM →
+              {t('publisherCrmLink')}
             </Button>
           </div>
         ) : (
@@ -127,13 +130,13 @@ export const BasicInfoSection = memo(function BasicInfoSection({
             onChange={(e) => onPublisherChange(e.target.value)}
             required
           >
-            <option value="">Bitte wählen...</option>
+            <option value="">{t('publisherPlaceholder')}</option>
             {publishers.map(publisher => (
               <option key={publisher.id} value={publisher.id}>
                 {publisher.name}
-                {publisher.type === 'publisher' && ' (Verlag)'}
-                {publisher.type === 'media_house' && ' (Medienhaus)'}
-                {publisher.type === 'partner' && ' (Partner)'}
+                {publisher.type === 'publisher' && ` ${t('publisherTypes.publisher')}`}
+                {publisher.type === 'media_house' && ` ${t('publisherTypes.media_house')}`}
+                {publisher.type === 'partner' && ` ${t('publisherTypes.partner')}`}
               </option>
             ))}
           </Select>
@@ -143,7 +146,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Website
+            {t('websiteLabel')}
           </label>
           <Input
             type="url"
@@ -154,7 +157,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Reichweite
+            {t('scopeLabel')}
           </label>
           <Select
             value={formData.geographicScope}
@@ -172,7 +175,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Typ *
+            {t('typeLabel')}
           </label>
           <Select
             value={formData.type}
@@ -187,31 +190,31 @@ export const BasicInfoSection = memo(function BasicInfoSection({
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Format
+            {t('formatLabel')}
           </label>
           <Select
             value={formData.format}
             onChange={(e) => setFormData({ ...formData, format: e.target.value as any })}
           >
-            <option value="print">Print</option>
-            <option value="online">Digital</option>
-            <option value="both">Print & Digital</option>
-            <option value="broadcast">Broadcast</option>
-            <option value="audio">Audio</option>
+            <option value="print">{t('formats.print')}</option>
+            <option value="online">{t('formats.online')}</option>
+            <option value="both">{t('formats.both')}</option>
+            <option value="broadcast">{t('formats.broadcast')}</option>
+            <option value="audio">{t('formats.audio')}</option>
           </Select>
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Status
+            {t('statusLabel')}
           </label>
           <Select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
           >
-            <option value="active">Aktiv</option>
-            <option value="inactive">Inaktiv</option>
-            <option value="discontinued">Eingestellt</option>
-            <option value="planned">Geplant</option>
+            <option value="active">{t('statuses.active')}</option>
+            <option value="inactive">{t('statuses.inactive')}</option>
+            <option value="discontinued">{t('statuses.discontinued')}</option>
+            <option value="planned">{t('statuses.planned')}</option>
           </Select>
         </div>
       </div>
@@ -219,12 +222,12 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       <div>
         <label className="block text-sm font-medium text-zinc-700 mb-1">
           <LanguageIcon className="inline h-4 w-4 mr-1" />
-          Sprachen *
+          {t('languagesLabel')}
         </label>
         <LanguageSelectorMulti
           value={formData.languages}
           onChange={(languages) => setFormData({ ...formData, languages })}
-          placeholder="Sprachen auswählen..."
+          placeholder={t('languagesPlaceholder')}
           multiple
         />
       </div>
@@ -232,27 +235,27 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       <div>
         <label className="block text-sm font-medium text-zinc-700 mb-1">
           <GlobeAltIcon className="inline h-4 w-4 mr-1" />
-          Geografische Zielgebiete *
+          {t('countriesLabel')}
         </label>
         <CountrySelectorMulti
           value={formData.geographicTargets}
           onChange={(countries) => setFormData({ ...formData, geographicTargets: countries })}
-          placeholder="Länder auswählen..."
+          placeholder={t('countriesPlaceholder')}
           multiple
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Themenbereiche
+          {t('focusAreasLabel')}
         </label>
         <TagInput
           value={formData.focusAreas}
           onChange={(tags) => setFormData({ ...formData, focusAreas: tags })}
-          placeholder="Tippen Sie und drücken Sie Enter..."
+          placeholder={t('focusAreasPlaceholder')}
         />
         <p className="mt-1 text-xs text-zinc-500">
-          Geben Sie Themenbereiche ein und drücken Sie Enter oder Komma
+          {t('focusAreasHint')}
         </p>
       </div>
 
@@ -264,19 +267,19 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
         />
         <label className="ml-2 block text-sm text-zinc-900">
-          Publikation ist verifiziert
+          {t('verifiedLabel')}
         </label>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Interne Notizen
+          {t('notesLabel')}
         </label>
         <Textarea
           value={formData.internalNotes}
           onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
           rows={2}
-          placeholder="Interne Anmerkungen..."
+          placeholder={t('notesPlaceholder')}
         />
       </div>
     </div>

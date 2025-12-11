@@ -168,7 +168,13 @@
     "recipientAdded": "{name} added",
     "testEmailSent": "Test email sent to {email}",
     "emailScheduled": "Email scheduled for {datetime}",
-    "mediumNotFound": "Medium could not be found"
+    "mediumNotFound": "Medium could not be found",
+    "rss": {
+      "urlRequired": "Please enter a website URL first.",
+      "detectionError": "Error detecting RSS feed",
+      "detectionErrorRetry": "Error detecting RSS feed. Please try again."
+    },
+    "pipelinePdfGenerated": "Pipeline PDF successfully generated"
   },
   "settings": {
     "navigation": {
@@ -2148,6 +2154,182 @@
         "cancel": "Cancel",
         "saving": "Saving..."
       }
+    },
+    "modal": {
+      "titleEdit": "Edit Publication",
+      "titleNew": "New Publication",
+      "tabs": {
+        "basic": "Basic Info",
+        "metrics": "Metrics",
+        "identifiers": "Identifiers & Links",
+        "monitoring": "Monitoring"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "update": "Update",
+        "create": "Create"
+      },
+      "basicInfo": {
+        "titleLabel": "Publication Title *",
+        "titlePlaceholder": "e.g. New York Times",
+        "subtitleLabel": "Subtitle / Tagline",
+        "subtitlePlaceholder": "e.g. All the News That's Fit to Print",
+        "publisherLabel": "Publisher / Media House *",
+        "publisherLoading": "Loading...",
+        "publisherEmpty": "No publishers or media houses found. Please create a company of type 'Publisher', 'Media House' or 'Partner' in the CRM first.",
+        "publisherCrmLink": "Go to CRM →",
+        "publisherPlaceholder": "Please select...",
+        "publisherTypes": {
+          "publisher": "(Publisher)",
+          "media_house": "(Media House)",
+          "partner": "(Partner)"
+        },
+        "websiteLabel": "Website",
+        "scopeLabel": "Reach",
+        "typeLabel": "Type *",
+        "formatLabel": "Format",
+        "formats": {
+          "print": "Print",
+          "online": "Digital",
+          "both": "Print & Digital",
+          "broadcast": "Broadcast",
+          "audio": "Audio"
+        },
+        "statusLabel": "Status",
+        "statuses": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "discontinued": "Discontinued",
+          "planned": "Planned"
+        },
+        "languagesLabel": "Languages *",
+        "languagesPlaceholder": "Select languages...",
+        "countriesLabel": "Geographic Target Areas *",
+        "countriesPlaceholder": "Select countries...",
+        "focusAreasLabel": "Topic Areas",
+        "focusAreasPlaceholder": "Type and press Enter...",
+        "focusAreasHint": "Enter topic areas and press Enter or comma",
+        "verifiedLabel": "Publication is verified",
+        "notesLabel": "Internal Notes",
+        "notesPlaceholder": "Internal notes..."
+      },
+      "metrics": {
+        "frequencyLabel": "Publication Frequency",
+        "targetAudienceLabel": "Target Audience",
+        "targetAudiencePlaceholder": "e.g. Decision makers, professionals...",
+        "ageGroupLabel": "Age Group",
+        "ageGroupPlaceholder": "e.g. 25-49, 50+",
+        "genderLabel": "Gender Distribution",
+        "genders": {
+          "all": "Balanced",
+          "predominantly_male": "Predominantly male",
+          "predominantly_female": "Predominantly female"
+        },
+        "print": {
+          "title": "Print Metrics",
+          "circulationLabel": "Circulation *",
+          "circulationPlaceholder": "50000",
+          "circulationTypeLabel": "Circulation Type",
+          "priceLabel": "Price per Issue (€)",
+          "pricePlaceholder": "3.50",
+          "subscriptionLabel": "Monthly Subscription (€)",
+          "subscriptionPlaceholder": "29.90",
+          "formatLabel": "Format",
+          "formatPlaceholder": "e.g. A4, Tabloid",
+          "pageCountLabel": "Page Count",
+          "pageCountPlaceholder": "64"
+        },
+        "online": {
+          "title": "Online Metrics",
+          "visitorsLabel": "Monthly Unique Visitors",
+          "visitorsPlaceholder": "100000",
+          "pageViewsLabel": "Monthly Page Views *",
+          "pageViewsPlaceholder": "500000",
+          "sessionLabel": "Avg. Session Duration (Minutes)",
+          "sessionPlaceholder": "3.5",
+          "bounceLabel": "Bounce Rate (%)",
+          "bouncePlaceholder": "45.5",
+          "usersLabel": "Registered Users",
+          "usersPlaceholder": "50000",
+          "newsletterLabel": "Newsletter Subscribers",
+          "newsletterPlaceholder": "25000",
+          "paywall": "Has Paywall",
+          "mobileApp": "Has Mobile App"
+        },
+        "broadcast": {
+          "title": "Broadcast Metrics (TV/Radio)",
+          "viewershipLabel": "Viewership/Listenership (Average) *",
+          "viewershipPlaceholder": "500000",
+          "marketShareLabel": "Market Share (%)",
+          "marketSharePlaceholder": "15.5",
+          "areaLabel": "Broadcast Area",
+          "areaPlaceholder": "e.g. National, Regional"
+        },
+        "audio": {
+          "title": "Audio Metrics (Podcast)",
+          "downloadsLabel": "Monthly Downloads *",
+          "downloadsPlaceholder": "50000",
+          "listenersLabel": "Monthly Listeners (optional)",
+          "listenersPlaceholder": "25000",
+          "episodesLabel": "Episode Count",
+          "episodesPlaceholder": "120",
+          "durationLabel": "Avg. Episode Length (Minutes)",
+          "durationPlaceholder": "45.0"
+        }
+      },
+      "identifiers": {
+        "title": "Identifiers",
+        "addButton": "Add Identifier",
+        "valuePlaceholder": "Enter value...",
+        "empty": "No identifiers added",
+        "types": {
+          "ISSN": "ISSN",
+          "ISBN": "ISBN",
+          "DOI": "DOI",
+          "URL": "URL",
+          "DOMAIN": "Domain",
+          "SOCIAL_HANDLE": "Social Handle",
+          "OTHER": "Other"
+        },
+        "socialMedia": {
+          "title": "Social Media Profiles",
+          "addButton": "Add Profile",
+          "urlPlaceholder": "https://...",
+          "empty": "No social media profiles added"
+        }
+      },
+      "monitoring": {
+        "enableTitle": "Enable Monitoring",
+        "enableDescription": "Automatically monitor new publications from this publication",
+        "websiteLabel": "Website URL",
+        "websitePlaceholder": "https://www.example.com",
+        "searchButton": "Search RSS Feed",
+        "searching": "Searching...",
+        "searchHint": "Click \"Search RSS Feed\" to automatically detect feeds",
+        "rssFound": {
+          "title": "RSS Feeds Found!",
+          "feedsLabel": "Found Feeds:",
+          "reset": "Reset"
+        },
+        "rssNotFound": {
+          "title": "No RSS Feeds Found",
+          "hint": "You can enter feed URLs manually below."
+        },
+        "manualRss": {
+          "label": "RSS Feed URLs (manual)",
+          "feedPlaceholder": "https://www.example.com/feed",
+          "addButton": "Add RSS Feed"
+        },
+        "stats": {
+          "title": "Statistics",
+          "articlesFound": "{count} articles found"
+        }
+      },
+      "errors": {
+        "saveError": "Error saving: {message}",
+        "saveErrorGeneric": "Error saving publication"
+      }
     }
   },
   "editors": {
@@ -3528,6 +3710,50 @@
       "notificationInfo": "This contact will be notified via email about the approval request and can review and approve the campaign through a secure link.",
       "hint": "Note:",
       "hintDescription": "Select the main contact person at the customer who is responsible for approving press releases."
+    },
+    "edit": {
+      "tabs": {
+        "approval": {
+          "title": "Approval Settings",
+          "description": "Define who must approve the campaign before sending.",
+          "workflow": {
+            "step1": "1. PDF is automatically generated",
+            "step2": "2. Approval link is sent to customer",
+            "step3": "3. Customer can review and approve PDF"
+          }
+        },
+        "attachments": {
+          "mediaTitle": "Media",
+          "addMedia": "Add Media"
+        },
+        "content": {
+          "pressReleaseTitle": "Press Release"
+        },
+        "preview": {
+          "workflowActive": "Approval Workflow Active",
+          "workflowDescription": "The campaign is in the approval process. Links have been sent.",
+          "openTeamLink": "Open Team Link",
+          "openCustomerLink": "Open Customer Link",
+          "livePreview": "Live Preview",
+          "pdfPreviewTitle": "PDF Preview and Versions",
+          "pdfCreatedForApproval": "PDF created for approval",
+          "generatingPdf": "Generating PDF...",
+          "generatePdf": "Generate PDF",
+          "pdfLocked": "PDF generation locked",
+          "editingNotPossible": "Editing not possible",
+          "previewPdf": "Preview PDF",
+          "approvalPdf": "Approval PDF",
+          "current": "Current",
+          "workflowActiveShort": "Workflow active",
+          "statusDraft": "Draft",
+          "statusApproved": "Approved",
+          "statusPending": "Approval requested",
+          "download": "Download",
+          "noPdfCreated": "No PDF version created yet",
+          "noPdfHint": "Click \"Generate PDF\" to create a preview",
+          "pdfVersionHistory": "PDF Version History"
+        }
+      }
     }
   },
   "approvals": {

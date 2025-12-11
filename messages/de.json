@@ -168,7 +168,13 @@
     "recipientAdded": "{name} hinzugefügt",
     "testEmailSent": "Test-Email an {email} versendet",
     "emailScheduled": "E-Mail für {datetime} geplant",
-    "mediumNotFound": "Medium konnte nicht gefunden werden"
+    "mediumNotFound": "Medium konnte nicht gefunden werden",
+    "rss": {
+      "urlRequired": "Bitte geben Sie zuerst eine Website URL ein.",
+      "detectionError": "Fehler bei der RSS Feed Erkennung",
+      "detectionErrorRetry": "Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut."
+    },
+    "pipelinePdfGenerated": "Pipeline-PDF erfolgreich generiert"
   },
   "settings": {
     "navigation": {
@@ -2148,6 +2154,182 @@
         "cancel": "Abbrechen",
         "saving": "Speichern..."
       }
+    },
+    "modal": {
+      "titleEdit": "Publikation bearbeiten",
+      "titleNew": "Neue Publikation",
+      "tabs": {
+        "basic": "Grunddaten",
+        "metrics": "Metriken",
+        "identifiers": "Identifikatoren & Links",
+        "monitoring": "Monitoring"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "saving": "Speichern...",
+        "update": "Aktualisieren",
+        "create": "Erstellen"
+      },
+      "basicInfo": {
+        "titleLabel": "Titel der Publikation *",
+        "titlePlaceholder": "z.B. Süddeutsche Zeitung",
+        "subtitleLabel": "Untertitel / Claim",
+        "subtitlePlaceholder": "z.B. Die große Tageszeitung",
+        "publisherLabel": "Verlag / Medienhaus *",
+        "publisherLoading": "Lädt...",
+        "publisherEmpty": "Keine Verlage oder Medienhäuser gefunden. Bitte legen Sie zuerst eine Firma vom Typ 'Verlag', 'Medienhaus' oder 'Partner' im CRM an.",
+        "publisherCrmLink": "Zum CRM →",
+        "publisherPlaceholder": "Bitte wählen...",
+        "publisherTypes": {
+          "publisher": "(Verlag)",
+          "media_house": "(Medienhaus)",
+          "partner": "(Partner)"
+        },
+        "websiteLabel": "Website",
+        "scopeLabel": "Reichweite",
+        "typeLabel": "Typ *",
+        "formatLabel": "Format",
+        "formats": {
+          "print": "Print",
+          "online": "Digital",
+          "both": "Print & Digital",
+          "broadcast": "Broadcast",
+          "audio": "Audio"
+        },
+        "statusLabel": "Status",
+        "statuses": {
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "discontinued": "Eingestellt",
+          "planned": "Geplant"
+        },
+        "languagesLabel": "Sprachen *",
+        "languagesPlaceholder": "Sprachen auswählen...",
+        "countriesLabel": "Geografische Zielgebiete *",
+        "countriesPlaceholder": "Länder auswählen...",
+        "focusAreasLabel": "Themenbereiche",
+        "focusAreasPlaceholder": "Tippen Sie und drücken Sie Enter...",
+        "focusAreasHint": "Geben Sie Themenbereiche ein und drücken Sie Enter oder Komma",
+        "verifiedLabel": "Publikation ist verifiziert",
+        "notesLabel": "Interne Notizen",
+        "notesPlaceholder": "Interne Anmerkungen..."
+      },
+      "metrics": {
+        "frequencyLabel": "Erscheinungsfrequenz",
+        "targetAudienceLabel": "Zielgruppe",
+        "targetAudiencePlaceholder": "z.B. Entscheider, Fachpublikum...",
+        "ageGroupLabel": "Altersgruppe",
+        "ageGroupPlaceholder": "z.B. 25-49, 50+",
+        "genderLabel": "Geschlechterverteilung",
+        "genders": {
+          "all": "Ausgeglichen",
+          "predominantly_male": "Überwiegend männlich",
+          "predominantly_female": "Überwiegend weiblich"
+        },
+        "print": {
+          "title": "Print-Metriken",
+          "circulationLabel": "Auflage *",
+          "circulationPlaceholder": "50000",
+          "circulationTypeLabel": "Auflagentyp",
+          "priceLabel": "Preis pro Ausgabe (€)",
+          "pricePlaceholder": "3.50",
+          "subscriptionLabel": "Abo-Preis Monat (€)",
+          "subscriptionPlaceholder": "29.90",
+          "formatLabel": "Format",
+          "formatPlaceholder": "z.B. A4, Tabloid",
+          "pageCountLabel": "Seitenanzahl",
+          "pageCountPlaceholder": "64"
+        },
+        "online": {
+          "title": "Online-Metriken",
+          "visitorsLabel": "Monatliche Unique Visitors",
+          "visitorsPlaceholder": "100000",
+          "pageViewsLabel": "Monatliche Page Views *",
+          "pageViewsPlaceholder": "500000",
+          "sessionLabel": "Ø Sitzungsdauer (Minuten)",
+          "sessionPlaceholder": "3.5",
+          "bounceLabel": "Bounce Rate (%)",
+          "bouncePlaceholder": "45.5",
+          "usersLabel": "Registrierte Nutzer",
+          "usersPlaceholder": "50000",
+          "newsletterLabel": "Newsletter-Abonnenten",
+          "newsletterPlaceholder": "25000",
+          "paywall": "Hat Paywall",
+          "mobileApp": "Hat Mobile App"
+        },
+        "broadcast": {
+          "title": "Broadcast-Metriken (TV/Radio)",
+          "viewershipLabel": "Zuschauer/Hörer (Durchschnitt) *",
+          "viewershipPlaceholder": "500000",
+          "marketShareLabel": "Marktanteil (%)",
+          "marketSharePlaceholder": "15.5",
+          "areaLabel": "Sendegebiet",
+          "areaPlaceholder": "z.B. National, Regional Bayern"
+        },
+        "audio": {
+          "title": "Audio-Metriken (Podcast)",
+          "downloadsLabel": "Monatliche Downloads *",
+          "downloadsPlaceholder": "50000",
+          "listenersLabel": "Monatliche Hörer (optional)",
+          "listenersPlaceholder": "25000",
+          "episodesLabel": "Anzahl Episoden",
+          "episodesPlaceholder": "120",
+          "durationLabel": "Ø Episode-Länge (Minuten)",
+          "durationPlaceholder": "45.0"
+        }
+      },
+      "identifiers": {
+        "title": "Identifikatoren",
+        "addButton": "Identifikator hinzufügen",
+        "valuePlaceholder": "Wert eingeben...",
+        "empty": "Keine Identifikatoren hinzugefügt",
+        "types": {
+          "ISSN": "ISSN",
+          "ISBN": "ISBN",
+          "DOI": "DOI",
+          "URL": "URL",
+          "DOMAIN": "Domain",
+          "SOCIAL_HANDLE": "Social Handle",
+          "OTHER": "Sonstiges"
+        },
+        "socialMedia": {
+          "title": "Social Media Profile",
+          "addButton": "Profil hinzufügen",
+          "urlPlaceholder": "https://...",
+          "empty": "Keine Social Media Profile hinzugefügt"
+        }
+      },
+      "monitoring": {
+        "enableTitle": "Monitoring aktivieren",
+        "enableDescription": "Überwache automatisch neue Veröffentlichungen dieser Publikation",
+        "websiteLabel": "Website URL",
+        "websitePlaceholder": "https://www.example.com",
+        "searchButton": "RSS-Feed suchen",
+        "searching": "Suche...",
+        "searchHint": "Klicken Sie \"RSS-Feed suchen\" um automatisch Feeds zu erkennen",
+        "rssFound": {
+          "title": "RSS Feeds gefunden!",
+          "feedsLabel": "Gefundene Feeds:",
+          "reset": "Zurücksetzen"
+        },
+        "rssNotFound": {
+          "title": "Keine RSS Feeds gefunden",
+          "hint": "Sie können die Feed URLs unten manuell eintragen."
+        },
+        "manualRss": {
+          "label": "RSS Feed URLs (manuell)",
+          "feedPlaceholder": "https://www.example.com/feed",
+          "addButton": "RSS Feed hinzufügen"
+        },
+        "stats": {
+          "title": "Statistiken",
+          "articlesFound": "{count} Artikel gefunden"
+        }
+      },
+      "errors": {
+        "saveError": "Fehler beim Speichern: {message}",
+        "saveErrorGeneric": "Fehler beim Speichern der Publikation"
+      }
     }
   },
   "editors": {
@@ -3528,6 +3710,50 @@
       "notificationInfo": "Dieser Kontakt wird per E-Mail über die Freigabe-Anfrage benachrichtigt und kann über einen sicheren Link die Kampagne prüfen und freigeben.",
       "hint": "Hinweis:",
       "hintDescription": "Wählen Sie den Hauptansprechpartner beim Kunden aus, der für die Freigabe von Pressemitteilungen zuständig ist."
+    },
+    "edit": {
+      "tabs": {
+        "approval": {
+          "title": "Freigabe-Einstellungen",
+          "description": "Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.",
+          "workflow": {
+            "step1": "1. PDF wird automatisch generiert",
+            "step2": "2. Freigabe-Link wird an Kunde versendet",
+            "step3": "3. Kunde kann PDF prüfen und freigeben"
+          }
+        },
+        "attachments": {
+          "mediaTitle": "Medien",
+          "addMedia": "Medien hinzufügen"
+        },
+        "content": {
+          "pressReleaseTitle": "Pressemeldung"
+        },
+        "preview": {
+          "workflowActive": "Freigabe-Workflow aktiv",
+          "workflowDescription": "Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet.",
+          "openTeamLink": "Team-Link öffnen",
+          "openCustomerLink": "Kunden-Link öffnen",
+          "livePreview": "Live-Vorschau",
+          "pdfPreviewTitle": "PDF-Vorschau und Versionen",
+          "pdfCreatedForApproval": "PDF für Freigabe erstellt",
+          "generatingPdf": "PDF wird erstellt...",
+          "generatePdf": "PDF generieren",
+          "pdfLocked": "PDF-Erstellung gesperrt",
+          "editingNotPossible": "Bearbeitung nicht möglich",
+          "previewPdf": "Vorschau PDF",
+          "approvalPdf": "Freigabe-PDF",
+          "current": "Aktuell",
+          "workflowActiveShort": "Workflow aktiv",
+          "statusDraft": "Entwurf",
+          "statusApproved": "Freigegeben",
+          "statusPending": "Freigabe angefordert",
+          "download": "Download",
+          "noPdfCreated": "Noch keine PDF-Version erstellt",
+          "noPdfHint": "Klicken Sie auf \"PDF generieren\" um eine Vorschau zu erstellen",
+          "pdfVersionHistory": "PDF-Versionen Historie"
+        }
+      }
     }
   },
   "approvals": {

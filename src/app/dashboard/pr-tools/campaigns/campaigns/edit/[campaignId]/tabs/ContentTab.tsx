@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { FieldGroup } from '@/components/ui/fieldset';
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { KeyVisualSection } from '@/components/campaigns/KeyVisualSection';
@@ -27,6 +28,8 @@ export default React.memo(function ContentTab({
   onOpenAiModal,
   onSeoScoreChange
 }: ContentTabProps) {
+  const t = useTranslations('campaigns.edit.tabs.content');
+
   // Phase 3: Get all state from Context
   const {
     campaignTitle,
@@ -79,7 +82,7 @@ export default React.memo(function ContentTab({
         {/* Pressemeldung */}
         <div className="mb-8 mt-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pressemeldung</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('pressReleaseTitle')}</h3>
 
             {/* KI-Assistent CTA */}
             <AiAssistantCTA onOpenAiModal={onOpenAiModal} />

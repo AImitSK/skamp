@@ -2,11 +2,11 @@
 "use client";
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import type { PublicationFormData, MetricsState } from './types';
-import { frequencies, circulationTypes } from './types';
 import type { PublicationFrequency } from '@/types/library';
 
 interface MetricsSectionProps {
@@ -16,12 +16,39 @@ interface MetricsSectionProps {
 }
 
 export const MetricsSection = memo(function MetricsSection({ formData, metrics, setMetrics }: MetricsSectionProps) {
+  const t = useTranslations('publications.modal.metrics');
+  const tDetail = useTranslations('publications.detail');
+
+  // Frequency options
+  const frequencies: Array<{ value: PublicationFrequency; label: string }> = [
+    { value: 'continuous', label: tDetail('frequencies.continuous') },
+    { value: 'multiple_daily', label: tDetail('frequencies.multiple_daily') },
+    { value: 'daily', label: tDetail('frequencies.daily') },
+    { value: 'weekly', label: tDetail('frequencies.weekly') },
+    { value: 'biweekly', label: tDetail('frequencies.biweekly') },
+    { value: 'monthly', label: tDetail('frequencies.monthly') },
+    { value: 'bimonthly', label: tDetail('frequencies.bimonthly') },
+    { value: 'quarterly', label: tDetail('frequencies.quarterly') },
+    { value: 'biannual', label: tDetail('frequencies.biannual') },
+    { value: 'annual', label: tDetail('frequencies.annual') },
+    { value: 'irregular', label: tDetail('frequencies.irregular') }
+  ];
+
+  // Circulation type options
+  const circulationTypes = [
+    { value: 'distributed', label: tDetail('circulationTypes.distributed') },
+    { value: 'sold', label: tDetail('circulationTypes.sold') },
+    { value: 'printed', label: tDetail('circulationTypes.printed') },
+    { value: 'subscribers', label: tDetail('circulationTypes.subscribers') },
+    { value: 'audited_ivw', label: tDetail('circulationTypes.ivw') }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Erscheinungsfrequenz
+            {t('frequencyLabel')}
           </label>
           <Select
             value={metrics.frequency}
@@ -36,13 +63,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Zielgruppe
+            {t('targetAudienceLabel')}
           </label>
           <Input
             type="text"
             value={metrics.targetAudience}
             onChange={(e) => setMetrics({ ...metrics, targetAudience: e.target.value })}
-            placeholder="z.B. Entscheider, Fachpublikum..."
+            placeholder={t('targetAudiencePlaceholder')}
           />
         </div>
       </div>
@@ -50,26 +77,26 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Altersgruppe
+            {t('ageGroupLabel')}
           </label>
           <Input
             type="text"
             value={metrics.targetAgeGroup}
             onChange={(e) => setMetrics({ ...metrics, targetAgeGroup: e.target.value })}
-            placeholder="z.B. 25-49, 50+"
+            placeholder={t('ageGroupPlaceholder')}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Geschlechterverteilung
+            {t('genderLabel')}
           </label>
           <Select
             value={metrics.targetGender}
             onChange={(e) => setMetrics({ ...metrics, targetGender: e.target.value as any })}
           >
-            <option value="all">Ausgeglichen</option>
-            <option value="predominantly_male">Überwiegend männlich</option>
-            <option value="predominantly_female">Überwiegend weiblich</option>
+            <option value="all">{t('genders.all')}</option>
+            <option value="predominantly_male">{t('genders.predominantly_male')}</option>
+            <option value="predominantly_female">{t('genders.predominantly_female')}</option>
           </Select>
         </div>
       </div>
@@ -77,12 +104,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Print Metriken */}
       {(formData.format === 'print' || formData.format === 'both') && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-zinc-900">Print-Metriken</h4>
+          <h4 className="font-medium text-zinc-900">{t('print.title')}</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Auflage *
-                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
+                {t('print.circulationLabel')}
+                <InfoTooltip content="AVE calculation field" />
               </label>
               <Input
                 type="number"
@@ -91,13 +118,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   print: { ...metrics.print, circulation: e.target.value }
                 })}
-                placeholder="50000"
+                placeholder={t('print.circulationPlaceholder')}
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Auflagentyp
+                {t('print.circulationTypeLabel')}
               </label>
               <Select
                 value={metrics.print.circulationType}
@@ -115,7 +142,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Preis pro Ausgabe (€)
+                {t('print.priceLabel')}
               </label>
               <Input
                 type="number"
@@ -125,12 +152,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   print: { ...metrics.print, pricePerIssue: e.target.value }
                 })}
-                placeholder="3.50"
+                placeholder={t('print.pricePlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Abo-Preis Monat (€)
+                {t('print.subscriptionLabel')}
               </label>
               <Input
                 type="number"
@@ -140,12 +167,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   print: { ...metrics.print, subscriptionPriceMonthly: e.target.value }
                 })}
-                placeholder="29.90"
+                placeholder={t('print.subscriptionPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Format
+                {t('print.formatLabel')}
               </label>
               <Input
                 type="text"
@@ -154,12 +181,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   print: { ...metrics.print, paperFormat: e.target.value }
                 })}
-                placeholder="z.B. A4, Tabloid"
+                placeholder={t('print.formatPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Seitenanzahl
+                {t('print.pageCountLabel')}
               </label>
               <Input
                 type="number"
@@ -168,7 +195,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   print: { ...metrics.print, pageCount: e.target.value }
                 })}
-                placeholder="64"
+                placeholder={t('print.pageCountPlaceholder')}
               />
             </div>
           </div>
@@ -178,11 +205,11 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Online Metriken */}
       {(formData.format === 'online' || formData.format === 'both') && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-zinc-900">Online-Metriken</h4>
+          <h4 className="font-medium text-zinc-900">{t('online.title')}</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Monatliche Unique Visitors
+                {t('online.visitorsLabel')}
               </label>
               <Input
                 type="number"
@@ -191,13 +218,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, monthlyUniqueVisitors: e.target.value }
                 })}
-                placeholder="100000"
+                placeholder={t('online.visitorsPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Monatliche Page Views *
-                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
+                {t('online.pageViewsLabel')}
+                <InfoTooltip content="AVE calculation field" />
               </label>
               <Input
                 type="number"
@@ -206,13 +233,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, monthlyPageViews: e.target.value }
                 })}
-                placeholder="500000"
+                placeholder={t('online.pageViewsPlaceholder')}
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Ø Sitzungsdauer (Minuten)
+                {t('online.sessionLabel')}
               </label>
               <Input
                 type="number"
@@ -222,12 +249,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, avgSessionDuration: e.target.value }
                 })}
-                placeholder="3.5"
+                placeholder={t('online.sessionPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Bounce Rate (%)
+                {t('online.bounceLabel')}
               </label>
               <Input
                 type="number"
@@ -237,12 +264,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, bounceRate: e.target.value }
                 })}
-                placeholder="45.5"
+                placeholder={t('online.bouncePlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Registrierte Nutzer
+                {t('online.usersLabel')}
               </label>
               <Input
                 type="number"
@@ -251,12 +278,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, registeredUsers: e.target.value }
                 })}
-                placeholder="50000"
+                placeholder={t('online.usersPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Newsletter-Abonnenten
+                {t('online.newsletterLabel')}
               </label>
               <Input
                 type="number"
@@ -265,7 +292,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, newsletterSubscribers: e.target.value }
                 })}
-                placeholder="25000"
+                placeholder={t('online.newsletterPlaceholder')}
               />
             </div>
           </div>
@@ -280,7 +307,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                 })}
                 className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
               />
-              <span className="ml-2 text-sm">Hat Paywall</span>
+              <span className="ml-2 text-sm">{t('online.paywall')}</span>
             </label>
             <label className="flex items-center">
               <input
@@ -292,7 +319,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                 })}
                 className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
               />
-              <span className="ml-2 text-sm">Hat Mobile App</span>
+              <span className="ml-2 text-sm">{t('online.mobileApp')}</span>
             </label>
           </div>
         </div>
@@ -301,12 +328,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Broadcast Metriken (TV/Radio) */}
       {formData.format === 'broadcast' && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-zinc-900">Broadcast-Metriken (TV/Radio)</h4>
+          <h4 className="font-medium text-zinc-900">{t('broadcast.title')}</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Zuschauer/Hörer (Durchschnitt) *
-                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
+                {t('broadcast.viewershipLabel')}
+                <InfoTooltip content="AVE calculation field" />
               </label>
               <Input
                 type="number"
@@ -315,13 +342,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   broadcast: { ...metrics.broadcast, viewership: e.target.value }
                 })}
-                placeholder="500000"
+                placeholder={t('broadcast.viewershipPlaceholder')}
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Marktanteil (%)
+                {t('broadcast.marketShareLabel')}
               </label>
               <Input
                 type="number"
@@ -331,12 +358,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   broadcast: { ...metrics.broadcast, marketShare: e.target.value }
                 })}
-                placeholder="15.5"
+                placeholder={t('broadcast.marketSharePlaceholder')}
               />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Sendegebiet
+                {t('broadcast.areaLabel')}
               </label>
               <Input
                 type="text"
@@ -345,7 +372,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   broadcast: { ...metrics.broadcast, broadcastArea: e.target.value }
                 })}
-                placeholder="z.B. National, Regional Bayern"
+                placeholder={t('broadcast.areaPlaceholder')}
               />
             </div>
           </div>
@@ -355,12 +382,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Audio Metriken (Podcast) */}
       {formData.format === 'audio' && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-zinc-900">Audio-Metriken (Podcast)</h4>
+          <h4 className="font-medium text-zinc-900">{t('audio.title')}</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Monatliche Downloads *
-                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
+                {t('audio.downloadsLabel')}
+                <InfoTooltip content="AVE calculation field" />
               </label>
               <Input
                 type="number"
@@ -369,13 +396,13 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   audio: { ...metrics.audio, monthlyDownloads: e.target.value }
                 })}
-                placeholder="50000"
+                placeholder={t('audio.downloadsPlaceholder')}
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Monatliche Hörer (optional)
+                {t('audio.listenersLabel')}
               </label>
               <Input
                 type="number"
@@ -384,12 +411,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   audio: { ...metrics.audio, monthlyListeners: e.target.value }
                 })}
-                placeholder="25000"
+                placeholder={t('audio.listenersPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Anzahl Episoden
+                {t('audio.episodesLabel')}
               </label>
               <Input
                 type="number"
@@ -398,12 +425,12 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   audio: { ...metrics.audio, episodeCount: e.target.value }
                 })}
-                placeholder="120"
+                placeholder={t('audio.episodesPlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Ø Episode-Länge (Minuten)
+                {t('audio.durationLabel')}
               </label>
               <Input
                 type="number"
@@ -413,7 +440,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   audio: { ...metrics.audio, avgEpisodeDuration: e.target.value }
                 })}
-                placeholder="45.0"
+                placeholder={t('audio.durationPlaceholder')}
               />
             </div>
           </div>

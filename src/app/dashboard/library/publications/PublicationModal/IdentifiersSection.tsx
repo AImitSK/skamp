@@ -2,6 +2,7 @@
 "use client";
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ export const IdentifiersSection = memo(function IdentifiersSection({
   socialMediaUrls,
   setSocialMediaUrls
 }: IdentifiersSectionProps) {
+  const t = useTranslations('publications.modal.identifiers');
+
   const addIdentifier = () => {
     setIdentifiers([...identifiers, { type: 'URL', value: '' }]);
   };
@@ -44,10 +47,10 @@ export const IdentifiersSection = memo(function IdentifiersSection({
       {/* Identifikatoren */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Identifikatoren</div>
+          <div className="text-sm font-medium text-gray-900">{t('title')}</div>
           <Button type="button" onClick={addIdentifier} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Identifikator hinzufügen
+            {t('addButton')}
           </Button>
         </div>
 
@@ -64,13 +67,13 @@ export const IdentifiersSection = memo(function IdentifiersSection({
                       setIdentifiers(updated);
                     }}
                   >
-                    <option value="ISSN">ISSN</option>
-                    <option value="ISBN">ISBN</option>
-                    <option value="DOI">DOI</option>
-                    <option value="URL">URL</option>
-                    <option value="DOMAIN">Domain</option>
-                    <option value="SOCIAL_HANDLE">Social Handle</option>
-                    <option value="OTHER">Sonstiges</option>
+                    <option value="ISSN">{t('types.ISSN')}</option>
+                    <option value="ISBN">{t('types.ISBN')}</option>
+                    <option value="DOI">{t('types.DOI')}</option>
+                    <option value="URL">{t('types.URL')}</option>
+                    <option value="DOMAIN">{t('types.DOMAIN')}</option>
+                    <option value="SOCIAL_HANDLE">{t('types.SOCIAL_HANDLE')}</option>
+                    <option value="OTHER">{t('types.OTHER')}</option>
                   </Select>
                 </div>
                 <div className="col-span-8">
@@ -82,7 +85,7 @@ export const IdentifiersSection = memo(function IdentifiersSection({
                       updated[index].value = e.target.value;
                       setIdentifiers(updated);
                     }}
-                    placeholder="Wert eingeben..."
+                    placeholder={t('valuePlaceholder')}
                   />
                 </div>
                 <div className="col-span-1">
@@ -99,17 +102,17 @@ export const IdentifiersSection = memo(function IdentifiersSection({
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Identifikatoren hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('empty')}</Text>
         )}
       </div>
 
       {/* Social Media Profile */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+          <div className="text-sm font-medium text-gray-900">{t('socialMedia.title')}</div>
           <Button type="button" onClick={addSocialMedia} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Profil hinzufügen
+            {t('socialMedia.addButton')}
           </Button>
         </div>
 
@@ -140,7 +143,7 @@ export const IdentifiersSection = memo(function IdentifiersSection({
                       updated[index].url = e.target.value;
                       setSocialMediaUrls(updated);
                     }}
-                    placeholder="https://..."
+                    placeholder={t('socialMedia.urlPlaceholder')}
                   />
                 </div>
                 <div className="col-span-1">
@@ -152,7 +155,7 @@ export const IdentifiersSection = memo(function IdentifiersSection({
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Social Media Profile hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('socialMedia.empty')}</Text>
         )}
       </div>
     </div>

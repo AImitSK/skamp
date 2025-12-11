@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -58,6 +59,7 @@ export function PublicationModal({
   onSuccess,
   preselectedPublisherId
 }: PublicationModalProps) {
+  const t = useTranslations('publications.modal');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -349,8 +351,8 @@ export function PublicationModal({
       console.error('Fehler beim Speichern der Publikation:', error);
       toastService.error(
         error instanceof Error
-          ? `Fehler beim Speichern: ${error.message}`
-          : 'Fehler beim Speichern der Publikation'
+          ? t('errors.saveError', { message: error.message })
+          : t('errors.saveErrorGeneric')
       );
     } finally {
       setLoading(false);
@@ -374,7 +376,7 @@ export function PublicationModal({
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
       <DialogTitle>
-        {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
+        {publication ? t('titleEdit') : t('titleNew')}
       </DialogTitle>
 
       <DialogBody className="p-0">
@@ -390,7 +392,7 @@ export function PublicationModal({
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
-              Grunddaten
+              {t('tabs.basic')}
             </button>
             <button
               type="button"
@@ -401,7 +403,7 @@ export function PublicationModal({
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
-              Metriken
+              {t('tabs.metrics')}
             </button>
             <button
               type="button"
@@ -412,7 +414,7 @@ export function PublicationModal({
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
-              Identifikatoren & Links
+              {t('tabs.identifiers')}
             </button>
             <button
               type="button"
@@ -423,7 +425,7 @@ export function PublicationModal({
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
-              Monitoring
+              {t('tabs.monitoring')}
             </button>
           </nav>
         </div>
@@ -481,13 +483,13 @@ export function PublicationModal({
 
       <DialogActions>
         <Button plain onClick={onClose}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           disabled={loading}
         >
-          {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
+          {loading ? t('actions.saving') : publication ? t('actions.update') : t('actions.create')}
         </Button>
       </DialogActions>
     </Dialog>

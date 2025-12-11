@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ClockIcon,
   UserGroupIcon,
@@ -39,6 +40,9 @@ export default React.memo(function PreviewTab({
   organizationId,
   campaignId
 }: PreviewTabProps) {
+  const t = useTranslations('campaigns.edit.tabs.preview');
+  const tToast = useTranslations('toasts');
+
   // Get all state from Context
   const {
     campaign,
@@ -102,10 +106,10 @@ export default React.memo(function PreviewTab({
             <ClockIcon className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h4 className="text-sm font-medium text-green-800 mb-2">
-                Freigabe-Workflow aktiv
+                {t('workflowActive')}
               </h4>
               <Text className="text-sm text-green-700 mb-3">
-                Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet.
+                {t('workflowDescription')}
               </Text>
 
               <div className="flex flex-wrap gap-2">
@@ -116,7 +120,7 @@ export default React.memo(function PreviewTab({
                     className="text-xs text-green-700 hover:text-green-800"
                   >
                     <UserGroupIcon className="h-3 w-3 mr-1" />
-                    Team-Link öffnen
+                    {t('openTeamLink')}
                   </Button>
                 )}
 
@@ -127,7 +131,7 @@ export default React.memo(function PreviewTab({
                     className="text-xs text-green-700 hover:text-green-800"
                   >
                     <BuildingOfficeIcon className="h-3 w-3 mr-1" />
-                    Kunden-Link öffnen
+                    {t('openCustomerLink')}
                   </Button>
                 )}
               </div>
@@ -138,7 +142,7 @@ export default React.memo(function PreviewTab({
 
       {/* Live Vorschau - Mit CampaignPreviewStep Komponente */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('livePreview')}</h3>
 
         <CampaignPreviewStep
           campaignTitle={campaignTitle}
@@ -161,13 +165,13 @@ export default React.memo(function PreviewTab({
       {/* PDF-Vorschau und Versionen-Historie */}
       <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau und Versionen</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('pdfPreviewTitle')}</h3>
 
           {/* WORKFLOW-STATUS INDICATOR */}
           {approvalWorkflowResult?.pdfVersionId ? (
             <div className="flex items-center gap-2 text-sm text-green-700">
               <CheckCircleIcon className="h-4 w-4" />
-              <span>PDF für Freigabe erstellt</span>
+              <span>{t('pdfCreatedForApproval')}</span>
             </div>
           ) : !editLockStatus.isLocked ? (
             <Button
@@ -179,19 +183,19 @@ export default React.memo(function PreviewTab({
               {generatingPdf ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                  PDF wird erstellt...
+                  {t('generatingPdf')}
                 </>
               ) : (
                 <>
                   <DocumentTextIcon className="h-4 w-4 mr-2" />
-                  PDF generieren
+                  {t('generatePdf')}
                 </>
               )}
             </Button>
           ) : (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <LockClosedIcon className="h-4 w-4" />
-              PDF-Erstellung gesperrt - {editLockStatus.reason ? EDIT_LOCK_CONFIG[editLockStatus.reason]?.label : 'Bearbeitung nicht möglich'}
+              {t('pdfLocked')} - {editLockStatus.reason ? EDIT_LOCK_CONFIG[editLockStatus.reason]?.label : t('editingNotPossible')}
             </div>
           )}
         </div>
@@ -203,14 +207,14 @@ export default React.memo(function PreviewTab({
               <div className="flex items-center gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">Vorschau PDF</span>
+                    <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">{t('previewPdf')}</span>
                     <Badge color="blue" className="text-xs">
-                      {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
+                      {approvalWorkflowResult?.pdfVersionId ? t('approvalPdf') : t('current')}
                     </Badge>
                   </div>
                   {approvalWorkflowResult?.workflowId && (
                     <div className="text-sm text-blue-700">
-                      Workflow aktiv
+                      {t('workflowActiveShort')}
                     </div>
                   )}
                 </div>
@@ -222,8 +226,8 @@ export default React.memo(function PreviewTab({
                         currentPdfVersion.status === 'approved' ? 'green' : 'amber'}
                   className="text-xs"
                 >
-                  {currentPdfVersion.status === 'draft' ? 'Entwurf' :
-                   currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
+                  {currentPdfVersion.status === 'draft' ? t('statusDraft') :
+                   currentPdfVersion.status === 'approved' ? t('statusApproved') : t('statusPending')}
                 </Badge>
 
                 <Button
@@ -233,7 +237,7 @@ export default React.memo(function PreviewTab({
                   className="!text-gray-600 hover:!text-gray-900 text-sm"
                 >
                   <DocumentArrowDownIcon className="h-4 w-4" />
-                  Download
+                  {t('download')}
                 </Button>
               </div>
             </div>
@@ -244,8 +248,8 @@ export default React.memo(function PreviewTab({
         {!currentPdfVersion && (
           <div className="text-center py-6 text-gray-500">
             <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-            <p>Noch keine PDF-Version erstellt</p>
-            <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
+            <p>{t('noPdfCreated')}</p>
+            <p className="text-sm">{t('noPdfHint')}</p>
           </div>
         )}
 
@@ -253,7 +257,7 @@ export default React.memo(function PreviewTab({
         {campaignId && organizationId && (
           <div className="mt-8 pt-6 border-t border-gray-200">
             <h4 className="text-base font-semibold mb-4 text-gray-900">
-              PDF-Versionen Historie
+              {t('pdfVersionHistory')}
             </h4>
             <PDFVersionHistory
               campaignId={campaignId}
@@ -271,7 +275,7 @@ export default React.memo(function PreviewTab({
             campaign={campaign}
             organizationId={organizationId}
             onPDFGenerated={(pdfUrl: string) => {
-              toastService.success('Pipeline-PDF erfolgreich generiert');
+              toastService.success(tToast('pipelinePdfGenerated'));
             }}
           />
         </div>
