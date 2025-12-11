@@ -1,0 +1,241 @@
+{
+  "contactModalFull": {
+    "titleEdit": "Edit Person",
+    "titleAdd": "Add New Person",
+    "tabs": {
+      "general": {
+        "label": "General"
+      },
+      "communication": {
+        "label": "Communication"
+      },
+      "media": {
+        "label": "Media"
+      },
+      "professional": {
+        "label": "Professional"
+      },
+      "gdpr": {
+        "label": "GDPR"
+      },
+      "personal": {
+        "label": "Personal"
+      }
+    },
+    "general": {
+      "labels": {
+        "contactType": "Contact Type",
+        "salutation": "Salutation",
+        "title": "Title",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "functionName": "Function Name",
+        "company": "Company",
+        "position": "Position",
+        "department": "Department",
+        "tags": "Tags",
+        "status": "Status",
+        "isJournalist": "Is Journalist?"
+      },
+      "contactTypes": {
+        "person": "Person",
+        "function": "Function Contact"
+      },
+      "salutations": {
+        "none": "No Salutation",
+        "mr": "Mr.",
+        "ms": "Ms.",
+        "dr": "Dr.",
+        "prof": "Prof.",
+        "profDr": "Prof. Dr."
+      },
+      "placeholders": {
+        "title": "e.g. Dr., Prof.",
+        "functionName": "e.g. Editorial Office, Press Department, Newsdesk",
+        "position": "e.g. Managing Director, Editor",
+        "department": "e.g. Sales, Editorial"
+      },
+      "company": {
+        "none": "No Company Assigned",
+        "tooltip": "Select the company this person works for"
+      },
+      "journalist": {
+        "label": "This person is a journalist/editor",
+        "tooltip": "Enables additional media fields"
+      }
+    },
+    "communication": {
+      "emails": {
+        "title": "Email Addresses",
+        "addButton": "Add Email",
+        "placeholder": "email@example.com",
+        "empty": "No email addresses added",
+        "types": {
+          "business": "Business",
+          "private": "Private",
+          "other": "Other"
+        }
+      },
+      "phones": {
+        "title": "Phone Numbers",
+        "addButton": "Add Number",
+        "placeholder": "30 12345678",
+        "empty": "No phone numbers added",
+        "types": {
+          "business": "Business",
+          "mobile": "Mobile",
+          "private": "Private",
+          "fax": "Fax",
+          "other": "Other"
+        }
+      },
+      "social": {
+        "title": "Social Media Profiles",
+        "addButton": "Add Profile",
+        "urlPlaceholder": "https://...",
+        "empty": "No social media profiles added"
+      },
+      "preferences": {
+        "title": "Communication Preferences",
+        "preferredChannel": "Preferred Channel",
+        "preferredLanguage": "Preferred Language",
+        "noPreference": "No Preference",
+        "selectLanguage": "Select language...",
+        "languages": {
+          "de": "Deutsch",
+          "en": "English",
+          "fr": "Français",
+          "es": "Español",
+          "it": "Italiano",
+          "pt": "Português",
+          "nl": "Nederlands",
+          "pl": "Polski",
+          "ru": "Русский",
+          "ja": "日本語",
+          "ko": "한국어",
+          "zh": "中文"
+        }
+      },
+      "primary": "Primary"
+    },
+    "media": {
+      "publications": {
+        "title": "Publications",
+        "selectCompanyFirst": "First select a company to view its publications.",
+        "chooseForJournalist": "Select the publications from this company that the journalist works for.",
+        "empty": "This company has no publications yet.",
+        "selectCompanyHint": "Please select a company in the \"General\" tab first.",
+        "verified": "Verified",
+        "types": {
+          "magazine": "Magazine",
+          "newspaper": "Newspaper",
+          "website": "Website",
+          "blog": "Blog",
+          "trade_journal": "Trade Journal"
+        },
+        "formats": {
+          "print": "Print",
+          "online": "Online",
+          "both": "Print & Online"
+        }
+      },
+      "beats": {
+        "title": "Beats & Topics",
+        "description": "What topics does this journalist cover?",
+        "placeholder": "e.g. Technology, Business, Politics...",
+        "addButton": "Add",
+        "empty": "No beats added yet"
+      },
+      "mediaTypes": {
+        "title": "Media Types",
+        "description": "Which media does the journalist work in?"
+      },
+      "preferredFormats": {
+        "title": "Preferred Formats",
+        "description": "Which content formats are preferred?"
+      },
+      "submissionGuidelines": {
+        "title": "Submission Guidelines",
+        "description": "Special requirements or notes for contact",
+        "placeholder": "e.g. Preferred contact times, special requirements for press releases, deadlines..."
+      }
+    },
+    "professional": {
+      "biography": {
+        "label": "Biography",
+        "placeholder": "Professional background..."
+      }
+    },
+    "gdpr": {
+      "marketing": {
+        "title": "Marketing Communication",
+        "description": "Permission for marketing emails and calls"
+      },
+      "newsletter": {
+        "title": "Newsletter",
+        "description": "Permission for newsletter delivery"
+      },
+      "phoneContact": {
+        "title": "Phone Contact",
+        "description": "Permission for calls"
+      },
+      "consentGranted": "Consent Granted"
+    },
+    "personal": {
+      "birthday": "Birthday",
+      "nationality": "Nationality",
+      "nationalityPlaceholder": "Select nationality...",
+      "interests": {
+        "label": "Interests",
+        "placeholder": "e.g. Golf, Technology, Travel (comma separated)"
+      },
+      "internalNotes": {
+        "label": "Internal Notes",
+        "placeholder": "Internal notes for the team (not visible to external contacts)..."
+      },
+      "countries": {
+        "DE": "Germany",
+        "AT": "Austria",
+        "CH": "Switzerland",
+        "US": "USA",
+        "GB": "United Kingdom",
+        "FR": "France",
+        "IT": "Italy",
+        "ES": "Spain",
+        "NL": "Netherlands",
+        "BE": "Belgium",
+        "LU": "Luxembourg",
+        "DK": "Denmark",
+        "SE": "Sweden",
+        "NO": "Norway",
+        "FI": "Finland",
+        "PL": "Poland",
+        "CZ": "Czech Republic",
+        "HU": "Hungary",
+        "PT": "Portugal",
+        "GR": "Greece",
+        "IE": "Ireland",
+        "CA": "Canada",
+        "AU": "Australia",
+        "JP": "Japan",
+        "CN": "China",
+        "IN": "India",
+        "BR": "Brazil",
+        "MX": "Mexico",
+        "RU": "Russia",
+        "TR": "Turkey"
+      }
+    },
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "functionNameRequired": "Function name is required (e.g. \"Editorial Office\", \"Press Department\")",
+      "generalError": "An error occurred. Please try again."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    }
+  }
+}

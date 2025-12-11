@@ -951,6 +951,25 @@
       "journalist": "Journalist",
       "statusActive": "Aktiv"
     },
+    "contactsTable": {
+      "headers": {
+        "name": "Name",
+        "companyPosition": "Firma / Position",
+        "phoneEmail": "Telefon / E-Mail",
+        "socialMedia": "Social Media",
+        "tags": "Tags"
+      },
+      "badges": {
+        "function": "Funktion",
+        "journalist": "Journalist",
+        "reference": "🌐 Verweis"
+      },
+      "actions": {
+        "referenceNote": "(Verweis)"
+      },
+      "noName": "(Kein Name)",
+      "emptyValue": "—"
+    },
     "companyTable": {
       "headers": {
         "company": "Firma",
@@ -962,6 +981,27 @@
         "tags": "Tags"
       },
       "dba": "dba"
+    },
+    "companiesTable": {
+      "countries": {
+        "DE": "Deutschland",
+        "AT": "Österreich",
+        "CH": "Schweiz",
+        "US": "USA",
+        "GB": "Großbritannien",
+        "FR": "Frankreich",
+        "IT": "Italien",
+        "ES": "Spanien",
+        "NL": "Niederlande",
+        "BE": "Belgien",
+        "LU": "Luxemburg",
+        "PL": "Polen",
+        "CZ": "Tschechien",
+        "DK": "Dänemark",
+        "SE": "Schweden",
+        "NO": "Norwegen",
+        "FI": "Finnland"
+      }
     },
     "contactModal": {
       "titleEdit": "Person bearbeiten",
@@ -1254,6 +1294,57 @@
       }
     },
     "companyModal": {
+      "titleEdit": "Firma bearbeiten",
+      "titleAdd": "Neue Firma hinzufügen",
+      "tabs": {
+        "general": "Allgemein",
+        "legal": "Rechtlich",
+        "international": "International",
+        "financial": "Finanzen",
+        "corporate": "Konzern",
+        "media": "Medien"
+      },
+      "general": {
+        "displayName": "Anzeigename",
+        "displayNameTooltip": "Der Name, wie er in Listen und Übersichten angezeigt wird",
+        "type": "Typ",
+        "types": {
+          "customer": "Kunde",
+          "supplier": "Lieferant",
+          "partner": "Partner",
+          "publisher": "Verlag",
+          "mediaHouse": "Medienhaus",
+          "agency": "Agentur",
+          "other": "Sonstiges"
+        },
+        "industry": "Branche",
+        "industryTooltip": "Bei Medienunternehmen wird die Branche durch den Typ definiert",
+        "industryPlaceholder": "z.B. IT, Handel, Industrie",
+        "industryDisabledPlaceholder": "—",
+        "status": "Status",
+        "statuses": {
+          "prospect": "Interessent",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "archived": "Archiviert"
+        },
+        "lifecycleStage": "Lifecycle Stage",
+        "lifecycleStages": {
+          "lead": "Lead",
+          "opportunity": "Opportunity",
+          "customer": "Kunde",
+          "partner": "Partner",
+          "former": "Ehemalig"
+        },
+        "website": "Website",
+        "websitePlaceholder": "https://...",
+        "tags": "Tags",
+        "internalNotes": "Interne Notizen",
+        "internalNotesPlaceholder": "Notizen, die nicht für Kunden sichtbar sind...",
+        "publicDescription": "Öffentliche Beschreibung",
+        "publicDescriptionPlaceholder": "Beschreibung, die in Media Kits verwendet werden kann...",
+        "required": "*"
+      },
       "financial": {
         "annualRevenue": "Jahresumsatz",
         "annualRevenuePlaceholder": "0,00",
@@ -1354,11 +1445,26 @@
           "tooltip": "Alle Publikationen dieses Verlags/Medienhauses",
           "addButton": "Neue Publikation",
           "empty": "Noch keine Publikationen verknüpft",
+          "loading": "Lädt...",
+          "view": "Anzeigen",
           "badges": {
             "verified": "Verifiziert",
             "advertisements": "{count, plural, =1 {# Werbemittel} other {# Werbemittel}}"
+          },
+          "types": {
+            "magazine": "Magazin",
+            "newspaper": "Zeitung",
+            "website": "Website",
+            "blog": "Blog",
+            "newsletter": "Newsletter",
+            "podcast": "Podcast",
+            "tv": "TV",
+            "radio": "Radio",
+            "tradeJournal": "Fachzeitschrift",
+            "socialMedia": "Social Media"
           }
-        }
+        },
+        "primary": "Primär"
       },
       "corporate": {
         "parentCompany": "Muttergesellschaft",
@@ -1392,11 +1498,24 @@
           "companyRegUk": "Companies House (UK)",
           "uidCh": "UID (CH)",
           "sirenFr": "SIREN (FR)",
+          "duns": "D-U-N-S",
+          "lei": "LEI",
           "other": "Sonstige"
         },
         "valuePlaceholder": "Wert eingeben...",
         "authorityPlaceholder": "Land/Behörde",
         "noIdentifiers": "Keine Kennungen hinzugefügt"
+      },
+      "validation": {
+        "nameRequired": "Firmenname ist erforderlich",
+        "invalidEmail": "Ungültige E-Mail-Adresse",
+        "websiteProtocol": "Website muss mit http:// oder https:// beginnen",
+        "generalError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "saving": "Speichern..."
       }
     },
     "companyMedia": {
@@ -1419,6 +1538,325 @@
         "folderType": "Ordner",
         "recentFiles": "Letzte Dateien ({count}{total, plural, =0 {} other { von {total}}})",
         "showAll": "Alle {total} Medien anzeigen"
+      }
+    },
+    "importModal": {
+      "title": "Daten importieren",
+      "globalMode": "GLOBAL-MODUS",
+      "fileSelected": "1 Datei ausgewählt",
+      "noFile": "Keine Datei",
+      "tabs": {
+        "companies": "Firmen importieren",
+        "contacts": "Kontakte importieren"
+      },
+      "globalWarning": {
+        "title": "⚠️ GLOBAL-IMPORT AKTIV",
+        "companiesMessage": "Du bist als SuperAdmin angemeldet. Alle importierten Firmen werden automatisch global und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!",
+        "contactsMessage": "Du bist als SuperAdmin angemeldet. Alle importierten Kontakte werden automatisch global und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!"
+      },
+      "instructions": {
+        "companiesTitle": "Firmen-Import",
+        "contactsTitle": "Kontakte-Import",
+        "companiesDescription": "Laden Sie eine CSV-Datei hoch, um Firmen zu importieren. Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).",
+        "contactsDescription": "Laden Sie eine CSV-Datei hoch, um Kontakte zu importieren. Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).",
+        "downloadTemplate": "Vorlage herunterladen"
+      },
+      "duplicateHandling": {
+        "label": "Duplikate-Behandlung",
+        "skip": "Duplikate überspringen",
+        "update": "Bestehende Einträge aktualisieren"
+      },
+      "fileUpload": {
+        "label": "CSV-Datei auswählen",
+        "clickOrDrag": "Klicken Sie hier",
+        "orDrag": "oder ziehen Sie eine Datei hierher",
+        "fileType": "CSV-Datei (max. 10MB)",
+        "selectedFile": "Ausgewählte Datei:",
+        "reset": "Zurücksetzen"
+      },
+      "preview": {
+        "title": "Vorschau (erste 5 Zeilen)",
+        "more": "..."
+      },
+      "progress": {
+        "parsing": "Datei wird gelesen...",
+        "validating": "Daten werden validiert...",
+        "importing": "Importiere {current} von {total}...",
+        "done": "Import abgeschlossen!"
+      },
+      "results": {
+        "successTitle": "Import erfolgreich!",
+        "warningsTitle": "Import mit Warnungen abgeschlossen",
+        "created": "Neu erstellt",
+        "updated": "Aktualisiert",
+        "skipped": "Übersprungen",
+        "errorsFound": "{count} Fehler gefunden",
+        "errorRow": "Zeile {row}: {error}",
+        "moreErrors": "... und {count} weitere Fehler",
+        "warningsFound": "{count} Warnungen",
+        "warningRow": "Zeile {row}: {warning}",
+        "moreWarnings": "... und {count} weitere Warnungen",
+        "newImport": "Neuen Import starten"
+      },
+      "errors": {
+        "fileFormatError": "Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.",
+        "fileReadError": "Fehler beim Lesen der Datei: {message}",
+        "importFailed": "Import fehlgeschlagen. {count} Fehler gefunden.",
+        "companyNameMissing": "Firmenname fehlt",
+        "firstNameMissing": "Vorname fehlt",
+        "lastNameMissing": "Nachname fehlt",
+        "parsingError": "Parsing-Fehler"
+      },
+      "confirmDialog": {
+        "companiesTitle": "⚠️ GLOBAL-IMPORT WARNUNG",
+        "contactsTitle": "⚠️ GLOBAL-IMPORT WARNUNG",
+        "companiesMessage": "Du bist als SuperAdmin angemeldet!\n\nDie importierten Firmen werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\nMöchtest du wirklich fortfahren?",
+        "contactsMessage": "Du bist als SuperAdmin angemeldet!\n\nDie importierten Kontakte werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\nMöchtest du wirklich fortfahren?"
+      },
+      "actions": {
+        "close": "Schließen",
+        "cancel": "Abbrechen",
+        "import": "Import starten",
+        "importing": "Importiere..."
+      }
+    },
+    "contactModalFull": {
+      "titleEdit": "Person bearbeiten",
+      "titleAdd": "Neue Person hinzufügen",
+      "tabs": {
+        "general": {
+          "label": "Allgemein"
+        },
+        "communication": {
+          "label": "Kommunikation"
+        },
+        "media": {
+          "label": "Medien"
+        },
+        "professional": {
+          "label": "Beruflich"
+        },
+        "gdpr": {
+          "label": "DSGVO"
+        },
+        "personal": {
+          "label": "Persönlich"
+        }
+      },
+      "general": {
+        "labels": {
+          "contactType": "Kontaktart",
+          "salutation": "Anrede",
+          "title": "Titel",
+          "firstName": "Vorname",
+          "lastName": "Nachname",
+          "functionName": "Funktionsname",
+          "company": "Firma",
+          "position": "Position",
+          "department": "Abteilung",
+          "tags": "Tags",
+          "status": "Status",
+          "isJournalist": "Ist Journalist?"
+        },
+        "contactTypes": {
+          "person": "Person",
+          "function": "Funktionskontakt"
+        },
+        "salutations": {
+          "none": "Keine Anrede",
+          "mr": "Herr",
+          "ms": "Frau",
+          "dr": "Dr.",
+          "prof": "Prof.",
+          "profDr": "Prof. Dr."
+        },
+        "placeholders": {
+          "title": "z.B. Dr., Prof.",
+          "functionName": "z.B. Redaktion, Pressestelle, Newsdesk",
+          "position": "z.B. Geschäftsführer, Redakteur",
+          "department": "z.B. Vertrieb, Redaktion"
+        },
+        "company": {
+          "none": "Keine Firma zugeordnet",
+          "tooltip": "Wählen Sie die Firma aus, bei der diese Person arbeitet"
+        },
+        "journalist": {
+          "label": "Diese Person ist Journalist/Redakteur",
+          "tooltip": "Aktiviert zusätzliche Medien-Felder"
+        }
+      },
+      "communication": {
+        "emails": {
+          "title": "E-Mail-Adressen",
+          "addButton": "E-Mail hinzufügen",
+          "placeholder": "email@beispiel.de",
+          "empty": "Keine E-Mail-Adressen hinzugefügt",
+          "types": {
+            "business": "Geschäftlich",
+            "private": "Privat",
+            "other": "Sonstige"
+          }
+        },
+        "phones": {
+          "title": "Telefonnummern",
+          "addButton": "Nummer hinzufügen",
+          "placeholder": "30 12345678",
+          "empty": "Keine Telefonnummern hinzugefügt",
+          "types": {
+            "business": "Geschäftlich",
+            "mobile": "Mobil",
+            "private": "Privat",
+            "fax": "Fax",
+            "other": "Sonstige"
+          }
+        },
+        "social": {
+          "title": "Social Media Profile",
+          "addButton": "Profil hinzufügen",
+          "urlPlaceholder": "https://...",
+          "empty": "Keine Social Media Profile hinzugefügt"
+        },
+        "preferences": {
+          "title": "Kommunikations-Präferenzen",
+          "preferredChannel": "Bevorzugter Kanal",
+          "preferredLanguage": "Bevorzugte Sprache",
+          "noPreference": "Keine Präferenz",
+          "selectLanguage": "Sprache auswählen...",
+          "languages": {
+            "de": "Deutsch",
+            "en": "English",
+            "fr": "Français",
+            "es": "Español",
+            "it": "Italiano",
+            "pt": "Português",
+            "nl": "Nederlands",
+            "pl": "Polski",
+            "ru": "Русский",
+            "ja": "日本語",
+            "ko": "한국어",
+            "zh": "中文"
+          }
+        },
+        "primary": "Primär"
+      },
+      "media": {
+        "publications": {
+          "title": "Publikationen",
+          "selectCompanyFirst": "Wählen Sie zuerst eine Firma aus, um deren Publikationen anzuzeigen.",
+          "chooseForJournalist": "Wählen Sie die Publikationen dieser Firma aus, für die der Journalist arbeitet.",
+          "empty": "Diese Firma hat noch keine Publikationen.",
+          "selectCompanyHint": "Bitte wählen Sie zuerst eine Firma im Tab \"Allgemein\" aus.",
+          "verified": "Verifiziert",
+          "types": {
+            "magazine": "Magazin",
+            "newspaper": "Zeitung",
+            "website": "Website",
+            "blog": "Blog",
+            "trade_journal": "Fachzeitschrift"
+          },
+          "formats": {
+            "print": "Print",
+            "online": "Online",
+            "both": "Print & Online"
+          }
+        },
+        "beats": {
+          "title": "Ressorts & Themengebiete",
+          "description": "Über welche Themen berichtet dieser Journalist?",
+          "placeholder": "z.B. Technologie, Wirtschaft, Politik...",
+          "addButton": "Hinzufügen",
+          "empty": "Noch keine Ressorts hinzugefügt"
+        },
+        "mediaTypes": {
+          "title": "Medientypen",
+          "description": "In welchen Medien arbeitet der Journalist?"
+        },
+        "preferredFormats": {
+          "title": "Bevorzugte Formate",
+          "description": "Welche Inhaltsformate werden bevorzugt?"
+        },
+        "submissionGuidelines": {
+          "title": "Einreichungs-Richtlinien",
+          "description": "Spezielle Anforderungen oder Hinweise für die Kontaktaufnahme",
+          "placeholder": "z.B. Bevorzugte Kontaktzeiten, spezielle Anforderungen an Pressemitteilungen, Deadlines..."
+        }
+      },
+      "professional": {
+        "biography": {
+          "label": "Biografie",
+          "placeholder": "Beruflicher Werdegang..."
+        }
+      },
+      "gdpr": {
+        "marketing": {
+          "title": "Marketing-Kommunikation",
+          "description": "Erlaubnis für Marketing-E-Mails und -Anrufe"
+        },
+        "newsletter": {
+          "title": "Newsletter",
+          "description": "Erlaubnis für Newsletter-Versand"
+        },
+        "phoneContact": {
+          "title": "Telefonische Kontaktaufnahme",
+          "description": "Erlaubnis für Anrufe"
+        },
+        "consentGranted": "Einwilligung erteilt"
+      },
+      "personal": {
+        "birthday": "Geburtstag",
+        "nationality": "Nationalität",
+        "nationalityPlaceholder": "Nationalität auswählen...",
+        "interests": {
+          "label": "Interessen",
+          "placeholder": "z.B. Golf, Technologie, Reisen (kommagetrennt)"
+        },
+        "internalNotes": {
+          "label": "Interne Notizen",
+          "placeholder": "Interne Notizen für das Team (nicht sichtbar für externe Kontakte)..."
+        },
+        "countries": {
+          "DE": "Deutschland",
+          "AT": "Österreich",
+          "CH": "Schweiz",
+          "US": "USA",
+          "GB": "Großbritannien",
+          "FR": "Frankreich",
+          "IT": "Italien",
+          "ES": "Spanien",
+          "NL": "Niederlande",
+          "BE": "Belgien",
+          "LU": "Luxemburg",
+          "DK": "Dänemark",
+          "SE": "Schweden",
+          "NO": "Norwegen",
+          "FI": "Finnland",
+          "PL": "Polen",
+          "CZ": "Tschechien",
+          "HU": "Ungarn",
+          "PT": "Portugal",
+          "GR": "Griechenland",
+          "IE": "Irland",
+          "CA": "Kanada",
+          "AU": "Australien",
+          "JP": "Japan",
+          "CN": "China",
+          "IN": "Indien",
+          "BR": "Brasilien",
+          "MX": "Mexiko",
+          "RU": "Russland",
+          "TR": "Türkei"
+        }
+      },
+      "validation": {
+        "firstNameRequired": "Vorname ist erforderlich",
+        "lastNameRequired": "Nachname ist erforderlich",
+        "functionNameRequired": "Funktionsname ist erforderlich (z.B. \"Redaktion\", \"Pressestelle\")",
+        "generalError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "saving": "Speichern..."
       }
     }
   },
@@ -3381,6 +3819,10 @@
       "apiManagement": "API-Verwaltung",
       "integrations": "Integrationen"
     },
+    "layout": {
+      "title": "Administration",
+      "description": "Verwalte deinen Account und organisationsweite Einstellungen"
+    },
     "integrations": {
       "title": "Integrationen",
       "description": "Verbinde CeleroPress mit deinen bestehenden Tools und Services",
@@ -3974,6 +4416,54 @@
     "search": {
       "label": "Dokumentation durchsuchen",
       "placeholder": "Durchsuche die Dokumentation..."
+    },
+    "layout": {
+      "header": "Academy",
+      "navigation": {
+        "overview": "Übersicht",
+        "gettingStarted": "Erste Schritte",
+        "contacts": {
+          "title": "Kontakte",
+          "companies": "Unternehmen",
+          "people": "Personen",
+          "distributionLists": "Verteilerlisten"
+        },
+        "library": {
+          "title": "Bibliothek",
+          "publications": "Publikationen",
+          "marketingMaterials": "Werbemittel"
+        },
+        "prTools": {
+          "title": "PR-Tools",
+          "campaigns": "Kampagnen",
+          "approvals": "Freigaben",
+          "calendar": "Kalender",
+          "mediaLibrary": "Mediathek",
+          "textModules": "Textbausteine"
+        },
+        "communication": {
+          "title": "Kommunikation",
+          "inbox": "Kampagnen In-Box",
+          "notifications": "Benachrichtigungen"
+        },
+        "settings": {
+          "title": "Einstellungen",
+          "notifications": "Benachrichtigungen",
+          "branding": "Branding",
+          "domains": "Domains",
+          "email": "E-Mail",
+          "importExport": "Import/Export",
+          "team": "Team"
+        },
+        "adminCenter": {
+          "title": "Admin-Center",
+          "profile": "Profil",
+          "contract": "Vertrag",
+          "billing": "Abrechnung",
+          "api": "API"
+        }
+      },
+      "support": "Support kontaktieren"
     }
   },
   "superadmin": {
@@ -4753,6 +5243,20 @@
       "createdLabel": "Erstellt:",
       "changesLabel": "Änderungen:",
       "downloadButton": "Download"
+    }
+  },
+  "library": {
+    "layout": {
+      "title": "Bibliothek",
+      "ariaLabel": "Tabs",
+      "selectTabLabel": "Tab auswählen",
+      "restrictedSuffix": "(gesperrt)",
+      "tabs": {
+        "publications": "Publikationen",
+        "boilerplates": "Boilerplates",
+        "media": "Mediathek",
+        "database": "Datenbank"
+      }
     }
   }
 }

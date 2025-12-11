@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -137,6 +138,7 @@ export default function ContactModalEnhanced({
   const { user } = useAuth();
   const { autoGlobalMode } = useAutoGlobal();
   const queryClient = useQueryClient();
+  const t = useTranslations('crm.contactModalFull');
   const [activeTab, setActiveTab] = useState<ContactTabId>('general');
 
   // Defensive: Stelle sicher, dass companies nie undefined ist
@@ -411,15 +413,15 @@ export default function ContactModalEnhanced({
     if (isPerson) {
       // Personen brauchen Vor- und Nachname
       if (!formData.name?.firstName?.trim()) {
-        errors.push('Vorname ist erforderlich');
+        errors.push(t('validation.firstNameRequired'));
       }
       if (!formData.name?.lastName?.trim()) {
-        errors.push('Nachname ist erforderlich');
+        errors.push(t('validation.lastNameRequired'));
       }
     } else {
       // Funktionskontakte brauchen functionName
       if (!formData.functionName?.trim()) {
-        errors.push('Funktionsname ist erforderlich (z.B. "Redaktion", "Pressestelle")');
+        errors.push(t('validation.functionNameRequired'));
       }
     }
 
@@ -477,7 +479,7 @@ export default function ContactModalEnhanced({
       onClose();
     } catch (error) {
       // Error saving contact - handled via UI feedback
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      setValidationErrors([t('validation.generalError')]);
     } finally {
       setLoading(false);
     }
@@ -487,7 +489,7 @@ export default function ContactModalEnhanced({
     <Dialog open={true} onClose={onClose} size="5xl">
       <form ref={formRef} onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
-          {contact ? 'Person bearbeiten' : 'Neue Person hinzufügen'}
+          {contact ? t('titleEdit') : t('titleAdd')}
         </DialogTitle>
         
         <DialogBody className="p-0">
@@ -520,7 +522,7 @@ export default function ContactModalEnhanced({
                         activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
                       )}
                     />
-                    {tab.label}
+                    {t(`tabs.${tab.id}.label`)}
                   </button>
                 );
               })}
@@ -535,20 +537,20 @@ export default function ContactModalEnhanced({
                 {/* Kontakttyp und Anrede/Funktionsname in einer Zeile */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Field>
-                    <Label>Kontaktart</Label>
+                    <Label>{t('general.labels.contactType')}</Label>
                     <Select
                       value={formData.contactType || 'person'}
                       onChange={(e) => setFormData({ ...formData, contactType: e.target.value as 'person' | 'function' })}
                     >
-                      <option value="person">Person</option>
-                      <option value="function">Funktionskontakt</option>
+                      <option value="person">{t('general.contactTypes.person')}</option>
+                      <option value="function">{t('general.contactTypes.function')}</option>
                     </Select>
                   </Field>
 
                   {/* Anrede nur für Personen */}
                   {(formData.contactType === 'person' || !formData.contactType) && (
                     <Field>
-                      <Label>Anrede</Label>
+                      <Label>{t('general.labels.salutation')}</Label>
                       <Select
                         value={formData.name?.salutation || ''}
                         onChange={(e) => setFormData({
@@ -559,12 +561,12 @@ export default function ContactModalEnhanced({
                           }
                         })}
                       >
-                        <option value="">Keine Anrede</option>
-                        <option value="Herr">Herr</option>
-                        <option value="Frau">Frau</option>
-                        <option value="Dr.">Dr.</option>
-                        <option value="Prof.">Prof.</option>
-                        <option value="Prof. Dr.">Prof. Dr.</option>
+                        <option value="">{t('general.salutations.none')}</option>
+                        <option value="Herr">{t('general.salutations.mr')}</option>
+                        <option value="Frau">{t('general.salutations.ms')}</option>
+                        <option value="Dr.">{t('general.salutations.dr')}</option>
+                        <option value="Prof.">{t('general.salutations.prof')}</option>
+                        <option value="Prof. Dr.">{t('general.salutations.profDr')}</option>
                       </Select>
                     </Field>
                   )}

@@ -1,6 +1,11 @@
 {
   "permissions": {
     "allow": [
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
       "mcp__genkit__run_flow",
       "Bash(npx tsx:*)",
       "Bash(git push)",

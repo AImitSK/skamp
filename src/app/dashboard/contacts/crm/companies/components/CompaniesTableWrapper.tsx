@@ -2,29 +2,10 @@
 "use client";
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { CompaniesTable } from './CompaniesTable';
 import { CompanyEnhanced, ContactEnhanced } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
-
-const COUNTRY_NAMES: Record<string, string> = {
-  'DE': 'Deutschland',
-  'AT': 'Österreich',
-  'CH': 'Schweiz',
-  'US': 'USA',
-  'GB': 'Großbritannien',
-  'FR': 'Frankreich',
-  'IT': 'Italien',
-  'ES': 'Spanien',
-  'NL': 'Niederlande',
-  'BE': 'Belgien',
-  'LU': 'Luxemburg',
-  'PL': 'Polen',
-  'CZ': 'Tschechien',
-  'DK': 'Dänemark',
-  'SE': 'Schweden',
-  'NO': 'Norwegen',
-  'FI': 'Finnland'
-};
 
 export interface CompaniesTableWrapperProps {
   companies: CompanyEnhanced[];
@@ -60,6 +41,9 @@ export function CompaniesTableWrapper({
   const safeContacts = contacts || [];
   const safeTags = tags || [];
 
+  // i18n hook for country names
+  const t = useTranslations('crm.companiesTable');
+
   // Tags Map erstellen
   const tagsMap = useMemo(() => {
     const map = new Map<string, { name: string; color: string }>();
@@ -78,10 +62,17 @@ export function CompaniesTableWrapper({
     };
   }, [safeContacts]);
 
-  // Country Name Funktion
+  // Country Name Funktion - now using i18n
   const getCountryName = (countryCode?: string) => {
     if (!countryCode) return '';
-    return COUNTRY_NAMES[countryCode] || countryCode;
+
+    // Try to get translated country name, fallback to country code
+    const key = `countries.${countryCode}` as any;
+    const translated = t(key);
+
+    // If translation key equals the output, it means no translation exists
+    // In that case, return the country code
+    return translated === key ? countryCode : translated;
   };
 
   // onSelectAll Handler

@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { 
   BookOpenIcon, 
   HomeIcon, 
@@ -35,170 +36,175 @@ import {
 } from '@heroicons/react/24/outline';
 
 // Navigation Items für die Dokumentation - 6 Hauptkategorien basierend auf App-Navigation
-const navigation = [
-  { 
-    name: 'Übersicht', 
-    href: '/dashboard/academy/documentation', 
-    icon: HomeIcon 
-  },
-  { 
-    name: 'Erste Schritte', 
-    href: '/dashboard/academy/documentation/erste-schritte', 
-    icon: RocketLaunchIcon 
-  },
-  {
-    name: 'Kontakte',
-    icon: UserGroupIcon,
-    href: '/dashboard/academy/documentation/handbuch/kontakte',
-    children: [
-      { 
-        name: 'Unternehmen', 
-        href: '/dashboard/academy/documentation/handbuch/kontakte/unternehmen',
-        icon: BuildingOfficeIcon 
-      },
-      { 
-        name: 'Personen', 
-        href: '/dashboard/academy/documentation/handbuch/kontakte/personen',
-        icon: UserGroupIcon 
-      },
-      { 
-        name: 'Verteilerlisten', 
-        href: '/dashboard/academy/documentation/handbuch/kontakte/verteilerlisten',
-        icon: QueueListIcon 
-      },
-    ]
-  },
-  {
-    name: 'Bibliothek',
-    icon: ArchiveBoxIcon,
-    href: '/dashboard/academy/documentation/handbuch/bibliothek',
-    children: [
-      { 
-        name: 'Publikationen', 
-        href: '/dashboard/academy/documentation/handbuch/bibliothek/publikationen',
-        icon: NewspaperIcon 
-      },
-      { 
-        name: 'Werbemittel', 
-        href: '/dashboard/academy/documentation/handbuch/bibliothek/werbemittel',
-        icon: PhotoIcon 
-      },
-    ]
-  },
-  {
-    name: 'PR-Tools',
-    icon: MegaphoneIcon,
-    href: '/dashboard/academy/documentation/handbuch/pr-tools',
-    children: [
-      { 
-        name: 'Kampagnen', 
-        href: '/dashboard/academy/documentation/handbuch/pr-tools/kampagnen',
-        icon: MegaphoneIcon 
-      },
-      { 
-        name: 'Freigaben', 
-        href: '/dashboard/academy/documentation/handbuch/pr-tools/freigaben',
-        icon: ShieldCheckIcon 
-      },
-      { 
-        name: 'Kalender', 
-        href: '/dashboard/academy/documentation/handbuch/pr-tools/kalender',
-        icon: CalendarDaysIcon 
-      },
-      { 
-        name: 'Mediathek', 
-        href: '/dashboard/academy/documentation/handbuch/pr-tools/mediathek',
-        icon: PhotoIcon 
-      },
-      { 
-        name: 'Textbausteine', 
-        href: '/dashboard/academy/documentation/handbuch/pr-tools/textbausteine',
-        icon: DocumentTextIcon 
-      },
-    ]
-  },
-  {
-    name: 'Kommunikation',
-    icon: EnvelopeIcon,
-    href: '/dashboard/academy/documentation/handbuch/kommunikation',
-    children: [
-      { 
-        name: 'Kampagnen In-Box', 
-        href: '/dashboard/academy/documentation/handbuch/kommunikation/inbox',
-        icon: InboxIcon 
-      },
-      { 
-        name: 'Benachrichtigungen', 
-        href: '/dashboard/academy/documentation/handbuch/kommunikation/benachrichtigungen',
-        icon: BellIcon 
-      },
-    ]
-  },
-  {
-    name: 'Einstellungen',
-    icon: Cog6ToothIcon,
-    href: '/dashboard/academy/documentation/handbuch/einstellungen',
-    children: [
-      { 
-        name: 'Benachrichtigungen', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen',
-        icon: BellAlertIcon 
-      },
-      { 
-        name: 'Branding', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/branding',
-        icon: PaintBrushIcon 
-      },
-      { 
-        name: 'Domains', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/domains',
-        icon: EnvelopeIcon 
-      },
-      { 
-        name: 'E-Mail', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/email',
-        icon: EnvelopeIcon 
-      },
-      { 
-        name: 'Import/Export', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/import-export',
-        icon: ArrowDownTrayIcon 
-      },
-      { 
-        name: 'Team', 
-        href: '/dashboard/academy/documentation/handbuch/einstellungen/team',
-        icon: UserGroupIcon 
-      },
-    ]
-  },
-  {
-    name: 'Admin-Center',
-    icon: UserIcon,
-    href: '/dashboard/academy/documentation/handbuch/admin',
-    children: [
-      { 
-        name: 'Profil', 
-        href: '/dashboard/academy/documentation/handbuch/admin/profil',
-        icon: UserIcon 
-      },
-      { 
-        name: 'Vertrag', 
-        href: '/dashboard/academy/documentation/handbuch/admin/vertrag',
-        icon: DocumentCheckIcon 
-      },
-      { 
-        name: 'Abrechnung', 
-        href: '/dashboard/academy/documentation/handbuch/admin/abrechnung',
-        icon: CreditCardIcon 
-      },
-      { 
-        name: 'API', 
-        href: '/dashboard/academy/documentation/handbuch/admin/api',
-        icon: CodeBracketIcon 
-      },
-    ]
-  },
-];
+// Diese Funktion wird innerhalb der Komponente verwendet, um Zugriff auf useTranslations zu haben
+function useNavigationItems() {
+  const t = useTranslations('academy.layout.navigation');
+
+  return [
+    {
+      name: t('overview'),
+      href: '/dashboard/academy/documentation',
+      icon: HomeIcon
+    },
+    {
+      name: t('gettingStarted'),
+      href: '/dashboard/academy/documentation/erste-schritte',
+      icon: RocketLaunchIcon
+    },
+    {
+      name: t('contacts.title'),
+      icon: UserGroupIcon,
+      href: '/dashboard/academy/documentation/handbuch/kontakte',
+      children: [
+        {
+          name: t('contacts.companies'),
+          href: '/dashboard/academy/documentation/handbuch/kontakte/unternehmen',
+          icon: BuildingOfficeIcon
+        },
+        {
+          name: t('contacts.people'),
+          href: '/dashboard/academy/documentation/handbuch/kontakte/personen',
+          icon: UserGroupIcon
+        },
+        {
+          name: t('contacts.distributionLists'),
+          href: '/dashboard/academy/documentation/handbuch/kontakte/verteilerlisten',
+          icon: QueueListIcon
+        },
+      ]
+    },
+    {
+      name: t('library.title'),
+      icon: ArchiveBoxIcon,
+      href: '/dashboard/academy/documentation/handbuch/bibliothek',
+      children: [
+        {
+          name: t('library.publications'),
+          href: '/dashboard/academy/documentation/handbuch/bibliothek/publikationen',
+          icon: NewspaperIcon
+        },
+        {
+          name: t('library.marketingMaterials'),
+          href: '/dashboard/academy/documentation/handbuch/bibliothek/werbemittel',
+          icon: PhotoIcon
+        },
+      ]
+    },
+    {
+      name: t('prTools.title'),
+      icon: MegaphoneIcon,
+      href: '/dashboard/academy/documentation/handbuch/pr-tools',
+      children: [
+        {
+          name: t('prTools.campaigns'),
+          href: '/dashboard/academy/documentation/handbuch/pr-tools/kampagnen',
+          icon: MegaphoneIcon
+        },
+        {
+          name: t('prTools.approvals'),
+          href: '/dashboard/academy/documentation/handbuch/pr-tools/freigaben',
+          icon: ShieldCheckIcon
+        },
+        {
+          name: t('prTools.calendar'),
+          href: '/dashboard/academy/documentation/handbuch/pr-tools/kalender',
+          icon: CalendarDaysIcon
+        },
+        {
+          name: t('prTools.mediaLibrary'),
+          href: '/dashboard/academy/documentation/handbuch/pr-tools/mediathek',
+          icon: PhotoIcon
+        },
+        {
+          name: t('prTools.textModules'),
+          href: '/dashboard/academy/documentation/handbuch/pr-tools/textbausteine',
+          icon: DocumentTextIcon
+        },
+      ]
+    },
+    {
+      name: t('communication.title'),
+      icon: EnvelopeIcon,
+      href: '/dashboard/academy/documentation/handbuch/kommunikation',
+      children: [
+        {
+          name: t('communication.inbox'),
+          href: '/dashboard/academy/documentation/handbuch/kommunikation/inbox',
+          icon: InboxIcon
+        },
+        {
+          name: t('communication.notifications'),
+          href: '/dashboard/academy/documentation/handbuch/kommunikation/benachrichtigungen',
+          icon: BellIcon
+        },
+      ]
+    },
+    {
+      name: t('settings.title'),
+      icon: Cog6ToothIcon,
+      href: '/dashboard/academy/documentation/handbuch/einstellungen',
+      children: [
+        {
+          name: t('settings.notifications'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen',
+          icon: BellAlertIcon
+        },
+        {
+          name: t('settings.branding'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/branding',
+          icon: PaintBrushIcon
+        },
+        {
+          name: t('settings.domains'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/domains',
+          icon: EnvelopeIcon
+        },
+        {
+          name: t('settings.email'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/email',
+          icon: EnvelopeIcon
+        },
+        {
+          name: t('settings.importExport'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/import-export',
+          icon: ArrowDownTrayIcon
+        },
+        {
+          name: t('settings.team'),
+          href: '/dashboard/academy/documentation/handbuch/einstellungen/team',
+          icon: UserGroupIcon
+        },
+      ]
+    },
+    {
+      name: t('adminCenter.title'),
+      icon: UserIcon,
+      href: '/dashboard/academy/documentation/handbuch/admin',
+      children: [
+        {
+          name: t('adminCenter.profile'),
+          href: '/dashboard/academy/documentation/handbuch/admin/profil',
+          icon: UserIcon
+        },
+        {
+          name: t('adminCenter.contract'),
+          href: '/dashboard/academy/documentation/handbuch/admin/vertrag',
+          icon: DocumentCheckIcon
+        },
+        {
+          name: t('adminCenter.billing'),
+          href: '/dashboard/academy/documentation/handbuch/admin/abrechnung',
+          icon: CreditCardIcon
+        },
+        {
+          name: t('adminCenter.api'),
+          href: '/dashboard/academy/documentation/handbuch/admin/api',
+          icon: CodeBracketIcon
+        },
+      ]
+    },
+  ];
+}
 
 
 export default function DocumentationLayout({
@@ -208,16 +214,18 @@ export default function DocumentationLayout({
 }) {
   const pathname = usePathname();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const t = useTranslations('academy.layout');
+  const navigation = useNavigationItems();
 
   // Automatisch aktive Sektion öffnen
   useEffect(() => {
-    const activeSection = navigation.find(item => 
+    const activeSection = navigation.find(item =>
       item.children?.some(child => pathname.startsWith(child.href))
     );
     if (activeSection) {
       setExpandedSections([activeSection.name]);
     }
-  }, [pathname]);
+  }, [pathname, navigation]);
 
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => 
@@ -237,7 +245,7 @@ export default function DocumentationLayout({
       <nav className="w-64 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
         <div className="flex h-16 items-center border-b border-gray-200 px-6">
           <BookOpenIcon className="h-5 w-5 text-gray-400 mr-2" />
-          <h2 className="text-lg font-semibold text-gray-900">Academy</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('header')}</h2>
         </div>
         <div className="flex-1 px-3 py-4">
           {navigation.map((item) => (
@@ -306,7 +314,7 @@ export default function DocumentationLayout({
             className="flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <QuestionMarkCircleIcon className="h-4 w-4 mr-2" />
-            Support kontaktieren
+            {t('support')}
           </a>
         </div>
       </nav>

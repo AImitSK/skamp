@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from 'next-intl';
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
@@ -85,34 +86,34 @@ import { useRouter } from "next/navigation";
 
 // Tab-Konfiguration ist jetzt in @/lib/constants/crm-constants.ts definiert
 
-// Business Identifier Types
-const IDENTIFIER_TYPES = [
-  { value: 'VAT_EU', label: 'USt-IdNr. (EU)' },
-  { value: 'EIN_US', label: 'EIN (US)' },
-  { value: 'COMPANY_REG_DE', label: 'Handelsregister (DE)' },
-  { value: 'COMPANY_REG_UK', label: 'Companies House (UK)' },
-  { value: 'UID_CH', label: 'UID (CH)' },
-  { value: 'SIREN_FR', label: 'SIREN (FR)' },
-  { value: 'DUNS', label: 'D-U-N-S' },
-  { value: 'LEI', label: 'LEI' },
-  { value: 'OTHER', label: 'Sonstige' }
+// Business Identifier Types - Now using i18n
+const getIdentifierTypes = (t: any) => [
+  { value: 'VAT_EU', label: t('crm.companyModal.legal.identifierTypes.vatEu') },
+  { value: 'EIN_US', label: t('crm.companyModal.legal.identifierTypes.einUs') },
+  { value: 'COMPANY_REG_DE', label: t('crm.companyModal.legal.identifierTypes.companyRegDe') },
+  { value: 'COMPANY_REG_UK', label: t('crm.companyModal.legal.identifierTypes.companyRegUk') },
+  { value: 'UID_CH', label: t('crm.companyModal.legal.identifierTypes.uidCh') },
+  { value: 'SIREN_FR', label: t('crm.companyModal.legal.identifierTypes.sirenFr') },
+  { value: 'DUNS', label: t('crm.companyModal.legal.identifierTypes.duns') },
+  { value: 'LEI', label: t('crm.companyModal.legal.identifierTypes.lei') },
+  { value: 'OTHER', label: t('crm.companyModal.legal.identifierTypes.other') }
 ];
 
-// Legal Forms
-const LEGAL_FORMS = [
+// Legal Forms - Now using i18n for translated labels only
+const getLegalForms = (t: any) => [
   { value: 'GmbH', label: 'GmbH' },
   { value: 'AG', label: 'AG' },
   { value: 'KG', label: 'KG' },
   { value: 'OHG', label: 'OHG' },
   { value: 'GbR', label: 'GbR' },
-  { value: 'UG', label: 'UG (haftungsbeschränkt)' },
+  { value: 'UG', label: t('crm.companyModal.legal.legalForms.ug') },
   { value: 'Ltd', label: 'Ltd.' },
   { value: 'Inc', label: 'Inc.' },
   { value: 'LLC', label: 'LLC' },
   { value: 'SA', label: 'SA' },
   { value: 'SAS', label: 'SAS' },
   { value: 'BV', label: 'BV' },
-  { value: 'Other', label: 'Sonstige' }
+  { value: 'Other', label: t('crm.companyModal.legal.legalForms.other') }
 ];
 
 // Alert Component
@@ -167,6 +168,9 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   const { user } = useAuth();
   const { autoGlobalMode } = useAutoGlobal();
   const queryClient = useQueryClient();
+  const t = useTranslations('crm.companyModal');
+  const tCountries = useTranslations('crm.companyModal.international.mainAddress.countries');
+  const tPublicationTypes = useTranslations('crm.companyModal.media.publications.types');
   const [activeTab, setActiveTab] = useState<CompanyTabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
     // Basic fields
@@ -468,7 +472,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
     <Dialog open={true} onClose={onClose} size="5xl">
       <form ref={formRef} onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
-          {company ? 'Firma bearbeiten' : 'Neue Firma hinzufügen'}
+          {company ? t('titleEdit') : t('titleAdd')}
         </DialogTitle>
         
         <DialogBody className="p-0">
@@ -501,7 +505,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                         activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
                       )}
                     />
-                    {tab.label}
+                    {t(`tabs.${tab.id}`)}
                   </button>
                 );
               })}
@@ -515,8 +519,8 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
               <FieldGroup>
                 <Field>
                   <Label>
-                    Anzeigename *
-                    <InfoTooltip content="Der Name, wie er in Listen und Übersichten angezeigt wird" className="ml-1.5 inline-flex align-text-top" />
+                    {t('general.displayName')} {t('general.required')}
+                    <InfoTooltip content={t('general.displayNameTooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
                   <Input
                     value={formData.name}
@@ -528,34 +532,34 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Typ</Label>
+                    <Label>{t('general.type')}</Label>
                     <Select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as CompanyType })}>
-                      <option value="customer">Kunde</option>
-                      <option value="supplier">Lieferant</option>
-                      <option value="partner">Partner</option>
-                      <option value="publisher">Verlag</option>
-                      <option value="media_house">Medienhaus</option>
-                      <option value="agency">Agentur</option>
-                      <option value="other">Sonstiges</option>
+                      <option value="customer">{t('general.types.customer')}</option>
+                      <option value="supplier">{t('general.types.supplier')}</option>
+                      <option value="partner">{t('general.types.partner')}</option>
+                      <option value="publisher">{t('general.types.publisher')}</option>
+                      <option value="media_house">{t('general.types.mediaHouse')}</option>
+                      <option value="agency">{t('general.types.agency')}</option>
+                      <option value="other">{t('general.types.other')}</option>
                     </Select>
                   </Field>
                   <Field>
                     <Label>
-                      Branche
+                      {t('general.industry')}
                       {isMediaCompany && (
-                        <InfoTooltip content="Bei Medienunternehmen wird die Branche durch den Typ definiert" className="ml-1.5 inline-flex align-text-top" />
+                        <InfoTooltip content={t('general.industryTooltip')} className="ml-1.5 inline-flex align-text-top" />
                       )}
                     </Label>
-                    <Input 
-                      value={formData.industryClassification?.primary || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        industryClassification: { 
+                    <Input
+                      value={formData.industryClassification?.primary || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        industryClassification: {
                           ...formData.industryClassification,
-                          primary: e.target.value 
+                          primary: e.target.value
                         }
-                      })} 
-                      placeholder={isMediaCompany ? "—" : "z.B. IT, Handel, Industrie"}
+                      })}
+                      placeholder={isMediaCompany ? t('general.industryDisabledPlaceholder') : t('general.industryPlaceholder')}
                       disabled={isMediaCompany}
                     />
                   </Field>
@@ -563,68 +567,68 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Status</Label>
-                    <Select 
-                      value={formData.status} 
+                    <Label>{t('general.status')}</Label>
+                    <Select
+                      value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                     >
                       {COMPANY_STATUS_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value}>{t(`general.statuses.${opt.value}`)}</option>
                       ))}
                     </Select>
                   </Field>
                   <Field>
-                    <Label>Lifecycle Stage</Label>
-                    <Select 
-                      value={formData.lifecycleStage} 
+                    <Label>{t('general.lifecycleStage')}</Label>
+                    <Select
+                      value={formData.lifecycleStage}
                       onChange={(e) => setFormData({ ...formData, lifecycleStage: e.target.value as any })}
                     >
                       {LIFECYCLE_STAGE_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value}>{t(`general.lifecycleStages.${opt.value}`)}</option>
                       ))}
                     </Select>
                   </Field>
                 </div>
 
                 <Field>
-                  <Label>Website</Label>
-                  <Input 
-                    type="url" 
-                    value={formData.website || ''} 
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })} 
-                    placeholder="https://..."
+                  <Label>{t('general.website')}</Label>
+                  <Input
+                    type="url"
+                    value={formData.website || ''}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder={t('general.websitePlaceholder')}
                   />
                 </Field>
 
                 {/* Tags */}
                 <Field>
-                  <Label>Tags</Label>
-                  <TagInput 
-                    selectedTagIds={formData.tagIds || []} 
-                    availableTags={tags} 
-                    onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
-                    onCreateTag={handleCreateTag} 
+                  <Label>{t('general.tags')}</Label>
+                  <TagInput
+                    selectedTagIds={formData.tagIds || []}
+                    availableTags={tags}
+                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                    onCreateTag={handleCreateTag}
                   />
                 </Field>
 
                 {/* Notes */}
                 <Field>
-                  <Label>Interne Notizen</Label>
-                  <Textarea 
-                    value={formData.internalNotes || ''} 
-                    onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })} 
+                  <Label>{t('general.internalNotes')}</Label>
+                  <Textarea
+                    value={formData.internalNotes || ''}
+                    onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
                     rows={3}
-                    placeholder="Notizen, die nicht für Kunden sichtbar sind..." 
+                    placeholder={t('general.internalNotesPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Öffentliche Beschreibung</Label>
-                  <Textarea 
-                    value={formData.description || ''} 
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+                  <Label>{t('general.publicDescription')}</Label>
+                  <Textarea
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    placeholder="Beschreibung, die in Media Kits verwendet werden kann..." 
+                    placeholder={t('general.publicDescriptionPlaceholder')}
                   />
                 </Field>
               </FieldGroup>
@@ -635,44 +639,44 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
               <FieldGroup>
                 <Field>
                   <Label>
-                    Offizieller Firmenname
-                    <InfoTooltip content="Name laut Handelsregister oder offiziellen Dokumenten" className="ml-1.5 inline-flex align-text-top" />
+                    {t('legal.officialName')}
+                    <InfoTooltip content={t('legal.officialNameTooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
-                  <Input 
-                    value={formData.officialName || ''} 
+                  <Input
+                    value={formData.officialName || ''}
                     onChange={(e) => setFormData({ ...formData, officialName: e.target.value })}
-                    placeholder="z.B. Example GmbH" 
+                    placeholder={t('legal.officialNamePlaceholder')}
                   />
                 </Field>
 
                 <Field>
                   <Label>
-                    Handelsname (DBA)
-                    <InfoTooltip content="Falls anders als offizieller Name" className="ml-1.5 inline-flex align-text-top" />
+                    {t('legal.tradingName')}
+                    <InfoTooltip content={t('legal.tradingNameTooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
-                  <Input 
-                    value={formData.tradingName || ''} 
+                  <Input
+                    value={formData.tradingName || ''}
                     onChange={(e) => setFormData({ ...formData, tradingName: e.target.value })}
-                    placeholder="z.B. Example" 
+                    placeholder={t('legal.tradingNamePlaceholder')}
                   />
                 </Field>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Rechtsform</Label>
-                    <Select 
-                      value={formData.legalForm || ''} 
+                    <Label>{t('legal.legalForm')}</Label>
+                    <Select
+                      value={formData.legalForm || ''}
                       onChange={(e) => setFormData({ ...formData, legalForm: e.target.value })}
                     >
-                      <option value="">Bitte wählen...</option>
-                      {LEGAL_FORMS.map(form => (
+                      <option value="">{t('legal.pleaseSelect')}</option>
+                      {getLegalForms(t).map(form => (
                         <option key={form.value} value={form.value}>{form.label}</option>
                       ))}
                     </Select>
                   </Field>
 
                   <Field>
-                    <Label>Gründungsdatum</Label>
+                    <Label>{t('legal.foundedDate')}</Label>
                     <Input
                       type="date"
                       value={(() => {
@@ -709,43 +713,43 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">
-                      Geschäftliche Kennungen
-                      <InfoTooltip content="USt-ID, Handelsregister, etc." className="ml-1.5 inline-flex align-text-top" />
+                      {t('legal.identifiers')}
+                      <InfoTooltip content={t('legal.identifiersTooltip')} className="ml-1.5 inline-flex align-text-top" />
                     </div>
                     <Button type="button" onClick={addIdentifier} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      Kennung hinzufügen
+                      {t('legal.addIdentifier')}
                     </Button>
                   </div>
-                  
+
                   {formData.identifiers && formData.identifiers.length > 0 ? (
                     <div className="space-y-2">
                       {formData.identifiers.map((identifier, index) => (
                         <div key={index} className="space-y-2 p-3 border rounded-lg">
                           <div className="grid grid-cols-12 gap-2 items-center">
                             <div className="col-span-3">
-                              <Select 
-                                value={identifier.type} 
+                              <Select
+                                value={identifier.type}
                                 onChange={(e) => {
                                   const updated = [...formData.identifiers!];
                                   updated[index].type = e.target.value as any;
                                   setFormData({ ...formData, identifiers: updated });
                                 }}
                               >
-                                {IDENTIFIER_TYPES.map(type => (
+                                {getIdentifierTypes(t).map(type => (
                                   <option key={type.value} value={type.value}>{type.label}</option>
                                 ))}
                               </Select>
                             </div>
                             <div className="col-span-6">
-                              <Input 
-                                value={identifier.value} 
+                              <Input
+                                value={identifier.value}
                                 onChange={(e) => {
                                   const updated = [...formData.identifiers!];
                                   updated[index].value = e.target.value;
                                   setFormData({ ...formData, identifiers: updated });
                                 }}
-                                placeholder="Wert eingeben..." 
+                                placeholder={t('legal.valuePlaceholder')}
                               />
                             </div>
                             <div className="col-span-2">
@@ -756,7 +760,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                                   updated[index].issuingAuthority = e.target.value;
                                   setFormData({ ...formData, identifiers: updated });
                                 }}
-                                placeholder="Land/Behörde"
+                                placeholder={t('legal.authorityPlaceholder')}
                               />
                             </div>
                             <div className="col-span-1">
@@ -769,7 +773,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine Kennungen hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('legal.noIdentifiers')}</Text>
                   )}
                 </div>
               </FieldGroup>
@@ -780,59 +784,59 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
               <FieldGroup>
                 {/* Main Address */}
                 <div className="space-y-4 rounded-md border p-4 bg-gray-50">
-                  <div className="text-sm font-medium text-gray-900">Hauptadresse</div>
-                  
+                  <div className="text-sm font-medium text-gray-900">{t('international.mainAddress.title')}</div>
+
                   <Field>
-                    <Label>Straße und Hausnummer</Label>
-                    <Input 
-                      value={formData.mainAddress?.street || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                    <Label>{t('international.mainAddress.street')}</Label>
+                    <Input
+                      value={formData.mainAddress?.street || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
                         mainAddress: { ...formData.mainAddress!, street: e.target.value }
-                      })} 
-                      placeholder="Musterstraße 123" 
+                      })}
+                      placeholder={t('international.mainAddress.streetPlaceholder')} 
                     />
                   </Field>
                   
                   <div className="grid grid-cols-3 gap-4">
                     <Field>
-                      <Label>PLZ</Label>
-                      <Input 
-                        value={formData.mainAddress?.postalCode || ''} 
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
+                      <Label>{t('international.mainAddress.postalCode')}</Label>
+                      <Input
+                        value={formData.mainAddress?.postalCode || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
                           mainAddress: { ...formData.mainAddress!, postalCode: e.target.value }
-                        })} 
-                        placeholder="12345" 
+                        })}
+                        placeholder={t('international.mainAddress.postalCodePlaceholder')}
                       />
                     </Field>
                     <Field className="col-span-2">
-                      <Label>Stadt</Label>
-                      <Input 
-                        value={formData.mainAddress?.city || ''} 
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
+                      <Label>{t('international.mainAddress.city')}</Label>
+                      <Input
+                        value={formData.mainAddress?.city || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
                           mainAddress: { ...formData.mainAddress!, city: e.target.value }
-                        })} 
-                        placeholder="Berlin" 
+                        })}
+                        placeholder={t('international.mainAddress.cityPlaceholder')}
                       />
                     </Field>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <Field>
-                      <Label>Bundesland/Region</Label>
-                      <Input 
-                        value={formData.mainAddress?.region || ''} 
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
+                      <Label>{t('international.mainAddress.region')}</Label>
+                      <Input
+                        value={formData.mainAddress?.region || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
                           mainAddress: { ...formData.mainAddress!, region: e.target.value }
-                        })} 
-                        placeholder="Bayern" 
+                        })}
+                        placeholder={t('international.mainAddress.regionPlaceholder')} 
                       />
                     </Field>
                     <Field>
-                      <Label>Land</Label>
+                      <Label>{t('international.mainAddress.country')}</Label>
                       <div className="relative" data-slot="control">
                         {formData.mainAddress?.countryCode && (
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
@@ -847,37 +851,37 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                           })}
                           className={formData.mainAddress?.countryCode ? 'pl-11' : ''}
                         >
-                          <option value="">Land auswählen...</option>
-                          <option value="DE">Deutschland</option>
-                          <option value="AT">Österreich</option>
-                          <option value="CH">Schweiz</option>
-                          <option value="US">USA</option>
-                          <option value="GB">Großbritannien</option>
-                          <option value="FR">Frankreich</option>
-                          <option value="IT">Italien</option>
-                          <option value="ES">Spanien</option>
-                          <option value="NL">Niederlande</option>
-                          <option value="BE">Belgien</option>
-                          <option value="LU">Luxemburg</option>
-                          <option value="DK">Dänemark</option>
-                          <option value="SE">Schweden</option>
-                          <option value="NO">Norwegen</option>
-                          <option value="FI">Finnland</option>
-                          <option value="PL">Polen</option>
-                          <option value="CZ">Tschechien</option>
-                          <option value="HU">Ungarn</option>
-                          <option value="PT">Portugal</option>
-                          <option value="GR">Griechenland</option>
-                          <option value="IE">Irland</option>
-                          <option value="CA">Kanada</option>
-                          <option value="AU">Australien</option>
-                          <option value="JP">Japan</option>
-                          <option value="CN">China</option>
-                          <option value="IN">Indien</option>
-                          <option value="BR">Brasilien</option>
-                          <option value="MX">Mexiko</option>
-                          <option value="RU">Russland</option>
-                          <option value="TR">Türkei</option>
+                          <option value="">{t('international.mainAddress.countryPlaceholder')}</option>
+                          <option value="DE">{tCountries('DE')}</option>
+                          <option value="AT">{tCountries('AT')}</option>
+                          <option value="CH">{tCountries('CH')}</option>
+                          <option value="US">{tCountries('US')}</option>
+                          <option value="GB">{tCountries('GB')}</option>
+                          <option value="FR">{tCountries('FR')}</option>
+                          <option value="IT">{tCountries('IT')}</option>
+                          <option value="ES">{tCountries('ES')}</option>
+                          <option value="NL">{tCountries('NL')}</option>
+                          <option value="BE">{tCountries('BE')}</option>
+                          <option value="LU">{tCountries('LU')}</option>
+                          <option value="DK">{tCountries('DK')}</option>
+                          <option value="SE">{tCountries('SE')}</option>
+                          <option value="NO">{tCountries('NO')}</option>
+                          <option value="FI">{tCountries('FI')}</option>
+                          <option value="PL">{tCountries('PL')}</option>
+                          <option value="CZ">{tCountries('CZ')}</option>
+                          <option value="HU">{tCountries('HU')}</option>
+                          <option value="PT">{tCountries('PT')}</option>
+                          <option value="GR">{tCountries('GR')}</option>
+                          <option value="IE">{tCountries('IE')}</option>
+                          <option value="CA">{tCountries('CA')}</option>
+                          <option value="AU">{tCountries('AU')}</option>
+                          <option value="JP">{tCountries('JP')}</option>
+                          <option value="CN">{tCountries('CN')}</option>
+                          <option value="IN">{tCountries('IN')}</option>
+                          <option value="BR">{tCountries('BR')}</option>
+                          <option value="MX">{tCountries('MX')}</option>
+                          <option value="RU">{tCountries('RU')}</option>
+                          <option value="TR">{tCountries('TR')}</option>
                         </Select>
                       </div>
                     </Field>
@@ -887,13 +891,13 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 {/* Phone Numbers */}
                 <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
+                    <div className="text-sm font-medium text-gray-900">{t('international.phones.title')}</div>
                     <Button type="button" onClick={addPhoneField} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      Nummer hinzufügen
+                      {t('international.phones.addButton')}
                     </Button>
                   </div>
-                  
+
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
                       {formData.phones.map((phone, index) => (
@@ -907,11 +911,11 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                                 setFormData({ ...formData, phones: updated });
                               }}
                             >
-                              <option value="business">Geschäftlich</option>
-                              <option value="mobile">Mobil</option>
-                              <option value="private">Privat</option>
-                              <option value="fax">Fax</option>
-                              <option value="other">Sonstige</option>
+                              <option value="business">{t('international.phones.types.business')}</option>
+                              <option value="mobile">{t('international.phones.types.mobile')}</option>
+                              <option value="private">{t('international.phones.types.private')}</option>
+                              <option value="fax">{t('international.phones.types.fax')}</option>
+                              <option value="other">{t('international.phones.types.other')}</option>
                             </Select>
                           </div>
                           <div className="col-span-2">

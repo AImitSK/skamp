@@ -1,0 +1,241 @@
+{
+  "contactModalFull": {
+    "titleEdit": "Person bearbeiten",
+    "titleAdd": "Neue Person hinzufügen",
+    "tabs": {
+      "general": {
+        "label": "Allgemein"
+      },
+      "communication": {
+        "label": "Kommunikation"
+      },
+      "media": {
+        "label": "Medien"
+      },
+      "professional": {
+        "label": "Beruflich"
+      },
+      "gdpr": {
+        "label": "DSGVO"
+      },
+      "personal": {
+        "label": "Persönlich"
+      }
+    },
+    "general": {
+      "labels": {
+        "contactType": "Kontaktart",
+        "salutation": "Anrede",
+        "title": "Titel",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "functionName": "Funktionsname",
+        "company": "Firma",
+        "position": "Position",
+        "department": "Abteilung",
+        "tags": "Tags",
+        "status": "Status",
+        "isJournalist": "Ist Journalist?"
+      },
+      "contactTypes": {
+        "person": "Person",
+        "function": "Funktionskontakt"
+      },
+      "salutations": {
+        "none": "Keine Anrede",
+        "mr": "Herr",
+        "ms": "Frau",
+        "dr": "Dr.",
+        "prof": "Prof.",
+        "profDr": "Prof. Dr."
+      },
+      "placeholders": {
+        "title": "z.B. Dr., Prof.",
+        "functionName": "z.B. Redaktion, Pressestelle, Newsdesk",
+        "position": "z.B. Geschäftsführer, Redakteur",
+        "department": "z.B. Vertrieb, Redaktion"
+      },
+      "company": {
+        "none": "Keine Firma zugeordnet",
+        "tooltip": "Wählen Sie die Firma aus, bei der diese Person arbeitet"
+      },
+      "journalist": {
+        "label": "Diese Person ist Journalist/Redakteur",
+        "tooltip": "Aktiviert zusätzliche Medien-Felder"
+      }
+    },
+    "communication": {
+      "emails": {
+        "title": "E-Mail-Adressen",
+        "addButton": "E-Mail hinzufügen",
+        "placeholder": "email@beispiel.de",
+        "empty": "Keine E-Mail-Adressen hinzugefügt",
+        "types": {
+          "business": "Geschäftlich",
+          "private": "Privat",
+          "other": "Sonstige"
+        }
+      },
+      "phones": {
+        "title": "Telefonnummern",
+        "addButton": "Nummer hinzufügen",
+        "placeholder": "30 12345678",
+        "empty": "Keine Telefonnummern hinzugefügt",
+        "types": {
+          "business": "Geschäftlich",
+          "mobile": "Mobil",
+          "private": "Privat",
+          "fax": "Fax",
+          "other": "Sonstige"
+        }
+      },
+      "social": {
+        "title": "Social Media Profile",
+        "addButton": "Profil hinzufügen",
+        "urlPlaceholder": "https://...",
+        "empty": "Keine Social Media Profile hinzugefügt"
+      },
+      "preferences": {
+        "title": "Kommunikations-Präferenzen",
+        "preferredChannel": "Bevorzugter Kanal",
+        "preferredLanguage": "Bevorzugte Sprache",
+        "noPreference": "Keine Präferenz",
+        "selectLanguage": "Sprache auswählen...",
+        "languages": {
+          "de": "Deutsch",
+          "en": "English",
+          "fr": "Français",
+          "es": "Español",
+          "it": "Italiano",
+          "pt": "Português",
+          "nl": "Nederlands",
+          "pl": "Polski",
+          "ru": "Русский",
+          "ja": "日本語",
+          "ko": "한국어",
+          "zh": "中文"
+        }
+      },
+      "primary": "Primär"
+    },
+    "media": {
+      "publications": {
+        "title": "Publikationen",
+        "selectCompanyFirst": "Wählen Sie zuerst eine Firma aus, um deren Publikationen anzuzeigen.",
+        "chooseForJournalist": "Wählen Sie die Publikationen dieser Firma aus, für die der Journalist arbeitet.",
+        "empty": "Diese Firma hat noch keine Publikationen.",
+        "selectCompanyHint": "Bitte wählen Sie zuerst eine Firma im Tab \"Allgemein\" aus.",
+        "verified": "Verifiziert",
+        "types": {
+          "magazine": "Magazin",
+          "newspaper": "Zeitung",
+          "website": "Website",
+          "blog": "Blog",
+          "trade_journal": "Fachzeitschrift"
+        },
+        "formats": {
+          "print": "Print",
+          "online": "Online",
+          "both": "Print & Online"
+        }
+      },
+      "beats": {
+        "title": "Ressorts & Themengebiete",
+        "description": "Über welche Themen berichtet dieser Journalist?",
+        "placeholder": "z.B. Technologie, Wirtschaft, Politik...",
+        "addButton": "Hinzufügen",
+        "empty": "Noch keine Ressorts hinzugefügt"
+      },
+      "mediaTypes": {
+        "title": "Medientypen",
+        "description": "In welchen Medien arbeitet der Journalist?"
+      },
+      "preferredFormats": {
+        "title": "Bevorzugte Formate",
+        "description": "Welche Inhaltsformate werden bevorzugt?"
+      },
+      "submissionGuidelines": {
+        "title": "Einreichungs-Richtlinien",
+        "description": "Spezielle Anforderungen oder Hinweise für die Kontaktaufnahme",
+        "placeholder": "z.B. Bevorzugte Kontaktzeiten, spezielle Anforderungen an Pressemitteilungen, Deadlines..."
+      }
+    },
+    "professional": {
+      "biography": {
+        "label": "Biografie",
+        "placeholder": "Beruflicher Werdegang..."
+      }
+    },
+    "gdpr": {
+      "marketing": {
+        "title": "Marketing-Kommunikation",
+        "description": "Erlaubnis für Marketing-E-Mails und -Anrufe"
+      },
+      "newsletter": {
+        "title": "Newsletter",
+        "description": "Erlaubnis für Newsletter-Versand"
+      },
+      "phoneContact": {
+        "title": "Telefonische Kontaktaufnahme",
+        "description": "Erlaubnis für Anrufe"
+      },
+      "consentGranted": "Einwilligung erteilt"
+    },
+    "personal": {
+      "birthday": "Geburtstag",
+      "nationality": "Nationalität",
+      "nationalityPlaceholder": "Nationalität auswählen...",
+      "interests": {
+        "label": "Interessen",
+        "placeholder": "z.B. Golf, Technologie, Reisen (kommagetrennt)"
+      },
+      "internalNotes": {
+        "label": "Interne Notizen",
+        "placeholder": "Interne Notizen für das Team (nicht sichtbar für externe Kontakte)..."
+      },
+      "countries": {
+        "DE": "Deutschland",
+        "AT": "Österreich",
+        "CH": "Schweiz",
+        "US": "USA",
+        "GB": "Großbritannien",
+        "FR": "Frankreich",
+        "IT": "Italien",
+        "ES": "Spanien",
+        "NL": "Niederlande",
+        "BE": "Belgien",
+        "LU": "Luxemburg",
+        "DK": "Dänemark",
+        "SE": "Schweden",
+        "NO": "Norwegen",
+        "FI": "Finnland",
+        "PL": "Polen",
+        "CZ": "Tschechien",
+        "HU": "Ungarn",
+        "PT": "Portugal",
+        "GR": "Griechenland",
+        "IE": "Irland",
+        "CA": "Kanada",
+        "AU": "Australien",
+        "JP": "Japan",
+        "CN": "China",
+        "IN": "Indien",
+        "BR": "Brasilien",
+        "MX": "Mexiko",
+        "RU": "Russland",
+        "TR": "Türkei"
+      }
+    },
+    "validation": {
+      "firstNameRequired": "Vorname ist erforderlich",
+      "lastNameRequired": "Nachname ist erforderlich",
+      "functionNameRequired": "Funktionsname ist erforderlich (z.B. \"Redaktion\", \"Pressestelle\")",
+      "generalError": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "saving": "Speichern..."
+    }
+  }
+}

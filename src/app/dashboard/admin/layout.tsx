@@ -1,6 +1,7 @@
 // src/app/dashboard/admin/layout.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { AdminNav } from '@/components/AdminNav';
 import { Divider } from "@/components/ui/divider";
 
@@ -9,20 +10,22 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('admin.layout');
+
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
       {/* Linke Spalte: Navigation */}
       <aside className="w-full lg:w-64 lg:flex-shrink-0">
         <div className="sticky top-8">
           <h2 className="text-base/7 font-semibold text-gray-900">
-            Administration
+            {t('title')}
           </h2>
           <p className="mt-1 text-sm/6 text-gray-600">
-            Verwalte deinen Account und organisationsweite Einstellungen
+            {t('description')}
           </p>
-          
+
           <Divider className="my-6" />
-          
+
           <AdminNav />
         </div>
       </aside>

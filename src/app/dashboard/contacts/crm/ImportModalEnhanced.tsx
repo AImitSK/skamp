@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -93,20 +94,28 @@ function Alert({
 }
 
 // Progress Bar Component
-function ProgressBar({ progress }: { progress: ImportProgress }) {
+function ProgressBar({ progress, t }: { progress: ImportProgress; t: any }) {
   const percentage = progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
-  
-  const statusText = {
-    parsing: 'Datei wird gelesen...',
-    validating: 'Daten werden validiert...',
-    importing: `Importiere ${progress.current} von ${progress.total}...`,
-    done: 'Import abgeschlossen!'
+
+  const getStatusText = () => {
+    switch (progress.status) {
+      case 'parsing':
+        return t('progress.parsing');
+      case 'validating':
+        return t('progress.validating');
+      case 'importing':
+        return t('progress.importing', { current: progress.current, total: progress.total });
+      case 'done':
+        return t('progress.done');
+      default:
+        return '';
+    }
   };
 
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{statusText[progress.status]}</span>
+        <span className="text-gray-600">{getStatusText()}</span>
         <span className="text-gray-500">{Math.round(percentage)}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
@@ -130,6 +139,8 @@ interface Props {
 }
 
 export default function ImportModalEnhanced({ onClose, onImportSuccess }: Props) {
+  const t = useTranslations('crm.importModal');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -658,12 +669,10 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
 
     // SuperAdmin Bestätigung: Warnung bei globalem Import
     if (autoGlobalMode) {
-      const entityType = activeTab === 'companies' ? 'Firmen' : 'Kontakte';
       const confirmed = window.confirm(
-        `⚠️ GLOBAL-IMPORT WARNUNG\n\n` +
-        `Du bist als SuperAdmin angemeldet!\n\n` +
-        `Die importierten ${entityType} werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\n` +
-        `Möchtest du wirklich fortfahren?`
+        activeTab === 'companies'
+          ? t('confirmDialog.companiesMessage')
+          : t('confirmDialog.contactsMessage')
       );
 
       if (!confirmed) {
@@ -705,30 +714,30 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                 if (!row["Firmenname*"] && !row["Firmenname"]) {
                   parseErrors.push({
                     row: index + 2,
-                    error: 'Firmenname fehlt'
+                    error: t('errors.companyNameMissing')
                   });
                   return;
                 }
-                
+
                 const company = parseCompanyRow(row);
-                
+
                 // Parse tags (Komma-getrennt in Anführungszeichen)
                 if (row["Tags"]) {
                   // For now, we'll store tag names - in production, these would need to be mapped to tag IDs
                   (company as any).tagNames = row["Tags"].split(',').map((t: string) => t.trim());
                 }
-                
+
                 companies.push(company);
               } catch (err) {
                 parseErrors.push({
                   row: index + 2,
-                  error: err instanceof Error ? err.message : 'Parsing-Fehler'
+                  error: err instanceof Error ? err.message : t('errors.parsingError')
                 });
               }
             });
 
             if (companies.length === 0 && parseErrors.length > 0) {
-              setError(`Import fehlgeschlagen. ${parseErrors.length} Fehler gefunden.`);
+              setError(t('errors.importFailed', { count: parseErrors.length }));
               setImportResult({
                 created: 0,
                 updated: 0,
@@ -786,18 +795,18 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                 if (!row["Vorname*"] && !row["Vorname"]) {
                   parseErrors.push({
                     row: index + 2,
-                    error: 'Vorname fehlt'
+                    error: t('errors.firstNameMissing')
                   });
                   return;
                 }
                 if (!row["Nachname*"] && !row["Nachname"]) {
                   parseErrors.push({
                     row: index + 2,
-                    error: 'Nachname fehlt'
+                    error: t('errors.lastNameMissing')
                   });
                   return;
                 }
-                
+
                 const contact = parseContactRow(row);
 
                 // Parse tags (Komma-getrennt in Anführungszeichen)
@@ -805,18 +814,18 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   // For now, we'll store tag names - in production, these would need to be mapped to tag IDs
                   (contact as any).tagNames = row["Tags"].split(',').map((t: string) => t.trim());
                 }
-                
+
                 contacts.push(contact);
               } catch (err) {
                 parseErrors.push({
                   row: index + 2,
-                  error: err instanceof Error ? err.message : 'Parsing-Fehler'
+                  error: err instanceof Error ? err.message : t('errors.parsingError')
                 });
               }
             });
 
             if (contacts.length === 0 && parseErrors.length > 0) {
-              setError(`Import fehlgeschlagen. ${parseErrors.length} Fehler gefunden.`);
+              setError(t('errors.importFailed', { count: parseErrors.length }));
               setImportResult({
                 created: 0,
                 updated: 0,
@@ -867,13 +876,13 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
           }
         } catch (err) {
           // Import error handled via UI error message
-          setError("Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.");
+          setError(t('errors.fileFormatError'));
         } finally {
           setIsImporting(false);
         }
       },
       error: (error) => {
-        setError(`Fehler beim Lesen der Datei: ${error.message}`);
+        setError(t('errors.fileReadError', { message: error.message }));
         setIsImporting(false);
       }
     });
@@ -894,14 +903,14 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
     <Dialog open={true} onClose={onClose} size="5xl">
       <DialogTitle className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <span className="text-lg font-semibold">Daten importieren</span>
+          <span className="text-lg font-semibold">{t('title')}</span>
           <div className="flex items-center gap-2">
             {autoGlobalMode && (
               <Badge color="orange" className="text-xs font-semibold">
-                🌐 GLOBAL-MODUS
+                🌐 {t('globalMode')}
               </Badge>
             )}
-            <Badge color="blue">{file ? '1 Datei ausgewählt' : 'Keine Datei'}</Badge>
+            <Badge color="blue">{file ? t('fileSelected') : t('noFile')}</Badge>
           </div>
         </div>
       </DialogTitle>
@@ -927,9 +936,9 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   activeTab === 'companies' ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
                 )}
               />
-              Firmen importieren
+              {t('tabs.companies')}
             </button>
-            
+
             <button
               type="button"
               onClick={() => setActiveTab('contacts')}
@@ -947,7 +956,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   activeTab === 'contacts' ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
                 )}
               />
-              Kontakte importieren
+              {t('tabs.contacts')}
             </button>
           </nav>
         </div>
@@ -965,11 +974,10 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                     </div>
                     <div className="ml-3">
                       <Text className="text-sm font-semibold text-orange-800">
-                        ⚠️ GLOBAL-IMPORT AKTIV
+                        {t('globalWarning.title')}
                       </Text>
                       <Text className="mt-1 text-sm text-orange-700">
-                        Du bist als SuperAdmin angemeldet. Alle importierten {activeTab === 'companies' ? 'Firmen' : 'Kontakte'} werden
-                        <strong> automatisch global</strong> und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!
+                        {activeTab === 'companies' ? t('globalWarning.companiesMessage') : t('globalWarning.contactsMessage')}
                       </Text>
                     </div>
                   </div>
@@ -984,11 +992,10 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   </div>
                   <div className="ml-3">
                     <Text className="text-sm font-medium text-blue-800">
-                      {activeTab === 'companies' ? 'Firmen-Import' : 'Kontakte-Import'}
+                      {activeTab === 'companies' ? t('instructions.companiesTitle') : t('instructions.contactsTitle')}
                     </Text>
                     <Text className="mt-1 text-sm text-blue-700">
-                      Laden Sie eine CSV-Datei hoch, um {activeTab === 'companies' ? 'Firmen' : 'Kontakte'} zu importieren.
-                      Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).
+                      {activeTab === 'companies' ? t('instructions.companiesDescription') : t('instructions.contactsDescription')}
                     </Text>
                     <div className="mt-2">
                       <button
@@ -996,7 +1003,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                         className="text-sm font-medium text-blue-800 hover:text-blue-900"
                       >
                         <DocumentArrowDownIcon className="inline h-4 w-4 mr-1" />
-                        Vorlage herunterladen
+                        {t('instructions.downloadTemplate')}
                       </button>
                     </div>
                   </div>
@@ -1005,7 +1012,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
 
               <FieldGroup>
                 <Field>
-                  <Label>Duplikate-Behandlung</Label>
+                  <Label>{t('duplicateHandling.label')}</Label>
                   <div className="mt-2 space-y-2">
                     <label className="flex items-center">
                       <input
@@ -1015,7 +1022,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                         onChange={(e) => setDuplicateHandling(e.target.value as 'skip' | 'update')}
                         className="h-4 w-4 text-primary focus:ring-primary"
                       />
-                      <span className="ml-2 text-sm">Duplikate überspringen</span>
+                      <span className="ml-2 text-sm">{t('duplicateHandling.skip')}</span>
                     </label>
                     <label className="flex items-center">
                       <input
@@ -1025,7 +1032,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                         onChange={(e) => setDuplicateHandling(e.target.value as 'skip' | 'update')}
                         className="h-4 w-4 text-primary focus:ring-primary"
                       />
-                      <span className="ml-2 text-sm">Bestehende Einträge aktualisieren</span>
+                      <span className="ml-2 text-sm">{t('duplicateHandling.update')}</span>
                     </label>
                   </div>
                 </Field>
@@ -1034,33 +1041,33 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
               {/* File Upload */}
               <div>
                 <h3 className="block text-sm font-medium text-gray-700 mb-2">
-                  CSV-Datei auswählen
+                  {t('fileUpload.label')}
                 </h3>
                 <div className="flex items-center justify-center w-full">
                   <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <ArrowUpTrayIcon className="w-8 h-8 mb-3 text-gray-400" />
                       <Text className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Klicken Sie hier</span> oder ziehen Sie eine Datei hierher
+                        <span className="font-semibold">{t('fileUpload.clickOrDrag')}</span> {t('fileUpload.orDrag')}
                       </Text>
-                      <Text className="text-xs text-gray-500">CSV-Datei (max. 10MB)</Text>
+                      <Text className="text-xs text-gray-500">{t('fileUpload.fileType')}</Text>
                     </div>
-                    <input 
+                    <input
                       ref={fileInputRef}
-                      id="file-upload" 
-                      type="file" 
-                      accept=".csv" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
+                      id="file-upload"
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileChange}
+                      className="hidden"
                       disabled={isImporting}
                     />
                   </label>
                 </div>
                 {file && (
                   <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
-                    <span>Ausgewählte Datei: <span className="font-medium">{file.name}</span></span>
+                    <span>{t('fileUpload.selectedFile')} <span className="font-medium">{file.name}</span></span>
                     <Button plain onClick={resetImport}>
-                      Zurücksetzen
+                      {t('fileUpload.reset')}
                     </Button>
                   </div>
                 )}
@@ -1069,7 +1076,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
               {/* Preview */}
               {previewData.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Vorschau (erste 5 Zeilen)</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">{t('preview.title')}</h3>
                   <div className="mt-2 overflow-x-auto border rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
@@ -1083,7 +1090,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                             </th>
                           ))}
                           <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">
-                            ...
+                            {t('preview.more')}
                           </th>
                         </tr>
                       </thead>
@@ -1096,7 +1103,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                               </td>
                             ))}
                             <td className="px-3 py-2 text-center text-sm text-gray-400">
-                              ...
+                              {t('preview.more')}
                             </td>
                           </tr>
                         ))}
@@ -1108,7 +1115,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
 
               {/* Progress */}
               {importProgress && (
-                <ProgressBar progress={importProgress} />
+                <ProgressBar progress={importProgress} t={t} />
               )}
 
               {/* Error */}
@@ -1123,12 +1130,12 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                 {importResult.errors.length === 0 ? (
                   <>
                     <CheckCircleIcon className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                    <h3 className="text-lg font-semibold">Import erfolgreich!</h3>
+                    <h3 className="text-lg font-semibold">{t('results.successTitle')}</h3>
                   </>
                 ) : (
                   <>
                     <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-                    <h3 className="text-lg font-semibold">Import mit Warnungen abgeschlossen</h3>
+                    <h3 className="text-lg font-semibold">{t('results.warningsTitle')}</h3>
                   </>
                 )}
               </div>
@@ -1137,15 +1144,15 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-green-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-green-700">{importResult.created}</div>
-                  <div className="text-sm text-green-600">Neu erstellt</div>
+                  <div className="text-sm text-green-600">{t('results.created')}</div>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-700">{importResult.updated}</div>
-                  <div className="text-sm text-blue-600">Aktualisiert</div>
+                  <div className="text-sm text-blue-600">{t('results.updated')}</div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-gray-700">{importResult.skipped}</div>
-                  <div className="text-sm text-gray-600">Übersprungen</div>
+                  <div className="text-sm text-gray-600">{t('results.skipped')}</div>
                 </div>
               </div>
 
@@ -1155,18 +1162,18 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   <div className="flex items-center mb-2">
                     <XCircleIcon className="h-5 w-5 text-red-400 mr-2" />
                     <Text className="font-medium text-red-800">
-                      {importResult.errors.length} Fehler gefunden
+                      {t('results.errorsFound', { count: importResult.errors.length })}
                     </Text>
                   </div>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {importResult.errors.slice(0, 10).map((error, index) => (
                       <Text key={index} className="text-sm text-red-700">
-                        Zeile {error.row}: {error.error}
+                        {t('results.errorRow', { row: error.row, error: error.error })}
                       </Text>
                     ))}
                     {importResult.errors.length > 10 && (
                       <Text className="text-sm text-red-700 font-medium">
-                        ... und {importResult.errors.length - 10} weitere Fehler
+                        {t('results.moreErrors', { count: importResult.errors.length - 10 })}
                       </Text>
                     )}
                   </div>
@@ -1179,18 +1186,18 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
                   <div className="flex items-center mb-2">
                     <ExclamationTriangleIcon className="h-5 w-5 text-amber-400 mr-2" />
                     <Text className="font-medium text-amber-800">
-                      {importResult.warnings.length} Warnungen
+                      {t('results.warningsFound', { count: importResult.warnings.length })}
                     </Text>
                   </div>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {importResult.warnings.slice(0, 10).map((warning, index) => (
                       <Text key={index} className="text-sm text-amber-700">
-                        Zeile {warning.row}: {warning.warning}
+                        {t('results.warningRow', { row: warning.row, warning: warning.warning })}
                       </Text>
                     ))}
                     {importResult.warnings.length > 10 && (
                       <Text className="text-sm text-amber-700 font-medium">
-                        ... und {importResult.warnings.length - 10} weitere Warnungen
+                        {t('results.moreWarnings', { count: importResult.warnings.length - 10 })}
                       </Text>
                     )}
                   </div>
@@ -1200,7 +1207,7 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
               <div className="flex justify-center gap-4">
                 <Button plain onClick={resetImport}>
                   <ArrowPathIcon className="h-4 w-4 mr-2" />
-                  Neuen Import starten
+                  {t('results.newImport')}
                 </Button>
               </div>
             </div>
@@ -1210,21 +1217,21 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
       
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          {importResult ? 'Schließen' : 'Abbrechen'}
+          {importResult ? t('actions.close') : t('actions.cancel')}
         </Button>
         {!importResult && (
-          <Button 
-            onClick={handleImport} 
+          <Button
+            onClick={handleImport}
             disabled={!file || isImporting}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             {isImporting ? (
               <>
                 <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                Importiere...
+                {t('actions.importing')}
               </>
             ) : (
-              'Import starten'
+              t('actions.import')
             )}
           </Button>
         )}

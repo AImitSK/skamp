@@ -2,6 +2,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
@@ -41,10 +42,10 @@ export interface ContactsTableProps {
  * Formatiert den Kontaktnamen als "Nachname, Vorname" (ohne Titel wie Dr.)
  * Für Funktionskontakte wird der functionName angezeigt
  */
-function formatContactName(contact: ContactEnhanced): string {
+function formatContactName(contact: ContactEnhanced, noNameLabel: string): string {
   // Funktionskontakte zeigen functionName
   if (contact.contactType && contact.contactType !== 'person') {
-    return contact.functionName || contact.displayName || '(Kein Name)';
+    return contact.functionName || contact.displayName || noNameLabel;
   }
 
   // Personen zeigen "Nachname, Vorname"
@@ -60,19 +61,19 @@ function formatContactName(contact: ContactEnhanced): string {
   if (firstName) {
     return firstName;
   }
-  return contact.displayName || '(Kein Name)';
+  return contact.displayName || noNameLabel;
 }
 
 /**
  * Gibt ein Badge für den Kontakttyp zurück
  */
-function getContactTypeBadge(contact: ContactEnhanced): { label: string; color: string } | null {
+function getContactTypeBadge(contact: ContactEnhanced, functionLabel: string): { label: string; color: string } | null {
   if (!contact.contactType || contact.contactType === 'person') {
     return null;
   }
   // Funktionskontakte (inkl. legacy 'editorial') zeigen graues Badge
   if (contact.contactType === 'function' || contact.contactType === 'editorial') {
-    return { label: 'Funktion', color: 'zinc' };
+    return { label: functionLabel, color: 'zinc' };
   }
   return null;
 }
@@ -90,6 +91,8 @@ export function ContactsTable({
   getPrimaryPhone
 }: ContactsTableProps) {
   const router = useRouter();
+  const t = useTranslations('crm.contactsTable');
+  const tCommon = useTranslations('common');
 
   // Defensive: Stelle sicher, dass Arrays nie undefined sind
   const safeContacts = contacts || [];
@@ -110,20 +113,20 @@ export function ContactsTable({
               onChange={(checked: boolean) => onSelectAll(checked)}
             />
             <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Name
+              {t('headers.name')}
             </span>
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Firma / Position
+            {t('headers.companyPosition')}
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Telefon / E-Mail
+            {t('headers.phoneEmail')}
           </div>
           <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Social Media
+            {t('headers.socialMedia')}
           </div>
           <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
-            Tags
+            {t('headers.tags')}
           </div>
         </div>
       </div>
@@ -144,24 +147,24 @@ export function ContactsTable({
                     onClick={() => onView(contact.id!)}
                     className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
                   >
-                    {formatContactName(contact)}
+                    {formatContactName(contact, t('noName'))}
                   </button>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex flex-wrap gap-1">
                       {/* Kontakttyp-Badge für Funktionskontakte */}
-                      {getContactTypeBadge(contact) && (
-                        <Badge color={getContactTypeBadge(contact)!.color as any} className="text-xs">
-                          {getContactTypeBadge(contact)!.label}
+                      {getContactTypeBadge(contact, t('badges.function')) && (
+                        <Badge color={getContactTypeBadge(contact, t('badges.function'))!.color as any} className="text-xs">
+                          {getContactTypeBadge(contact, t('badges.function'))!.label}
                         </Badge>
                       )}
                       {contact.mediaProfile?.isJournalist && (
                         <Badge color="purple" className="text-xs">
-                          Journalist
+                          {t('badges.journalist')}
                         </Badge>
                       )}
                       {(contact as any)._isReference && (
                         <Badge color="blue" className="text-xs">
-                          🌐 Verweis
+                          {t('badges.reference')}
                         </Badge>
                       )}
                     </div>
@@ -183,7 +186,7 @@ export function ContactsTable({
                     </div>
                   )}
                   {!contact.companyName && !contact.position && (
-                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-400">{t('emptyValue')}</span>
                   )}
                 </div>
               </div>
@@ -202,7 +205,7 @@ export function ContactsTable({
                   ) : (
                     <div className="text-sm text-zinc-400 flex items-center gap-1.5">
                       <PhoneIcon className="h-4 w-4 shrink-0" />
-                      <span>—</span>
+                      <span>{t('emptyValue')}</span>
                     </div>
                   )}
                   {getPrimaryEmail(contact.emails) ? (
@@ -217,7 +220,7 @@ export function ContactsTable({
                   ) : (
                     <div className="text-sm text-zinc-400 flex items-center gap-1.5">
                       <EnvelopeIcon className="h-4 w-4 shrink-0" />
-                      <span>—</span>
+                      <span>{t('emptyValue')}</span>
                     </div>
                   )}
                 </div>
@@ -282,7 +285,7 @@ export function ContactsTable({
                   <DropdownMenu anchor="bottom end">
                     <DropdownItem onClick={() => onView(contact.id!)}>
                       <EyeIcon className="h-4 w-4" />
-                      Anzeigen
+                      {tCommon('view')}
                     </DropdownItem>
                     <DropdownItem
                       onClick={() => onEdit(contact)}
@@ -290,7 +293,7 @@ export function ContactsTable({
                       className={(contact as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <PencilIcon className="h-4 w-4" />
-                      Bearbeiten {(contact as any)?._isReference && '(Verweis)'}
+                      {tCommon('edit')} {(contact as any)?._isReference && t('actions.referenceNote')}
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem
@@ -299,7 +302,7 @@ export function ContactsTable({
                       className={(contact as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <TrashIcon className="h-4 w-4" />
-                      <span className="text-red-600">Löschen {(contact as any)?._isReference && '(Verweis)'}</span>
+                      <span className="text-red-600">{tCommon('delete')} {(contact as any)?._isReference && t('actions.referenceNote')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
