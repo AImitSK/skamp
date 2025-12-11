@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mediaService } from '@/lib/firebase/media-service';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useTranslations } from 'next-intl';
 
 interface EmailEditorProps {
   content: string;
@@ -39,11 +40,12 @@ interface EmailEditorProps {
 export default function EmailEditor({
   content,
   onChange,
-  placeholder = 'Beginnen Sie mit der Eingabe Ihrer E-Mail...',
+  placeholder,
   onOpenVariables,
   minHeight = '400px',
   error
 }: EmailEditorProps) {
+  const t = useTranslations('email.editor');
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
 
@@ -149,14 +151,14 @@ export default function EmailEditor({
 
     // Validiere Dateityp
     if (!file.type.startsWith('image/')) {
-      setLogoError('Bitte wählen Sie eine Bilddatei aus');
+      setLogoError(t('validation.imageFileRequired'));
       setTimeout(() => setLogoError(''), 3000);
       return;
     }
 
     // Validiere Dateigröße (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setLogoError('Die Datei darf maximal 5MB groß sein');
+      setLogoError(t('validation.maxFileSize'));
       setTimeout(() => setLogoError(''), 3000);
       return;
     }
@@ -172,7 +174,7 @@ export default function EmailEditor({
       await new Promise((resolve, reject) => {
         img.onload = () => {
           if (img.width > 400 || img.height > 300) {
-            reject(new Error('Das Logo darf maximal 400x300 Pixel groß sein'));
+            reject(new Error(t('validation.maxImageDimensions')));
           } else {
             resolve(true);
           }
@@ -180,7 +182,7 @@ export default function EmailEditor({
         };
         img.onerror = () => {
           URL.revokeObjectURL(imageUrl);
-          reject(new Error('Fehler beim Laden des Bildes'));
+          reject(new Error(t('validation.imageLoadError')));
         };
         img.src = imageUrl;
       });
@@ -202,7 +204,7 @@ export default function EmailEditor({
 
     } catch (error) {
       console.error('Fehler beim Logo-Upload:', error);
-      setLogoError(error instanceof Error ? error.message : 'Fehler beim Hochladen des Logos');
+      setLogoError(error instanceof Error ? error.message : t('validation.uploadError'));
       setTimeout(() => setLogoError(''), 3000);
     } finally {
       setUploadingLogo(false);
@@ -211,7 +213,7 @@ export default function EmailEditor({
         fileInputRef.current.value = '';
       }
     }
-  }, [editor, organizationId]);
+  }, [editor, organizationId, t]);
 
   const insertVariable = useCallback((variable: string) => {
     if (!editor) return;
@@ -242,7 +244,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bold') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Fett (Strg+B)"
+            title={t('toolbar.bold')}
           >
             <BoldIcon className="h-4 w-4" />
           </button>
@@ -250,7 +252,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('italic') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Kursiv (Strg+I)"
+            title={t('toolbar.italic')}
           >
             <ItalicIcon className="h-4 w-4" />
           </button>
@@ -258,7 +260,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleUnderline().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('underline') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Unterstrichen (Strg+U)"
+            title={t('toolbar.underline')}
           >
             <UnderlineIcon className="h-4 w-4" />
           </button>
@@ -266,7 +268,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('strike') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Durchgestrichen"
+            title={t('toolbar.strikethrough')}
           >
             <StrikethroughIcon className="h-4 w-4" />
           </button>
@@ -274,7 +276,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); openLinkDialog(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('link') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Link einfügen (Strg+K)"
+            title={t('toolbar.link')}
           >
             <LinkIcon className="h-4 w-4" />
           </button>
@@ -283,7 +285,7 @@ export default function EmailEditor({
             onMouseDown={(e) => { e.preventDefault(); handleLogoClick(); }}
             disabled={uploadingLogo}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${uploadingLogo ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title="Logo einfügen (max. 400x300px)"
+            title={t('toolbar.insertLogo')}
           >
             <PhotoIcon className="h-4 w-4" />
           </button>
@@ -307,10 +309,10 @@ export default function EmailEditor({
               editor.isActive('heading', { level: 3 }) ? 3 : 0
             }
           >
-            <option value={0}>Normal</option>
-            <option value={1}>Überschrift 1</option>
-            <option value={2}>Überschrift 2</option>
-            <option value={3}>Überschrift 3</option>
+            <option value={0}>{t('toolbar.headings.normal')}</option>
+            <option value={1}>{t('toolbar.headings.heading1')}</option>
+            <option value={2}>{t('toolbar.headings.heading2')}</option>
+            <option value={3}>{t('toolbar.headings.heading3')}</option>
           </select>
         </div>
 
@@ -320,7 +322,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bulletList') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Aufzählungsliste"
+            title={t('toolbar.bulletList')}
           >
             <ListBulletIcon className="h-4 w-4" />
           </button>
@@ -328,7 +330,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('orderedList') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Nummerierte Liste"
+            title={t('toolbar.orderedList')}
           >
             <ListOrderedIcon className="h-4 w-4" />
           </button>
@@ -340,7 +342,7 @@ export default function EmailEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('codeBlock') ? 'bg-gray-200 text-blue-600' : ''}`}
-            title="Code-Block"
+            title={t('toolbar.codeBlock')}
           >
             <CodeBracketIcon className="h-4 w-4" />
           </button>
@@ -353,7 +355,7 @@ export default function EmailEditor({
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().undo().run(); }}
             disabled={!editor.can().undo()}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${!editor.can().undo() ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title="Rückgängig (Strg+Z)"
+            title={t('toolbar.undo')}
           >
             <ArrowUturnLeftIcon className="h-4 w-4" />
           </button>
@@ -362,7 +364,7 @@ export default function EmailEditor({
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().redo().run(); }}
             disabled={!editor.can().redo()}
             className={`p-2 rounded hover:bg-gray-200 transition-colors ${!editor.can().redo() ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title="Wiederholen (Strg+Y)"
+            title={t('toolbar.redo')}
           >
             <ArrowUturnRightIcon className="h-4 w-4" />
           </button>
@@ -374,10 +376,10 @@ export default function EmailEditor({
             type="button"
             onClick={onOpenVariables}
             className="px-3 py-1.5 bg-[#005fab] text-white text-sm rounded hover:bg-[#004a8c] flex items-center gap-2 transition-colors"
-            title="Variablen einfügen"
+            title={t('toolbar.insertVariables')}
           >
             <CodeBracketIcon className="h-4 w-4" />
-            Variablen
+            {t('toolbar.variables')}
           </button>
         )}
       </div>
@@ -402,7 +404,7 @@ export default function EmailEditor({
       {uploadingLogo && (
         <div className="px-4 py-2 bg-blue-50 text-blue-700 text-sm border-t border-blue-200 flex items-center gap-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-          Logo wird hochgeladen...
+          {t('uploadStatus')}
         </div>
       )}
 
@@ -410,7 +412,7 @@ export default function EmailEditor({
       <div className="bg-white relative" style={{ minHeight }}>
         {!content && (
           <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
-            {placeholder}
+            {placeholder || t('placeholder')}
           </div>
         )}
         <EditorContent editor={editor} />
@@ -503,12 +505,12 @@ export default function EmailEditor({
 
       {/* Link Dialog */}
       <Dialog open={showLinkDialog} onClose={() => setShowLinkDialog(false)} size="sm">
-        <DialogTitle>Link einfügen</DialogTitle>
+        <DialogTitle>{t('linkDialog.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             <div>
               <label htmlFor="link-url" className="block text-sm font-medium text-gray-700 mb-2">
-                URL
+                {t('linkDialog.urlLabel')}
               </label>
               <Input
                 id="link-url"
@@ -525,17 +527,17 @@ export default function EmailEditor({
                 }}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Leer lassen um den Link zu entfernen
+                {t('linkDialog.emptyHint')}
               </p>
             </div>
           </div>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setShowLinkDialog(false)}>
-            Abbrechen
+            {t('linkDialog.cancel')}
           </Button>
           <Button onClick={handleLinkSubmit} className="bg-[#005fab] hover:bg-[#004a8c] text-white">
-            {linkUrl ? 'Link einfügen' : 'Link entfernen'}
+            {linkUrl ? t('linkDialog.insert') : t('linkDialog.remove')}
           </Button>
         </DialogActions>
       </Dialog>

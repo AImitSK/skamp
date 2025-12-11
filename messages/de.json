@@ -244,10 +244,14 @@
           "emailInvalid": "Ungültige E-Mail-Adresse"
         },
         "scheduling": {
-          "dateTimeRequired": "Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand"
+          "scheduled": "E-Mail wurde für {dateTime} geplant!",
+          "scheduledToast": "E-Mail für {dateTime} geplant"
         },
         "errors": {
-          "noSenderEmail": "Keine Absender-E-Mail-Adresse ausgewählt"
+          "noAuthentication": "Keine Authentifizierung vorhanden",
+          "sendFailed": "Versand fehlgeschlagen: {reason}",
+          "schedulingFailed": "Planung fehlgeschlagen",
+          "unknownError": "Unbekannter Fehler"
         },
         "testSend": {
           "title": "Test-Versand",
@@ -289,21 +293,11 @@
           "alreadyScheduled": "Diese Kampagne ist bereits für den Versand geplant.",
           "sending": "Diese Kampagne wird gerade versendet."
         },
-        "errors": {
-          "noAuthentication": "Keine Authentifizierung vorhanden",
-          "sendFailed": "Versand fehlgeschlagen: {reason}",
-          "schedulingFailed": "Planung fehlgeschlagen",
-          "unknownError": "Unbekannter Fehler"
-        },
         "sending": {
           "sent": "E-Mail erfolgreich an {count} Empfänger gesendet",
           "sentAlert": "E-Mail wurde erfolgreich an {count} Empfänger gesendet!",
           "sentPipelineTransition": "E-Mail an {count} Empfänger gesendet - Projekt zur Monitoring-Phase weitergeleitet",
           "sentWithPipelineAlert": "E-Mail wurde erfolgreich an {count} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet."
-        },
-        "scheduling": {
-          "scheduled": "E-Mail wurde für {dateTime} geplant!",
-          "scheduledToast": "E-Mail für {dateTime} geplant"
         },
         "dialog": {
           "titleNow": "E-Mail jetzt versenden?",
@@ -2052,7 +2046,15 @@
       "backToCampaigns": "Zurück zu Kampagnen",
       "createdAt": "Erstellt am {date}",
       "admin": "Admin",
-      "actions": "Aktionen",
+      "actions": {
+        "send": "Versenden",
+        "requestApproval": "Freigabe anfordern",
+        "resubmit": "Erneut einreichen",
+        "edit": "Bearbeiten",
+        "duplicate": "Duplizieren",
+        "analytics": "Analytics",
+        "delete": "Löschen"
+      },
       "copyTitle": "(Kopie)",
       "newAdmin": "Neuer Admin",
       "pdfVersionHistory": "PDF-Versionen Historie",
@@ -2063,15 +2065,6 @@
       "folder": "Ordner",
       "file": "Datei",
       "mediaLink": "Medien-Link",
-      "actions": {
-        "send": "Versenden",
-        "requestApproval": "Freigabe anfordern",
-        "resubmit": "Erneut einreichen",
-        "edit": "Bearbeiten",
-        "duplicate": "Duplizieren",
-        "analytics": "Analytics",
-        "delete": "Löschen"
-      },
       "errors": {
         "notFound": "Kampagne nicht gefunden",
         "loadError": "Fehler beim Laden der Kampagne",
@@ -3501,6 +3494,46 @@
         "settingsLink": "E-Mail-Einstellungen"
       }
     },
+    "editor": {
+      "placeholder": "Beginnen Sie mit der Eingabe Ihrer E-Mail...",
+      "toolbar": {
+        "bold": "Fett (Strg+B)",
+        "italic": "Kursiv (Strg+I)",
+        "underline": "Unterstrichen (Strg+U)",
+        "strikethrough": "Durchgestrichen",
+        "link": "Link einfügen (Strg+K)",
+        "insertLogo": "Logo einfügen (max. 400x300px)",
+        "bulletList": "Aufzählungsliste",
+        "orderedList": "Nummerierte Liste",
+        "codeBlock": "Code-Block",
+        "undo": "Rückgängig (Strg+Z)",
+        "redo": "Wiederholen (Strg+Y)",
+        "insertVariables": "Variablen einfügen",
+        "variables": "Variablen",
+        "headings": {
+          "normal": "Normal",
+          "heading1": "Überschrift 1",
+          "heading2": "Überschrift 2",
+          "heading3": "Überschrift 3"
+        }
+      },
+      "validation": {
+        "imageFileRequired": "Bitte wählen Sie eine Bilddatei aus",
+        "maxFileSize": "Die Datei darf maximal 5MB groß sein",
+        "maxImageDimensions": "Das Logo darf maximal 400x300 Pixel groß sein",
+        "imageLoadError": "Fehler beim Laden des Bildes",
+        "uploadError": "Fehler beim Hochladen des Logos"
+      },
+      "uploadStatus": "Logo wird hochgeladen...",
+      "linkDialog": {
+        "title": "Link einfügen",
+        "urlLabel": "URL",
+        "emptyHint": "Leer lassen um den Link zu entfernen",
+        "cancel": "Abbrechen",
+        "insert": "Link einfügen",
+        "remove": "Link entfernen"
+      }
+    },
     "composer": {
       "header": {
         "title": "E-Mail-Versand"
@@ -3583,6 +3616,29 @@
         "addButton": "Hinzufügen"
       }
     },
+    "senderSelector": {
+      "senderType": "Absender-Typ",
+      "selectContactFrom": "Kontakt aus {company} wählen",
+      "companyFallback": "Firma",
+      "enterManually": "Manuell eingeben",
+      "selectContact": "Kontakt auswählen",
+      "pleaseSelect": "Bitte wählen...",
+      "noContactsFound": "Keine Kontakte für {company} gefunden. Bitte wählen Sie \"Manuell eingeben\" oder fügen Sie zuerst einen Kontakt zur Firma hinzu.",
+      "fields": {
+        "name": "Name *",
+        "email": "E-Mail *",
+        "position": "Position",
+        "phone": "Telefon",
+        "company": "Firma"
+      },
+      "placeholders": {
+        "name": "Max Mustermann",
+        "email": "max@firma.de",
+        "position": "PR Manager",
+        "phone": "+49 30 12345678",
+        "company": "Firma GmbH"
+      }
+    },
     "step2": {
       "recipients": {
         "title": "Empfänger"
@@ -3625,6 +3681,18 @@
       },
       "listsLoadedSuccess": "{count} Verteilerliste(n) geladen",
       "listsLoadedError": "Fehler beim Laden der Verteilerlisten"
+    },
+    "translationLanguageSelector": {
+      "title": "Sprachen für Versand",
+      "original": "Original",
+      "selectedCount": "{count} ausgewählt",
+      "noTranslations": "Keine Übersetzungen vorhanden. Nur die Originalsprache wird versendet.",
+      "loading": "Lade Übersetzungen...",
+      "outdated": "Veraltet",
+      "aiTranslation": "KI Übersetzung",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Alle abwählen",
+      "outdatedWarning": "Einige ausgewählte Übersetzungen sind veraltet. Das Original wurde seit der letzten Übersetzung geändert."
     }
   }
 }

@@ -9,6 +9,7 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 import { useProjectTranslations } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
@@ -40,6 +41,8 @@ export function TranslationLanguageSelector({
   onSelectedLanguagesChange,
   disabled = false,
 }: TranslationLanguageSelectorProps) {
+  const t = useTranslations("email.translationLanguageSelector");
+
   // Lade verfügbare Übersetzungen
   const { data: translations, isLoading } = useProjectTranslations(organizationId, projectId);
 
@@ -81,15 +84,15 @@ export function TranslationLanguageSelector({
       <div className="border rounded-lg p-4 bg-gray-50">
         <div className="flex items-center gap-2 mb-2">
           <LanguageIcon className="h-5 w-5 text-gray-400" />
-          <Text className="font-medium text-gray-600">Sprachen für Versand</Text>
+          <Text className="font-medium text-gray-600">{t("title")}</Text>
         </div>
         <div className="flex items-center gap-2 py-2">
           <LanguageFlagIcon languageCode={sourceLanguage} />
           <Text className="text-sm">{LANGUAGE_NAMES[sourceLanguage] || sourceLanguage}</Text>
-          <Badge color="blue" className="ml-auto">Original</Badge>
+          <Badge color="blue" className="ml-auto">{t("original")}</Badge>
         </div>
         <Text className="text-xs text-gray-500 mt-2">
-          Keine Übersetzungen vorhanden. Nur die Originalsprache wird versendet.
+          {t("noTranslations")}
         </Text>
       </div>
     );
@@ -101,9 +104,9 @@ export function TranslationLanguageSelector({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <LanguageIcon className="h-5 w-5 text-gray-500" />
-          <Text className="font-medium">Sprachen für Versand</Text>
+          <Text className="font-medium">{t("title")}</Text>
         </div>
-        <Badge color="zinc">{selectedCount} ausgewählt</Badge>
+        <Badge color="zinc">{t("selectedCount", { count: selectedCount })}</Badge>
       </div>
 
       {/* Sprach-Liste */}
@@ -117,13 +120,13 @@ export function TranslationLanguageSelector({
               {LANGUAGE_NAMES[sourceLanguage] || sourceLanguage}
             </Text>
           </div>
-          <Badge color="blue">Original</Badge>
+          <Badge color="blue">{t("original")}</Badge>
         </div>
 
         {/* Übersetzungen */}
         {isLoading ? (
           <div className="py-4 text-center text-sm text-gray-500">
-            Lade Übersetzungen...
+            {t("loading")}
           </div>
         ) : (
           translations?.map((translation) => (
@@ -149,12 +152,12 @@ export function TranslationLanguageSelector({
                 {translation.isOutdated ? (
                   <Badge color="amber" className="text-xs">
                     <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                    Veraltet
+                    {t("outdated")}
                   </Badge>
                 ) : (
                   <Badge color="purple" className="text-xs">
                     <SparklesIcon className="h-3 w-3 mr-1" />
-                    KI Übersetzung
+                    {t("aiTranslation")}
                   </Badge>
                 )}
               </div>
@@ -169,21 +172,20 @@ export function TranslationLanguageSelector({
             disabled={disabled}
             className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 hover:bg-gray-50 rounded-md transition-colors disabled:opacity-50"
           >
-            {translations.every((t) => selectedLanguages.translations.includes(t.language))
-              ? "Alle abwählen"
-              : "Alle auswählen"}
+            {translations.every((translation) => selectedLanguages.translations.includes(translation.language))
+              ? t("deselectAll")
+              : t("selectAll")}
           </button>
         )}
       </div>
 
       {/* Info-Hinweis bei veralteten Übersetzungen */}
-      {translations?.some((t) => t.isOutdated && selectedLanguages.translations.includes(t.language)) && (
+      {translations?.some((translation) => translation.isOutdated && selectedLanguages.translations.includes(translation.language)) && (
         <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
           <div className="flex items-start gap-2">
             <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 shrink-0" />
             <Text className="text-sm text-amber-700">
-              Einige ausgewählte Übersetzungen sind veraltet. Das Original wurde seit der
-              letzten Übersetzung geändert.
+              {t("outdatedWarning")}
             </Text>
           </div>
         </div>

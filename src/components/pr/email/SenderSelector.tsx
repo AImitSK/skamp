@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
 import { SenderInfo } from '@/types/email-composer';
 import { contactsService } from '@/lib/firebase/crm-service';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { 
+import {
   UserIcon,
   BuildingOfficeIcon,
   EnvelopeIcon,
@@ -24,6 +25,7 @@ interface SenderSelectorProps {
 }
 
 export default function SenderSelector({ campaign, sender, onChange, error }: SenderSelectorProps) {
+  const t = useTranslations('email.senderSelector');
   const [companyContacts, setCompanyContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [manualData, setManualData] = useState({
@@ -95,7 +97,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
     <div className="space-y-4">
       {/* Absender-Typ Auswahl */}
       <div>
-        <label className="block text-sm font-medium mb-2">Absender-Typ</label>
+        <label className="block text-sm font-medium mb-2">{t('senderType')}</label>
         <Select
           value={sender.type}
           onChange={(e) => {
@@ -107,8 +109,8 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
             }
           }}
         >
-          <option value="contact">Kontakt aus {campaign.clientName || 'Firma'} wählen</option>
-          <option value="manual">Manuell eingeben</option>
+          <option value="contact">{t('selectContactFrom', { company: campaign.clientName || t('companyFallback') })}</option>
+          <option value="manual">{t('enterManually')}</option>
         </Select>
       </div>
 
@@ -122,19 +124,18 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
           ) : companyContacts.length === 0 ? (
             <div className="p-4 bg-yellow-50 rounded-lg">
               <p className="text-sm text-yellow-800">
-                Keine Kontakte für {campaign.clientName} gefunden. 
-                Bitte wählen Sie &ldquo;Manuell eingeben&rdquo; oder fügen Sie zuerst einen Kontakt zur Firma hinzu.
+                {t('noContactsFound', { company: campaign.clientName || t('companyFallback') })}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-2">Kontakt auswählen</label>
+                <label className="block text-sm font-medium mb-2">{t('selectContact')}</label>
                 <Select
                   value={sender.contactId || ''}
                   onChange={(e) => handleContactSelect(e.target.value)}
                 >
-                  <option value="">Bitte wählen...</option>
+                  <option value="">{t('pleaseSelect')}</option>
                   {companyContacts.map(contact => (
                     <option key={contact.id} value={contact.id}>
                       {contact.functionName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
@@ -154,25 +155,25 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="sender-name" className="block text-sm font-medium mb-1">
-                Name *
+                {t('fields.name')}
               </label>
               <Input
                 id="sender-name"
                 value={manualData.name}
                 onChange={(e) => handleManualChange('name', e.target.value)}
-                placeholder="Max Mustermann"
+                placeholder={t('placeholders.name')}
               />
             </div>
             <div>
               <label htmlFor="sender-email" className="block text-sm font-medium mb-1">
-                E-Mail *
+                {t('fields.email')}
               </label>
               <Input
                 id="sender-email"
                 type="email"
                 value={manualData.email}
                 onChange={(e) => handleManualChange('email', e.target.value)}
-                placeholder="max@firma.de"
+                placeholder={t('placeholders.email')}
               />
             </div>
           </div>
@@ -180,37 +181,37 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="sender-title" className="block text-sm font-medium mb-1">
-                Position
+                {t('fields.position')}
               </label>
               <Input
                 id="sender-title"
                 value={manualData.title}
                 onChange={(e) => handleManualChange('title', e.target.value)}
-                placeholder="PR Manager"
+                placeholder={t('placeholders.position')}
               />
             </div>
             <div>
               <label htmlFor="sender-phone" className="block text-sm font-medium mb-1">
-                Telefon
+                {t('fields.phone')}
               </label>
               <Input
                 id="sender-phone"
                 value={manualData.phone}
                 onChange={(e) => handleManualChange('phone', e.target.value)}
-                placeholder="+49 30 12345678"
+                placeholder={t('placeholders.phone')}
               />
             </div>
           </div>
 
           <div>
             <label htmlFor="sender-company" className="block text-sm font-medium mb-1">
-              Firma
+              {t('fields.company')}
             </label>
             <Input
               id="sender-company"
               value={manualData.company}
               onChange={(e) => handleManualChange('company', e.target.value)}
-              placeholder={campaign.clientName || 'Firma GmbH'}
+              placeholder={campaign.clientName || t('placeholders.company')}
             />
           </div>
         </div>

@@ -244,10 +244,14 @@
           "emailInvalid": "Invalid email address"
         },
         "scheduling": {
-          "dateTimeRequired": "Please select date and time for scheduled sending"
+          "scheduled": "Email scheduled for {dateTime}!",
+          "scheduledToast": "Email scheduled for {dateTime}"
         },
         "errors": {
-          "noSenderEmail": "No sender email address selected"
+          "noAuthentication": "No authentication available",
+          "sendFailed": "Send failed: {reason}",
+          "schedulingFailed": "Scheduling failed",
+          "unknownError": "Unknown error"
         },
         "testSend": {
           "title": "Test Send",
@@ -289,21 +293,11 @@
           "alreadyScheduled": "This campaign is already scheduled for sending.",
           "sending": "This campaign is currently being sent."
         },
-        "errors": {
-          "noAuthentication": "No authentication available",
-          "sendFailed": "Send failed: {reason}",
-          "schedulingFailed": "Scheduling failed",
-          "unknownError": "Unknown error"
-        },
         "sending": {
           "sent": "Email successfully sent to {count} recipients",
           "sentAlert": "Email was successfully sent to {count} recipients!",
           "sentPipelineTransition": "Email sent to {count} recipients - Project forwarded to monitoring phase",
           "sentWithPipelineAlert": "Email was successfully sent to {count} recipients! Project was forwarded to monitoring phase."
-        },
-        "scheduling": {
-          "scheduled": "Email scheduled for {dateTime}!",
-          "scheduledToast": "Email scheduled for {dateTime}"
         },
         "dialog": {
           "titleNow": "Send email now?",
@@ -2052,7 +2046,15 @@
       "backToCampaigns": "Back to campaigns",
       "createdAt": "Created on {date}",
       "admin": "Admin",
-      "actions": "Actions",
+      "actions": {
+        "send": "Send",
+        "requestApproval": "Request Approval",
+        "resubmit": "Resubmit",
+        "edit": "Edit",
+        "duplicate": "Duplicate",
+        "analytics": "Analytics",
+        "delete": "Delete"
+      },
       "copyTitle": "(Copy)",
       "newAdmin": "New Admin",
       "pdfVersionHistory": "PDF Version History",
@@ -2063,15 +2065,6 @@
       "folder": "Folder",
       "file": "File",
       "mediaLink": "Media Link",
-      "actions": {
-        "send": "Send",
-        "requestApproval": "Request Approval",
-        "resubmit": "Resubmit",
-        "edit": "Edit",
-        "duplicate": "Duplicate",
-        "analytics": "Analytics",
-        "delete": "Delete"
-      },
       "errors": {
         "notFound": "Campaign not found",
         "loadError": "Error loading campaign",
@@ -3501,6 +3494,46 @@
         "settingsLink": "Email Settings"
       }
     },
+    "editor": {
+      "placeholder": "Start typing your email...",
+      "toolbar": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "link": "Insert link (Ctrl+K)",
+        "insertLogo": "Insert logo (max. 400x300px)",
+        "bulletList": "Bullet list",
+        "orderedList": "Numbered list",
+        "codeBlock": "Code block",
+        "undo": "Undo (Ctrl+Z)",
+        "redo": "Redo (Ctrl+Y)",
+        "insertVariables": "Insert variables",
+        "variables": "Variables",
+        "headings": {
+          "normal": "Normal",
+          "heading1": "Heading 1",
+          "heading2": "Heading 2",
+          "heading3": "Heading 3"
+        }
+      },
+      "validation": {
+        "imageFileRequired": "Please select an image file",
+        "maxFileSize": "File must be no larger than 5MB",
+        "maxImageDimensions": "Logo must be no larger than 400x300 pixels",
+        "imageLoadError": "Error loading image",
+        "uploadError": "Error uploading logo"
+      },
+      "uploadStatus": "Uploading logo...",
+      "linkDialog": {
+        "title": "Insert link",
+        "urlLabel": "URL",
+        "emptyHint": "Leave empty to remove the link",
+        "cancel": "Cancel",
+        "insert": "Insert link",
+        "remove": "Remove link"
+      }
+    },
     "composer": {
       "header": {
         "title": "Email Send"
@@ -3583,6 +3616,29 @@
         "addButton": "Add"
       }
     },
+    "senderSelector": {
+      "senderType": "Sender Type",
+      "selectContactFrom": "Select contact from {company}",
+      "companyFallback": "Company",
+      "enterManually": "Enter manually",
+      "selectContact": "Select contact",
+      "pleaseSelect": "Please select...",
+      "noContactsFound": "No contacts found for {company}. Please select \"Enter manually\" or add a contact to the company first.",
+      "fields": {
+        "name": "Name *",
+        "email": "Email *",
+        "position": "Position",
+        "phone": "Phone",
+        "company": "Company"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@company.com",
+        "position": "PR Manager",
+        "phone": "+1 555 123 4567",
+        "company": "Company Inc."
+      }
+    },
     "step2": {
       "recipients": {
         "title": "Recipients"
@@ -3625,6 +3681,18 @@
       },
       "listsLoadedSuccess": "{count} distribution list(s) loaded",
       "listsLoadedError": "Error loading distribution lists"
+    },
+    "translationLanguageSelector": {
+      "title": "Languages for Dispatch",
+      "original": "Original",
+      "selectedCount": "{count} selected",
+      "noTranslations": "No translations available. Only the original language will be sent.",
+      "loading": "Loading translations...",
+      "outdated": "Outdated",
+      "aiTranslation": "AI Translation",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "outdatedWarning": "Some selected translations are outdated. The original has been changed since the last translation."
     }
   }
 }
