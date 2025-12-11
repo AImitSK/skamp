@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
@@ -21,13 +22,15 @@ export const DatenTabContent = React.memo(function DatenTabContent({
   foldersLoading,
   onRefresh
 }: DatenTabContentProps) {
+  const t = useTranslations('projects.tabs.daten');
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Heading level={3}>Projektdaten verwalten</Heading>
+        <Heading level={3}>{t('title')}</Heading>
         <Text className="text-gray-500 mt-1">
-          Organisieren Sie alle Projektdateien und Dokumente zentral
+          {t('description')}
         </Text>
       </div>
 
@@ -42,7 +45,7 @@ export const DatenTabContent = React.memo(function DatenTabContent({
           foldersLoading={foldersLoading}
           onRefresh={onRefresh}
           filterByFolder="all"
-          title="Projektdaten"
+          title={t('folderViewTitle')}
         />
       )}
     </div>

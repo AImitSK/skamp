@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
@@ -40,6 +41,8 @@ export default function ProjectTable({
   onUnarchive,
   onDelete
 }: ProjectTableProps) {
+  const t = useTranslations('projects.table');
+
   // Hilfsfunktionen
   const getProjectStatusColor = (status: string) => {
     switch (status) {
@@ -53,22 +56,22 @@ export default function ProjectTable({
 
   const getProjectStatusLabel = (status: string) => {
     switch (status) {
-      case 'active': return 'Aktiv';
-      case 'on_hold': return 'Pausiert';
-      case 'completed': return 'Abgeschlossen';
-      case 'cancelled': return 'Abgebrochen';
+      case 'active': return t('status.active');
+      case 'on_hold': return t('status.onHold');
+      case 'completed': return t('status.completed');
+      case 'cancelled': return t('status.cancelled');
       default: return status;
     }
   };
 
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
-      case 'ideas_planning': return 'Planung';
-      case 'creation': return 'Erstellung';
-      case 'approval': return 'Freigabe';
-      case 'distribution': return 'Verteilung';
-      case 'monitoring': return 'Monitoring';
-      case 'completed': return 'Abgeschlossen';
+      case 'ideas_planning': return t('stages.planning');
+      case 'creation': return t('stages.creation');
+      case 'approval': return t('stages.approval');
+      case 'distribution': return t('stages.distribution');
+      case 'monitoring': return t('stages.monitoring');
+      case 'completed': return t('stages.completed');
       default: return stage;
     }
   };
@@ -89,19 +92,19 @@ export default function ProjectTable({
       <div className="px-8 py-4 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center">
           <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Projekt
+            {t('headers.project')}
           </div>
           <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Status
+            {t('headers.status')}
           </div>
           <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Projektphase
+            {t('headers.stage')}
           </div>
           <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Team
+            {t('headers.team')}
           </div>
           <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Aktualisiert
+            {t('headers.updated')}
           </div>
           <div className="w-12"></div>
         </div>
@@ -173,7 +176,7 @@ export default function ProjectTable({
                             <div
                               key={userId}
                               className="w-7 h-7 rounded-full bg-zinc-300 flex items-center justify-center text-zinc-600 text-xs font-medium ring-2 ring-white"
-                              title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
+                              title={loadingTeam ? t('team.loadingMembers') : t('team.unknownMember')}
                             >
                               {loadingTeam ? "..." : "?"}
                             </div>
@@ -220,7 +223,7 @@ export default function ProjectTable({
                       })()}
                     </div>
                   ) : (
-                    <span className="text-xs text-zinc-500">Kein Team</span>
+                    <span className="text-xs text-zinc-500">{t('team.noTeam')}</span>
                   )}
                 </div>
 
@@ -240,11 +243,11 @@ export default function ProjectTable({
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem href={`/dashboard/projects/${project.id}`}>
                         <EyeIcon className="h-4 w-4" />
-                        Projekt anzeigen
+                        {t('actions.view')}
                       </DropdownItem>
                       <DropdownItem onClick={() => onEdit(project)}>
                         <PencilIcon className="h-4 w-4" />
-                        Bearbeiten
+                        {t('actions.edit')}
                       </DropdownItem>
                       <DropdownDivider />
                       {project.status === 'archived' ? (
@@ -259,7 +262,7 @@ export default function ProjectTable({
                           }}
                         >
                           <ArchiveBoxIcon className="h-4 w-4" />
-                          Reaktivieren
+                          {t('actions.unarchive')}
                         </DropdownItem>
                       ) : (
                         <DropdownItem
@@ -273,13 +276,13 @@ export default function ProjectTable({
                           }}
                         >
                           <ArchiveBoxIcon className="h-4 w-4" />
-                          Archivieren
+                          {t('actions.archive')}
                         </DropdownItem>
                       )}
                       <DropdownDivider />
                       <DropdownItem
                         onClick={async () => {
-                          if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                          if (confirm(t('actions.deleteConfirm'))) {
                             try {
                               const projectTitle = project.title;
                               await onDelete(project.id!);
@@ -291,7 +294,7 @@ export default function ProjectTable({
                         }}
                       >
                         <TrashIcon className="h-4 w-4" />
-                        <span className="text-red-600">Löschen</span>
+                        <span className="text-red-600">{t('actions.delete')}</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>

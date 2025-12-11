@@ -876,6 +876,12 @@
       "title": "Archivansicht aktiv",
       "description": "Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden."
     },
+    "emptyStates": {
+      "noFiltersSelected": {
+        "title": "Keine Filter ausgewählt",
+        "description": "Wähle \"Aktiv\" oder \"Archiv\" im Filter-Menü aus."
+      }
+    },
     "detail": {
       "shared": {
         "loading": "Projekt wird geladen...",
@@ -893,7 +899,27 @@
         "data": "Daten",
         "distributionLists": "Verteiler",
         "pressRelease": "Pressemeldung",
-        "monitoring": "Monitoring"
+        "monitoring": "Monitoring",
+        "overviewContent": {
+          "pipelineTitle": "Pipeline-Übersicht",
+          "myDueTasks": "Meine fälligen Tasks",
+          "currentUser": "Aktueller User",
+          "showAllTasks": "Alle Tasks anzeigen →"
+        }
+      },
+      "monitoringTab": {
+        "loading": "Lade Monitoring-Daten...",
+        "empty": {
+          "title": "Noch keine Monitoring-Aktivitäten",
+          "description": "Versende eine Kampagne oder erfasse eine Veröffentlichung"
+        },
+        "backToOverview": "← Zurück zur Übersicht",
+        "recipients": {
+          "title": "📋 Alle Empfänger & Veröffentlichungen"
+        },
+        "clippings": {
+          "title": "📰 Alle Veröffentlichungen"
+        }
       },
       "header": {
         "edit": "Bearbeiten",
@@ -905,6 +931,25 @@
           "on_hold": "Pausiert",
           "completed": "Abgeschlossen",
           "cancelled": "Abgebrochen"
+        },
+        "infoBar": {
+          "stage": "Phase",
+          "customer": "Kunde",
+          "deadline": "Deadline",
+          "tags": "Tags",
+          "viewCustomer": "Kunde anzeigen",
+          "stages": {
+            "ideasPlanning": "Ideen & Planung",
+            "creation": "Content und Materialien",
+            "approval": "Freigabe",
+            "distribution": "Verteilung",
+            "monitoring": "Monitoring",
+            "completed": "Abgeschlossen",
+            "planningLegacy": "Planung (Legacy)",
+            "contentCreationLegacy": "Content-Erstellung (Legacy)",
+            "internalReviewLegacy": "Interne Prüfung (Legacy)",
+            "unknown": "Unbekannt"
+          }
         }
       },
       "info": {
@@ -929,6 +974,49 @@
       "errors": {
         "projectIdMissing": "Projekt-ID nicht gefunden",
         "loadingFailed": "Projekt konnte nicht geladen werden"
+      }
+    },
+    "table": {
+      "headers": {
+        "project": "Projekt",
+        "status": "Status",
+        "stage": "Projektphase",
+        "team": "Team",
+        "updated": "Aktualisiert"
+      },
+      "status": {
+        "active": "Aktiv",
+        "onHold": "Pausiert",
+        "completed": "Abgeschlossen",
+        "cancelled": "Abgebrochen"
+      },
+      "stages": {
+        "planning": "Planung",
+        "creation": "Erstellung",
+        "approval": "Freigabe",
+        "distribution": "Verteilung",
+        "monitoring": "Monitoring",
+        "completed": "Abgeschlossen"
+      },
+      "team": {
+        "loadingMembers": "Lädt Mitgliederdaten...",
+        "unknownMember": "Unbekanntes Mitglied",
+        "noTeam": "Kein Team"
+      },
+      "actions": {
+        "view": "Projekt anzeigen",
+        "edit": "Bearbeiten",
+        "archive": "Archivieren",
+        "unarchive": "Reaktivieren",
+        "delete": "Löschen",
+        "deleteConfirm": "Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      }
+    },
+    "tabs": {
+      "daten": {
+        "title": "Projektdaten verwalten",
+        "description": "Organisieren Sie alle Projektdateien und Dokumente zentral",
+        "folderViewTitle": "Projektdaten"
       }
     }
   },

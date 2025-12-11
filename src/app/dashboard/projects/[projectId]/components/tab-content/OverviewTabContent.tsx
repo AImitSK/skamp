@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
@@ -42,13 +43,15 @@ function OverviewTabContentComponent({
   onStepToggle,
   onNavigateToTasks
 }: OverviewTabContentProps) {
+  const t = useTranslations('projects.detail.tabs.overviewContent');
+
   return (
     <div className="space-y-6">
       {/* Pipeline-Fortschritt */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center mb-4">
           <Squares2X2Icon className="h-5 w-5 text-primary mr-2" />
-          <Subheading>Pipeline-Übersicht</Subheading>
+          <Subheading>{t('pipelineTitle')}</Subheading>
         </div>
         {project && currentOrganization && (
           <PipelineProgressDashboard />
@@ -61,7 +64,7 @@ function OverviewTabContentComponent({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <CalendarDaysIcon className="h-5 w-5 text-primary mr-2" />
-              <Subheading>Meine fälligen Tasks</Subheading>
+              <Subheading>{t('myDueTasks')}</Subheading>
             </div>
             {user && (
               <div className="flex items-center">
@@ -74,7 +77,7 @@ function OverviewTabContentComponent({
                     .join('')
                     .toUpperCase()
                     .slice(0, 2) || user.email?.charAt(0).toUpperCase() || '?'}
-                  title={user.displayName || user.email || 'Aktueller User'}
+                  title={user.displayName || user.email || t('currentUser')}
                 />
               </div>
             )}
@@ -150,7 +153,7 @@ function OverviewTabContentComponent({
               onClick={onNavigateToTasks}
               className="text-sm text-primary hover:text-primary-hover font-medium"
             >
-              Alle Tasks anzeigen →
+              {t('showAllTasks')}
             </button>
           </div>
         </div>

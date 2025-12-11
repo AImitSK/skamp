@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
@@ -27,6 +28,7 @@ interface ProjectMonitoringTabProps {
 }
 
 export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
+  const t = useTranslations('projects.detail.monitoringTab');
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
   const router = useRouter();
@@ -156,14 +158,14 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   }, [tracker?.id, currentOrganization, extendMonitoring]);
 
   if (isLoading) {
-    return <LoadingState message="Lade Monitoring-Daten..." />;
+    return <LoadingState message={t('loading')} />;
   }
 
   if (campaigns.length === 0) {
     return (
       <EmptyState
-        title="Noch keine Monitoring-Aktivitäten"
-        description="Versende eine Kampagne oder erfasse eine Veröffentlichung"
+        title={t('empty.title')}
+        description={t('empty.description')}
       />
     );
   }
@@ -204,12 +206,12 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       {activeView === 'recipients' && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <Subheading>📋 Alle Empfänger & Veröffentlichungen</Subheading>
+            <Subheading>{t('recipients.title')}</Subheading>
             <button
               onClick={() => setActiveView('overview')}
               className="text-sm text-blue-600 hover:text-blue-700"
             >
-              ← Zurück zur Übersicht
+              {t('backToOverview')}
             </button>
           </div>
           <RecipientTrackingList
@@ -224,12 +226,12 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       {activeView === 'clippings' && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <Subheading>📰 Alle Veröffentlichungen</Subheading>
+            <Subheading>{t('clippings.title')}</Subheading>
             <button
               onClick={() => setActiveView('overview')}
               className="text-sm text-blue-600 hover:text-blue-700"
             >
-              ← Zurück zur Übersicht
+              {t('backToOverview')}
             </button>
           </div>
           <ClippingArchive clippings={allClippings} />

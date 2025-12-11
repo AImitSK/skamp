@@ -876,6 +876,12 @@
       "title": "Archive view active",
       "description": "Archived projects can be reactivated via the 3-dot menu."
     },
+    "emptyStates": {
+      "noFiltersSelected": {
+        "title": "No filters selected",
+        "description": "Select \"Active\" or \"Archive\" in the filter menu."
+      }
+    },
     "detail": {
       "shared": {
         "loading": "Loading project...",
@@ -893,7 +899,27 @@
         "data": "Data",
         "distributionLists": "Distribution Lists",
         "pressRelease": "Press Release",
-        "monitoring": "Monitoring"
+        "monitoring": "Monitoring",
+        "overviewContent": {
+          "pipelineTitle": "Pipeline Overview",
+          "myDueTasks": "My Due Tasks",
+          "currentUser": "Current User",
+          "showAllTasks": "Show all tasks →"
+        }
+      },
+      "monitoringTab": {
+        "loading": "Loading monitoring data...",
+        "empty": {
+          "title": "No monitoring activities yet",
+          "description": "Send a campaign or record a publication"
+        },
+        "backToOverview": "← Back to overview",
+        "recipients": {
+          "title": "📋 All Recipients & Publications"
+        },
+        "clippings": {
+          "title": "📰 All Publications"
+        }
       },
       "header": {
         "edit": "Edit",
@@ -905,6 +931,25 @@
           "on_hold": "On Hold",
           "completed": "Completed",
           "cancelled": "Cancelled"
+        },
+        "infoBar": {
+          "stage": "Stage",
+          "customer": "Customer",
+          "deadline": "Deadline",
+          "tags": "Tags",
+          "viewCustomer": "View customer",
+          "stages": {
+            "ideasPlanning": "Ideas & Planning",
+            "creation": "Content & Materials",
+            "approval": "Approval",
+            "distribution": "Distribution",
+            "monitoring": "Monitoring",
+            "completed": "Completed",
+            "planningLegacy": "Planning (Legacy)",
+            "contentCreationLegacy": "Content Creation (Legacy)",
+            "internalReviewLegacy": "Internal Review (Legacy)",
+            "unknown": "Unknown"
+          }
         }
       },
       "info": {
@@ -929,6 +974,49 @@
       "errors": {
         "projectIdMissing": "Project ID not found",
         "loadingFailed": "Could not load project"
+      }
+    },
+    "table": {
+      "headers": {
+        "project": "Project",
+        "status": "Status",
+        "stage": "Project Phase",
+        "team": "Team",
+        "updated": "Updated"
+      },
+      "status": {
+        "active": "Active",
+        "onHold": "On Hold",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "stages": {
+        "planning": "Planning",
+        "creation": "Creation",
+        "approval": "Approval",
+        "distribution": "Distribution",
+        "monitoring": "Monitoring",
+        "completed": "Completed"
+      },
+      "team": {
+        "loadingMembers": "Loading member data...",
+        "unknownMember": "Unknown member",
+        "noTeam": "No team"
+      },
+      "actions": {
+        "view": "View project",
+        "edit": "Edit",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "delete": "Delete",
+        "deleteConfirm": "Really delete project? This action cannot be undone."
+      }
+    },
+    "tabs": {
+      "daten": {
+        "title": "Manage project data",
+        "description": "Organize all project files and documents centrally",
+        "folderViewTitle": "Project Data"
       }
     }
   },
