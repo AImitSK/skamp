@@ -165,7 +165,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           >
             {geographicScopes.map(scope => (
               <option key={scope.value} value={scope.value}>
-                {scope.label}
+                {t(`scopes.${scope.value}`)}
               </option>
             ))}
           </Select>
@@ -183,7 +183,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           >
             {publicationTypes.map(type => (
               <option key={type.value} value={type.value}>
-                {type.label}
+                {t(`types.${type.value}`)}
               </option>
             ))}
           </Select>

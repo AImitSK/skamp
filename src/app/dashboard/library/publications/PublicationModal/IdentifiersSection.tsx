@@ -8,8 +8,11 @@ import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { socialPlatformLabels } from '@/types/crm';
+import type { SocialPlatform } from '@/types/crm';
 import type { IdentifierItem, SocialMediaItem } from './types';
+
+// Social platforms for dropdown
+const socialPlatforms: SocialPlatform[] = ['linkedin', 'twitter', 'xing', 'facebook', 'instagram', 'youtube', 'tiktok', 'other'];
 
 interface IdentifiersSectionProps {
   identifiers: IdentifierItem[];
@@ -129,8 +132,8 @@ export const IdentifiersSection = memo(function IdentifiersSection({
                       setSocialMediaUrls(updated);
                     }}
                   >
-                    {Object.entries(socialPlatformLabels).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
+                    {socialPlatforms.map((platform) => (
+                      <option key={platform} value={platform}>{t(`socialMedia.platforms.${platform}`)}</option>
                     ))}
                   </Select>
                 </div>

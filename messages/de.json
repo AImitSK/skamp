@@ -2212,7 +2212,26 @@
         "focusAreasHint": "Geben Sie Themenbereiche ein und drücken Sie Enter oder Komma",
         "verifiedLabel": "Publikation ist verifiziert",
         "notesLabel": "Interne Notizen",
-        "notesPlaceholder": "Interne Anmerkungen..."
+        "notesPlaceholder": "Interne Anmerkungen...",
+        "types": {
+          "newspaper": "Zeitung",
+          "magazine": "Magazin",
+          "website": "Website",
+          "blog": "Blog",
+          "newsletter": "Newsletter",
+          "podcast": "Podcast",
+          "tv": "TV",
+          "radio": "Radio",
+          "trade_journal": "Fachzeitschrift",
+          "social_media": "Social Media"
+        },
+        "scopes": {
+          "local": "Lokal",
+          "regional": "Regional",
+          "national": "National",
+          "international": "International",
+          "global": "Global"
+        }
       },
       "metrics": {
         "frequencyLabel": "Erscheinungsfrequenz",
@@ -2296,7 +2315,17 @@
           "title": "Social Media Profile",
           "addButton": "Profil hinzufügen",
           "urlPlaceholder": "https://...",
-          "empty": "Keine Social Media Profile hinzugefügt"
+          "empty": "Keine Social Media Profile hinzugefügt",
+          "platforms": {
+            "linkedin": "LinkedIn",
+            "twitter": "Twitter/X",
+            "xing": "XING",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "youtube": "YouTube",
+            "tiktok": "TikTok",
+            "other": "Andere"
+          }
         }
       },
       "monitoring": {
