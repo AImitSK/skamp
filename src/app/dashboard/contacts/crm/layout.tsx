@@ -5,21 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { BuildingOfficeIcon, UsersIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-
-const tabs = [
-  {
-    name: 'Firmen',
-    href: '/dashboard/contacts/crm/companies',
-    icon: BuildingOfficeIcon,
-    description: 'Verwalte Firmen und Organisationen'
-  },
-  {
-    name: 'Personen',
-    href: '/dashboard/contacts/crm/contacts',
-    icon: UsersIcon,
-    description: 'Verwalte Personen und Ansprechpartner'
-  }
-];
+import { useTranslations } from 'next-intl';
 
 /**
  * CRM Layout Component
@@ -31,19 +17,34 @@ const tabs = [
  */
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const currentTab = tabs.find(tab => pathname.startsWith(tab.href));
+  const t = useTranslations('crm.layout');
+
+  const tabs = [
+    {
+      name: t('tabs.companies.name'),
+      href: '/dashboard/contacts/crm/companies',
+      icon: BuildingOfficeIcon,
+      description: t('tabs.companies.description')
+    },
+    {
+      name: t('tabs.contacts.name'),
+      href: '/dashboard/contacts/crm/contacts',
+      icon: UsersIcon,
+      description: t('tabs.contacts.description')
+    }
+  ];
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Kontakte</h1>
+        <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">{t('title')}</h1>
       </div>
 
       {/* Tab Navigation */}
       <div className="mb-6">
         <div className="border-0 border-zinc-200 dark:border-zinc-700">
-          <nav aria-label="Tabs" className="-mb-px flex space-x-8">
+          <nav aria-label={t('navigation')} className="-mb-px flex space-x-8">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
               const Icon = tab.icon;

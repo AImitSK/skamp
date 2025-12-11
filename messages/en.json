@@ -922,6 +922,20 @@
     }
   },
   "crm": {
+    "layout": {
+      "title": "Contacts",
+      "navigation": "Tabs",
+      "tabs": {
+        "companies": {
+          "name": "Companies",
+          "description": "Manage companies and organizations"
+        },
+        "contacts": {
+          "name": "People",
+          "description": "Manage people and contacts"
+        }
+      }
+    },
     "redirecting": "Redirecting...",
     "contactTable": {
       "headers": {

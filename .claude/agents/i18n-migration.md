@@ -27,9 +27,17 @@ Wenn du aufgerufen wirst, folge diesen Schritten:
    - Lies zuerst `docs/translation/06-MIGRATION-GUIDE.md` fuer projektspezifische Konventionen
    - Beachte existierende Patterns und Namespace-Strukturen
 
-2. **Zielkomponente analysieren:**
+2. **Zielkomponente GRUENDLICH analysieren:**
    - Lies die angegebene Komponente/Seite vollstaendig
-   - Identifiziere alle hardcodierten deutschen Texte
+   - **WICHTIG:** Suche nach ALLEN deutschen Texten, nicht nur solchen mit Umlauten!
+   - Pruefe diese Kategorien:
+     - JSX-Text: `<tag>Deutscher Text</tag>`
+     - Select-Optionen: `<option>Label</option>`
+     - Konstanten-Arrays: `const items = [{ name: 'Label' }]`
+     - Inline-Objekte: `{ label: 'Text', title: 'Text' }`
+     - Placeholders: `placeholder="Text"`
+     - Aria-Labels: `aria-label="Text"`
+     - Title-Attribute: `title="Text"`
    - Pruefe ob es eine Client Component (`'use client'`) oder Server Component ist
    - Notiere bereits vorhandene i18n-Imports und -Verwendungen
 
@@ -59,8 +67,173 @@ Wenn du aufgerufen wirst, folge diesen Schritten:
 
 7. **Qualitaetssicherung:**
    - Fuehre `npm run type-check` aus um TypeScript-Fehler zu pruefen
-   - Fuehre `npm run lint` aus um Linting-Fehler zu pruefen
-   - Optional: `npm test` fuer betroffene Komponenten
+   - Stelle sicher dass ALLE deutschen Texte migriert wurden
+
+---
+
+## KRITISCHE PATTERNS (oft uebersehen!)
+
+### Select-Optionen
+
+```tsx
+// VORHER - FALSCH (hardcodiert)
+<Select>
+  <option value="customer">Kunde</option>
+  <option value="supplier">Lieferant</option>
+  <option value="partner">Partner</option>
+</Select>
+
+// NACHHER - RICHTIG (mit i18n)
+<Select>
+  <option value="customer">{t('companyTypes.customer')}</option>
+  <option value="supplier">{t('companyTypes.supplier')}</option>
+  <option value="partner">{t('companyTypes.partner')}</option>
+</Select>
+
+// In de.json:
+"companyTypes": {
+  "customer": "Kunde",
+  "supplier": "Lieferant",
+  "partner": "Partner"
+}
+
+// In en.json:
+"companyTypes": {
+  "customer": "Customer",
+  "supplier": "Supplier",
+  "partner": "Partner"
+}
+```
+
+### Konstanten-Arrays mit Labels
+
+```tsx
+// VORHER - FALSCH (hardcodiert)
+const tabs = [
+  { name: 'Firmen', href: '/companies' },
+  { name: 'Personen', href: '/contacts' }
+];
+
+// NACHHER - RICHTIG (mit i18n)
+// Option A: Translation im Render
+const tabs = [
+  { key: 'companies', href: '/companies' },
+  { key: 'contacts', href: '/contacts' }
+];
+// Im JSX: {t(`tabs.${tab.key}`)}
+
+// Option B: Funktion die t() verwendet
+function useTabs() {
+  const t = useTranslations('crm');
+  return [
+    { name: t('tabs.companies'), href: '/companies' },
+    { name: t('tabs.contacts'), href: '/contacts' }
+  ];
+}
+```
+
+### Inline-Objekte mit Labels (z.B. Identifier Types)
+
+```tsx
+// VORHER - FALSCH (hardcodiert)
+const IDENTIFIER_TYPES = [
+  { value: 'VAT_EU', label: 'USt-IdNr. (EU)' },
+  { value: 'COMPANY_REG_DE', label: 'Handelsregister (DE)' }
+];
+
+// NACHHER - RICHTIG (mit i18n)
+// Option A: Keys speichern, im Render uebersetzen
+const IDENTIFIER_TYPES = [
+  { value: 'VAT_EU', labelKey: 'identifierTypes.vatEu' },
+  { value: 'COMPANY_REG_DE', labelKey: 'identifierTypes.companyRegDe' }
+];
+// Im JSX: {t(type.labelKey)}
+
+// Option B: Hook fuer Labels
+function useIdentifierTypes() {
+  const t = useTranslations('crm');
+  return [
+    { value: 'VAT_EU', label: t('identifierTypes.vatEu') },
+    { value: 'COMPANY_REG_DE', label: t('identifierTypes.companyRegDe') }
+  ];
+}
+```
+
+### Country/Language Listen
+
+```tsx
+// VORHER - FALSCH (hardcodiert)
+<option value="DE">Deutschland</option>
+<option value="AT">Österreich</option>
+
+// NACHHER - RICHTIG (mit i18n)
+<option value="DE">{t('countries.DE')}</option>
+<option value="AT">{t('countries.AT')}</option>
+
+// In de.json unter "common.countries":
+"countries": {
+  "DE": "Deutschland",
+  "AT": "Österreich",
+  "CH": "Schweiz",
+  "US": "USA",
+  "GB": "Großbritannien"
+}
+
+// In en.json:
+"countries": {
+  "DE": "Germany",
+  "AT": "Austria",
+  "CH": "Switzerland",
+  "US": "USA",
+  "GB": "United Kingdom"
+}
+```
+
+### Layout-Navigation
+
+```tsx
+// VORHER - FALSCH (hardcodiert im Layout)
+<h1>Kontakte</h1>
+<nav>
+  <Link href="/companies">Firmen</Link>
+  <Link href="/contacts">Personen</Link>
+</nav>
+
+// NACHHER - RICHTIG (mit i18n)
+'use client';
+import { useTranslations } from 'next-intl';
+
+export default function CRMLayout({ children }) {
+  const t = useTranslations('crm.layout');
+
+  return (
+    <>
+      <h1>{t('title')}</h1>
+      <nav>
+        <Link href="/companies">{t('tabs.companies')}</Link>
+        <Link href="/contacts">{t('tabs.contacts')}</Link>
+      </nav>
+      {children}
+    </>
+  );
+}
+```
+
+### Phone/Input Type Labels
+
+```tsx
+// VORHER - FALSCH (hardcodiert)
+<option value="business">Geschäftlich</option>
+<option value="mobile">Mobil</option>
+<option value="fax">Fax</option>
+
+// NACHHER - RICHTIG (mit i18n)
+<option value="business">{t('phoneTypes.business')}</option>
+<option value="mobile">{t('phoneTypes.mobile')}</option>
+<option value="fax">{t('phoneTypes.fax')}</option>
+```
+
+---
 
 ## Namespace-Konventionen
 
@@ -68,17 +241,24 @@ Verwende diese Namespaces basierend auf dem Modul:
 
 | Namespace | Verwendung |
 |-----------|------------|
-| `common` | Globale UI-Elemente (save, cancel, delete, loading, search) |
+| `common` | Globale UI-Elemente (save, cancel, delete, loading, search, countries) |
+| `common.countries` | Laendernamen |
+| `common.phoneTypes` | Telefon-Typen (business, mobile, fax) |
 | `errors` | Fehlermeldungen (notFound, serverError, validation) |
 | `navigation` | Menu/Navigation (dashboard, contacts, campaigns) |
 | `contacts` | Kontakte-Modul |
 | `campaigns` | Kampagnen-Modul |
 | `crm` | CRM allgemein |
+| `crm.layout` | CRM Layout/Navigation |
+| `crm.companyTypes` | Firmen-Typen (customer, supplier, partner) |
+| `crm.identifierTypes` | Business Identifier (VAT, EIN, etc.) |
 | `monitoring` | Monitoring-Modul |
 | `auth` | Authentifizierung |
 | `settings` | Einstellungen |
 
-**Hinweis:** `toasts` Namespace wird separat in Foundation-Phase behandelt - nicht durch diesen Agent!
+**Hinweis:** `toasts` Namespace wird separat behandelt - nicht durch diesen Agent!
+
+---
 
 ## Uebersetzungs-Patterns
 
@@ -151,21 +331,37 @@ export function ContactForm() {
 }
 ```
 
+---
+
 ## Toast Service - NICHT MIGRIEREN!
 
 **WICHTIG:** Der Toast Service ist bereits zentralisiert in `src/lib/utils/toast.ts`.
-
-Alle produktiven Komponenten nutzen bereits `toastService.success()`, `toastService.error()` etc. Die i18n-Integration erfolgt **einmalig in Phase 1 (Foundation)** direkt im Toast Service - nicht pro Komponente!
 
 ### Was dieser Agent bei Toasts tun soll:
 - **NICHTS!** Toast-Aufrufe ignorieren
 - Keine `toastService.success('Text')` Aufrufe aendern
 - Keine neuen Toast-Keys anlegen
 
-### Warum?
-- Toast i18n wird zentral im `toast.ts` Service integriert
-- Bestehende Aufrufe funktionieren automatisch nach Foundation-Phase
-- Siehe `docs/translation/02-UI-INTERNATIONALIZATION.md` fuer Details
+---
+
+## Checkliste fuer vollstaendige Migration
+
+Pruefe VOR Abschluss ob ALLE diese Elemente migriert wurden:
+
+- [ ] H1/H2/H3 Ueberschriften
+- [ ] Button-Labels
+- [ ] Link-Texte
+- [ ] Select-Optionen (ALLE!)
+- [ ] Table Headers
+- [ ] Placeholder-Texte
+- [ ] Aria-Labels
+- [ ] Title-Attribute
+- [ ] Empty-State Texte
+- [ ] Error-Messages (ausser Toasts)
+- [ ] Konstanten mit Labels
+- [ ] Navigation-Tabs
+
+---
 
 ## Best Practices
 
@@ -175,8 +371,9 @@ Alle produktiven Komponenten nutzen bereits `toastService.success()`, `toastServ
 - **Keine TODO-Kommentare:** Hinterlasse keine `// TODO: translate` Kommentare
 - **Beide Sprachen synchron:** Fuege Keys immer in beide Dateien gleichzeitig ein
 - **Deutsche Version funktionsfaehig:** Die App muss nach Migration weiter funktionieren
-- **Inkrementelle Migration:** Migriere Seite fuer Seite, nicht alles auf einmal
 - **TypeScript beachten:** Stelle sicher dass alle Types korrekt sind
+
+---
 
 ## Verbotene Patterns
 
@@ -193,6 +390,8 @@ t('Bitte geben Sie Ihre E-Mail-Adresse ein')
 // RICHTIG
 <span>{t('greeting', { name: 'Max' })}</span>
 ```
+
+---
 
 ## Report / Response
 
@@ -214,6 +413,11 @@ Nach Abschluss der Migration liefere einen Bericht mit:
 - `/messages/de.json`
 - `/messages/en.json`
 
+### Qualitaetspruefung
+- [ ] Alle Select-Optionen migriert
+- [ ] Alle Konstanten-Labels migriert
+- [ ] TypeScript-Check bestanden
+- [ ] Keine hardcodierten deutschen Texte mehr
+
 ### Naechste Schritte
 - Hinweise auf verwandte Komponenten die auch migriert werden sollten
-- Empfehlungen fuer weitere Optimierungen

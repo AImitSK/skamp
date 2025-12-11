@@ -922,6 +922,20 @@
     }
   },
   "crm": {
+    "layout": {
+      "title": "Kontakte",
+      "navigation": "Tabs",
+      "tabs": {
+        "companies": {
+          "name": "Firmen",
+          "description": "Verwalte Firmen und Organisationen"
+        },
+        "contacts": {
+          "name": "Personen",
+          "description": "Verwalte Personen und Ansprechpartner"
+        }
+      }
+    },
     "redirecting": "Weiterleitung...",
     "contactTable": {
       "headers": {
