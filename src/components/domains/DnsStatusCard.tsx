@@ -15,8 +15,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useTranslations } from 'next-intl';
 
 export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCardProps) {
+  const t = useTranslations('domains.dnsStatus');
+
   // Calculate summary
   const validCount = results.filter(r => r.valid).length;
   const totalCount = results.length;
@@ -25,19 +28,19 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
 
   // Get last check time
   const lastCheckTime = results[0]?.checkedAt?.toDate();
-  const timeAgo = lastCheckTime 
+  const timeAgo = lastCheckTime
     ? formatDistanceToNow(lastCheckTime, { addSuffix: true, locale: de })
-    : 'noch nie';
+    : t('neverChecked');
 
   const getRecordLabel = (result: DnsCheckResult, index: number): string => {
     switch (result.recordType) {
       case 'CNAME':
-        if (index === 0) return 'Mail Server (CNAME)';
-        if (index === 1) return 'DKIM 1 (CNAME)';
-        if (index === 2) return 'DKIM 2 (CNAME)';
-        return `${result.recordType} Record`;
+        if (index === 0) return t('records.mailServer');
+        if (index === 1) return t('records.dkim1');
+        if (index === 2) return t('records.dkim2');
+        return `${result.recordType} ${t('records.record')}`;
       default:
-        return `${result.recordType} Record`;
+        return `${result.recordType} ${t('records.record')}`;
     }
   };
 
@@ -50,9 +53,9 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
 
   const getStatusBadge = (valid: boolean) => {
     if (valid) {
-      return <Badge color="green" className="whitespace-nowrap">Korrekt</Badge>;
+      return <Badge color="green" className="whitespace-nowrap">{t('badges.correct')}</Badge>;
     }
-    return <Badge color="red" className="whitespace-nowrap">Fehlerhaft</Badge>;
+    return <Badge color="red" className="whitespace-nowrap">{t('badges.faulty')}</Badge>;
   };
 
   return (
@@ -61,7 +64,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
       <div className="flex items-start justify-between mb-4">
         <div>
           <h4 className="font-medium text-gray-900 flex items-center gap-2">
-            DNS-Status Überprüfung
+            {t('title')}
             {allValid ? (
               <CheckCircleIcon className="w-5 h-5 text-green-500" />
             ) : (
@@ -69,14 +72,14 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
             )}
           </h4>
           <Text className="text-sm text-gray-600 mt-1">
-            {allValid 
-              ? 'Alle DNS-Einträge sind korrekt konfiguriert' 
-              : `${validCount} von ${totalCount} DNS-Einträgen sind korrekt (${percentage}%)`
+            {allValid
+              ? t('allConfigured')
+              : t('partiallyConfigured', { valid: validCount, total: totalCount, percentage })
             }
           </Text>
           <Text className="text-xs text-gray-500 mt-1 flex items-center gap-1">
             <ClockIcon className="w-3 h-3" />
-            Zuletzt geprüft: {timeAgo}
+            {t('lastChecked')}: {timeAgo}
           </Text>
         </div>
         <Button
@@ -86,7 +89,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
           className="shrink-0"
         >
           <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Prüfe...' : 'Erneut prüfen'}
+          {isRefreshing ? t('checking') : t('checkAgain')}
         </Button>
       </div>
 
@@ -124,7 +127,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
             <div className="ml-7 space-y-2">
               {/* Host */}
               <div>
-                <Text className="text-xs text-gray-500 uppercase">Host</Text>
+                <Text className="text-xs text-gray-500 uppercase">{t('fields.host')}</Text>
                 <code className="text-sm font-mono text-gray-700 break-all">
                   {result.host}
                 </code>
@@ -132,7 +135,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
 
               {/* Expected Value */}
               <div>
-                <Text className="text-xs text-gray-500 uppercase">Erwarteter Wert</Text>
+                <Text className="text-xs text-gray-500 uppercase">{t('fields.expectedValue')}</Text>
                 <code className="text-sm font-mono text-gray-700 break-all">
                   {result.expected}
                 </code>
@@ -140,7 +143,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
 
               {/* Actual Value */}
               <div>
-                <Text className="text-xs text-gray-500 uppercase">Gefundener Wert</Text>
+                <Text className="text-xs text-gray-500 uppercase">{t('fields.foundValue')}</Text>
                 {result.actual ? (
                   <code className={`text-sm font-mono break-all ${
                     result.valid ? 'text-green-700' : 'text-red-700'
@@ -149,7 +152,7 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
                   </code>
                 ) : (
                   <Text className="text-sm text-red-600 italic">
-                    {result.error || 'Kein Eintrag gefunden'}
+                    {result.error || t('noEntryFound')}
                   </Text>
                 )}
               </div>
@@ -171,12 +174,12 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
                     <InformationCircleIcon className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
                     <div>
                       <Text className="text-sm text-yellow-800 font-medium">
-                        Mögliche Ursachen:
+                        {t('help.possibleCauses.title')}
                       </Text>
                       <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
-                        <li>DNS-Änderungen brauchen Zeit (bis zu 48 Stunden)</li>
-                        <li>Tippfehler beim Eintragen der Werte</li>
-                        <li>Fehlende oder falsche Subdomain</li>
+                        <li>{t('help.possibleCauses.propagation')}</li>
+                        <li>{t('help.possibleCauses.typos')}</li>
+                        <li>{t('help.possibleCauses.subdomain')}</li>
                       </ul>
                     </div>
                   </div>
@@ -194,13 +197,13 @@ export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCar
             <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
             <div>
               <Text className="text-sm font-medium text-blue-900">
-                Tipps zur Fehlerbehebung:
+                {t('help.troubleshooting.title')}
               </Text>
               <ul className="text-sm text-blue-800 mt-1 space-y-1">
-                <li>• Prüfen Sie, ob Sie die Werte korrekt kopiert haben</li>
-                <li>• Achten Sie auf Groß-/Kleinschreibung</li>
-                <li>• Entfernen Sie eventuelle Leerzeichen am Anfang/Ende</li>
-                <li>• Bei manchen Providern muss die Domain ohne "www" eingetragen werden</li>
+                <li>• {t('help.troubleshooting.checkValues')}</li>
+                <li>• {t('help.troubleshooting.caseSensitive')}</li>
+                <li>• {t('help.troubleshooting.whitespace')}</li>
+                <li>• {t('help.troubleshooting.domainFormat')}</li>
               </ul>
             </div>
           </div>

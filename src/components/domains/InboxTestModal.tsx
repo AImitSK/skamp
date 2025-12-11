@@ -27,8 +27,10 @@ import {
   PaperAirplaneIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalProps) {
+  const t = useTranslations('domains.inboxTest');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [domain, setDomain] = useState<EmailDomainEnhanced | null>(null);
@@ -47,7 +49,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
 
   const loadDomain = async () => {
     if (!currentOrganization?.id) {
-      setError('Organisation nicht geladen');
+      setError(t('errors.organizationNotLoaded'));
       setLoading(false);
       return;
     }
@@ -60,7 +62,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       );
       setDomain(domainData);
     } catch (err) {
-      setError('Domain konnte nicht geladen werden');
+      setError(t('errors.domainLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       .filter(email => email.includes('@'));
 
     if (testAddresses.length === 0) {
-      setError('Bitte geben Sie mindestens eine gültige E-Mail-Adresse ein');
+      setError(t('errors.noValidEmail'));
       return;
     }
 
@@ -111,7 +113,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       });
 
       if (!response.success) {
-        throw new Error(response.error || 'Inbox-Test fehlgeschlagen');
+        throw new Error(response.error || t('errors.testFailed'));
       }
 
       setTestResults(response.results);
@@ -133,7 +135,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       setTestComplete(true);
 
     } catch (err: any) {
-      setError(err.message || 'Test fehlgeschlagen');
+      setError(err.message || t('errors.testFailed'));
     } finally {
       setTesting(false);
     }
@@ -155,13 +157,13 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
   const getDeliveryBadge = (status: string) => {
     switch (status) {
       case 'delivered':
-        return <Badge color="green" className="whitespace-nowrap">Zugestellt</Badge>;
+        return <Badge color="green" className="whitespace-nowrap">{t('status.delivered')}</Badge>;
       case 'failed':
-        return <Badge color="red" className="whitespace-nowrap">Fehlgeschlagen</Badge>;
+        return <Badge color="red" className="whitespace-nowrap">{t('status.failed')}</Badge>;
       case 'spam':
-        return <Badge color="yellow" className="whitespace-nowrap">Spam</Badge>;
+        return <Badge color="yellow" className="whitespace-nowrap">{t('status.spam')}</Badge>;
       default:
-        return <Badge color="zinc" className="whitespace-nowrap">Ausstehend</Badge>;
+        return <Badge color="zinc" className="whitespace-nowrap">{t('status.pending')}</Badge>;
     }
   };
 
@@ -193,7 +195,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="mx-auto max-w-2xl rounded-xl bg-white p-6 shadow-xl">
           <Dialog.Title className="text-lg font-semibold text-gray-900 mb-4">
-            Inbox-Test für {domain.domain}
+            {t('title', { domain: domain.domain })}
           </Dialog.Title>
 
           {!testComplete ? (
@@ -204,11 +206,10 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                   <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
                   <div>
                     <Text className="text-sm font-medium text-blue-900">
-                      Was ist ein Inbox-Test?
+                      {t('info.title')}
                     </Text>
                     <Text className="text-sm text-blue-800 mt-1">
-                      Wir senden Test-E-Mails an verschiedene E-Mail-Provider, um zu prüfen, 
-                      ob Ihre E-Mails im Posteingang oder im Spam-Ordner landen.
+                      {t('info.description')}
                     </Text>
                   </div>
                 </div>
@@ -226,17 +227,16 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
 
               {/* E-Mail-Adressen Eingabe */}
               <Field>
-                <Label>Test-E-Mail-Adressen</Label>
+                <Label>{t('input.label')}</Label>
                 <Input
                   type="text"
                   value={testEmails}
                   onChange={(e) => setTestEmails(e.target.value)}
-                  placeholder="test@gmail.com, test@outlook.com"
+                  placeholder={t('input.placeholder')}
                   disabled={testing}
                 />
                 <Description>
-                  Geben Sie eine oder mehrere E-Mail-Adressen ein (kommagetrennt), an die Test-E-Mails gesendet werden sollen.
-                  Prüfen Sie anschließend, ob die E-Mails im Posteingang oder Spam-Ordner gelandet sind.
+                  {t('input.description')}
                 </Description>
               </Field>
 
@@ -244,7 +244,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
               {domain.inboxTests && domain.inboxTests.length > 0 && (
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <Text className="text-sm text-gray-600">
-                    Letzter Test: {domain.inboxTestScore}% Zustellrate
+                    {t('previousTest', { score: domain.inboxTestScore ?? 0 })}
                   </Text>
                 </div>
               )}
@@ -252,7 +252,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
               {/* Actions */}
               <div className="flex justify-between mt-6">
                 <Button plain onClick={onClose}>
-                  Abbrechen
+                  {t('actions.cancel')}
                 </Button>
                 <Button
                   onClick={handleStartTest}
@@ -261,12 +261,12 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                   {testing ? (
                     <>
                       <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                      Test läuft...
+                      {t('actions.testing')}
                     </>
                   ) : (
                     <>
                       <PaperAirplaneIcon className="w-4 h-4 mr-2" />
-                      Test starten
+                      {t('actions.startTest')}
                     </>
                   )}
                 </Button>
@@ -280,10 +280,10 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                   <EnvelopeIcon className="w-10 h-10 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Inbox-Test abgeschlossen
+                  {t('results.completed')}
                 </h3>
                 <Text className="mt-2 text-gray-600">
-                  Zustellrate: {calculateScore()}%
+                  {t('results.deliveryRate', { score: calculateScore() })}
                 </Text>
               </div>
 
@@ -297,7 +297,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                         <div>
                           <Text className="font-medium">{result.testEmail}</Text>
                           <Text className="text-sm text-gray-600">
-                            Provider: {result.provider || 'Unbekannt'}
+                            {t('results.provider', { provider: result.provider || t('results.unknownProvider') })}
                           </Text>
                         </div>
                       </div>
@@ -319,7 +319,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                     {result.spamReasons && result.spamReasons.length > 0 && (
                       <div className="mt-2 p-2 bg-yellow-50 rounded">
                         <Text className="text-sm text-yellow-700">
-                          Spam-Gründe: {result.spamReasons.join(', ')}
+                          {t('results.spamReasons', { reasons: result.spamReasons.join(', ') })}
                         </Text>
                       </div>
                     )}
@@ -345,20 +345,20 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                       calculateScore() >= 70 ? 'text-yellow-900' :
                       'text-red-900'
                     }`}>
-                      {calculateScore() >= 90 ? 'Exzellente Zustellbarkeit!' :
-                       calculateScore() >= 70 ? 'Gute Zustellbarkeit' :
-                       'Verbesserung erforderlich'}
+                      {calculateScore() >= 90 ? t('interpretation.excellent.title') :
+                       calculateScore() >= 70 ? t('interpretation.good.title') :
+                       t('interpretation.poor.title')}
                     </Text>
                     <Text className={`text-sm mt-1 ${
                       calculateScore() >= 90 ? 'text-green-800' :
                       calculateScore() >= 70 ? 'text-yellow-800' :
                       'text-red-800'
                     }`}>
-                      {calculateScore() >= 90 ? 
-                        'Ihre E-Mails erreichen zuverlässig den Posteingang.' :
-                       calculateScore() >= 70 ? 
-                        'Die meisten E-Mails erreichen den Posteingang, aber es gibt Raum für Verbesserungen.' :
-                        'Viele E-Mails landen im Spam. Überprüfen Sie Ihre Sender-Reputation und E-Mail-Inhalte.'}
+                      {calculateScore() >= 90 ?
+                        t('interpretation.excellent.description') :
+                       calculateScore() >= 70 ?
+                        t('interpretation.good.description') :
+                        t('interpretation.poor.description')}
                     </Text>
                   </div>
                 </div>
@@ -366,13 +366,13 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
 
               {/* Actions */}
               <div className="flex justify-center mt-6">
-                <Button 
+                <Button
                   onClick={() => {
                     onSuccess();
                     onClose();
                   }}
                 >
-                  Fertig
+                  {t('actions.done')}
                 </Button>
               </div>
             </div>

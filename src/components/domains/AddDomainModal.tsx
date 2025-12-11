@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Label, Description } from '@/components/ui/fieldset';
@@ -12,12 +13,12 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
-import { 
-  EmailDomainEnhanced, 
-  DnsRecord, 
+import {
+  EmailDomainEnhanced,
+  DnsRecord,
   DomainProvider,
   DOMAIN_PROVIDER_NAMES,
-  AddDomainModalProps 
+  AddDomainModalProps
 } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,
@@ -49,6 +50,7 @@ export function AddDomainModal({
   onSuccess,
   existingDomain
 }: AddDomainModalProps) {
+  const t = useTranslations('domains.addModal');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [step, setStep] = useState<Step>(existingDomain ? 'dns' : 'provider');
@@ -90,14 +92,14 @@ export function AddDomainModal({
 
   const handleDomainContinue = async () => {
     if (!domain) {
-      setError('Bitte geben Sie eine Domain ein');
+      setError(t('errors.domainRequired'));
       return;
     }
 
     // Basic domain validation
     const domainRegex = /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
     if (!domainRegex.test(domain)) {
-      setError('Bitte geben Sie eine gültige Domain ein (z.B. example.com)');
+      setError(t('errors.domainInvalid'));
       return;
     }
 
@@ -115,13 +117,13 @@ export function AddDomainModal({
         domain,
         context.organizationId
       );
-      
+
       if (existingDomain) {
-        setError('Diese Domain ist bereits registriert');
+        setError(t('errors.domainExists'));
         setLoading(false);
         return;
       }
-      
+
       // Create domain at SendGrid
       const response = await apiClient.post<{
         success: boolean;
@@ -130,13 +132,13 @@ export function AddDomainModal({
         domainData: any;
         subdomain: string;
         error?: string;
-      }>('/api/email/domains', { 
+      }>('/api/email/domains', {
         domain: domain.toLowerCase(),
-        provider: selectedProvider 
+        provider: selectedProvider
       });
-      
+
       if (!response.success) {
-        throw new Error(response.error || 'SendGrid-Fehler');
+        throw new Error(response.error || t('errors.sendgridError'));
       }
       
       // Save to Firebase
@@ -152,9 +154,9 @@ export function AddDomainModal({
       setDomainId(newDomainId);
       setDnsRecords(response.dnsRecords);
       setStep('dns');
-      
+
     } catch (error: any) {
-      setError(error.message || 'Ein Fehler ist aufgetreten');
+      setError(error.message || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -174,7 +176,7 @@ export function AddDomainModal({
       );
 
       if (!currentDomain?.sendgridDomainId) {
-        setError('SendGrid Domain ID nicht gefunden');
+        setError(t('errors.sendgridIdMissing'));
         return;
       }
 
@@ -214,11 +216,11 @@ export function AddDomainModal({
           setStep('verify');
         } else {
           setDnsRecords(response.dnsRecords);
-          setError('DNS-Einträge noch nicht vollständig konfiguriert. Bitte überprüfen Sie Ihre DNS-Einstellungen.');
+          setError(t('errors.dnsNotConfigured'));
         }
       }
     } catch (error: any) {
-      setError(error.message || 'Verifizierung fehlgeschlagen');
+      setError(error.message || t('errors.verificationFailed'));
     } finally {
       setVerifying(false);
     }
@@ -234,17 +236,7 @@ export function AddDomainModal({
   };
 
   const getProviderInstructions = (provider: DomainProvider): string => {
-    const instructions: Record<DomainProvider, string> = {
-      namecheap: 'Gehen Sie zu Domain List → Manage → Advanced DNS',
-      godaddy: 'Öffnen Sie My Products → DNS → Manage Zones',
-      cloudflare: 'Wählen Sie Ihre Domain → DNS → Records',
-      hetzner: 'DNS Console → Zone auswählen → Records',
-      strato: 'Domain-Verwaltung → DNS-Verwaltung → Records bearbeiten',
-      'united-domains': 'Portfolio → Domain → DNS-Einstellungen',
-      ionos: 'Domains & SSL → Domain → DNS-Einstellungen',
-      other: 'Öffnen Sie die DNS-Verwaltung Ihres Domain-Providers'
-    };
-    return instructions[provider];
+    return t(`providerInstructions.${provider}`);
   };
 
   const renderStepContent = () => {
@@ -252,8 +244,8 @@ export function AddDomainModal({
       case 'provider':
         return (
           <div className="space-y-4">
-            <Text>Bei welchem Anbieter ist Ihre Domain registriert?</Text>
-            
+            <Text>{t('providerStep.description')}</Text>
+
             <div className="grid gap-3">
               {providerOptions.map((provider) => (
                 <button
@@ -267,7 +259,7 @@ export function AddDomainModal({
                 >
                   <span className="font-medium">{provider.name}</span>
                   {provider.popular && (
-                    <Badge color="blue" className="ml-2">Beliebt</Badge>
+                    <Badge color="blue" className="ml-2">{t('popular')}</Badge>
                   )}
                   {selectedProvider === provider.value && (
                     <CheckCircleIcon className="w-5 h-5 text-blue-500 absolute right-4" />
@@ -278,10 +270,10 @@ export function AddDomainModal({
 
             <div className="flex justify-between mt-6">
               <Button plain onClick={onClose}>
-                Abbrechen
+                {t('cancel')}
               </Button>
               <Button onClick={handleProviderContinue}>
-                Weiter
+                {t('continue')}
                 <ArrowRightIcon className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -292,9 +284,9 @@ export function AddDomainModal({
         return (
           <div className="space-y-4">
             <Field>
-              <Label>Ihre Domain</Label>
+              <Label>{t('domainStep.label')}</Label>
               <Description>
-                Geben Sie die Domain ein, von der Sie E-Mails versenden möchten
+                {t('domainStep.description')}
               </Description>
               <Input
                 type="text"
@@ -318,10 +310,9 @@ export function AddDomainModal({
               <div className="flex gap-3">
                 <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
                 <div>
-                  <Text className="text-sm font-medium text-blue-900">Wichtig</Text>
+                  <Text className="text-sm font-medium text-blue-900">{t('domainStep.important')}</Text>
                   <Text className="text-sm text-blue-800 mt-1">
-                    Sie müssen Zugriff auf die DNS-Einstellungen dieser Domain haben, 
-                    um die Authentifizierung abzuschließen.
+                    {t('domainStep.importantText')}
                   </Text>
                 </div>
               </div>
@@ -330,17 +321,17 @@ export function AddDomainModal({
             <div className="flex justify-between mt-6">
               <Button plain onClick={() => setStep('provider')}>
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Zurück
+                {t('back')}
               </Button>
               <Button onClick={handleDomainContinue} disabled={loading}>
                 {loading ? (
                   <>
                     <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                    Wird erstellt...
+                    {t('domainStep.creating')}
                   </>
                 ) : (
                   <>
-                    Domain hinzufügen
+                    {t('domainStep.addDomain')}
                     <ArrowRightIcon className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -354,7 +345,7 @@ export function AddDomainModal({
           <div className="space-y-4">
             <div>
               <Text className="font-medium mb-2">
-                Fügen Sie diese DNS-Einträge bei {DOMAIN_PROVIDER_NAMES[selectedProvider]} hinzu:
+                {t('dnsStep.title', { provider: DOMAIN_PROVIDER_NAMES[selectedProvider] })}
               </Text>
               <Text className="text-sm text-gray-600">
                 {getProviderInstructions(selectedProvider)}
@@ -375,14 +366,14 @@ export function AddDomainModal({
                 <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-2">
                     <Badge color={record.valid ? 'green' : 'yellow'}>
-                      {record.type} Record {index + 1}
+                      {record.type} {t('dnsStep.record')} {index + 1}
                     </Badge>
                     {record.valid && <CheckCircleIcon className="w-5 h-5 text-green-500" />}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div>
-                      <Text className="text-xs text-gray-500 uppercase">Host/Name</Text>
+                      <Text className="text-xs text-gray-500 uppercase">{t('dnsStep.hostName')}</Text>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 p-2 bg-white rounded text-sm font-mono break-all">
                           {record.host}
@@ -399,9 +390,9 @@ export function AddDomainModal({
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <Text className="text-xs text-gray-500 uppercase">Wert/Ziel</Text>
+                      <Text className="text-xs text-gray-500 uppercase">{t('dnsStep.value')}</Text>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 p-2 bg-white rounded text-sm font-mono break-all">
                           {record.data}
@@ -428,11 +419,10 @@ export function AddDomainModal({
                 <InformationCircleIcon className="w-5 h-5 text-amber-600 shrink-0" />
                 <div>
                   <Text className="text-sm font-medium text-amber-900">
-                    DNS-Änderungen können bis zu 48 Stunden dauern
+                    {t('dnsStep.propagationTitle')}
                   </Text>
                   <Text className="text-sm text-amber-800 mt-1">
-                    In den meisten Fällen sind die Änderungen jedoch innerhalb von 
-                    5-30 Minuten aktiv.
+                    {t('dnsStep.propagationText')}
                   </Text>
                 </div>
               </div>
@@ -440,17 +430,17 @@ export function AddDomainModal({
 
             <div className="flex justify-between mt-6">
               <Button plain onClick={onClose}>
-                Später fortfahren
+                {t('dnsStep.continueLater')}
               </Button>
               <Button onClick={handleVerify} disabled={verifying}>
                 {verifying ? (
                   <>
                     <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                    Wird überprüft...
+                    {t('dnsStep.verifying')}
                   </>
                 ) : (
                   <>
-                    DNS prüfen
+                    {t('dnsStep.verify')}
                     <CheckCircleIcon className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -465,31 +455,30 @@ export function AddDomainModal({
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircleIcon className="w-10 h-10 text-green-600" />
             </div>
-            
+
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Domain erfolgreich verifiziert!
+                {t('verifyStep.title')}
               </h3>
               <Text className="mt-2 text-gray-600">
-                {domain} ist jetzt für den E-Mail-Versand authentifiziert.
+                {t('verifyStep.description', { domain })}
               </Text>
             </div>
 
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <Text className="text-sm text-green-800">
-                Sie können jetzt E-Mails von dieser Domain versenden. 
-                Die Zustellbarkeit Ihrer E-Mails wird sich deutlich verbessern.
+                {t('verifyStep.successText')}
               </Text>
             </div>
 
             <div className="flex justify-center mt-6">
-              <Button 
+              <Button
                 onClick={() => {
                   onSuccess();
                   onClose();
                 }}
               >
-                Fertig
+                {t('verifyStep.done')}
                 <CheckCircleIcon className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -500,10 +489,10 @@ export function AddDomainModal({
 
   const getStepTitle = () => {
     switch (step) {
-      case 'provider': return 'Domain-Provider auswählen';
-      case 'domain': return 'Domain eingeben';
-      case 'dns': return 'DNS-Einträge konfigurieren';
-      case 'verify': return 'Verifizierung erfolgreich';
+      case 'provider': return t('stepTitles.provider');
+      case 'domain': return t('stepTitles.domain');
+      case 'dns': return t('stepTitles.dns');
+      case 'verify': return t('stepTitles.verify');
     }
   };
 

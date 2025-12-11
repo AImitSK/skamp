@@ -6,12 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 // Dynamisch laden um SSR-Probleme zu vermeiden
 const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false });
 import 'swagger-ui-react/swagger-ui.css';
 
 export default function APIDocumentation() {
+  const t = useTranslations('developer.docs');
   const { user, loading } = useAuth();
   const router = useRouter();
   const [spec, setSpec] = useState<any>(null);
@@ -86,12 +88,12 @@ export default function APIDocumentation() {
                 className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mr-4"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück zum Developer Portal
+                {t('backToPortal')}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">API Dokumentation</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
                 <p className="text-sm text-gray-600">
-                  Interaktive OpenAPI 3.0 Dokumentation mit Live-Testing
+                  {t('subtitle')}
                 </p>
               </div>
             </div>
@@ -101,7 +103,7 @@ export default function APIDocumentation() {
                 download
                 className="text-sm text-blue-600 hover:text-blue-500"
               >
-                Download OpenAPI Spec
+                {t('downloadSpec')}
               </a>
             </div>
           </div>
@@ -112,11 +114,11 @@ export default function APIDocumentation() {
       {/* Swagger UI */}
       <div className="swagger-ui-wrapper">
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-blue-800 font-medium mb-2">🔑 API Key für Tests</p>
+          <p className="text-blue-800 font-medium mb-2">🔑 {t('apiKeyTitle')}</p>
           <p className="text-blue-700 text-sm">
-            Um die API-Endpoints zu testen, klicke auf den grünen <strong>&quot;Authorize&quot;</strong> Button 
-            in der Swagger UI unten und gib deinen API Key ein. 
-            Du findest deine API Keys unter <strong>Einstellungen → API</strong>.
+            {t.rich('apiKeyDescription', {
+              strong: (chunks) => <strong>{chunks}</strong>
+            })}
           </p>
         </div>
         
@@ -155,7 +157,7 @@ export default function APIDocumentation() {
         ) : (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">OpenAPI Dokumentation wird geladen...</p>
+            <p className="text-gray-600">{t('loading')}</p>
           </div>
         )}
       </div>

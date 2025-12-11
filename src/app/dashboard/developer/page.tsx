@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { 
-  DocumentTextIcon, 
-  CodeBracketIcon, 
+import { useTranslations } from 'next-intl';
+import {
+  DocumentTextIcon,
+  CodeBracketIcon,
   CloudArrowDownIcon,
   ChartBarIcon,
   KeyIcon,
@@ -16,6 +17,7 @@ import Link from 'next/link';
 export default function DeveloperPortal() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('developer');
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [usage, setUsage] = useState<any>(null);
 
@@ -116,36 +118,36 @@ export default function DeveloperPortal() {
 
   const features = [
     {
-      title: 'API Dokumentation',
-      description: 'Interaktive OpenAPI 3.0 Dokumentation mit Live-Testing',
+      title: t('features.apiDocs.title'),
+      description: t('features.apiDocs.description'),
       icon: DocumentTextIcon,
       href: '/dashboard/developer/docs',
       color: 'bg-blue-500'
     },
     {
-      title: 'SDKs & Libraries',
-      description: 'Vorgefertigte Client-Libraries für verschiedene Sprachen',
+      title: t('features.sdks.title'),
+      description: t('features.sdks.description'),
       icon: CodeBracketIcon,
       href: '/dashboard/developer/sdks',
       color: 'bg-green-500'
     },
     {
-      title: 'Code Examples',
-      description: 'Integration-Beispiele für Salesforce, HubSpot, Zapier',
+      title: t('features.codeExamples.title'),
+      description: t('features.codeExamples.description'),
       icon: BookOpenIcon,
       href: '/dashboard/developer/examples',
       color: 'bg-yellow-500'
     },
     {
-      title: 'API Keys',
-      description: 'Verwalte deine API-Schlüssel und Berechtigungen',
+      title: t('features.apiKeys.title'),
+      description: t('features.apiKeys.description'),
       icon: KeyIcon,
       href: '/dashboard/admin/api',
       color: 'bg-red-500'
     },
     {
-      title: 'Usage & Analytics',
-      description: 'Überwache deine API-Nutzung und Rate Limits',
+      title: t('features.analytics.title'),
+      description: t('features.analytics.description'),
       icon: ChartBarIcon,
       href: '/dashboard/developer/analytics',
       color: 'bg-indigo-500'
@@ -153,10 +155,10 @@ export default function DeveloperPortal() {
   ];
 
   const quickStats = [
-    { label: 'Requests heute', value: usage?.requests_today || 0 },
-    { label: 'Requests diesen Monat', value: usage?.requests_month || 0 },
-    { label: 'Rate Limit', value: usage?.rate_limit || 'N/A' },
-    { label: 'Aktive API Keys', value: apiKeys.filter(k => k.status === 'active').length }
+    { label: t('stats.requestsToday'), value: usage?.requests_today || 0 },
+    { label: t('stats.requestsMonth'), value: usage?.requests_month || 0 },
+    { label: t('stats.rateLimit'), value: usage?.rate_limit || 'N/A' },
+    { label: t('stats.activeKeys'), value: apiKeys.filter(k => k.status === 'active').length }
   ];
 
   if (loading) {
@@ -174,9 +176,9 @@ export default function DeveloperPortal() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Developer Portal</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t('header.title')}</h1>
               <p className="mt-2 text-gray-600">
-                Alles was du für die Integration der CeleroPress API benötigst
+                {t('header.subtitle')}
               </p>
             </div>
             <div className="flex space-x-4">
@@ -186,14 +188,14 @@ export default function DeveloperPortal() {
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <CloudArrowDownIcon className="h-5 w-5 mr-2" />
-                OpenAPI Spec
+                {t('header.downloadSpec')}
               </a>
               <Link
                 href="/dashboard/developer/docs"
                 className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
               >
                 <DocumentTextIcon className="h-4 w-4 mr-2" />
-                API Dokumentation
+                {t('header.viewDocs')}
               </Link>
             </div>
           </div>
@@ -232,7 +234,7 @@ export default function DeveloperPortal() {
 
         {/* Getting Started */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Start</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('quickStart.title')}</h2>
           <div className="space-y-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
@@ -241,9 +243,9 @@ export default function DeveloperPortal() {
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">API Key erstellen</h3>
+                <h3 className="text-sm font-medium text-gray-900">{t('quickStart.step1.title')}</h3>
                 <p className="mt-1 text-sm text-gray-600">
-                  Gehe zu <Link href="/dashboard/admin/api" className="text-blue-600 hover:text-blue-500">API Keys</Link> und erstelle einen neuen Schlüssel
+                  {t('quickStart.step1.description')} <Link href="/dashboard/admin/api" className="text-blue-600 hover:text-blue-500">{t('quickStart.step1.link')}</Link> {t('quickStart.step1.descriptionEnd')}
                 </p>
               </div>
             </div>
@@ -254,7 +256,7 @@ export default function DeveloperPortal() {
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">SDK installieren</h3>
+                <h3 className="text-sm font-medium text-gray-900">{t('quickStart.step2.title')}</h3>
                 <div className="mt-1 bg-gray-900 rounded-md p-3">
                   <code className="text-sm text-green-400">
                     npm install @celeropress/sdk
@@ -269,7 +271,7 @@ export default function DeveloperPortal() {
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Erste API-Anfrage</h3>
+                <h3 className="text-sm font-medium text-gray-900">{t('quickStart.step3.title')}</h3>
                 <div className="mt-1 bg-gray-900 rounded-md p-3 overflow-x-auto">
                   <pre className="text-sm text-gray-300">
 {`import { CeleroPress } from '@celeropress/sdk';
@@ -288,28 +290,28 @@ const contacts = await client.contacts.list();`}
 
         {/* API Endpoints Overview */}
         <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Verfügbare API Endpoints</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('endpoints.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">REST API</h3>
+              <h3 className="font-medium text-gray-900 mb-2">{t('endpoints.rest.title')}</h3>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• Authentication & API Keys</li>
-                <li>• Contacts & Companies (CRM)</li>
-                <li>• Publications & Media Library</li>
-                <li>• Bulk Export/Import</li>
-                <li>• Webhooks & Events</li>
-                <li>• Search & Filtering</li>
+                <li>• {t('endpoints.rest.items.auth')}</li>
+                <li>• {t('endpoints.rest.items.crm')}</li>
+                <li>• {t('endpoints.rest.items.publications')}</li>
+                <li>• {t('endpoints.rest.items.bulk')}</li>
+                <li>• {t('endpoints.rest.items.webhooks')}</li>
+                <li>• {t('endpoints.rest.items.search')}</li>
               </ul>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">Advanced Features</h3>
+              <h3 className="font-medium text-gray-900 mb-2">{t('endpoints.advanced.title')}</h3>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• GraphQL API für komplexe Queries</li>
-                <li>• WebSocket für Real-time Updates</li>
-                <li>• Batch Operations</li>
-                <li>• Event Subscriptions</li>
-                <li>• Custom Webhooks</li>
-                <li>• Rate Limiting & Quotas</li>
+                <li>• {t('endpoints.advanced.items.graphql')}</li>
+                <li>• {t('endpoints.advanced.items.websocket')}</li>
+                <li>• {t('endpoints.advanced.items.batch')}</li>
+                <li>• {t('endpoints.advanced.items.events')}</li>
+                <li>• {t('endpoints.advanced.items.customWebhooks')}</li>
+                <li>• {t('endpoints.advanced.items.rateLimit')}</li>
               </ul>
             </div>
           </div>

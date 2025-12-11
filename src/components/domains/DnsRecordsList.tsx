@@ -2,16 +2,18 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
-import { 
-  ClipboardDocumentIcon, 
+import {
+  ClipboardDocumentIcon,
   CheckIcon,
-  InformationCircleIcon 
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { DnsRecord } from '@/types/email-domains';
 import type { DnsRecordsListProps } from '@/types/email-domains-enhanced';
 
 export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps) {
+  const t = useTranslations('settings.domain.dnsRecords');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCopy = async (text: string, index: number) => {
@@ -49,10 +51,10 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
             ) : (
               <ClipboardDocumentIcon className="w-4 h-4" />
             )}
-            Alle kopieren
+            {t('copyAll')}
           </button>
         </div>
-        
+
         <div className="bg-gray-50 rounded-lg p-3 space-y-2">
           {records.map((record, index) => (
             <div key={index} className="font-mono text-xs">
@@ -70,7 +72,7 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Text className="text-sm text-gray-600">
-          Kopieren Sie diese Werte in Ihre DNS-Verwaltung:
+          {t('instruction')}
         </Text>
         <button
           onClick={handleCopyAll}
@@ -81,7 +83,7 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
           ) : (
             <ClipboardDocumentIcon className="w-4 h-4" />
           )}
-          Alle kopieren
+          {t('copyAll')}
         </button>
       </div>
 
@@ -94,14 +96,14 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Text className="text-xs text-gray-500 uppercase tracking-wide">
-                  Typ
+                  {t('type')}
                 </Text>
                 <Text className="font-medium">{record.type}</Text>
               </div>
-              
+
               <div>
                 <Text className="text-xs text-gray-500 uppercase tracking-wide">
-                  Hostname (Name)
+                  {t('hostname')}
                 </Text>
                 <div className="flex items-center gap-2">
                   <Text className="font-mono text-sm break-all">
@@ -122,7 +124,7 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
               
               <div>
                 <Text className="text-xs text-gray-500 uppercase tracking-wide">
-                  Wert (Ziel)
+                  {t('value')}
                 </Text>
                 <div className="flex items-center gap-2">
                   <Text className="font-mono text-sm break-all">
@@ -148,9 +150,7 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
       <div className="flex gap-2 p-3 bg-blue-50 rounded-lg">
         <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
         <Text className="text-sm text-blue-800">
-          <strong>Wichtig:</strong> Manche Provider fügen Ihre Domain automatisch 
-          zum Hostname hinzu. Wenn Ihr Provider nach "Subdomain" fragt, geben Sie 
-          nur den Teil vor Ihrer Domain ein.
+          <strong>{t('importantLabel')}</strong> {t('providerHint')}
         </Text>
       </div>
     </div>

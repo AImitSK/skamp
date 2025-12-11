@@ -2,9 +2,10 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   XMarkIcon,
   QuestionMarkCircleIcon,
   PlayCircleIcon,
@@ -18,6 +19,7 @@ import {
 import type { HelpSidebarProps, FAQItem, GuideStep } from '@/types/email-domains-enhanced';
 
 export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps) {
+  const t = useTranslations('domains.help');
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [expandedSection, setExpandedSection] = useState<string>('guides');
 
@@ -35,81 +37,81 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
       case 'start':
         return [
           {
-            title: '1. Domain auswählen',
-            description: 'Wählen Sie die Domain aus, von der Sie E-Mails versenden möchten.',
-            tip: 'Verwenden Sie Ihre Haupt-Domain für beste Ergebnisse'
+            title: t('guides.start.step1.title'),
+            description: t('guides.start.step1.description'),
+            tip: t('guides.start.step1.tip')
           },
           {
-            title: '2. Provider angeben',
-            description: 'Teilen Sie uns mit, wo Ihre Domain registriert ist.',
-            tip: 'Die meisten Domains sind bei Namecheap, GoDaddy oder Cloudflare'
+            title: t('guides.start.step2.title'),
+            description: t('guides.start.step2.description'),
+            tip: t('guides.start.step2.tip')
           },
           {
-            title: '3. DNS-Einträge hinzufügen',
-            description: 'Kopieren Sie die angezeigten DNS-Einträge in Ihre Domain-Verwaltung.',
-            tip: 'Die Einträge müssen exakt kopiert werden, inklusive Punkte'
+            title: t('guides.start.step3.title'),
+            description: t('guides.start.step3.description'),
+            tip: t('guides.start.step3.tip')
           },
           {
-            title: '4. Verifizierung abwarten',
-            description: 'Nach dem Hinzufügen dauert es 5-30 Minuten bis zur Verifizierung.',
-            tip: 'In seltenen Fällen kann es bis zu 48 Stunden dauern'
+            title: t('guides.start.step4.title'),
+            description: t('guides.start.step4.description'),
+            tip: t('guides.start.step4.tip')
           }
         ];
       
       case 'dns':
         return [
           {
-            title: 'DNS-Einträge lokalisieren',
-            description: 'Loggen Sie sich bei Ihrem Domain-Provider ein und navigieren Sie zu den DNS-Einstellungen.',
-            tip: 'Suchen Sie nach "DNS", "Zone Editor" oder "Advanced DNS"'
+            title: t('guides.dns.step1.title'),
+            description: t('guides.dns.step1.description'),
+            tip: t('guides.dns.step1.tip')
           },
           {
-            title: 'CNAME-Einträge hinzufügen',
-            description: 'Fügen Sie die drei CNAME-Einträge exakt wie angezeigt hinzu.',
-            tip: 'Achten Sie auf Groß-/Kleinschreibung und Punkte am Ende'
+            title: t('guides.dns.step2.title'),
+            description: t('guides.dns.step2.description'),
+            tip: t('guides.dns.step2.tip')
           },
           {
-            title: 'TTL auf niedrig setzen',
-            description: 'Setzen Sie die TTL (Time To Live) auf 300 oder 600 Sekunden.',
-            tip: 'Dies beschleunigt die Propagierung der Änderungen'
+            title: t('guides.dns.step3.title'),
+            description: t('guides.dns.step3.description'),
+            tip: t('guides.dns.step3.tip')
           }
         ];
       
       case 'verify':
         return [
           {
-            title: 'Automatische Überprüfung',
-            description: 'Klicken Sie auf "DNS prüfen" um den Status zu aktualisieren.',
-            tip: 'Die Prüfung kann alle 5 Minuten wiederholt werden'
+            title: t('guides.verify.step1.title'),
+            description: t('guides.verify.step1.description'),
+            tip: t('guides.verify.step1.tip')
           },
           {
-            title: 'Fehlerbehebung',
-            description: 'Bei roten Einträgen prüfen Sie die kopierten Werte.',
-            tip: 'Häufigster Fehler: Leerzeichen am Anfang oder Ende'
+            title: t('guides.verify.step2.title'),
+            description: t('guides.verify.step2.description'),
+            tip: t('guides.verify.step2.tip')
           },
           {
-            title: 'Geduld haben',
-            description: 'DNS-Änderungen brauchen Zeit zur Verbreitung.',
-            tip: 'Nach 48 Stunden kontaktieren Sie den Support'
+            title: t('guides.verify.step3.title'),
+            description: t('guides.verify.step3.description'),
+            tip: t('guides.verify.step3.tip')
           }
         ];
-        
+
       default:
         return [
           {
-            title: 'Domains verwalten',
-            description: 'Hier sehen Sie alle Ihre konfigurierten Domains.',
-            tip: 'Verifizierte Domains haben ein grünes Häkchen'
+            title: t('guides.default.step1.title'),
+            description: t('guides.default.step1.description'),
+            tip: t('guides.default.step1.tip')
           },
           {
-            title: 'Inbox-Tests durchführen',
-            description: 'Testen Sie die Zustellbarkeit Ihrer E-Mails.',
-            tip: 'Führen Sie regelmäßig Tests durch'
+            title: t('guides.default.step2.title'),
+            description: t('guides.default.step2.description'),
+            tip: t('guides.default.step2.tip')
           },
           {
-            title: 'Weitere Domains hinzufügen',
-            description: 'Sie können beliebig viele Domains authentifizieren.',
-            tip: 'Jede Domain verbessert die Zustellbarkeit für diese spezifische Domain'
+            title: t('guides.default.step3.title'),
+            description: t('guides.default.step3.description'),
+            tip: t('guides.default.step3.tip')
           }
         ];
     }
@@ -117,40 +119,40 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
 
   const faqs: FAQItem[] = [
     {
-      question: 'Warum muss ich meine Domain authentifizieren?',
-      answer: 'Ohne Authentifizierung werden Ihre E-Mails von einer fremden Domain versendet, was die Wahrscheinlichkeit erhöht, dass sie im Spam landen. Mit eigener Domain steigt die Zustellrate auf über 95%.',
-      category: 'Grundlagen'
+      question: t('faq.authenticate.question'),
+      answer: t('faq.authenticate.answer'),
+      category: t('faq.categories.basics')
     },
     {
-      question: 'Wie lange dauert die Verifizierung?',
-      answer: 'In den meisten Fällen 5-30 Minuten. DNS-Änderungen können jedoch bis zu 48 Stunden dauern, bis sie weltweit propagiert sind.',
-      category: 'Verifizierung'
+      question: t('faq.duration.question'),
+      answer: t('faq.duration.answer'),
+      category: t('faq.categories.verification')
     },
     {
-      question: 'Was bedeuten die verschiedenen DNS-Einträge?',
-      answer: 'Mail CNAME: Haupteintrag für E-Mail-Versand. DKIM 1 & 2: Digitale Signaturen, die beweisen, dass E-Mails wirklich von Ihrer Domain kommen.',
-      category: 'Technisch'
+      question: t('faq.dnsRecords.question'),
+      answer: t('faq.dnsRecords.answer'),
+      category: t('faq.categories.technical')
     },
     {
-      question: 'Kann ich mehrere Domains hinzufügen?',
-      answer: 'Ja, Sie können beliebig viele Domains authentifizieren. Jede Domain funktioniert unabhängig voneinander.',
-      category: 'Verwaltung'
+      question: t('faq.multipleDomains.question'),
+      answer: t('faq.multipleDomains.answer'),
+      category: t('faq.categories.management')
     },
     {
-      question: 'Was ist ein Inbox-Test?',
-      answer: 'Ein Test, bei dem wir E-Mails an verschiedene Provider senden, um zu prüfen, ob sie im Posteingang oder Spam landen.',
-      category: 'Tests'
+      question: t('faq.inboxTest.question'),
+      answer: t('faq.inboxTest.answer'),
+      category: t('faq.categories.tests')
     },
     {
-      question: 'Meine Domain wird als "Fehlgeschlagen" angezeigt',
-      answer: 'Überprüfen Sie: 1) Wurden alle DNS-Einträge korrekt kopiert? 2) Sind keine Leerzeichen enthalten? 3) Wurde die TTL niedrig gesetzt? Nach Korrekturen dauert es wieder bis zu 30 Minuten.',
-      category: 'Fehlerbehebung'
+      question: t('faq.failed.question'),
+      answer: t('faq.failed.answer'),
+      category: t('faq.categories.troubleshooting')
     }
   ];
 
   const currentFAQs = faqs.filter(faq => {
-    if (currentStep === 'start') return faq.category === 'Grundlagen';
-    if (currentStep === 'dns' || currentStep === 'verify') return faq.category === 'Verifizierung' || faq.category === 'Technisch';
+    if (currentStep === 'start') return faq.category === t('faq.categories.basics');
+    if (currentStep === 'dns' || currentStep === 'verify') return faq.category === t('faq.categories.verification') || faq.category === t('faq.categories.technical');
     return true;
   });
 
@@ -160,7 +162,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <QuestionMarkCircleIcon className="w-5 h-5 text-blue-500" />
-          Hilfe & Anleitungen
+          {t('title')}
         </h3>
         <Button plain onClick={onClose} className="p-1">
           <XMarkIcon className="w-5 h-5" />
@@ -175,7 +177,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
           onClick={() => window.open('https://help.celeropress.de/domains', '_blank')}
         >
           <PlayCircleIcon className="w-5 h-5 text-blue-500" />
-          Video-Tutorial ansehen
+          {t('actions.watchVideo')}
         </Button>
         <Button
           plain
@@ -183,7 +185,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
           onClick={() => window.open('https://docs.celeropress.de/email/domains', '_blank')}
         >
           <DocumentTextIcon className="w-5 h-5 text-gray-500" />
-          Dokumentation lesen
+          {t('actions.readDocs')}
         </Button>
       </div>
 
@@ -195,7 +197,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
         >
           <h4 className="font-medium text-gray-900 flex items-center gap-2">
             <LightBulbIcon className="w-4 h-4 text-yellow-500" />
-            Schritt-für-Schritt
+            {t('sections.stepByStep')}
           </h4>
           {expandedSection === 'guides' ? (
             <ChevronDownIcon className="w-4 h-4 text-gray-400" />
@@ -235,7 +237,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
           onClick={() => toggleSection('faq')}
           className="w-full flex items-center justify-between mb-3 text-left"
         >
-          <h4 className="font-medium text-gray-900">Häufige Fragen</h4>
+          <h4 className="font-medium text-gray-900">{t('sections.faq')}</h4>
           {expandedSection === 'faq' ? (
             <ChevronDownIcon className="w-4 h-4 text-gray-400" />
           ) : (
@@ -275,12 +277,12 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
           <div className="flex gap-2">
             <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
-              <Text className="text-sm font-medium text-amber-900">Häufige Fehler</Text>
+              <Text className="text-sm font-medium text-amber-900">{t('commonIssues.title')}</Text>
               <ul className="text-sm text-amber-800 mt-2 space-y-1">
-                <li>• Leerzeichen in DNS-Werten</li>
-                <li>• Fehlende Punkte am Ende</li>
-                <li>• Falsche Subdomain verwendet</li>
-                <li>• TTL zu hoch eingestellt</li>
+                <li>• {t('commonIssues.whitespace')}</li>
+                <li>• {t('commonIssues.missingDots')}</li>
+                <li>• {t('commonIssues.wrongSubdomain')}</li>
+                <li>• {t('commonIssues.ttlTooHigh')}</li>
               </ul>
             </div>
           </div>
@@ -290,14 +292,14 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
       {/* Support Contact */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <Text className="text-sm text-gray-600 text-center">
-          Weitere Hilfe benötigt?
+          {t('support.needHelp')}
         </Text>
         <Button
           plain
           className="w-full mt-2 justify-center"
           onClick={() => window.open('mailto:support@celeropress.de?subject=Domain-Authentifizierung', '_blank')}
         >
-          Support kontaktieren
+          {t('support.contact')}
         </Button>
       </div>
     </div>

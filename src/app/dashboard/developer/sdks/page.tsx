@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { 
+import { useTranslations } from 'next-intl';
+import {
   ArrowLeftIcon,
   CloudArrowDownIcon,
   DocumentDuplicateIcon,
@@ -237,6 +238,7 @@ public class Example {
 export default function SDKsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('developer.sdks');
   const [selectedLanguage, setSelectedLanguage] = useState(SDK_LANGUAGES[0]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -266,12 +268,12 @@ export default function SDKsPage() {
                 className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mr-4"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück zum Developer Portal
+                {t('backToDeveloperPortal')}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">SDKs & Libraries</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
                 <p className="text-sm text-gray-600">
-                  Vorgefertigte Client-Libraries für verschiedene Programmiersprachen
+                  {t('subtitle')}
                 </p>
               </div>
             </div>
@@ -282,7 +284,7 @@ export default function SDKsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Language Selector */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Verfügbare SDKs</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('availableSDKs')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {SDK_LANGUAGES.map((lang, index) => (
               <button
@@ -303,7 +305,7 @@ export default function SDKsPage() {
                 </div>
                 {lang.status === 'coming_soon' && (
                   <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                    Soon
+                    {t('soon')}
                   </div>
                 )}
               </button>
@@ -315,11 +317,11 @@ export default function SDKsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Installation */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Installation</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('installation')}</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Package Manager
+                  {t('packageManager')}
                 </label>
                 <div className="bg-gray-900 rounded-md p-4 relative">
                   <pre className="text-sm text-green-400 overflow-x-auto">
@@ -340,19 +342,19 @@ export default function SDKsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Package Info
+                  {t('packageInfo')}
                 </label>
                 <div className="bg-gray-50 rounded-md p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">Package</span>
+                    <span className="text-sm text-gray-600">{t('package')}</span>
                     <span className="text-sm font-mono">{selectedLanguage.package}</span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">Version</span>
+                    <span className="text-sm text-gray-600">{t('version')}</span>
                     <span className="text-sm font-mono">{selectedLanguage.version}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">License</span>
+                    <span className="text-sm text-gray-600">{t('license')}</span>
                     <span className="text-sm font-mono">MIT</span>
                   </div>
                 </div>
@@ -367,7 +369,7 @@ export default function SDKsPage() {
                     className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     <CloudArrowDownIcon className="h-5 w-5 mr-2" />
-                    NPM Package
+                    {t('npmPackage')}
                   </a>
                   <a
                     href="https://github.com/AImitSK/skamp"
@@ -375,7 +377,7 @@ export default function SDKsPage() {
                     rel="noopener noreferrer"
                     className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    GitHub Repository
+                    {t('githubRepository')}
                   </a>
                 </div>
               ) : (
@@ -383,9 +385,9 @@ export default function SDKsPage() {
                   <div className="flex items-center">
                     <div className="text-orange-500 mr-3">🚧</div>
                     <div>
-                      <h4 className="text-sm font-medium text-orange-800">SDK in Entwicklung</h4>
+                      <h4 className="text-sm font-medium text-orange-800">{t('sdkInDevelopment')}</h4>
                       <p className="text-sm text-orange-700 mt-1">
-                        Dieses SDK ist noch in Entwicklung. Verwende vorerst die direkten API-Calls im Code-Beispiel.
+                        {t('sdkInDevelopmentDesc')}
                       </p>
                     </div>
                   </div>
@@ -396,7 +398,7 @@ export default function SDKsPage() {
 
           {/* Quick Start */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Quick Start</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('quickStart')}</h2>
             <div className="bg-gray-900 rounded-md p-4 relative max-h-96 overflow-y-auto">
               <pre className="text-sm text-gray-300">
                 <code>{selectedLanguage.example}</code>
@@ -417,42 +419,42 @@ export default function SDKsPage() {
 
         {/* Features */}
         <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">SDK Features</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('features.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Vollständige API-Abdeckung</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.apiCoverage.title')}</h3>
               <p className="text-sm text-gray-600">
-                Alle REST, GraphQL und WebSocket Endpoints sind implementiert
+                {t('features.apiCoverage.desc')}
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Type Safety</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.typeSafety.title')}</h3>
               <p className="text-sm text-gray-600">
-                Vollständige Typisierung für TypeScript und statisch typisierte Sprachen
+                {t('features.typeSafety.desc')}
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Auto-Retry</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.autoRetry.title')}</h3>
               <p className="text-sm text-gray-600">
-                Automatische Wiederholungen bei Netzwerkfehlern mit exponential backoff
+                {t('features.autoRetry.desc')}
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Rate Limiting</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.rateLimiting.title')}</h3>
               <p className="text-sm text-gray-600">
-                Eingebaute Rate-Limit-Behandlung mit automatischer Warteschlange
+                {t('features.rateLimiting.desc')}
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Pagination</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.pagination.title')}</h3>
               <p className="text-sm text-gray-600">
-                Einfache Pagination mit Cursor-basiertem und Offset-basiertem Support
+                {t('features.pagination.desc')}
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">✅ Error Handling</h3>
+              <h3 className="font-medium text-gray-900 mb-2">✅ {t('features.errorHandling.title')}</h3>
               <p className="text-sm text-gray-600">
-                Strukturierte Fehlerbehandlung mit detaillierten Fehlermeldungen
+                {t('features.errorHandling.desc')}
               </p>
             </div>
           </div>
@@ -460,42 +462,42 @@ export default function SDKsPage() {
 
         {/* Documentation Links */}
         <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">Dokumentation & Ressourcen</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('documentation.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a
               href="/dashboard/developer/docs"
               className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all"
             >
-              <h3 className="font-medium text-gray-900 mb-1">API Referenz</h3>
+              <h3 className="font-medium text-gray-900 mb-1">{t('documentation.apiReference.title')}</h3>
               <p className="text-sm text-gray-600">
-                Vollständige API-Dokumentation mit allen Endpoints
+                {t('documentation.apiReference.desc')}
               </p>
             </a>
             <a
               href="/dashboard/developer/examples"
               className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all"
             >
-              <h3 className="font-medium text-gray-900 mb-1">Code Examples</h3>
+              <h3 className="font-medium text-gray-900 mb-1">{t('documentation.codeExamples.title')}</h3>
               <p className="text-sm text-gray-600">
-                Beispiele für Salesforce, HubSpot und Zapier Integration
+                {t('documentation.codeExamples.desc')}
               </p>
             </a>
             <div className="block p-4 border border-gray-200 rounded-lg opacity-60 cursor-not-allowed relative">
               <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                Coming Soon
+                {t('comingSoon')}
               </div>
-              <h3 className="font-medium text-gray-500 mb-1">GitHub Examples</h3>
+              <h3 className="font-medium text-gray-500 mb-1">{t('documentation.githubExamples.title')}</h3>
               <p className="text-sm text-gray-400">
-                Vollständige Beispielprojekte auf GitHub
+                {t('documentation.githubExamples.desc')}
               </p>
             </div>
             <div className="block p-4 border border-gray-200 rounded-lg opacity-60 cursor-not-allowed relative">
               <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                Coming Soon
+                {t('comingSoon')}
               </div>
-              <h3 className="font-medium text-gray-500 mb-1">Community Support</h3>
+              <h3 className="font-medium text-gray-500 mb-1">{t('documentation.communitySupport.title')}</h3>
               <p className="text-sm text-gray-400">
-                Hilfe und Diskussionen in unserer Discord Community
+                {t('documentation.communitySupport.desc')}
               </p>
             </div>
           </div>

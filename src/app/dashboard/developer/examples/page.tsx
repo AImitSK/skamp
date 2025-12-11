@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { 
+import { useTranslations } from 'next-intl';
+import {
   ArrowLeftIcon,
   DocumentDuplicateIcon,
   CheckIcon
@@ -978,6 +979,7 @@ async function updateContactOptimistically(contact) {
 
 export default function ExamplesPage() {
   const { user, loading } = useAuth();
+  const t = useTranslations('developer.examples');
   const [selectedExample, setSelectedExample] = useState(INTEGRATION_EXAMPLES[0]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -1007,12 +1009,12 @@ export default function ExamplesPage() {
                 className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mr-4"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück zum Developer Portal
+                {t('backToDeveloperPortal')}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Code Examples</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
                 <p className="text-sm text-gray-600">
-                  Integration-Beispiele für populäre Plattformen
+                  {t('description')}
                 </p>
               </div>
             </div>
@@ -1025,7 +1027,7 @@ export default function ExamplesPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold mb-4">Integrationen</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('sidebar.integrationsTitle')}</h2>
               <div className="space-y-2">
                 {INTEGRATION_EXAMPLES.map((example, index) => (
                   <button
@@ -1050,19 +1052,19 @@ export default function ExamplesPage() {
             </div>
 
             <div className="mt-6 bg-white rounded-lg shadow-sm p-4">
-              <h3 className="font-medium text-gray-900 mb-3">Weitere Ressourcen</h3>
+              <h3 className="font-medium text-gray-900 mb-3">{t('sidebar.resourcesTitle')}</h3>
               <div className="space-y-2 text-sm">
                 <a href="#" className="block text-blue-600 hover:text-blue-500">
-                  → Postman Collection
+                  → {t('sidebar.resources.postman')}
                 </a>
                 <a href="#" className="block text-blue-600 hover:text-blue-500">
-                  → GitHub Repository
+                  → {t('sidebar.resources.github')}
                 </a>
                 <a href="#" className="block text-blue-600 hover:text-blue-500">
-                  → Video Tutorials
+                  → {t('sidebar.resources.videos')}
                 </a>
                 <a href="#" className="block text-blue-600 hover:text-blue-500">
-                  → Community Forum
+                  → {t('sidebar.resources.forum')}
                 </a>
               </div>
             </div>
@@ -1076,7 +1078,7 @@ export default function ExamplesPage() {
                   <span className="text-3xl mr-3">{selectedExample.logo}</span>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">
-                      {selectedExample.name} Integration
+                      {t('mainContent.integrationTitle', { name: selectedExample.name })}
                     </h2>
                     <p className="text-gray-600">{selectedExample.description}</p>
                   </div>
@@ -1085,7 +1087,7 @@ export default function ExamplesPage() {
 
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">Beispiel Code</h3>
+                  <h3 className="text-lg font-semibold">{t('codeSection.title')}</h3>
                   <button
                     onClick={() => copyToClipboard(selectedExample.code, 0)}
                     className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -1093,12 +1095,12 @@ export default function ExamplesPage() {
                     {copiedIndex === 0 ? (
                       <>
                         <CheckIcon className="h-4 w-4 mr-1 text-green-500" />
-                        Kopiert!
+                        {t('codeSection.copied')}
                       </>
                     ) : (
                       <>
                         <DocumentDuplicateIcon className="h-4 w-4 mr-1" />
-                        Code kopieren
+                        {t('codeSection.copyButton')}
                       </>
                     )}
                   </button>
@@ -1112,7 +1114,7 @@ export default function ExamplesPage() {
 
               {/* Quick Start Guide */}
               <div className="mt-8 border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Quick Start Guide</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('quickStart.title')}</h3>
                 <div className="space-y-4">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
@@ -1122,10 +1124,10 @@ export default function ExamplesPage() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-sm font-medium text-gray-900">
-                        API Key erstellen
+                        {t('quickStart.steps.createKey.title')}
                       </h4>
                       <p className="mt-1 text-sm text-gray-600">
-                        Erstelle einen API Key mit den benötigten Berechtigungen im Admin Dashboard
+                        {t('quickStart.steps.createKey.description')}
                       </p>
                     </div>
                   </div>
@@ -1137,10 +1139,10 @@ export default function ExamplesPage() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-sm font-medium text-gray-900">
-                        SDK installieren
+                        {t('quickStart.steps.installSdk.title')}
                       </h4>
                       <p className="mt-1 text-sm text-gray-600">
-                        Installiere das CeleroPress SDK für deine Programmiersprache
+                        {t('quickStart.steps.installSdk.description')}
                       </p>
                     </div>
                   </div>
@@ -1152,10 +1154,10 @@ export default function ExamplesPage() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-sm font-medium text-gray-900">
-                        Integration konfigurieren
+                        {t('quickStart.steps.configure.title')}
                       </h4>
                       <p className="mt-1 text-sm text-gray-600">
-                        Kopiere den Beispielcode und passe ihn an deine Anforderungen an
+                        {t('quickStart.steps.configure.description')}
                       </p>
                     </div>
                   </div>
@@ -1167,10 +1169,10 @@ export default function ExamplesPage() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-sm font-medium text-gray-900">
-                        Webhooks aktivieren
+                        {t('quickStart.steps.webhooks.title')}
                       </h4>
                       <p className="mt-1 text-sm text-gray-600">
-                        Registriere Webhooks für Real-time Updates (optional)
+                        {t('quickStart.steps.webhooks.description')}
                       </p>
                     </div>
                   </div>

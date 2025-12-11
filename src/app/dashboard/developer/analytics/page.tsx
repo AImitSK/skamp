@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { 
   ArrowLeftIcon,
   ChartBarIcon,
@@ -154,9 +155,9 @@ const aggregateAnalyticsData = async (user: any, timeRange: string) => {
     });
 
     const statusCodeData = [
-      { name: '2xx Success', value: statusCounts.success, color: '#10b981' },
-      { name: '4xx Client Error', value: statusCounts.clientError, color: '#f59e0b' },
-      { name: '5xx Server Error', value: statusCounts.serverError, color: '#ef4444' }
+      { name: 'statusCodes.success', value: statusCounts.success, color: '#10b981' },
+      { name: 'statusCodes.clientError', value: statusCounts.clientError, color: '#f59e0b' },
+      { name: 'statusCodes.serverError', value: statusCounts.serverError, color: '#ef4444' }
     ].filter(item => item.value > 0);
 
     return { hourlyData, dailyData, endpointData, statusCodeData };
@@ -169,6 +170,7 @@ const aggregateAnalyticsData = async (user: any, timeRange: string) => {
 };
 
 export default function AnalyticsPage() {
+  const t = useTranslations('developer.analytics');
   const { user, loading } = useAuth();
   const router = useRouter();
   const [timeRange, setTimeRange] = useState('24h');
@@ -409,12 +411,12 @@ export default function AnalyticsPage() {
                 className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mr-4"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück zum Developer Portal
+                {t('backToPortal')}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">API Analytics</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
                 <p className="text-sm text-gray-600">
-                  Überwache deine API-Nutzung und Performance
+                  {t('description')}
                 </p>
               </div>
             </div>
@@ -424,7 +426,7 @@ export default function AnalyticsPage() {
                 onChange={(e) => setSelectedKey(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="all">Alle API Keys</option>
+                <option value="all">{t('filters.allKeys')}</option>
                 {apiKeys.map(key => (
                   <option key={key.id} value={key.id}>
                     {key.name} ({key.key?.substring(0, 10) || 'N/A'}...)
@@ -436,10 +438,10 @@ export default function AnalyticsPage() {
                 onChange={(e) => setTimeRange(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="1h">Letzte Stunde</option>
-                <option value="24h">Letzte 24 Stunden</option>
-                <option value="7d">Letzte 7 Tage</option>
-                <option value="30d">Letzte 30 Tage</option>
+                <option value="1h">{t('filters.lastHour')}</option>
+                <option value="24h">{t('filters.last24Hours')}</option>
+                <option value="7d">{t('filters.last7Days')}</option>
+                <option value="30d">{t('filters.last30Days')}</option>
               </select>
             </div>
           </div>
@@ -452,7 +454,7 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Requests heute</p>
+                <p className="text-sm text-gray-600">{t('metrics.requestsToday')}</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">
                   {stats.requestsToday.toLocaleString('de-DE')}
                 </p>
@@ -468,13 +470,13 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Fehlerrate</p>
+                <p className="text-sm text-gray-600">{t('metrics.errorRate')}</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">
                   {stats.errorRate}%
                 </p>
                 <div className="flex items-center mt-2">
                   <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-500">Niedrig</span>
+                  <span className="text-sm text-green-500">{t('metrics.errorRateLow')}</span>
                 </div>
               </div>
               <ExclamationTriangleIcon className="h-10 w-10 text-yellow-500" />
@@ -484,7 +486,7 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg. Latenz</p>
+                <p className="text-sm text-gray-600">{t('metrics.avgLatency')}</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-1">
                   {stats.avgLatency}ms
                 </p>
@@ -499,7 +501,7 @@ export default function AnalyticsPage() {
 
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div>
-              <p className="text-sm text-gray-600">Quota Verbrauch</p>
+              <p className="text-sm text-gray-600">{t('metrics.quotaUsage')}</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
                 {getQuotaPercentage().toFixed(1)}%
               </p>
@@ -522,7 +524,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Request Timeline */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Request Timeline</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('charts.requestTimeline')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={chartData.hourlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -535,14 +537,14 @@ export default function AnalyticsPage() {
                   dataKey="requests"
                   stroke="#3b82f6"
                   fill="#93c5fd"
-                  name="Requests"
+                  name={t('charts.requests')}
                 />
                 <Area
                   type="monotone"
                   dataKey="errors"
                   stroke="#ef4444"
                   fill="#fca5a5"
-                  name="Errors"
+                  name={t('charts.errors')}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -550,7 +552,7 @@ export default function AnalyticsPage() {
 
           {/* Status Code Distribution */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Status Code Distribution</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('charts.statusCodeDistribution')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -558,7 +560,7 @@ export default function AnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  label={({ name, percent }) => `${t(name as any)}: ${(percent * 100).toFixed(1)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -577,7 +579,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Top Endpoints */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Top Endpoints</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('charts.topEndpoints')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData.endpointData} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
@@ -585,14 +587,14 @@ export default function AnalyticsPage() {
                 <YAxis dataKey="endpoint" type="category" width={100} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="requests" fill="#3b82f6" name="Requests" />
+                <Bar dataKey="requests" fill="#3b82f6" name={t('charts.requests')} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Daily Usage */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-4">Daily Usage</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('charts.dailyUsage')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData.dailyData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -605,14 +607,14 @@ export default function AnalyticsPage() {
                   dataKey="requests"
                   stroke="#3b82f6"
                   strokeWidth={2}
-                  name="Requests"
+                  name={t('charts.requests')}
                 />
                 <Line
                   type="monotone"
                   dataKey="unique_ips"
                   stroke="#10b981"
                   strokeWidth={2}
-                  name="Unique IPs"
+                  name={t('charts.uniqueIPs')}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -621,47 +623,47 @@ export default function AnalyticsPage() {
 
         {/* Rate Limit Details */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Rate Limit Details</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('rateLimit.title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Stündliches Limit</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('rateLimit.hourly')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Verbraucht</span>
+                  <span className="text-sm text-gray-600">{t('rateLimit.used')}</span>
                   <span className="text-sm font-medium">342 / 1000</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-green-500 h-2 rounded-full" style={{ width: '34.2%' }} />
                 </div>
-                <p className="text-xs text-gray-500">Reset in 42 Minuten</p>
+                <p className="text-xs text-gray-500">{t('rateLimit.resetIn', { minutes: 42 })}</p>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Tägliches Limit</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('rateLimit.daily')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Verbraucht</span>
+                  <span className="text-sm text-gray-600">{t('rateLimit.used')}</span>
                   <span className="text-sm font-medium">12,453 / 50,000</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-green-500 h-2 rounded-full" style={{ width: '24.9%' }} />
                 </div>
-                <p className="text-xs text-gray-500">Reset um Mitternacht</p>
+                <p className="text-xs text-gray-500">{t('rateLimit.resetAtMidnight')}</p>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Monatliches Limit</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('rateLimit.monthly')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Verbraucht</span>
+                  <span className="text-sm text-gray-600">{t('rateLimit.used')}</span>
                   <span className="text-sm font-medium">234,567 / 1,000,000</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-green-500 h-2 rounded-full" style={{ width: '23.5%' }} />
                 </div>
-                <p className="text-xs text-gray-500">Reset am 1. des Monats</p>
+                <p className="text-xs text-gray-500">{t('rateLimit.resetFirstOfMonth')}</p>
               </div>
             </div>
           </div>
@@ -669,28 +671,28 @@ export default function AnalyticsPage() {
 
         {/* API Key Performance */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4">API Key Performance</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('table.title')}</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    API Key
+                    {t('table.headers.apiKey')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Requests
+                    {t('table.headers.requests')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fehlerrate
+                    {t('table.headers.errorRate')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Avg. Latenz
+                    {t('table.headers.avgLatency')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Letzter Request
+                    {t('table.headers.lastRequest')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('table.headers.status')}
                   </th>
                 </tr>
               </thead>
@@ -717,11 +719,11 @@ export default function AnalyticsPage() {
                       {apiKeyStats.get(key.id)?.avgLatency || '0'}ms
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {apiKeyStats.get(key.id)?.lastRequest || 'Nie verwendet'}
+                      {apiKeyStats.get(key.id)?.lastRequest || t('table.neverUsed')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Aktiv
+                        {t('table.active')}
                       </span>
                     </td>
                   </tr>
