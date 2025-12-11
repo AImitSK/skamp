@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/badge';
 import { CampaignAssetAttachment } from '@/types/pr';
+import { useTranslations } from 'next-intl';
 
 interface MediaListProps {
   attachments: CampaignAssetAttachment[];
@@ -25,6 +26,8 @@ interface MediaListProps {
  * @param onRemove - Callback zum Entfernen eines Mediums (wird mit assetId/folderId aufgerufen)
  */
 export const MediaList = React.memo(function MediaList({ attachments, onRemove }: MediaListProps) {
+  const t = useTranslations('campaigns.edit.media');
+
   return (
     <div className="space-y-2">
       {attachments.map((attachment) => {
@@ -56,7 +59,7 @@ export const MediaList = React.memo(function MediaList({ attachments, onRemove }
                   {attachment.metadata.fileName || attachment.metadata.folderName}
                 </p>
                 {attachment.type === 'folder' && (
-                  <Badge color="blue" className="text-xs">Ordner</Badge>
+                  <Badge color="blue" className="text-xs">{t('folderBadge')}</Badge>
                 )}
               </div>
             </div>
@@ -66,7 +69,7 @@ export const MediaList = React.memo(function MediaList({ attachments, onRemove }
               type="button"
               onClick={() => onRemove(assetId)}
               className="text-red-600 hover:text-red-500"
-              aria-label="Medium entfernen"
+              aria-label={t('removeMedia')}
             >
               <XMarkIcon className="h-4 w-4" />
             </button>

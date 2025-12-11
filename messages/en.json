@@ -3465,6 +3465,11 @@
         "errors": {
           "missingIds": "Campaign or project ID missing",
           "generationFailed": "PDF generation failed. Please try again."
+        },
+        "workflow": {
+          "ready": "✅ PDF workflow ready",
+          "description": "A complete approval workflow will be automatically activated when saving:",
+          "tip": "💡 Tip: After saving, you will find all approval links and the current status in Step 4 \"Preview\"."
         }
       },
       "actions": {
@@ -3741,7 +3746,18 @@
       "hintDescription": "Select the main contact person at the customer who is responsible for approving press releases."
     },
     "edit": {
+      "error": {
+        "title": "Error",
+        "defaultMessage": "Campaign could not be loaded"
+      },
+      "loading": {
+        "campaign": "Loading campaign..."
+      },
       "tabs": {
+        "pressRelease": "Press Release",
+        "attachments": "Attachments",
+        "approvals": "Approvals",
+        "preview": "Preview",
         "approval": {
           "title": "Approval Settings",
           "description": "Define who must approve the campaign before sending.",
@@ -3782,6 +3798,43 @@
           "noPdfHint": "Click \"Generate PDF\" to create a preview",
           "pdfVersionHistory": "PDF Version History"
         }
+      },
+      "media": {
+        "addMediaAriaLabel": "Add media",
+        "addMedia": "Add media",
+        "clickToSelect": "Click to select",
+        "folderBadge": "Folder",
+        "removeMedia": "Remove media"
+      },
+      "feedback": {
+        "alert": {
+          "title": "Latest change request from customer"
+        }
+      },
+      "approval": {
+        "draft": "Draft",
+        "pending": "Pending",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "sent": "Sent",
+        "changesRequested": "Changes Requested"
+      },
+      "header": {
+        "client": "Client",
+        "created": "Created",
+        "unknownDate": "Unknown",
+        "status": {
+          "draft": "Draft",
+          "inReview": "In Review",
+          "approved": "Approved",
+          "sent": "Sent",
+          "changesRequested": "Changes Requested"
+        }
+      },
+      "aiAssistant": {
+        "ctaTitle": "Quick Start with AI Assistant",
+        "ctaDescription": "Create a complete draft with headline, lead paragraph, main text, and quote in seconds"
       }
     }
   },

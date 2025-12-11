@@ -1,4 +1,5 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/components/TabNavigation.tsx
+'use client';
 import React from 'react';
 import {
   DocumentTextIcon,
@@ -7,6 +8,7 @@ import {
   InformationCircleIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface TabNavigationProps {
   currentStep: 1 | 2 | 3 | 4;
@@ -15,6 +17,8 @@ interface TabNavigationProps {
 }
 
 export default function TabNavigation({ currentStep, onStepChange, onGeneratePreview }: TabNavigationProps) {
+  const t = useTranslations('campaigns.edit.tabs');
+
   return (
     <div className="border-b border-gray-200 mb-8">
       <nav className="-mb-px flex space-x-8">
@@ -30,7 +34,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <DocumentTextIcon className="h-4 w-4 mr-2" />
-          Pressemeldung
+          {t('pressRelease')}
           {currentStep > 1 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
         </button>
 
@@ -46,7 +50,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <PaperClipIcon className="h-4 w-4 mr-2" />
-          Anhänge
+          {t('attachments')}
           {currentStep > 2 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
         </button>
 
@@ -62,7 +66,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <UserGroupIcon className="h-4 w-4 mr-2" />
-          Freigaben
+          {t('approvals')}
           {currentStep > 3 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
         </button>
 
@@ -76,7 +80,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <InformationCircleIcon className="h-4 w-4 mr-2" />
-          Vorschau
+          {t('preview')}
         </button>
       </nav>
     </div>

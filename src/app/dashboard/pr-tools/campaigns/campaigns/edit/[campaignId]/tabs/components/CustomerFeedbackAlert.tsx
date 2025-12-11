@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface Feedback {
   author: string;
@@ -17,6 +18,8 @@ interface CustomerFeedbackAlertProps {
 }
 
 export function CustomerFeedbackAlert({ feedback }: CustomerFeedbackAlertProps) {
+  const t = useTranslations('campaigns.edit.feedback');
+
   if (!feedback || feedback.length === 0) {
     return null;
   }
@@ -35,7 +38,7 @@ export function CustomerFeedbackAlert({ feedback }: CustomerFeedbackAlertProps) 
         <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
           <h4 className="text-sm font-medium text-yellow-900 mb-2">
-            Letzte Änderungsanforderung vom Kunden
+            {t('alert.title')}
           </h4>
           <p className="text-sm text-yellow-800">
             {lastCustomerFeedback.comment}

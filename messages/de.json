@@ -3465,6 +3465,11 @@
         "errors": {
           "missingIds": "Kampagne oder Projekt-ID fehlt",
           "generationFailed": "PDF-Generierung fehlgeschlagen. Bitte versuchen Sie es erneut."
+        },
+        "workflow": {
+          "ready": "✅ PDF-Workflow bereit",
+          "description": "Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:",
+          "tip": "💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen Status in Step 4 \"Vorschau\"."
         }
       },
       "actions": {
@@ -3741,7 +3746,14 @@
       "hintDescription": "Wählen Sie den Hauptansprechpartner beim Kunden aus, der für die Freigabe von Pressemitteilungen zuständig ist."
     },
     "edit": {
+      "loading": {
+        "campaign": "Kampagne wird geladen..."
+      },
       "tabs": {
+        "pressRelease": "Pressemeldung",
+        "attachments": "Anhänge",
+        "approvals": "Freigaben",
+        "preview": "Vorschau",
         "approval": {
           "title": "Freigabe-Einstellungen",
           "description": "Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.",
@@ -3781,6 +3793,47 @@
           "noPdfCreated": "Noch keine PDF-Version erstellt",
           "noPdfHint": "Klicken Sie auf \"PDF generieren\" um eine Vorschau zu erstellen",
           "pdfVersionHistory": "PDF-Versionen Historie"
+        }
+      },
+      "approval": {
+        "draft": "Entwurf",
+        "pending": "Ausstehend",
+        "inReview": "In Prüfung",
+        "approved": "Freigegeben",
+        "rejected": "Abgelehnt",
+        "sent": "Versendet",
+        "changesRequested": "Änderungen Angefordert"
+      },
+      "media": {
+        "addMediaAriaLabel": "Medien hinzufügen",
+        "addMedia": "Medien hinzufügen",
+        "clickToSelect": "Klicken zum Auswählen",
+        "folderBadge": "Ordner",
+        "removeMedia": "Medium entfernen"
+      },
+      "feedback": {
+        "alert": {
+          "title": "Letzte Änderungsanforderung vom Kunden"
+        }
+      },
+      "aiAssistant": {
+        "ctaTitle": "Schnellstart mit dem KI-Assistenten",
+        "ctaDescription": "Erstelle einen kompletten Rohentwurf mit Titel, Lead-Absatz, Haupttext und Zitat in Sekunden"
+      },
+      "error": {
+        "title": "Fehler",
+        "defaultMessage": "Kampagne konnte nicht geladen werden"
+      },
+      "header": {
+        "client": "Kunde",
+        "created": "Erstellt",
+        "unknownDate": "Unbekannt",
+        "status": {
+          "draft": "Entwurf",
+          "inReview": "In Prüfung",
+          "approved": "Freigegeben",
+          "sent": "Versendet",
+          "changesRequested": "Änderungen Angefordert"
         }
       }
     }

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 
 interface PDFWorkflowPreviewProps {
@@ -20,6 +21,8 @@ interface PDFWorkflowPreviewProps {
  * @param estimatedSteps - Array von Workflow-Schritten, die angezeigt werden
  */
 export const PDFWorkflowPreview = React.memo(function PDFWorkflowPreview({ enabled, estimatedSteps }: PDFWorkflowPreviewProps) {
+  const t = useTranslations('campaigns.edit.pdf.workflow');
+
   if (!enabled) return null;
 
   return (
@@ -28,10 +31,10 @@ export const PDFWorkflowPreview = React.memo(function PDFWorkflowPreview({ enabl
         <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
           <h4 className="text-sm font-medium text-green-900 mb-2">
-            ✅ PDF-Workflow bereit
+            {t('ready')}
           </h4>
           <Text className="text-sm text-green-700 mb-3">
-            Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:
+            {t('description')}
           </Text>
 
           <div className="space-y-2">
@@ -45,8 +48,7 @@ export const PDFWorkflowPreview = React.memo(function PDFWorkflowPreview({ enabl
 
           <div className="mt-3 pt-3 border-t border-green-300">
             <Text className="text-xs text-green-600">
-              💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen
-              Status in Step 4 &ldquo;Vorschau&rdquo;.
+              {t('tip')}
             </Text>
           </div>
         </div>

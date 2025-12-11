@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { PhotoIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface MediaEmptyStateProps {
   onAddMedia: () => void;
@@ -17,6 +18,8 @@ interface MediaEmptyStateProps {
  * @param onAddMedia - Callback zum Öffnen des Asset-Selectors
  */
 export const MediaEmptyState = React.memo(function MediaEmptyState({ onAddMedia }: MediaEmptyStateProps) {
+  const t = useTranslations('campaigns.edit.media');
+
   return (
     <div
       className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
@@ -29,15 +32,15 @@ export const MediaEmptyState = React.memo(function MediaEmptyState({ onAddMedia 
           onAddMedia();
         }
       }}
-      aria-label="Medien hinzufügen"
+      aria-label={t('addMediaAriaLabel')}
     >
       <div className="flex flex-col items-center justify-center">
         <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
         <p className="text-gray-600 group-hover:text-[#005fab] font-medium">
-          Medien hinzufügen
+          {t('addMedia')}
         </p>
         <p className="text-sm text-gray-500 mt-1">
-          Klicken zum Auswählen
+          {t('clickToSelect')}
         </p>
       </div>
     </div>

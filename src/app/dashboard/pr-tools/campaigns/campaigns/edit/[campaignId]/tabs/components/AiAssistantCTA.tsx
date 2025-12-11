@@ -3,12 +3,15 @@
 
 import React from 'react';
 import { SparklesIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface AiAssistantCTAProps {
   onOpenAiModal: () => void;
 }
 
 export function AiAssistantCTA({ onOpenAiModal }: AiAssistantCTAProps) {
+  const t = useTranslations('campaigns.edit.aiAssistant');
+
   return (
     <button
       type="button"
@@ -22,10 +25,10 @@ export function AiAssistantCTA({ onOpenAiModal }: AiAssistantCTAProps) {
           </div>
           <div className="text-left">
             <p className="text-lg font-bold text-white mb-1">
-              Schnellstart mit dem KI-Assistenten
+              {t('ctaTitle')}
             </p>
             <p className="text-sm text-indigo-100">
-              Erstelle einen kompletten Rohentwurf mit Titel, Lead-Absatz, Haupttext und Zitat in Sekunden
+              {t('ctaDescription')}
             </p>
           </div>
         </div>
