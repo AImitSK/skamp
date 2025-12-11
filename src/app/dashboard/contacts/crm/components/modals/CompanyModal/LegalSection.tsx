@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/CompanyModal/LegalSection.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Field, FieldGroup, Label } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -11,32 +12,34 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from 'firebase/firestore';
 import { CompanyModalSectionProps } from "./types";
 
-const LEGAL_FORMS = [
+// Helper to get legal forms with translations
+const getLegalForms = (t: (key: string) => string) => [
   { value: 'GmbH', label: 'GmbH' },
   { value: 'AG', label: 'AG' },
   { value: 'KG', label: 'KG' },
   { value: 'OHG', label: 'OHG' },
   { value: 'GbR', label: 'GbR' },
-  { value: 'UG', label: 'UG (haftungsbeschränkt)' },
+  { value: 'UG', label: t('legalForms.ug') },
   { value: 'Ltd', label: 'Ltd.' },
   { value: 'Inc', label: 'Inc.' },
   { value: 'LLC', label: 'LLC' },
   { value: 'SA', label: 'SA' },
   { value: 'SAS', label: 'SAS' },
   { value: 'BV', label: 'BV' },
-  { value: 'Other', label: 'Sonstige' }
+  { value: 'Other', label: t('legalForms.other') }
 ];
 
-const IDENTIFIER_TYPES = [
-  { value: 'VAT_EU', label: 'USt-IdNr. (EU)' },
-  { value: 'EIN_US', label: 'EIN (US)' },
-  { value: 'COMPANY_REG_DE', label: 'Handelsregister (DE)' },
-  { value: 'COMPANY_REG_UK', label: 'Companies House (UK)' },
-  { value: 'UID_CH', label: 'UID (CH)' },
-  { value: 'SIREN_FR', label: 'SIREN (FR)' },
+// Helper to get identifier types with translations
+const getIdentifierTypes = (t: (key: string) => string) => [
+  { value: 'VAT_EU', label: t('identifierTypes.vatEu') },
+  { value: 'EIN_US', label: t('identifierTypes.einUs') },
+  { value: 'COMPANY_REG_DE', label: t('identifierTypes.companyRegDe') },
+  { value: 'COMPANY_REG_UK', label: t('identifierTypes.companyRegUk') },
+  { value: 'UID_CH', label: t('identifierTypes.uidCh') },
+  { value: 'SIREN_FR', label: t('identifierTypes.sirenFr') },
   { value: 'DUNS', label: 'D-U-N-S' },
   { value: 'LEI', label: 'LEI' },
-  { value: 'OTHER', label: 'Sonstige' }
+  { value: 'OTHER', label: t('identifierTypes.other') }
 ];
 
 /**
@@ -45,6 +48,8 @@ const IDENTIFIER_TYPES = [
  * Enthält: Offizieller Name, Handelsname, Rechtsform, Gründungsdatum, Business Identifiers
  */
 export function LegalSection({ formData, setFormData }: CompanyModalSectionProps) {
+  const t = useTranslations('crm.companyModal.legal');
+
   const addIdentifier = () => {
     const newIdentifier = {
       type: 'VAT_EU' as const,
@@ -65,44 +70,44 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
     <FieldGroup>
       <Field>
         <Label>
-          Offizieller Firmenname
-          <InfoTooltip content="Name laut Handelsregister oder offiziellen Dokumenten" className="ml-1.5 inline-flex align-text-top" />
+          {t('officialName')}
+          <InfoTooltip content={t('officialNameTooltip')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Input
           value={formData.officialName || ''}
           onChange={(e) => setFormData({ ...formData, officialName: e.target.value })}
-          placeholder="z.B. Example GmbH"
+          placeholder={t('officialNamePlaceholder')}
         />
       </Field>
 
       <Field>
         <Label>
-          Handelsname (DBA)
-          <InfoTooltip content="Falls anders als offizieller Name" className="ml-1.5 inline-flex align-text-top" />
+          {t('tradingName')}
+          <InfoTooltip content={t('tradingNameTooltip')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Input
           value={formData.tradingName || ''}
           onChange={(e) => setFormData({ ...formData, tradingName: e.target.value })}
-          placeholder="z.B. Example"
+          placeholder={t('tradingNamePlaceholder')}
         />
       </Field>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Rechtsform</Label>
+          <Label>{t('legalForm')}</Label>
           <Select
             value={formData.legalForm || ''}
             onChange={(e) => setFormData({ ...formData, legalForm: e.target.value })}
           >
-            <option value="">Bitte wählen...</option>
-            {LEGAL_FORMS.map(form => (
+            <option value="">{t('pleaseSelect')}</option>
+            {getLegalForms(t).map(form => (
               <option key={form.value} value={form.value}>{form.label}</option>
             ))}
           </Select>
         </Field>
 
         <Field>
-          <Label>Gründungsdatum</Label>
+          <Label>{t('foundedDate')}</Label>
           <Input
             type="date"
             value={(() => {
@@ -139,12 +144,12 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium text-gray-900">
-            Geschäftliche Kennungen
-            <InfoTooltip content="USt-ID, Handelsregister, etc." className="ml-1.5 inline-flex align-text-top" />
+            {t('identifiers')}
+            <InfoTooltip content={t('identifiersTooltip')} className="ml-1.5 inline-flex align-text-top" />
           </div>
           <Button type="button" onClick={addIdentifier} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Kennung hinzufügen
+            {t('addIdentifier')}
           </Button>
         </div>
 
@@ -162,7 +167,7 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
                         setFormData({ ...formData, identifiers: updated });
                       }}
                     >
-                      {IDENTIFIER_TYPES.map(type => (
+                      {getIdentifierTypes(t).map(type => (
                         <option key={type.value} value={type.value}>{type.label}</option>
                       ))}
                     </Select>
@@ -175,7 +180,7 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
                         updated[index].value = e.target.value;
                         setFormData({ ...formData, identifiers: updated });
                       }}
-                      placeholder="Wert eingeben..."
+                      placeholder={t('valuePlaceholder')}
                     />
                   </div>
                   <div className="col-span-2">
@@ -186,7 +191,7 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
                         updated[index].issuingAuthority = e.target.value;
                         setFormData({ ...formData, identifiers: updated });
                       }}
-                      placeholder="Land/Behörde"
+                      placeholder={t('authorityPlaceholder')}
                     />
                   </div>
                   <div className="col-span-1">
@@ -199,7 +204,7 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Kennungen hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('noIdentifiers')}</Text>
         )}
       </div>
     </FieldGroup>

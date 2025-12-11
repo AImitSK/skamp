@@ -21,6 +21,7 @@
     "all": "Alle",
     "none": "Keine",
     "actions": "Aktionen",
+    "view": "Anzeigen",
     "details": "Details",
     "settings": "Einstellungen",
     "help": "Hilfe",
@@ -921,7 +922,314 @@
     }
   },
   "crm": {
-    "redirecting": "Weiterleitung..."
+    "redirecting": "Weiterleitung...",
+    "contactModal": {
+      "general": {
+        "labels": {
+          "salutation": "Anrede",
+          "title": "Titel",
+          "firstName": "Vorname",
+          "lastName": "Nachname",
+          "company": "Firma",
+          "position": "Position",
+          "department": "Abteilung",
+          "tags": "Tags",
+          "status": "Status",
+          "isJournalist": "Ist Journalist?"
+        },
+        "placeholders": {
+          "titleExample": "z.B. Dr., Prof.",
+          "positionExample": "z.B. Geschäftsführer, Redakteur",
+          "departmentExample": "z.B. Vertrieb, Redaktion"
+        },
+        "salutations": {
+          "none": "Keine Anrede",
+          "mr": "Herr",
+          "ms": "Frau",
+          "dr": "Dr.",
+          "prof": "Prof.",
+          "profDr": "Prof. Dr."
+        },
+        "company": {
+          "none": "Keine Firma zugeordnet",
+          "tooltip": "Wählen Sie die Firma aus, bei der diese Person arbeitet"
+        },
+        "journalist": {
+          "label": "Diese Person ist Journalist/Redakteur",
+          "tooltip": "Aktiviert zusätzliche Medien-Felder"
+        },
+        "required": "*",
+        "contactStatus": {
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "unsubscribed": "Abgemeldet",
+          "bounced": "Unzustellbar",
+          "archived": "Archiviert"
+        }
+      },
+      "professional": {
+        "biography": "Biografie",
+        "biographyPlaceholder": "Beruflicher Werdegang..."
+      },
+      "communication": {
+        "title": "Kommunikation",
+        "emails": {
+          "title": "E-Mail-Adressen",
+          "addButton": "E-Mail hinzufügen",
+          "placeholder": "email@beispiel.de",
+          "empty": "Keine E-Mail-Adressen hinzugefügt",
+          "types": {
+            "business": "Geschäftlich",
+            "private": "Privat",
+            "other": "Sonstige"
+          }
+        },
+        "phones": {
+          "title": "Telefonnummern",
+          "addButton": "Nummer hinzufügen",
+          "placeholder": "30 12345678",
+          "empty": "Keine Telefonnummern hinzugefügt",
+          "types": {
+            "business": "Geschäftlich",
+            "mobile": "Mobil",
+            "private": "Privat",
+            "fax": "Fax",
+            "other": "Sonstige"
+          }
+        },
+        "social": {
+          "title": "Social Media Profile",
+          "addButton": "Profil hinzufügen",
+          "urlPlaceholder": "https://...",
+          "empty": "Keine Social Media Profile hinzugefügt",
+          "platforms": {
+            "linkedin": "LinkedIn",
+            "twitter": "Twitter/X",
+            "xing": "XING",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "youtube": "YouTube",
+            "tiktok": "TikTok",
+            "other": "Andere"
+          }
+        },
+        "preferences": {
+          "title": "Kommunikations-Präferenzen",
+          "preferredChannel": "Bevorzugter Kanal",
+          "preferredLanguage": "Bevorzugte Sprache",
+          "noPreference": "Keine Präferenz",
+          "selectLanguage": "Sprache auswählen...",
+          "channels": {
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "messaging": "Messaging (WhatsApp, etc.)",
+            "mail": "Post"
+          },
+          "languages": {
+            "de": "Deutsch",
+            "en": "English",
+            "fr": "Français",
+            "es": "Español",
+            "it": "Italiano",
+            "pt": "Português",
+            "nl": "Nederlands",
+            "pl": "Polski",
+            "ru": "Русский",
+            "ja": "日本語",
+            "ko": "한국어",
+            "zh": "中文"
+          }
+        },
+        "primary": "Primär"
+      },
+      "personal": {
+        "birthday": "Geburtstag",
+        "nationality": "Nationalität",
+        "nationalityPlaceholder": "Nationalität auswählen...",
+        "interests": "Interessen",
+        "interestsPlaceholder": "z.B. Golf, Technologie, Reisen (kommagetrennt)",
+        "internalNotes": "Interne Notizen",
+        "internalNotesPlaceholder": "Interne Notizen für das Team (nicht sichtbar für externe Kontakte)...",
+        "countries": {
+          "DE": "Deutschland",
+          "AT": "Österreich",
+          "CH": "Schweiz",
+          "US": "USA",
+          "GB": "Großbritannien",
+          "FR": "Frankreich",
+          "IT": "Italien",
+          "ES": "Spanien",
+          "NL": "Niederlande",
+          "BE": "Belgien",
+          "LU": "Luxemburg",
+          "DK": "Dänemark",
+          "SE": "Schweden",
+          "NO": "Norwegen",
+          "FI": "Finnland",
+          "PL": "Polen",
+          "CZ": "Tschechien",
+          "HU": "Ungarn",
+          "PT": "Portugal",
+          "GR": "Griechenland",
+          "IE": "Irland",
+          "CA": "Kanada",
+          "AU": "Australien",
+          "JP": "Japan",
+          "CN": "China",
+          "IN": "Indien",
+          "BR": "Brasilien",
+          "MX": "Mexiko",
+          "RU": "Russland",
+          "TR": "Türkei"
+        }
+      }
+    },
+    "companyModal": {
+      "financial": {
+        "annualRevenue": "Jahresumsatz",
+        "annualRevenuePlaceholder": "0,00",
+        "employees": "Mitarbeiterzahl",
+        "employeesPlaceholder": "0",
+        "fiscalYearEnd": "Geschäftsjahresende",
+        "fiscalYearEndPlaceholder": "31.12.",
+        "fiscalYearEndHint": "Format: TT.MM. (z.B. 31.12. für 31. Dezember)",
+        "creditRating": "Kreditrating",
+        "creditRatingPlaceholder": "AAA, BB+, etc."
+      },
+      "international": {
+        "mainAddress": {
+          "title": "Hauptadresse",
+          "street": "Straße und Hausnummer",
+          "streetPlaceholder": "Musterstraße 123",
+          "postalCode": "PLZ",
+          "postalCodePlaceholder": "12345",
+          "city": "Stadt",
+          "cityPlaceholder": "Berlin",
+          "region": "Bundesland/Region",
+          "regionPlaceholder": "Bayern",
+          "country": "Land",
+          "countryPlaceholder": "Land auswählen...",
+          "countries": {
+            "DE": "Deutschland",
+            "AT": "Österreich",
+            "CH": "Schweiz",
+            "US": "USA",
+            "GB": "Großbritannien",
+            "FR": "Frankreich",
+            "IT": "Italien",
+            "ES": "Spanien",
+            "NL": "Niederlande",
+            "BE": "Belgien",
+            "LU": "Luxemburg",
+            "DK": "Dänemark",
+            "SE": "Schweden",
+            "NO": "Norwegen",
+            "FI": "Finnland",
+            "PL": "Polen",
+            "CZ": "Tschechien",
+            "HU": "Ungarn",
+            "PT": "Portugal",
+            "GR": "Griechenland",
+            "IE": "Irland",
+            "CA": "Kanada",
+            "AU": "Australien",
+            "JP": "Japan",
+            "CN": "China",
+            "IN": "Indien",
+            "BR": "Brasilien",
+            "MX": "Mexiko",
+            "RU": "Russland",
+            "TR": "Türkei"
+          }
+        },
+        "phones": {
+          "title": "Telefonnummern",
+          "addButton": "Nummer hinzufügen",
+          "empty": "Keine Telefonnummern hinzugefügt",
+          "phonePlaceholder": "30 12345678",
+          "types": {
+            "business": "Geschäftlich",
+            "mobile": "Mobil",
+            "private": "Privat",
+            "fax": "Fax",
+            "other": "Sonstige"
+          }
+        },
+        "emails": {
+          "title": "E-Mail-Adressen",
+          "addButton": "E-Mail hinzufügen",
+          "empty": "Keine E-Mail-Adressen hinzugefügt",
+          "emailPlaceholder": "email@firma.de",
+          "types": {
+            "general": "Allgemein",
+            "support": "Support",
+            "sales": "Vertrieb",
+            "billing": "Buchhaltung",
+            "press": "Presse"
+          }
+        },
+        "socialMedia": {
+          "title": "Social Media Profile",
+          "addButton": "Profil hinzufügen",
+          "empty": "Keine Social Media Profile hinzugefügt",
+          "urlPlaceholder": "https://..."
+        }
+      },
+      "media": {
+        "alert": {
+          "title": "Medien-Verwaltung",
+          "message": "Publikationen werden jetzt zentral im Bibliotheks-Bereich verwaltet. Hier sehen Sie alle verknüpften Publikationen."
+        },
+        "publications": {
+          "title": "Publikationen",
+          "tooltip": "Alle Publikationen dieses Verlags/Medienhauses",
+          "addButton": "Neue Publikation",
+          "empty": "Noch keine Publikationen verknüpft",
+          "badges": {
+            "verified": "Verifiziert",
+            "advertisements": "{count, plural, =1 {# Werbemittel} other {# Werbemittel}}"
+          }
+        }
+      },
+      "corporate": {
+        "parentCompany": "Muttergesellschaft",
+        "parentCompanyTooltip": "Direkte Muttergesellschaft dieses Unternehmens",
+        "noParentCompany": "Keine Muttergesellschaft",
+        "ultimateParent": "Oberste Muttergesellschaft",
+        "ultimateParentTooltip": "Oberste Muttergesellschaft in der Konzernstruktur",
+        "noUltimateParent": "Keine oberste Muttergesellschaft"
+      },
+      "legal": {
+        "officialName": "Offizieller Firmenname",
+        "officialNameTooltip": "Name laut Handelsregister oder offiziellen Dokumenten",
+        "officialNamePlaceholder": "z.B. Example GmbH",
+        "tradingName": "Handelsname (DBA)",
+        "tradingNameTooltip": "Falls anders als offizieller Name",
+        "tradingNamePlaceholder": "z.B. Example",
+        "legalForm": "Rechtsform",
+        "foundedDate": "Gründungsdatum",
+        "pleaseSelect": "Bitte wählen...",
+        "legalForms": {
+          "ug": "UG (haftungsbeschränkt)",
+          "other": "Sonstige"
+        },
+        "identifiers": "Geschäftliche Kennungen",
+        "identifiersTooltip": "USt-ID, Handelsregister, etc.",
+        "addIdentifier": "Kennung hinzufügen",
+        "identifierTypes": {
+          "vatEu": "USt-IdNr. (EU)",
+          "einUs": "EIN (US)",
+          "companyRegDe": "Handelsregister (DE)",
+          "companyRegUk": "Companies House (UK)",
+          "uidCh": "UID (CH)",
+          "sirenFr": "SIREN (FR)",
+          "other": "Sonstige"
+        },
+        "valuePlaceholder": "Wert eingeben...",
+        "authorityPlaceholder": "Land/Behörde",
+        "noIdentifiers": "Keine Kennungen hinzugefügt"
+      }
+    }
   },
   "publications": {
     "loading": "Lade Publikationen...",

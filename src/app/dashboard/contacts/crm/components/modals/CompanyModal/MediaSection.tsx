@@ -12,6 +12,7 @@ import { Publication, Advertisement } from "@/types/library";
 import { CompanyModalSectionProps } from "./types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface MediaSectionProps extends CompanyModalSectionProps {
   companyId?: string;
@@ -21,12 +22,10 @@ interface MediaSectionProps extends CompanyModalSectionProps {
 // Alert Component
 function Alert({
   type = 'info',
-  title,
-  message
+  children
 }: {
   type?: 'info' | 'error';
-  title?: string;
-  message: string;
+  children: React.ReactNode;
 }) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
@@ -42,8 +41,7 @@ function Alert({
           <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
         </div>
         <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+          <div className={`text-sm ${styles[type].split(' ')[1]}`}>{children}</div>
         </div>
       </div>
     </div>
@@ -56,6 +54,9 @@ function Alert({
  * Zeigt verknüpfte Publikationen für Medienunternehmen (nur für publisher, media_house, agency)
  */
 export function MediaSection({ formData, companyId, userId }: MediaSectionProps) {
+  const t = useTranslations('crm.companyModal.media');
+  const tCommon = useTranslations('common');
+  const tPubTypes = useTranslations('publicationDetail.types');
   const router = useRouter();
   const [linkedPublications, setLinkedPublications] = useState<Publication[]>([]);
   const [linkedAdvertisements, setLinkedAdvertisements] = useState<Advertisement[]>([]);
@@ -103,11 +104,10 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
   return (
     <div className="space-y-6">
       {/* Info Alert */}
-      <Alert
-        type="info"
-        title="Medien-Verwaltung"
-        message="Publikationen werden jetzt zentral im Bibliotheks-Bereich verwaltet. Hier sehen Sie alle verknüpften Publikationen."
-      />
+      <Alert type="info">
+        <div className="font-medium">{t('alert.title')}</div>
+        <div>{t('alert.message')}</div>
+      </Alert>
 
       {/* Publikationen */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
@@ -115,8 +115,8 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
           <div className="flex items-center gap-2">
             <BookOpenIcon className="h-5 w-5 text-gray-400" />
             <div className="text-sm font-medium text-gray-900">
-              Publikationen
-              <InfoTooltip content="Alle Publikationen dieses Verlags/Medienhauses" className="ml-1.5 inline-flex align-text-top" />
+              {t('publications.title')}
+              <InfoTooltip content={t('publications.tooltip')} className="ml-1.5 inline-flex align-text-top" />
             </div>
           </div>
           <Button
@@ -129,7 +129,7 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
             className="text-sm"
           >
             <PlusIcon className="h-4 w-4" />
-            Neue Publikation
+            {t('publications.addButton')}
           </Button>
         </div>
 
@@ -151,26 +151,16 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
                     <div className="font-medium text-sm">{pub.title}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge color="zinc" className="text-xs">
-                        {pub.type === 'magazine' ? 'Magazin' :
-                         pub.type === 'newspaper' ? 'Zeitung' :
-                         pub.type === 'website' ? 'Website' :
-                         pub.type === 'blog' ? 'Blog' :
-                         pub.type === 'newsletter' ? 'Newsletter' :
-                         pub.type === 'podcast' ? 'Podcast' :
-                         pub.type === 'tv' ? 'TV' :
-                         pub.type === 'radio' ? 'Radio' :
-                         pub.type === 'trade_journal' ? 'Fachzeitschrift' :
-                         pub.type === 'social_media' ? 'Social Media' :
-                         pub.type}
+                        {tPubTypes(pub.type || 'other')}
                       </Badge>
                       {pub.verified && (
                         <Badge color="green" className="text-xs">
-                          Verifiziert
+                          {t('publications.badges.verified')}
                         </Badge>
                       )}
                       {adCount > 0 && (
                         <Badge color="blue" className="text-xs">
-                          {adCount} {adCount === 1 ? 'Werbemittel' : 'Werbemittel'}
+                          {t('publications.badges.advertisements', { count: adCount })}
                         </Badge>
                       )}
                     </div>
@@ -179,7 +169,7 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
                     href={`/dashboard/library/publications/${pub.id}`}
                     className="text-sm text-primary hover:text-primary-hover ml-4"
                   >
-                    Anzeigen
+                    {tCommon('view')}
                   </Link>
                 </div>
               );
@@ -187,7 +177,7 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
           </div>
         ) : (
           <Text className="text-sm text-gray-500 text-center py-4">
-            Noch keine Publikationen verknüpft
+            {t('publications.empty')}
           </Text>
         )}
       </div>

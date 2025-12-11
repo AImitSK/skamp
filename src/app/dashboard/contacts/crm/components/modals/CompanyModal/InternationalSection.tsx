@@ -13,6 +13,7 @@ import { CountryCode } from "@/types/international";
 import { SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { CompanyModalSectionProps } from "./types";
 import * as Flags from 'country-flag-icons/react/3x2';
+import { useTranslations } from 'next-intl';
 
 const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
   if (!countryCode) return null;
@@ -51,6 +52,8 @@ const COUNTRY_OPTIONS = [
  * Enthält: Adresse, Telefonnummern, E-Mail-Adressen, Social Media
  */
 export function InternationalSection({ formData, setFormData }: CompanyModalSectionProps) {
+  const t = useTranslations('crm.companyModal.international');
+
   const addPhoneField = () => {
     const newPhone = {
       type: 'business' as const,
@@ -96,59 +99,59 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
     <FieldGroup>
       {/* Main Address */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
-        <div className="text-sm font-medium text-gray-900">Hauptadresse</div>
+        <div className="text-sm font-medium text-gray-900">{t('mainAddress.title')}</div>
 
         <Field>
-          <Label>Straße und Hausnummer</Label>
+          <Label>{t('mainAddress.street')}</Label>
           <Input
             value={formData.mainAddress?.street || ''}
             onChange={(e) => setFormData({
               ...formData,
               mainAddress: { ...formData.mainAddress!, street: e.target.value }
             })}
-            placeholder="Musterstraße 123"
+            placeholder={t('mainAddress.streetPlaceholder')}
           />
         </Field>
 
         <div className="grid grid-cols-3 gap-4">
           <Field>
-            <Label>PLZ</Label>
+            <Label>{t('mainAddress.postalCode')}</Label>
             <Input
               value={formData.mainAddress?.postalCode || ''}
               onChange={(e) => setFormData({
                 ...formData,
                 mainAddress: { ...formData.mainAddress!, postalCode: e.target.value }
               })}
-              placeholder="12345"
+              placeholder={t('mainAddress.postalCodePlaceholder')}
             />
           </Field>
           <Field className="col-span-2">
-            <Label>Stadt</Label>
+            <Label>{t('mainAddress.city')}</Label>
             <Input
               value={formData.mainAddress?.city || ''}
               onChange={(e) => setFormData({
                 ...formData,
                 mainAddress: { ...formData.mainAddress!, city: e.target.value }
               })}
-              placeholder="Berlin"
+              placeholder={t('mainAddress.cityPlaceholder')}
             />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <Field>
-            <Label>Bundesland/Region</Label>
+            <Label>{t('mainAddress.region')}</Label>
             <Input
               value={formData.mainAddress?.region || ''}
               onChange={(e) => setFormData({
                 ...formData,
                 mainAddress: { ...formData.mainAddress!, region: e.target.value }
               })}
-              placeholder="Bayern"
+              placeholder={t('mainAddress.regionPlaceholder')}
             />
           </Field>
           <Field>
-            <Label>Land</Label>
+            <Label>{t('mainAddress.country')}</Label>
             <div className="relative" data-slot="control">
               {formData.mainAddress?.countryCode && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
@@ -163,37 +166,37 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                 })}
                 className={formData.mainAddress?.countryCode ? 'pl-11' : ''}
               >
-                <option value="">Land auswählen...</option>
-                <option value="DE">Deutschland</option>
-                <option value="AT">Österreich</option>
-                <option value="CH">Schweiz</option>
-                <option value="US">USA</option>
-                <option value="GB">Großbritannien</option>
-                <option value="FR">Frankreich</option>
-                <option value="IT">Italien</option>
-                <option value="ES">Spanien</option>
-                <option value="NL">Niederlande</option>
-                <option value="BE">Belgien</option>
-                <option value="LU">Luxemburg</option>
-                <option value="DK">Dänemark</option>
-                <option value="SE">Schweden</option>
-                <option value="NO">Norwegen</option>
-                <option value="FI">Finnland</option>
-                <option value="PL">Polen</option>
-                <option value="CZ">Tschechien</option>
-                <option value="HU">Ungarn</option>
-                <option value="PT">Portugal</option>
-                <option value="GR">Griechenland</option>
-                <option value="IE">Irland</option>
-                <option value="CA">Kanada</option>
-                <option value="AU">Australien</option>
-                <option value="JP">Japan</option>
-                <option value="CN">China</option>
-                <option value="IN">Indien</option>
-                <option value="BR">Brasilien</option>
-                <option value="MX">Mexiko</option>
-                <option value="RU">Russland</option>
-                <option value="TR">Türkei</option>
+                <option value="">{t('mainAddress.countryPlaceholder')}</option>
+                <option value="DE">{t('mainAddress.countries.DE')}</option>
+                <option value="AT">{t('mainAddress.countries.AT')}</option>
+                <option value="CH">{t('mainAddress.countries.CH')}</option>
+                <option value="US">{t('mainAddress.countries.US')}</option>
+                <option value="GB">{t('mainAddress.countries.GB')}</option>
+                <option value="FR">{t('mainAddress.countries.FR')}</option>
+                <option value="IT">{t('mainAddress.countries.IT')}</option>
+                <option value="ES">{t('mainAddress.countries.ES')}</option>
+                <option value="NL">{t('mainAddress.countries.NL')}</option>
+                <option value="BE">{t('mainAddress.countries.BE')}</option>
+                <option value="LU">{t('mainAddress.countries.LU')}</option>
+                <option value="DK">{t('mainAddress.countries.DK')}</option>
+                <option value="SE">{t('mainAddress.countries.SE')}</option>
+                <option value="NO">{t('mainAddress.countries.NO')}</option>
+                <option value="FI">{t('mainAddress.countries.FI')}</option>
+                <option value="PL">{t('mainAddress.countries.PL')}</option>
+                <option value="CZ">{t('mainAddress.countries.CZ')}</option>
+                <option value="HU">{t('mainAddress.countries.HU')}</option>
+                <option value="PT">{t('mainAddress.countries.PT')}</option>
+                <option value="GR">{t('mainAddress.countries.GR')}</option>
+                <option value="IE">{t('mainAddress.countries.IE')}</option>
+                <option value="CA">{t('mainAddress.countries.CA')}</option>
+                <option value="AU">{t('mainAddress.countries.AU')}</option>
+                <option value="JP">{t('mainAddress.countries.JP')}</option>
+                <option value="CN">{t('mainAddress.countries.CN')}</option>
+                <option value="IN">{t('mainAddress.countries.IN')}</option>
+                <option value="BR">{t('mainAddress.countries.BR')}</option>
+                <option value="MX">{t('mainAddress.countries.MX')}</option>
+                <option value="RU">{t('mainAddress.countries.RU')}</option>
+                <option value="TR">{t('mainAddress.countries.TR')}</option>
               </Select>
             </div>
           </Field>
@@ -203,10 +206,10 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
       {/* Phone Numbers */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
+          <div className="text-sm font-medium text-gray-900">{t('phones.title')}</div>
           <Button type="button" onClick={addPhoneField} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Nummer hinzufügen
+            {t('phones.addButton')}
           </Button>
         </div>
 
@@ -223,11 +226,11 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                       setFormData({ ...formData, phones: updated });
                     }}
                   >
-                    <option value="business">Geschäftlich</option>
-                    <option value="mobile">Mobil</option>
-                    <option value="private">Privat</option>
-                    <option value="fax">Fax</option>
-                    <option value="other">Sonstige</option>
+                    <option value="business">{t('phones.types.business')}</option>
+                    <option value="mobile">{t('phones.types.mobile')}</option>
+                    <option value="private">{t('phones.types.private')}</option>
+                    <option value="fax">{t('phones.types.fax')}</option>
+                    <option value="other">{t('phones.types.other')}</option>
                   </Select>
                 </div>
                 <div className="col-span-2">
@@ -256,7 +259,7 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                     }}
                     defaultCountry={phone.countryCode || formData.mainAddress?.countryCode || 'DE'}
                     showCountrySelect={false}
-                    placeholder="30 12345678"
+                    placeholder={t('phones.phonePlaceholder')}
                     keepInvalidInput={true}
                     onValidationError={(error) => {}}
                   />
@@ -283,17 +286,17 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('phones.empty')}</Text>
         )}
       </div>
 
       {/* Email Addresses */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+          <div className="text-sm font-medium text-gray-900">{t('emails.title')}</div>
           <Button type="button" onClick={addEmailField} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            E-Mail hinzufügen
+            {t('emails.addButton')}
           </Button>
         </div>
 
@@ -310,11 +313,11 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                       setFormData({ ...formData, emails: updated });
                     }}
                   >
-                    <option value="general">Allgemein</option>
-                    <option value="support">Support</option>
-                    <option value="sales">Vertrieb</option>
-                    <option value="billing">Buchhaltung</option>
-                    <option value="press">Presse</option>
+                    <option value="general">{t('emails.types.general')}</option>
+                    <option value="support">{t('emails.types.support')}</option>
+                    <option value="sales">{t('emails.types.sales')}</option>
+                    <option value="billing">{t('emails.types.billing')}</option>
+                    <option value="press">{t('emails.types.press')}</option>
                   </Select>
                 </div>
                 <div className="col-span-7">
@@ -326,7 +329,7 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                       updated[index].email = e.target.value;
                       setFormData({ ...formData, emails: updated });
                     }}
-                    placeholder="email@firma.de"
+                    placeholder={t('emails.emailPlaceholder')}
                   />
                 </div>
                 <div className="col-span-1 flex items-center">
@@ -351,17 +354,17 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine E-Mail-Adressen hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('emails.empty')}</Text>
         )}
       </div>
 
       {/* Social Media */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+          <div className="text-sm font-medium text-gray-900">{t('socialMedia.title')}</div>
           <Button type="button" onClick={addSocialMediaField} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Profil hinzufügen
+            {t('socialMedia.addButton')}
           </Button>
         </div>
 
@@ -383,7 +386,7 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
                   <Input
                     value={profile.url}
                     onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)}
-                    placeholder="https://..."
+                    placeholder={t('socialMedia.urlPlaceholder')}
                   />
                 </div>
                 <div className="col-span-1">
@@ -395,7 +398,7 @@ export function InternationalSection({ formData, setFormData }: CompanyModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Social Media Profile hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('socialMedia.empty')}</Text>
         )}
       </div>
     </FieldGroup>

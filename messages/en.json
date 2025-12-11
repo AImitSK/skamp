@@ -21,6 +21,7 @@
     "all": "All",
     "none": "None",
     "actions": "Actions",
+    "view": "View",
     "details": "Details",
     "settings": "Settings",
     "help": "Help",
@@ -921,7 +922,314 @@
     }
   },
   "crm": {
-    "redirecting": "Redirecting..."
+    "redirecting": "Redirecting...",
+    "contactModal": {
+      "general": {
+        "labels": {
+          "salutation": "Salutation",
+          "title": "Title",
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "company": "Company",
+          "position": "Position",
+          "department": "Department",
+          "tags": "Tags",
+          "status": "Status",
+          "isJournalist": "Is Journalist?"
+        },
+        "placeholders": {
+          "titleExample": "e.g., Dr., Prof.",
+          "positionExample": "e.g., CEO, Editor",
+          "departmentExample": "e.g., Sales, Editorial"
+        },
+        "salutations": {
+          "none": "No Salutation",
+          "mr": "Mr.",
+          "ms": "Ms.",
+          "dr": "Dr.",
+          "prof": "Prof.",
+          "profDr": "Prof. Dr."
+        },
+        "company": {
+          "none": "No Company Assigned",
+          "tooltip": "Select the company where this person works"
+        },
+        "journalist": {
+          "label": "This person is a journalist/editor",
+          "tooltip": "Enables additional media fields"
+        },
+        "required": "*",
+        "contactStatus": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "unsubscribed": "Unsubscribed",
+          "bounced": "Bounced",
+          "archived": "Archived"
+        }
+      },
+      "professional": {
+        "biography": "Biography",
+        "biographyPlaceholder": "Professional background..."
+      },
+      "communication": {
+        "title": "Communication",
+        "emails": {
+          "title": "Email Addresses",
+          "addButton": "Add Email",
+          "placeholder": "email@example.com",
+          "empty": "No email addresses added",
+          "types": {
+            "business": "Business",
+            "private": "Private",
+            "other": "Other"
+          }
+        },
+        "phones": {
+          "title": "Phone Numbers",
+          "addButton": "Add Number",
+          "placeholder": "30 12345678",
+          "empty": "No phone numbers added",
+          "types": {
+            "business": "Business",
+            "mobile": "Mobile",
+            "private": "Private",
+            "fax": "Fax",
+            "other": "Other"
+          }
+        },
+        "social": {
+          "title": "Social Media Profiles",
+          "addButton": "Add Profile",
+          "urlPlaceholder": "https://...",
+          "empty": "No social media profiles added",
+          "platforms": {
+            "linkedin": "LinkedIn",
+            "twitter": "Twitter/X",
+            "xing": "XING",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "youtube": "YouTube",
+            "tiktok": "TikTok",
+            "other": "Other"
+          }
+        },
+        "preferences": {
+          "title": "Communication Preferences",
+          "preferredChannel": "Preferred Channel",
+          "preferredLanguage": "Preferred Language",
+          "noPreference": "No Preference",
+          "selectLanguage": "Select language...",
+          "channels": {
+            "email": "Email",
+            "phone": "Phone",
+            "messaging": "Messaging (WhatsApp, etc.)",
+            "mail": "Mail"
+          },
+          "languages": {
+            "de": "German",
+            "en": "English",
+            "fr": "French",
+            "es": "Spanish",
+            "it": "Italian",
+            "pt": "Portuguese",
+            "nl": "Dutch",
+            "pl": "Polish",
+            "ru": "Russian",
+            "ja": "Japanese",
+            "ko": "Korean",
+            "zh": "Chinese"
+          }
+        },
+        "primary": "Primary"
+      },
+      "personal": {
+        "birthday": "Birthday",
+        "nationality": "Nationality",
+        "nationalityPlaceholder": "Select nationality...",
+        "interests": "Interests",
+        "interestsPlaceholder": "e.g., Golf, Technology, Travel (comma-separated)",
+        "internalNotes": "Internal Notes",
+        "internalNotesPlaceholder": "Internal notes for the team (not visible to external contacts)...",
+        "countries": {
+          "DE": "Germany",
+          "AT": "Austria",
+          "CH": "Switzerland",
+          "US": "USA",
+          "GB": "United Kingdom",
+          "FR": "France",
+          "IT": "Italy",
+          "ES": "Spain",
+          "NL": "Netherlands",
+          "BE": "Belgium",
+          "LU": "Luxembourg",
+          "DK": "Denmark",
+          "SE": "Sweden",
+          "NO": "Norway",
+          "FI": "Finland",
+          "PL": "Poland",
+          "CZ": "Czech Republic",
+          "HU": "Hungary",
+          "PT": "Portugal",
+          "GR": "Greece",
+          "IE": "Ireland",
+          "CA": "Canada",
+          "AU": "Australia",
+          "JP": "Japan",
+          "CN": "China",
+          "IN": "India",
+          "BR": "Brazil",
+          "MX": "Mexico",
+          "RU": "Russia",
+          "TR": "Turkey"
+        }
+      }
+    },
+    "companyModal": {
+      "financial": {
+        "annualRevenue": "Annual Revenue",
+        "annualRevenuePlaceholder": "0.00",
+        "employees": "Number of Employees",
+        "employeesPlaceholder": "0",
+        "fiscalYearEnd": "Fiscal Year End",
+        "fiscalYearEndPlaceholder": "12/31",
+        "fiscalYearEndHint": "Format: MM/DD (e.g., 12/31 for December 31st)",
+        "creditRating": "Credit Rating",
+        "creditRatingPlaceholder": "AAA, BB+, etc."
+      },
+      "international": {
+        "mainAddress": {
+          "title": "Main Address",
+          "street": "Street and House Number",
+          "streetPlaceholder": "Sample Street 123",
+          "postalCode": "Postal Code",
+          "postalCodePlaceholder": "12345",
+          "city": "City",
+          "cityPlaceholder": "Berlin",
+          "region": "State/Region",
+          "regionPlaceholder": "Bavaria",
+          "country": "Country",
+          "countryPlaceholder": "Select country...",
+          "countries": {
+            "DE": "Germany",
+            "AT": "Austria",
+            "CH": "Switzerland",
+            "US": "USA",
+            "GB": "United Kingdom",
+            "FR": "France",
+            "IT": "Italy",
+            "ES": "Spain",
+            "NL": "Netherlands",
+            "BE": "Belgium",
+            "LU": "Luxembourg",
+            "DK": "Denmark",
+            "SE": "Sweden",
+            "NO": "Norway",
+            "FI": "Finland",
+            "PL": "Poland",
+            "CZ": "Czech Republic",
+            "HU": "Hungary",
+            "PT": "Portugal",
+            "GR": "Greece",
+            "IE": "Ireland",
+            "CA": "Canada",
+            "AU": "Australia",
+            "JP": "Japan",
+            "CN": "China",
+            "IN": "India",
+            "BR": "Brazil",
+            "MX": "Mexico",
+            "RU": "Russia",
+            "TR": "Turkey"
+          }
+        },
+        "phones": {
+          "title": "Phone Numbers",
+          "addButton": "Add Number",
+          "empty": "No phone numbers added",
+          "phonePlaceholder": "30 12345678",
+          "types": {
+            "business": "Business",
+            "mobile": "Mobile",
+            "private": "Private",
+            "fax": "Fax",
+            "other": "Other"
+          }
+        },
+        "emails": {
+          "title": "Email Addresses",
+          "addButton": "Add Email",
+          "empty": "No email addresses added",
+          "emailPlaceholder": "email@company.com",
+          "types": {
+            "general": "General",
+            "support": "Support",
+            "sales": "Sales",
+            "billing": "Billing",
+            "press": "Press"
+          }
+        },
+        "socialMedia": {
+          "title": "Social Media Profiles",
+          "addButton": "Add Profile",
+          "empty": "No social media profiles added",
+          "urlPlaceholder": "https://..."
+        }
+      },
+      "legal": {
+        "officialName": "Official Company Name",
+        "officialNameTooltip": "Name as registered in commercial register or official documents",
+        "officialNamePlaceholder": "e.g. Example GmbH",
+        "tradingName": "Trading Name (DBA)",
+        "tradingNameTooltip": "If different from official name",
+        "tradingNamePlaceholder": "e.g. Example",
+        "legalForm": "Legal Form",
+        "foundedDate": "Founded Date",
+        "pleaseSelect": "Please select...",
+        "legalForms": {
+          "ug": "UG (limited liability)",
+          "other": "Other"
+        },
+        "identifiers": "Business Identifiers",
+        "identifiersTooltip": "VAT ID, Commercial Register, etc.",
+        "addIdentifier": "Add Identifier",
+        "identifierTypes": {
+          "vatEu": "VAT ID (EU)",
+          "einUs": "EIN (US)",
+          "companyRegDe": "Commercial Register (DE)",
+          "companyRegUk": "Companies House (UK)",
+          "uidCh": "UID (CH)",
+          "sirenFr": "SIREN (FR)",
+          "other": "Other"
+        },
+        "valuePlaceholder": "Enter value...",
+        "authorityPlaceholder": "Country/Authority",
+        "noIdentifiers": "No identifiers added"
+      },
+      "media": {
+        "alert": {
+          "title": "Media Management",
+          "message": "Publications are now managed centrally in the Library section. Here you can see all linked publications."
+        },
+        "publications": {
+          "title": "Publications",
+          "tooltip": "All publications of this publisher/media house",
+          "addButton": "New Publication",
+          "empty": "No publications linked yet",
+          "badges": {
+            "verified": "Verified",
+            "advertisements": "{count, plural, =1 {# Advertisement} other {# Advertisements}}"
+          }
+        }
+      },
+      "corporate": {
+        "parentCompany": "Parent Company",
+        "parentCompanyTooltip": "Direct parent company of this organization",
+        "noParentCompany": "No parent company",
+        "ultimateParent": "Ultimate Parent Company",
+        "ultimateParentTooltip": "Top-level parent company in the corporate structure",
+        "noUltimateParent": "No ultimate parent company"
+      }
+    }
   },
   "publications": {
     "loading": "Loading publications...",

@@ -9,6 +9,7 @@ import { CountryCode } from "@/types/international";
 import { ContactModalSectionProps } from "./types";
 import { Timestamp } from 'firebase/firestore';
 import * as Flags from 'country-flag-icons/react/3x2';
+import { useTranslations } from 'next-intl';
 
 // Flag Component
 const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
@@ -25,11 +26,13 @@ const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string
  * Enthält: Geburtstag, Nationalität, Interessen, Interne Notizen
  */
 export function PersonalSection({ formData, setFormData }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.personal');
+
   return (
     <FieldGroup>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Geburtstag</Label>
+          <Label>{t('birthday')}</Label>
           <Input
             type="date"
             value={(() => {
@@ -64,7 +67,7 @@ export function PersonalSection({ formData, setFormData }: ContactModalSectionPr
           />
         </Field>
         <Field>
-          <Label>Nationalität</Label>
+          <Label>{t('nationality')}</Label>
           <div className="relative" data-slot="control">
             {formData.personalInfo?.nationality && (
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
@@ -82,44 +85,44 @@ export function PersonalSection({ formData, setFormData }: ContactModalSectionPr
               })}
               className={formData.personalInfo?.nationality ? 'pl-11' : ''}
             >
-              <option value="">Nationalität auswählen...</option>
-              <option value="DE">Deutschland</option>
-              <option value="AT">Österreich</option>
-              <option value="CH">Schweiz</option>
-              <option value="US">USA</option>
-              <option value="GB">Großbritannien</option>
-              <option value="FR">Frankreich</option>
-              <option value="IT">Italien</option>
-              <option value="ES">Spanien</option>
-              <option value="NL">Niederlande</option>
-              <option value="BE">Belgien</option>
-              <option value="LU">Luxemburg</option>
-              <option value="DK">Dänemark</option>
-              <option value="SE">Schweden</option>
-              <option value="NO">Norwegen</option>
-              <option value="FI">Finnland</option>
-              <option value="PL">Polen</option>
-              <option value="CZ">Tschechien</option>
-              <option value="HU">Ungarn</option>
-              <option value="PT">Portugal</option>
-              <option value="GR">Griechenland</option>
-              <option value="IE">Irland</option>
-              <option value="CA">Kanada</option>
-              <option value="AU">Australien</option>
-              <option value="JP">Japan</option>
-              <option value="CN">China</option>
-              <option value="IN">Indien</option>
-              <option value="BR">Brasilien</option>
-              <option value="MX">Mexiko</option>
-              <option value="RU">Russland</option>
-              <option value="TR">Türkei</option>
+              <option value="">{t('nationalityPlaceholder')}</option>
+              <option value="DE">{t('countries.DE')}</option>
+              <option value="AT">{t('countries.AT')}</option>
+              <option value="CH">{t('countries.CH')}</option>
+              <option value="US">{t('countries.US')}</option>
+              <option value="GB">{t('countries.GB')}</option>
+              <option value="FR">{t('countries.FR')}</option>
+              <option value="IT">{t('countries.IT')}</option>
+              <option value="ES">{t('countries.ES')}</option>
+              <option value="NL">{t('countries.NL')}</option>
+              <option value="BE">{t('countries.BE')}</option>
+              <option value="LU">{t('countries.LU')}</option>
+              <option value="DK">{t('countries.DK')}</option>
+              <option value="SE">{t('countries.SE')}</option>
+              <option value="NO">{t('countries.NO')}</option>
+              <option value="FI">{t('countries.FI')}</option>
+              <option value="PL">{t('countries.PL')}</option>
+              <option value="CZ">{t('countries.CZ')}</option>
+              <option value="HU">{t('countries.HU')}</option>
+              <option value="PT">{t('countries.PT')}</option>
+              <option value="GR">{t('countries.GR')}</option>
+              <option value="IE">{t('countries.IE')}</option>
+              <option value="CA">{t('countries.CA')}</option>
+              <option value="AU">{t('countries.AU')}</option>
+              <option value="JP">{t('countries.JP')}</option>
+              <option value="CN">{t('countries.CN')}</option>
+              <option value="IN">{t('countries.IN')}</option>
+              <option value="BR">{t('countries.BR')}</option>
+              <option value="MX">{t('countries.MX')}</option>
+              <option value="RU">{t('countries.RU')}</option>
+              <option value="TR">{t('countries.TR')}</option>
             </Select>
           </div>
         </Field>
       </div>
 
       <Field>
-        <Label>Interessen</Label>
+        <Label>{t('interests')}</Label>
         <Textarea
           value={formData.personalInfo?.interests?.join(', ') || ''}
           onChange={(e) => setFormData({
@@ -130,12 +133,12 @@ export function PersonalSection({ formData, setFormData }: ContactModalSectionPr
             }
           })}
           rows={2}
-          placeholder="z.B. Golf, Technologie, Reisen (kommagetrennt)"
+          placeholder={t('interestsPlaceholder')}
         />
       </Field>
 
       <Field>
-        <Label>Interne Notizen</Label>
+        <Label>{t('internalNotes')}</Label>
         <Textarea
           value={formData.internalNotes || ''}
           onChange={(e) => setFormData({
@@ -143,7 +146,7 @@ export function PersonalSection({ formData, setFormData }: ContactModalSectionPr
             internalNotes: e.target.value
           })}
           rows={4}
-          placeholder="Interne Notizen für das Team (nicht sichtbar für externe Kontakte)..."
+          placeholder={t('internalNotesPlaceholder')}
         />
       </Field>
     </FieldGroup>

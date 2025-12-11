@@ -65,7 +65,9 @@
       "WebFetch(domain:docs.anthropic.com)",
       "WebFetch(domain:docs.claude.com)",
       "Bash(node scripts/find-campaign-for-project.js:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npm run lint:*)",
+      "Bash(python -c:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

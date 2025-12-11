@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/CompanyModal/CorporateSection.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Field, FieldGroup, Label } from "@/components/ui/fieldset";
 import { Select } from "@/components/ui/select";
 import { InfoTooltip } from "@/components/InfoTooltip";
@@ -12,18 +13,20 @@ import { CompanyModalSectionProps } from "./types";
  * Enthält: Muttergesellschaft, Oberste Muttergesellschaft
  */
 export function CorporateSection({ formData, setFormData, companies = [] }: CompanyModalSectionProps) {
+  const t = useTranslations('crm.companyModal.corporate');
+
   return (
     <FieldGroup>
       <Field>
         <Label>
-          Muttergesellschaft
-          <InfoTooltip content="Direkte Muttergesellschaft dieses Unternehmens" className="ml-1.5 inline-flex align-text-top" />
+          {t('parentCompany')}
+          <InfoTooltip content={t('parentCompanyTooltip')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Select
           value={formData.parentCompanyId || ''}
           onChange={(e) => setFormData({ ...formData, parentCompanyId: e.target.value || undefined })}
         >
-          <option value="">Keine Muttergesellschaft</option>
+          <option value="">{t('noParentCompany')}</option>
           {companies.map(comp => (
             <option key={comp.id} value={comp.id}>{comp.name}</option>
           ))}
@@ -32,14 +35,14 @@ export function CorporateSection({ formData, setFormData, companies = [] }: Comp
 
       <Field>
         <Label>
-          Oberste Muttergesellschaft
-          <InfoTooltip content="Oberste Muttergesellschaft in der Konzernstruktur" className="ml-1.5 inline-flex align-text-top" />
+          {t('ultimateParent')}
+          <InfoTooltip content={t('ultimateParentTooltip')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Select
           value={formData.ultimateParentId || ''}
           onChange={(e) => setFormData({ ...formData, ultimateParentId: e.target.value || undefined })}
         >
-          <option value="">Keine oberste Muttergesellschaft</option>
+          <option value="">{t('noUltimateParent')}</option>
           {companies.map(comp => (
             <option key={comp.id} value={comp.id}>{comp.name}</option>
           ))}

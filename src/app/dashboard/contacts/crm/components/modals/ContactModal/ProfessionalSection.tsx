@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/ContactModal/ProfessionalSection.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Field, FieldGroup, Label } from "@/components/ui/fieldset";
 import { Textarea } from "@/components/ui/textarea";
 import { ContactModalSectionProps } from "./types";
@@ -11,10 +12,12 @@ import { ContactModalSectionProps } from "./types";
  * Enthält: Biografie
  */
 export function ProfessionalSection({ formData, setFormData }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.professional');
+
   return (
     <FieldGroup>
       <Field>
-        <Label>Biografie</Label>
+        <Label>{t('biography')}</Label>
         <Textarea
           value={formData.professionalInfo?.biography || ''}
           onChange={(e) => setFormData({
@@ -25,7 +28,7 @@ export function ProfessionalSection({ formData, setFormData }: ContactModalSecti
             }
           })}
           rows={4}
-          placeholder="Beruflicher Werdegang..."
+          placeholder={t('biographyPlaceholder')}
         />
       </Field>
     </FieldGroup>

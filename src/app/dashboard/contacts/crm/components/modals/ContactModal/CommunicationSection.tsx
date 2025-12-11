@@ -13,6 +13,7 @@ import { socialPlatformLabels } from "@/types/crm";
 import { COMMUNICATION_CHANNELS, LanguageCode } from "@/types/crm-enhanced";
 import { ContactModalSectionProps } from "./types";
 import * as Flags from 'country-flag-icons/react/3x2';
+import { useTranslations } from 'next-intl';
 
 // Flag Component
 const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
@@ -53,6 +54,7 @@ const COUNTRY_OPTIONS = [
  * Enthält: Email-Adressen, Telefonnummern, Social Media Profile, Kommunikations-Präferenzen
  */
 export function CommunicationSection({ formData, setFormData }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.communication');
   // Email handlers
   const addEmailField = () => {
     const newEmail = {
@@ -111,10 +113,10 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
       {/* Email Addresses */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+          <div className="text-sm font-medium text-gray-900">{t('emails.title')}</div>
           <Button type="button" onClick={addEmailField} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            E-Mail hinzufügen
+            {t('emails.addButton')}
           </Button>
         </div>
 
@@ -131,9 +133,9 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       setFormData({ ...formData, emails: updated });
                     }}
                   >
-                    <option value="business">Geschäftlich</option>
-                    <option value="private">Privat</option>
-                    <option value="other">Sonstige</option>
+                    <option value="business">{t('emails.types.business')}</option>
+                    <option value="private">{t('emails.types.private')}</option>
+                    <option value="other">{t('emails.types.other')}</option>
                   </Select>
                 </div>
                 <div className="col-span-7">
@@ -145,7 +147,7 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       updated[index].email = e.target.value;
                       setFormData({ ...formData, emails: updated });
                     }}
-                    placeholder="email@beispiel.de"
+                    placeholder={t('emails.placeholder')}
                   />
                 </div>
                 <div className="col-span-1 flex items-center">
@@ -159,7 +161,7 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       });
                       setFormData({ ...formData, emails: updated });
                     }}
-                    aria-label="Primär"
+                    aria-label={t('primary')}
                   />
                 </div>
                 <div className="col-span-1">
@@ -171,17 +173,17 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine E-Mail-Adressen hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('emails.empty')}</Text>
         )}
       </div>
 
       {/* Phone Numbers */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
+          <div className="text-sm font-medium text-gray-900">{t('phones.title')}</div>
           <Button type="button" onClick={addPhoneField} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Nummer hinzufügen
+            {t('phones.addButton')}
           </Button>
         </div>
 
@@ -198,11 +200,11 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       setFormData({ ...formData, phones: updated });
                     }}
                   >
-                    <option value="business">Geschäftlich</option>
-                    <option value="mobile">Mobil</option>
-                    <option value="private">Privat</option>
-                    <option value="fax">Fax</option>
-                    <option value="other">Sonstige</option>
+                    <option value="business">{t('phones.types.business')}</option>
+                    <option value="mobile">{t('phones.types.mobile')}</option>
+                    <option value="private">{t('phones.types.private')}</option>
+                    <option value="fax">{t('phones.types.fax')}</option>
+                    <option value="other">{t('phones.types.other')}</option>
                   </Select>
                 </div>
                 <div className="col-span-2">
@@ -231,7 +233,7 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                     }}
                     defaultCountry={phone.countryCode || 'DE'}
                     showCountrySelect={false}
-                    placeholder="30 12345678"
+                    placeholder={t('phones.placeholder')}
                     keepInvalidInput={true}
                     onValidationError={(error) => {
                       // Telefonnummer-Validierungsfehler werden automatisch angezeigt
@@ -249,7 +251,7 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       });
                       setFormData({ ...formData, phones: updated });
                     }}
-                    aria-label="Primär"
+                    aria-label={t('primary')}
                   />
                 </div>
                 <div className="col-span-1 pt-2">
@@ -261,17 +263,17 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('phones.empty')}</Text>
         )}
       </div>
 
       {/* Social Profiles */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+          <div className="text-sm font-medium text-gray-900">{t('social.title')}</div>
           <Button type="button" onClick={addSocialProfile} plain className="text-sm">
             <PlusIcon className="h-4 w-4" />
-            Profil hinzufügen
+            {t('social.addButton')}
           </Button>
         </div>
 
@@ -288,8 +290,8 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       setFormData({ ...formData, socialProfiles: updated });
                     }}
                   >
-                    {Object.entries(socialPlatformLabels).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
+                    {Object.entries(socialPlatformLabels).map(([key]) => (
+                      <option key={key} value={key}>{t(`social.platforms.${key}`)}</option>
                     ))}
                   </Select>
                 </div>
@@ -301,7 +303,7 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                       updated[index].url = e.target.value;
                       setFormData({ ...formData, socialProfiles: updated });
                     }}
-                    placeholder="https://..."
+                    placeholder={t('social.urlPlaceholder')}
                   />
                 </div>
                 <div className="col-span-1">
@@ -313,17 +315,17 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
             ))}
           </div>
         ) : (
-          <Text className="text-sm text-gray-500">Keine Social Media Profile hinzugefügt</Text>
+          <Text className="text-sm text-gray-500">{t('social.empty')}</Text>
         )}
       </div>
 
       {/* Communication Preferences */}
       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
-        <div className="text-sm font-medium text-gray-900">Kommunikations-Präferenzen</div>
+        <div className="text-sm font-medium text-gray-900">{t('preferences.title')}</div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field>
-            <Label>Bevorzugter Kanal</Label>
+            <Label>{t('preferences.preferredChannel')}</Label>
             <Select
               value={formData.communicationPreferences?.preferredChannel || ''}
               onChange={(e) => setFormData({
@@ -334,16 +336,16 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                 }
               })}
             >
-              <option value="">Keine Präferenz</option>
+              <option value="">{t('preferences.noPreference')}</option>
               {COMMUNICATION_CHANNELS.map(channel => (
                 <option key={channel.value} value={channel.value}>
-                  {channel.label}
+                  {t(`preferences.channels.${channel.value}`)}
                 </option>
               ))}
             </Select>
           </Field>
           <Field>
-            <Label>Bevorzugte Sprache</Label>
+            <Label>{t('preferences.preferredLanguage')}</Label>
             <div className="relative" data-slot="control">
               {formData.communicationPreferences?.preferredLanguage && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
@@ -364,19 +366,19 @@ export function CommunicationSection({ formData, setFormData }: ContactModalSect
                 })}
                 className={formData.communicationPreferences?.preferredLanguage ? 'pl-11' : ''}
               >
-                <option value="">Sprache auswählen...</option>
-                <option value="de">Deutsch</option>
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="es">Español</option>
-                <option value="it">Italiano</option>
-                <option value="pt">Português</option>
-                <option value="nl">Nederlands</option>
-                <option value="pl">Polski</option>
-                <option value="ru">Русский</option>
-                <option value="ja">日本語</option>
-                <option value="ko">한국어</option>
-                <option value="zh">中文</option>
+                <option value="">{t('preferences.selectLanguage')}</option>
+                <option value="de">{t('preferences.languages.de')}</option>
+                <option value="en">{t('preferences.languages.en')}</option>
+                <option value="fr">{t('preferences.languages.fr')}</option>
+                <option value="es">{t('preferences.languages.es')}</option>
+                <option value="it">{t('preferences.languages.it')}</option>
+                <option value="pt">{t('preferences.languages.pt')}</option>
+                <option value="nl">{t('preferences.languages.nl')}</option>
+                <option value="pl">{t('preferences.languages.pl')}</option>
+                <option value="ru">{t('preferences.languages.ru')}</option>
+                <option value="ja">{t('preferences.languages.ja')}</option>
+                <option value="ko">{t('preferences.languages.ko')}</option>
+                <option value="zh">{t('preferences.languages.zh')}</option>
               </Select>
             </div>
           </Field>

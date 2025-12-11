@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/ContactModal/GeneralSection.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Field, FieldGroup, Label } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -23,11 +24,13 @@ export function GeneralSection({
   onCreateTag,
   onCompanyChange
 }: ContactModalSectionProps) {
+  const t = useTranslations('crm.contactModal.general');
+
   return (
     <FieldGroup>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Anrede</Label>
+          <Label>{t('labels.salutation')}</Label>
           <Select
             value={formData.name?.salutation || ''}
             onChange={(e) => setFormData({
@@ -38,16 +41,16 @@ export function GeneralSection({
               }
             })}
           >
-            <option value="">Keine Anrede</option>
-            <option value="Herr">Herr</option>
-            <option value="Frau">Frau</option>
-            <option value="Dr.">Dr.</option>
-            <option value="Prof.">Prof.</option>
-            <option value="Prof. Dr.">Prof. Dr.</option>
+            <option value="">{t('salutations.none')}</option>
+            <option value="Herr">{t('salutations.mr')}</option>
+            <option value="Frau">{t('salutations.ms')}</option>
+            <option value="Dr.">{t('salutations.dr')}</option>
+            <option value="Prof.">{t('salutations.prof')}</option>
+            <option value="Prof. Dr.">{t('salutations.profDr')}</option>
           </Select>
         </Field>
         <Field>
-          <Label>Titel</Label>
+          <Label>{t('labels.title')}</Label>
           <Input
             value={formData.name?.title || ''}
             onChange={(e) => setFormData({
@@ -57,14 +60,14 @@ export function GeneralSection({
                 title: e.target.value
               }
             })}
-            placeholder="z.B. Dr., Prof."
+            placeholder={t('placeholders.titleExample')}
           />
         </Field>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Vorname *</Label>
+          <Label>{t('labels.firstName')} {t('required')}</Label>
           <Input
             value={formData.name?.firstName || ''}
             onChange={(e) => setFormData({
@@ -79,7 +82,7 @@ export function GeneralSection({
           />
         </Field>
         <Field>
-          <Label>Nachname *</Label>
+          <Label>{t('labels.lastName')} {t('required')}</Label>
           <Input
             value={formData.name?.lastName || ''}
             onChange={(e) => setFormData({
@@ -96,14 +99,14 @@ export function GeneralSection({
 
       <Field>
         <Label>
-          Firma
-          <InfoTooltip content="Wählen Sie die Firma aus, bei der diese Person arbeitet" className="ml-1.5 inline-flex align-text-top" />
+          {t('labels.company')}
+          <InfoTooltip content={t('company.tooltip')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Select
           value={formData.companyId || ''}
           onChange={(e) => onCompanyChange?.(e.target.value)}
         >
-          <option value="">Keine Firma zugeordnet</option>
+          <option value="">{t('company.none')}</option>
           {companies.map((company) => (
             <option key={company.id} value={company.id}>
               {company.name}
@@ -114,26 +117,26 @@ export function GeneralSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Position</Label>
+          <Label>{t('labels.position')}</Label>
           <Input
             value={formData.position || ''}
             onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-            placeholder="z.B. Geschäftsführer, Redakteur"
+            placeholder={t('placeholders.positionExample')}
           />
         </Field>
         <Field>
-          <Label>Abteilung</Label>
+          <Label>{t('labels.department')}</Label>
           <Input
             value={formData.department || ''}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            placeholder="z.B. Vertrieb, Redaktion"
+            placeholder={t('placeholders.departmentExample')}
           />
         </Field>
       </div>
 
       {/* Tags */}
       <Field>
-        <Label>Tags</Label>
+        <Label>{t('labels.tags')}</Label>
         <TagInput
           selectedTagIds={formData.tagIds || []}
           availableTags={tags}
@@ -144,20 +147,22 @@ export function GeneralSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Status</Label>
+          <Label>{t('labels.status')}</Label>
           <Select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
           >
             {CONTACT_STATUS_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {t(`contactStatus.${opt.value}` as any)}
+              </option>
             ))}
           </Select>
         </Field>
         <Field>
           <Label>
-            Ist Journalist?
-            <InfoTooltip content="Aktiviert zusätzliche Medien-Felder" className="ml-1.5 inline-flex align-text-top" />
+            {t('labels.isJournalist')}
+            <InfoTooltip content={t('journalist.tooltip')} className="ml-1.5 inline-flex align-text-top" />
           </Label>
           <div className="mt-2">
             <label className="flex items-center">
@@ -171,7 +176,7 @@ export function GeneralSection({
                   }
                 })}
               />
-              <span className="ml-2">Diese Person ist Journalist/Redakteur</span>
+              <span className="ml-2">{t('journalist.label')}</span>
             </label>
           </div>
         </Field>

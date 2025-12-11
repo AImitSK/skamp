@@ -1,6 +1,7 @@
 // src/app/dashboard/contacts/crm/components/modals/CompanyModal/FinancialSection.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Field, FieldGroup, Label } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -14,11 +15,12 @@ import { CompanyModalSectionProps } from "./types";
  * Enthält: Jahresumsatz, Mitarbeiterzahl, Geschäftsjahresende, Kreditrating
  */
 export function FinancialSection({ formData, setFormData }: CompanyModalSectionProps) {
+  const t = useTranslations('crm.companyModal.financial');
   return (
     <FieldGroup>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field>
-          <Label>Jahresumsatz</Label>
+          <Label>{t('annualRevenue')}</Label>
           <CurrencyInput
             value={formData.financial?.annualRevenue?.amount}
             onChange={(value) => setFormData({
@@ -30,11 +32,11 @@ export function FinancialSection({ formData, setFormData }: CompanyModalSectionP
             })}
             currency={'EUR'}
             currencyPosition="right"
-            placeholder="0,00"
+            placeholder={t('annualRevenuePlaceholder')}
           />
         </Field>
         <Field>
-          <Label>Mitarbeiterzahl</Label>
+          <Label>{t('employees')}</Label>
           <Input
             type="number"
             value={formData.financial?.employees || ''}
@@ -45,15 +47,15 @@ export function FinancialSection({ formData, setFormData }: CompanyModalSectionP
                 employees: e.target.value ? parseInt(e.target.value) : undefined
               }
             })}
-            placeholder="0"
+            placeholder={t('employeesPlaceholder')}
           />
         </Field>
       </div>
 
       <Field>
         <Label>
-          Geschäftsjahresende
-          <InfoTooltip content="Format: TT.MM. (z.B. 31.12. für 31. Dezember)" className="ml-1.5 inline-flex align-text-top" />
+          {t('fiscalYearEnd')}
+          <InfoTooltip content={t('fiscalYearEndHint')} className="ml-1.5 inline-flex align-text-top" />
         </Label>
         <Input
           type="text"
@@ -65,19 +67,19 @@ export function FinancialSection({ formData, setFormData }: CompanyModalSectionP
               fiscalYearEnd: e.target.value || undefined
             }
           })}
-          placeholder="31.12."
+          placeholder={t('fiscalYearEndPlaceholder')}
         />
       </Field>
 
       <Field>
-        <Label>Kreditrating</Label>
+        <Label>{t('creditRating')}</Label>
         <Input
           value={formData.financial?.creditRating || ''}
           onChange={(e) => setFormData({
             ...formData,
             financial: { ...formData.financial!, creditRating: e.target.value || undefined }
           })}
-          placeholder="AAA, BB+, etc."
+          placeholder={t('creditRatingPlaceholder')}
         />
       </Field>
     </FieldGroup>
