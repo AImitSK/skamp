@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { CustomerContactSelectorProps, CustomerContact } from '@/types/approvals-enhanced';
 import { Select } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
@@ -21,6 +22,7 @@ export function CustomerContactSelector({
   onContactChange,
   clientId
 }: CustomerContactSelectorProps) {
+  const t = useTranslations('campaigns.contacts');
   const { currentOrganization } = useOrganization();
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export function CustomerContactSelector({
         
         return {
           contactId: contact.id!,
-          name: fullName || primaryEmail || 'Unbekannter Kontakt',
+          name: fullName || primaryEmail || t('unknownContact'),
           email: primaryEmail,
           companyName: contact.companyDetails?.name || '',
           role: contact.position || undefined
@@ -74,7 +76,7 @@ export function CustomerContactSelector({
       setContacts(customerContacts);
     } catch (error) {
       console.error('Fehler beim Laden der Kunden-Kontakte:', error);
-      setError('Kunden-Kontakte konnten nicht geladen werden');
+      setError(t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -119,7 +121,7 @@ export function CustomerContactSelector({
       {/* Header */}
       <div className="flex items-center gap-2">
         <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-        <Text className="font-medium">Kunden-Kontakt für Freigabe</Text>
+        <Text className="font-medium">{t('title')}</Text>
       </div>
 
       {loading ? (
@@ -136,8 +138,7 @@ export function CustomerContactSelector({
       ) : contacts.length === 0 ? (
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <Text className="text-sm text-gray-600">
-            Keine Kontakte für diesen Kunden gefunden. 
-            Bitte fügen Sie zuerst Kontakte im CRM-System hinzu.
+            {t('noContactsFound')}
           </Text>
         </div>
       ) : (
@@ -148,7 +149,7 @@ export function CustomerContactSelector({
             onChange={(e) => handleContactSelect(e.target.value)}
             className="w-full"
           >
-            <option value="">Bitte wählen Sie einen Kontakt aus...</option>
+            <option value="">{t('selectPlaceholder')}</option>
             {contacts.map((contact) => (
               <option key={contact.contactId} value={contact.contactId}>
                 {contact.name} 
@@ -171,7 +172,7 @@ export function CustomerContactSelector({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Text className="font-medium text-green-900">
-                      {selectedContactData.name || 'Name nicht verfügbar'}
+                      {selectedContactData.name || t('nameNotAvailable')}
                     </Text>
                     {selectedContactData.role && (
                       <Badge color={getContactRoleBadgeColor(selectedContactData.role)}>
@@ -199,8 +200,7 @@ export function CustomerContactSelector({
               
               <div className="mt-3 pt-3 border-t border-green-200">
                 <Text className="text-sm text-green-800">
-                  Dieser Kontakt wird per E-Mail über die Freigabe-Anfrage benachrichtigt 
-                  und kann über einen sicheren Link die Kampagne prüfen und freigeben.
+                  {t('notificationInfo')}
                 </Text>
               </div>
             </div>
@@ -210,8 +210,7 @@ export function CustomerContactSelector({
           {!selectedContact && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <Text className="text-sm text-blue-800">
-                <strong>Hinweis:</strong> Wählen Sie den Hauptansprechpartner beim Kunden aus, 
-                der für die Freigabe von Pressemitteilungen zuständig ist.
+                <strong>{t('hint')}</strong> {t('hintDescription')}
               </Text>
             </div>
           )}

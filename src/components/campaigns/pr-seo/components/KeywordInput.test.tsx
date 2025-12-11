@@ -3,6 +3,22 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { KeywordInput } from './KeywordInput';
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
+    const translations: Record<string, string> = {
+      'placeholder': 'Keyword hinzufügen...',
+      'add': 'Hinzufügen',
+    };
+
+    if (key === 'maxReached' && params?.max) {
+      return `Maximum ${params.max} Keywords erreicht`;
+    }
+
+    return translations[key] || key;
+  },
+}));
+
 describe('KeywordInput', () => {
   const mockOnAddKeyword = jest.fn();
 

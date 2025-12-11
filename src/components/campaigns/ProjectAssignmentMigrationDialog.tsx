@@ -8,6 +8,7 @@ import {
   Description
 } from '@headlessui/react';
 import { InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface ProjectAssignmentMigrationDialogProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function ProjectAssignmentMigrationDialog({
   projectName,
   isProcessing = false
 }: ProjectAssignmentMigrationDialogProps) {
+  const t = useTranslations('campaigns.project');
   const [isConfirming, setIsConfirming] = useState(false);
 
   const handleConfirm = async () => {
@@ -45,7 +47,7 @@ export function ProjectAssignmentMigrationDialog({
         <DialogPanel className="mx-auto max-w-md rounded-xl bg-white p-6 shadow-xl">
           <div className="flex items-start justify-between mb-4">
             <DialogTitle className="text-lg font-semibold text-gray-900">
-              Projektzuweisung bestätigen
+              {t('dialog.title')}
             </DialogTitle>
             <button
               onClick={onClose}
@@ -62,24 +64,24 @@ export function ProjectAssignmentMigrationDialog({
                 <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-700">
-                    Durch die Zuweisung zum Projekt <span className="font-semibold">{projectName}</span> werden
-                    alle verknüpften Medien in die entsprechenden Projekt-Ordner umorganisiert.
+                    {t('dialog.description', { projectName })}
                   </p>
 
                   <div className="mt-3 bg-white rounded-md p-3 border border-blue-100">
                     <p className="text-sm font-medium text-gray-900">
-                      {assetCount} {assetCount === 1 ? 'Datei wird' : 'Dateien werden'} neu verknüpft:
+                      {t('dialog.filesCount', { count: assetCount })}
                     </p>
                     <ul className="mt-2 text-xs text-gray-600 space-y-1">
-                      <li>• Key Visuals → Projekt/Medien</li>
-                      <li>• Anhänge → Projekt/Medien</li>
-                      <li>• PDFs → Projekt/Pressemeldungen</li>
+                      <li>• {t('dialog.fileTypes.keyVisuals')}</li>
+                      <li>• {t('dialog.fileTypes.attachments')}</li>
+                      <li>• {t('dialog.fileTypes.pdfs')}</li>
                     </ul>
                   </div>
 
                   <p className="text-xs text-gray-500 mt-3">
-                    <span className="font-medium">Hinweis:</span> Die Dateien werden neu organisiert, ohne zusätzlichen
-                    Speicherplatz zu verbrauchen. Die originalen Verknüpfungen werden aktualisiert.
+                    {t.rich('dialog.notice', {
+                      strong: (chunks) => <span className="font-medium">{chunks}</span>
+                    })}
                   </p>
                 </div>
               </div>
@@ -92,7 +94,7 @@ export function ProjectAssignmentMigrationDialog({
               disabled={isProcessing || isConfirming}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Abbrechen
+              {t('dialog.buttons.cancel')}
             </button>
 
             <button
@@ -103,11 +105,11 @@ export function ProjectAssignmentMigrationDialog({
               {(isProcessing || isConfirming) ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Dateien werden organisiert...</span>
+                  <span>{t('dialog.buttons.organizing')}</span>
                 </>
               ) : (
                 <span>
-                  {assetCount} {assetCount === 1 ? 'Datei' : 'Dateien'} organisieren
+                  {t('dialog.buttons.organize', { count: assetCount })}
                 </span>
               )}
             </button>
@@ -116,7 +118,7 @@ export function ProjectAssignmentMigrationDialog({
           {isProcessing && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-xs text-gray-600 text-center">
-                Bitte warten Sie, während die Dateien in die Projekt-Struktur organisiert werden...
+                {t('dialog.processing')}
               </p>
             </div>
           )}

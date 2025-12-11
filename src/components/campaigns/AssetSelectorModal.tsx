@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ export function AssetSelectorModal({
   legacyUserId,
   selectionMode = 'multiple',
   onUploadSuccess,
-  
+
   // Campaign Smart Router Props
   campaignId,
   campaignName,
@@ -86,6 +87,7 @@ export function AssetSelectorModal({
   uploadType = 'attachment',
   enableSmartRouter = false
 }: AssetSelectorModalProps) {
+  const t = useTranslations('campaigns.assets');
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -334,15 +336,15 @@ export function AssetSelectorModal({
         <DialogTitle className="px-6 py-4">
           <div className="flex items-center justify-between">
             <span>
-              {selectionMode === 'single' ? 'Key Visual' : 'Medien'} auswählen
-              {clientName && ` für ${clientName}`}
+              {t(selectionMode === 'single' ? 'selectKeyVisual' : 'selectMedia')}
+              {clientName && ` ${t('forClient', { clientName })}`}
             </span>
             <Button
               onClick={() => setShowUploadModal(true)}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 mr-8"
             >
               <CloudArrowUpIcon className="h-4 w-4 mr-2" />
-              Neue Datei hochladen
+              {t('uploadNewFile')}
             </Button>
           </div>
         </DialogTitle>
@@ -354,14 +356,14 @@ export function AssetSelectorModal({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Medien suchen..."
+            placeholder={t('searchPlaceholder')}
           />
         </div>
 
         {loading ? (
           <div className="text-center py-12">
             <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
-            <Text className="mt-4">Lade Medien...</Text>
+            <Text className="mt-4">{t('loading')}</Text>
           </div>
         ) : (
           <div className="space-y-6 max-h-96 overflow-y-auto">
@@ -373,7 +375,7 @@ export function AssetSelectorModal({
                   className="flex items-center text-sm text-gray-600 hover:text-[#005fab] transition-colors"
                 >
                   <HomeIcon className="h-4 w-4 mr-1" />
-                  Medien
+                  {t('media')}
                 </button>
                 {navigationStack.map((item, index) => (
                   <div key={item.id} className="flex items-center">
@@ -416,14 +418,14 @@ export function AssetSelectorModal({
                 className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#005fab] mb-4 transition-colors"
               >
                 <ArrowLeftIcon className="h-4 w-4" />
-                Zurück
+                {t('back')}
               </button>
             )}
 
             {/* Folders - Klickbar für Navigation, KEINE Auswahl möglich */}
             {folders.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">Ordner</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{t('folders')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {folders.map(folder => (
                     <button
@@ -449,7 +451,7 @@ export function AssetSelectorModal({
             {/* Assets */}
             {filteredAssets.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">Dateien</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{t('files')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {filteredAssets.map(asset => (
                     <label
@@ -473,7 +475,7 @@ export function AssetSelectorModal({
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{asset.fileName}</p>
                         <p className="text-xs text-gray-500">
-                          {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
+                          {asset.fileType?.split('/')[1]?.toUpperCase() || t('file')}
                         </p>
                       </div>
                     </label>
@@ -487,17 +489,17 @@ export function AssetSelectorModal({
               <div className="text-center py-12">
                 <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <Text>
-                  Keine Medien für diesen Kunden gefunden
+                  {t('emptyState.title')}
                 </Text>
                 <Text className="text-sm text-gray-500 mt-2">
-                  Laden Sie Medien für diesen Kunden hoch
+                  {t('emptyState.subtitle')}
                 </Text>
                 <Button
                   onClick={() => setShowUploadModal(true)}
                   className="inline-flex items-center mt-4 text-primary hover:text-primary-hover bg-transparent border-0 p-0"
                 >
                   <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
-                  Medien hochladen
+                  {t('emptyState.uploadAction')}
                 </Button>
               </div>
             )}
@@ -507,16 +509,16 @@ export function AssetSelectorModal({
       
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleConfirm}
           disabled={selectedItems.size === 0}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {selectionMode === 'single' 
-            ? 'Als Key Visual verwenden'
-            : `${selectedItems.size} Medien übernehmen`
+          {selectionMode === 'single'
+            ? t('useAsKeyVisual')
+            : t('confirmSelection', { count: selectedItems.size })
           }
         </Button>
       </DialogActions>

@@ -9,7 +9,7 @@
 | Phase | Checklist | Status |
 |-------|-----------|--------|
 | **Phase 1: Seiten** | `09-MIGRATION-CHECKLIST.md` | ✅ Abgeschlossen (50/50) |
-| **Phase 2: Komponenten** | `09.1-COMPONENT-MIGRATION-CHECKLIST.md` | 🔄 In Bearbeitung (0/47) |
+| **Phase 2: Komponenten** | `09.1-COMPONENT-MIGRATION-CHECKLIST.md` | 🔄 In Bearbeitung (40/47) |
 
 ---
 

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { KeywordInputProps } from '../types';
@@ -11,6 +12,7 @@ import type { KeywordInputProps } from '../types';
  * Erlaubt das Hinzufügen neuer Keywords (max 2)
  */
 export const KeywordInput = React.memo(function KeywordInput({ keywords, onAddKeyword, maxKeywords = 2 }: KeywordInputProps) {
+  const t = useTranslations('campaigns.prSeo.keywords');
   const [newKeyword, setNewKeyword] = useState('');
 
   const handleAdd = () => {
@@ -34,7 +36,7 @@ export const KeywordInput = React.memo(function KeywordInput({ keywords, onAddKe
         value={newKeyword}
         onChange={(e) => setNewKeyword(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={keywords.length >= maxKeywords ? `Maximum ${maxKeywords} Keywords erreicht` : "Keyword hinzufügen..."}
+        placeholder={keywords.length >= maxKeywords ? t('maxReached', { max: maxKeywords }) : t('placeholder')}
         disabled={keywords.length >= maxKeywords}
         className="flex-1"
       />
@@ -44,7 +46,7 @@ export const KeywordInput = React.memo(function KeywordInput({ keywords, onAddKe
         color="secondary"
         className="whitespace-nowrap px-3 py-1.5 text-sm"
       >
-        Hinzufügen
+        {t('add')}
       </Button>
     </div>
   );

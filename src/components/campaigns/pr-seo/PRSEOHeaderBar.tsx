@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { MagnifyingGlassIcon, ArrowPathIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
@@ -25,7 +26,7 @@ import type { PRSEOHeaderBarProps } from './types';
  * Refactored Version - modularisiert in Utils, Hooks und Sub-Komponenten
  */
 export function PRSEOHeaderBar({
-  title = "PR-SEO Analyse",
+  title,
   content,
   keywords,
   onKeywordsChange,
@@ -33,6 +34,9 @@ export function PRSEOHeaderBar({
   className,
   onSeoScoreChange
 }: PRSEOHeaderBarProps) {
+  // === Translations ===
+  const t = useTranslations('campaigns.prSeo');
+
   // === Custom Hooks ===
 
   // Keyword-Analyse Hook (Management + KI-Analyse)
@@ -69,7 +73,7 @@ export function PRSEOHeaderBar({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">{title}</h3>
+          <h3 className="font-semibold text-gray-900">{title || t('title')}</h3>
         </div>
 
         <div className="flex items-center gap-2">
@@ -80,7 +84,7 @@ export function PRSEOHeaderBar({
               onClick={refreshAnalysis}
               disabled={isAnalyzing}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-              title="KI-Analyse aktualisieren"
+              title={t('refreshAnalysis')}
             >
               <ArrowPathIcon className={clsx('h-5 w-5 text-gray-600', isAnalyzing && 'animate-spin')} />
             </button>
@@ -88,7 +92,7 @@ export function PRSEOHeaderBar({
 
           {/* Score-Badge */}
           <Badge color={scoreBadgeColor} className="text-base font-semibold px-4 py-2">
-            PR-Score: {prScore}/100
+            {t('score', { score: prScore })}
           </Badge>
         </div>
       </div>
@@ -132,17 +136,17 @@ export function PRSEOHeaderBar({
                 <div className="flex items-center gap-4">
                   {keywordMetrics[0]?.targetAudience && (
                     <span>
-                      <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
+                      <strong>{t('targetAudience')}:</strong> {keywordMetrics[0].targetAudience}
                     </span>
                   )}
                   {keywordMetrics[0]?.tonality && (
                     <span>
-                      <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
+                      <strong>{t('tonality')}:</strong> {keywordMetrics[0].tonality}
                     </span>
                   )}
                   {keywordScoreData?.hasAIAnalysis && (
                     <span>
-                      <strong>KI-Score:</strong> {keywordScoreData.aiBonus}/40
+                      <strong>{t('aiScore')}:</strong> {keywordScoreData.aiBonus}/40
                     </span>
                   )}
                 </div>

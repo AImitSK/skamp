@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,7 @@ export default function SimpleProjectUploadModal({
   clientId,
   organizationId
 }: SimpleProjectUploadModalProps) {
+  const t = useTranslations('campaigns.project');
   const { user } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -149,7 +151,7 @@ export default function SimpleProjectUploadModal({
 
       await Promise.all(uploadPromises);
 
-      showAlert('success', `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei wurde' : 'Dateien wurden'} erfolgreich hochgeladen.`);
+      showAlert('success', t('uploadSuccess', { count: selectedFiles.length }));
       setSelectedFiles([]);
       setTimeout(() => {
         onUploadSuccess();
@@ -158,7 +160,7 @@ export default function SimpleProjectUploadModal({
 
     } catch (error) {
       console.error('Upload-Fehler:', error);
-      showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
+      showAlert('error', t('uploadError'));
     } finally {
       setUploading(false);
       setUploadProgress({});
@@ -172,7 +174,7 @@ export default function SimpleProjectUploadModal({
       <DialogTitle>
         <div className="flex items-center">
           <CloudArrowUpIcon className="w-5 h-5 mr-2 text-blue-600" />
-          Medien hochladen
+          {t('title')}
           {folderName && (
             <Badge className="ml-2" color="blue">
               {folderName}
@@ -190,7 +192,7 @@ export default function SimpleProjectUploadModal({
             <div className="flex items-center gap-2 text-sm">
               <FolderIcon className="h-4 w-4 text-blue-600" />
               <Text className="text-blue-800">
-                Upload-Ziel: <strong>{folderName}</strong>
+                {t('uploadTarget')} <strong>{folderName}</strong>
               </Text>
             </div>
           </div>
@@ -204,10 +206,10 @@ export default function SimpleProjectUploadModal({
         >
           <CloudArrowUpIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <Text className="text-lg font-medium text-gray-900 mb-2">
-            Dateien auswählen
+            {t('selectFiles')}
           </Text>
           <Text className="text-sm text-gray-500 mb-4">
-            oder per Drag & Drop
+            {t('dragAndDrop')}
           </Text>
 
           <input
@@ -221,18 +223,18 @@ export default function SimpleProjectUploadModal({
             htmlFor="file-upload"
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
           >
-            Dateien auswählen
+            {t('selectFiles')}
           </label>
 
           <Text className="text-xs text-gray-500 mt-2">
-            PNG, JPG, GIF, MP4, PDF bis 10MB
+            {t('fileFormats')}
           </Text>
         </div>
 
         {/* Selected Files */}
         {selectedFiles.length > 0 && (
           <div className="space-y-3">
-            <Text className="font-medium">Ausgewählte Dateien ({selectedFiles.length})</Text>
+            <Text className="font-medium">{t('selectedFiles', { count: selectedFiles.length })}</Text>
             {selectedFiles.map((file, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
@@ -269,13 +271,13 @@ export default function SimpleProjectUploadModal({
 
         {/* Upload Info */}
         <div className="text-xs text-gray-500">
-          <Text>Unterstützte Formate: Bilder (JPG, PNG, GIF), Videos (MP4, MOV), Dokumente (PDF, DOCX)</Text>
+          <Text>{t('supportedFormats')}</Text>
         </div>
       </DialogBody>
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={uploading}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleUpload}
@@ -284,8 +286,8 @@ export default function SimpleProjectUploadModal({
         >
           <CloudArrowUpIcon className="w-4 h-4 mr-2" />
           {uploading
-            ? `Hochladen... (${Object.keys(uploadProgress).length}/${selectedFiles.length})`
-            : `${selectedFiles.length} Datei(en) hochladen`
+            ? t('uploading', { current: Object.keys(uploadProgress).length, total: selectedFiles.length })
+            : t('uploadFiles', { count: selectedFiles.length })
           }
         </Button>
       </DialogActions>

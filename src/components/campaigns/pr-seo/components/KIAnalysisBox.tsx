@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { SparklesIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import type { KIAnalysisBoxProps } from '../types';
 
 /**
@@ -10,13 +11,14 @@ import type { KIAnalysisBoxProps } from '../types';
  * Zeigt KI-Analyse-Status und Relevanz-Score an
  */
 export const KIAnalysisBox = React.memo(function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
+  const t = useTranslations('campaigns.prSeo.analysis');
   const boxClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs bg-purple-50 text-purple-700 border border-purple-300";
 
   if (isLoading) {
     return (
       <div className={boxClasses}>
         <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        <span>KI analysiert...</span>
+        <span>{t('analyzing')}</span>
       </div>
     );
   }
@@ -30,7 +32,7 @@ export const KIAnalysisBox = React.memo(function KIAnalysisBox({ metrics, isLoad
     return (
       <div className={boxClasses}>
         <SparklesIcon className="h-3 w-3" />
-        <span>Bereit für Analyse</span>
+        <span>{t('readyForAnalysis')}</span>
       </div>
     );
   }
@@ -38,7 +40,7 @@ export const KIAnalysisBox = React.memo(function KIAnalysisBox({ metrics, isLoad
   return (
     <div className={boxClasses}>
       <SparklesIcon className="h-3 w-3" />
-      <span className="font-semibold">Relevanz:</span>
+      <span className="font-semibold">{t('relevance')}</span>
       <span>{metrics.semanticRelevance || 0}%</span>
     </div>
   );

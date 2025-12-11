@@ -2257,6 +2257,54 @@
         "gridView": "Kachel-Ansicht"
       }
     },
+    "prSeo": {
+      "title": "PR-SEO Analyse",
+      "refreshAnalysis": "KI-Analyse aktualisieren",
+      "score": "PR-Score: {score}/100",
+      "targetAudience": "Zielgruppe",
+      "tonality": "Tonalität",
+      "aiScore": "KI-Score",
+      "analysis": {
+        "analyzing": "KI analysiert...",
+        "readyForAnalysis": "Bereit für Analyse",
+        "relevance": "Relevanz:"
+      },
+      "recommendations": {
+        "title": "Empfehlungen: ({count})",
+        "aiBadge": "KI",
+        "showLess": "weniger anzeigen",
+        "showMore": "{count} weitere anzeigen"
+      },
+      "keywords": {
+        "placeholder": "Keyword hinzufügen...",
+        "maxReached": "Maximum {max} Keywords erreicht",
+        "add": "Hinzufügen",
+        "density": "Dichte",
+        "occurrences": "Vorkommen",
+        "distributionLabel": "Verteilung",
+        "distribution": {
+          "good": "gut",
+          "medium": "mittel",
+          "poor": "schlecht"
+        },
+        "removeKeyword": "Keyword entfernen"
+      }
+    },
+    "project": {
+      "linkedWith": "Verknüpft mit Projekt:",
+      "budget": "Budget:",
+      "milestones": "{completed} / {total} erreicht",
+      "milestonesLabel": "Meilensteine:",
+      "update": "Aktualisieren",
+      "openProject": "Projekt öffnen",
+      "pipelineStages": {
+        "creation": "Erstellung",
+        "review": "Review",
+        "approval": "Freigabe",
+        "distribution": "Verteilung",
+        "completed": "Abgeschlossen"
+      }
+    },
     "recipients": {
       "title": "Verteiler",
       "campaignListsTitle": "Kampagnen-Verteilerlisten",
@@ -2370,6 +2418,27 @@
         "emptyHint": "Klicken zum Auswählen"
       }
     },
+    "assets": {
+      "selectMedia": "Medien auswählen",
+      "selectKeyVisual": "Key Visual auswählen",
+      "forClient": "für {clientName}",
+      "uploadNewFile": "Neue Datei hochladen",
+      "searchPlaceholder": "Medien suchen...",
+      "loading": "Lade Medien...",
+      "media": "Medien",
+      "back": "Zurück",
+      "folders": "Ordner",
+      "files": "Dateien",
+      "file": "Datei",
+      "emptyState": {
+        "title": "Keine Medien für diesen Kunden gefunden",
+        "subtitle": "Laden Sie Medien für diesen Kunden hoch",
+        "uploadAction": "Medien hochladen"
+      },
+      "cancel": "Abbrechen",
+      "useAsKeyVisual": "Als Key Visual verwenden",
+      "confirmSelection": "{count} Medien übernehmen"
+    },
     "textbausteine": {
       "title": "Textbausteine",
       "showLess": "Weniger anzeigen",
@@ -2443,13 +2512,28 @@
       "noContent": "Noch kein Inhalt vorhanden"
     },
     "preview": {
-      "header": "Pressemitteilung zur Prüfung",
-      "label": "Pressemitteilung",
-      "defaultTitle": "Titel der Pressemitteilung",
-      "generating": "Inhalt wird generiert...",
+      "pressRelease": "Pressemitteilung",
+      "titlePlaceholder": "Titel der Pressemitteilung",
+      "emptyPreviewHint": "Klicken Sie auf \"Weiter\" oder \"Vorschau\" um die finale Vorschau zu generieren",
+      "campaignInfo": "Kampagnen-Info",
+      "customer": "Kunde:",
+      "approval": "Freigabe:",
+      "required": "Erforderlich",
+      "statistics": "Statistiken",
+      "characters": "Zeichen",
+      "boilerplates": "Textbausteine",
       "keywords": "Keywords",
-      "textModules": "Textbausteine",
       "media": "Medien",
+      "prSeoAnalysis": "PR-SEO Analyse",
+      "totalScore": "Gesamt-Score",
+      "headline": "Headline",
+      "structure": "Struktur",
+      "social": "Social",
+      "relevance": "Relevanz",
+      "concreteness": "Konkretheit",
+      "engagement": "Engagement",
+      "keywordsLabel": "Keywords:",
+      "attachments": "Anhänge",
       "more": "weitere"
     },
     "new": {
@@ -2811,37 +2895,23 @@
         }
       }
     },
-    "preview": {
-      "pressRelease": "Pressemitteilung",
-      "titlePlaceholder": "Titel der Pressemitteilung",
-      "emptyPreviewHint": "Klicken Sie auf \"Weiter\" oder \"Vorschau\" um die finale Vorschau zu generieren",
-      "campaignInfo": "Kampagnen-Info",
-      "customer": "Kunde:",
-      "approval": "Freigabe:",
-      "required": "Erforderlich",
-      "statistics": "Statistiken",
-      "characters": "Zeichen",
-      "boilerplates": "Textbausteine",
-      "keywords": "Keywords",
-      "media": "Medien",
-      "prSeoAnalysis": "PR-SEO Analyse",
-      "totalScore": "Gesamt-Score",
-      "headline": "Headline",
-      "structure": "Struktur",
-      "social": "Social",
-      "relevance": "Relevanz",
-      "concreteness": "Konkretheit",
-      "engagement": "Engagement",
-      "keywordsLabel": "Keywords:",
-      "attachments": "Anhänge",
-      "more": "weitere"
-    },
     "keyVisual": {
       "noVisualCustomer": "Kein Key Visual",
       "noVisualAgency": "Key Visual nicht verfügbar",
       "altText": "Key Visual",
       "clickToEdit": "Zum Bearbeiten klicken",
       "badge": "Key Visual"
+    },
+    "contacts": {
+      "title": "Kunden-Kontakt für Freigabe",
+      "selectPlaceholder": "Bitte wählen Sie einen Kontakt aus...",
+      "unknownContact": "Unbekannter Kontakt",
+      "loadError": "Kunden-Kontakte konnten nicht geladen werden",
+      "noContactsFound": "Keine Kontakte für diesen Kunden gefunden. Bitte fügen Sie zuerst Kontakte im CRM-System hinzu.",
+      "nameNotAvailable": "Name nicht verfügbar",
+      "notificationInfo": "Dieser Kontakt wird per E-Mail über die Freigabe-Anfrage benachrichtigt und kann über einen sicheren Link die Kampagne prüfen und freigeben.",
+      "hint": "Hinweis:",
+      "hintDescription": "Wählen Sie den Hauptansprechpartner beim Kunden aus, der für die Freigabe von Pressemitteilungen zuständig ist."
     }
   },
   "approvals": {
@@ -4458,6 +4528,25 @@
       "selectAll": "Alle auswählen",
       "deselectAll": "Alle abwählen",
       "outdatedWarning": "Einige ausgewählte Übersetzungen sind veraltet. Das Original wurde seit der letzten Übersetzung geändert."
+    },
+    "project": {
+      "dialog": {
+        "title": "Projektzuweisung bestätigen",
+        "description": "Durch die Zuweisung zum Projekt {projectName} werden alle verknüpften Medien in die entsprechenden Projekt-Ordner umorganisiert.",
+        "filesCount": "{count, plural, =1 {1 Datei wird} other {# Dateien werden}} neu verknüpft:",
+        "fileTypes": {
+          "keyVisuals": "Key Visuals → Projekt/Medien",
+          "attachments": "Anhänge → Projekt/Medien",
+          "pdfs": "PDFs → Projekt/Pressemeldungen"
+        },
+        "notice": "<strong>Hinweis:</strong> Die Dateien werden neu organisiert, ohne zusätzlichen Speicherplatz zu verbrauchen. Die originalen Verknüpfungen werden aktualisiert.",
+        "buttons": {
+          "cancel": "Abbrechen",
+          "organize": "{count, plural, =1 {1 Datei} other {# Dateien}} organisieren",
+          "organizing": "Dateien werden organisiert..."
+        },
+        "processing": "Bitte warten Sie, während die Dateien in die Projekt-Struktur organisiert werden..."
+      }
     }
   }
 }

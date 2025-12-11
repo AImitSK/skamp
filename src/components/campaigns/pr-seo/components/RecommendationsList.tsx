@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { RecommendationsListProps } from '../types';
@@ -11,6 +12,7 @@ import type { RecommendationsListProps } from '../types';
  * Zeigt SEO-Empfehlungen mit Expand/Collapse an
  */
 export const RecommendationsList = React.memo(function RecommendationsList({ recommendations }: RecommendationsListProps) {
+  const t = useTranslations('campaigns.prSeo.recommendations');
   const [showAll, setShowAll] = useState(false);
 
   if (recommendations.length === 0) {
@@ -23,7 +25,7 @@ export const RecommendationsList = React.memo(function RecommendationsList({ rec
     <div className="mt-4 p-3 bg-gray-100 rounded-md">
       <div>
         <p className="text-sm font-medium text-gray-900 mb-1">
-          Empfehlungen: ({recommendations.length})
+          {t('title', { count: recommendations.length })}
         </p>
         <ul className="text-xs text-gray-700 space-y-2">
           {displayedRecommendations.map((rec, index) => (
@@ -31,7 +33,7 @@ export const RecommendationsList = React.memo(function RecommendationsList({ rec
               <span className="leading-relaxed">• {rec.replace('[KI] ', '')}</span>
               {rec.startsWith('[KI]') && (
                 <Badge color="purple" className="text-[9px] px-1 py-0 mt-0.5 flex-shrink-0 leading-none h-3">
-                  KI
+                  {t('aiBadge')}
                 </Badge>
               )}
             </li>
@@ -51,12 +53,12 @@ export const RecommendationsList = React.memo(function RecommendationsList({ rec
           >
             {showAll ? (
               <>
-                weniger anzeigen
+                {t('showLess')}
                 <ChevronUpIcon className="h-3 w-3" />
               </>
             ) : (
               <>
-                <span className="font-semibold">{recommendations.length - 3} weitere anzeigen</span>
+                <span className="font-semibold">{t('showMore', { count: recommendations.length - 3 })}</span>
                 <ChevronDownIcon className="h-3 w-3" />
               </>
             )}

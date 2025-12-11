@@ -2257,6 +2257,54 @@
         "gridView": "Grid View"
       }
     },
+    "prSeo": {
+      "title": "PR-SEO Analysis",
+      "refreshAnalysis": "Refresh AI analysis",
+      "score": "PR Score: {score}/100",
+      "targetAudience": "Target Audience",
+      "tonality": "Tonality",
+      "aiScore": "AI Score",
+      "analysis": {
+        "analyzing": "AI analyzing...",
+        "readyForAnalysis": "Ready for analysis",
+        "relevance": "Relevance:"
+      },
+      "recommendations": {
+        "title": "Recommendations: ({count})",
+        "aiBadge": "AI",
+        "showLess": "show less",
+        "showMore": "show {count} more"
+      },
+      "keywords": {
+        "placeholder": "Add keyword...",
+        "maxReached": "Maximum {max} keywords reached",
+        "add": "Add",
+        "density": "Density",
+        "occurrences": "Occurrences",
+        "distributionLabel": "Distribution",
+        "distribution": {
+          "good": "good",
+          "medium": "medium",
+          "poor": "poor"
+        },
+        "removeKeyword": "Remove keyword"
+      }
+    },
+    "project": {
+      "linkedWith": "Linked to project:",
+      "budget": "Budget:",
+      "milestones": "{completed} / {total} reached",
+      "milestonesLabel": "Milestones:",
+      "update": "Update",
+      "openProject": "Open project",
+      "pipelineStages": {
+        "creation": "Creation",
+        "review": "Review",
+        "approval": "Approval",
+        "distribution": "Distribution",
+        "completed": "Completed"
+      }
+    },
     "recipients": {
       "title": "Recipients",
       "campaignListsTitle": "Campaign Distribution Lists",
@@ -2370,6 +2418,27 @@
         "emptyHint": "Click to select"
       }
     },
+    "assets": {
+      "selectMedia": "Select Media",
+      "selectKeyVisual": "Select Key Visual",
+      "forClient": "for {clientName}",
+      "uploadNewFile": "Upload New File",
+      "searchPlaceholder": "Search media...",
+      "loading": "Loading media...",
+      "media": "Media",
+      "back": "Back",
+      "folders": "Folders",
+      "files": "Files",
+      "file": "File",
+      "emptyState": {
+        "title": "No media found for this client",
+        "subtitle": "Upload media for this client",
+        "uploadAction": "Upload media"
+      },
+      "cancel": "Cancel",
+      "useAsKeyVisual": "Use as Key Visual",
+      "confirmSelection": "Add {count} media"
+    },
     "textbausteine": {
       "title": "Boilerplates",
       "showLess": "Show less",
@@ -2443,13 +2512,28 @@
       "noContent": "No content available yet"
     },
     "preview": {
-      "header": "Press Release for Review",
-      "label": "Press Release",
-      "defaultTitle": "Press Release Title",
-      "generating": "Content is being generated...",
+      "pressRelease": "Press Release",
+      "titlePlaceholder": "Press Release Title",
+      "emptyPreviewHint": "Click \"Next\" or \"Preview\" to generate the final preview",
+      "campaignInfo": "Campaign Info",
+      "customer": "Customer:",
+      "approval": "Approval:",
+      "required": "Required",
+      "statistics": "Statistics",
+      "characters": "Characters",
+      "boilerplates": "Boilerplates",
       "keywords": "Keywords",
-      "textModules": "Text Modules",
       "media": "Media",
+      "prSeoAnalysis": "PR-SEO Analysis",
+      "totalScore": "Total Score",
+      "headline": "Headline",
+      "structure": "Structure",
+      "social": "Social",
+      "relevance": "Relevance",
+      "concreteness": "Concreteness",
+      "engagement": "Engagement",
+      "keywordsLabel": "Keywords:",
+      "attachments": "Attachments",
       "more": "more"
     },
     "new": {
@@ -2811,37 +2895,23 @@
         }
       }
     },
-    "preview": {
-      "pressRelease": "Press Release",
-      "titlePlaceholder": "Press Release Title",
-      "emptyPreviewHint": "Click \"Next\" or \"Preview\" to generate the final preview",
-      "campaignInfo": "Campaign Info",
-      "customer": "Customer:",
-      "approval": "Approval:",
-      "required": "Required",
-      "statistics": "Statistics",
-      "characters": "Characters",
-      "boilerplates": "Boilerplates",
-      "keywords": "Keywords",
-      "media": "Media",
-      "prSeoAnalysis": "PR-SEO Analysis",
-      "totalScore": "Total Score",
-      "headline": "Headline",
-      "structure": "Structure",
-      "social": "Social",
-      "relevance": "Relevance",
-      "concreteness": "Concreteness",
-      "engagement": "Engagement",
-      "keywordsLabel": "Keywords:",
-      "attachments": "Attachments",
-      "more": "more"
-    },
     "keyVisual": {
       "noVisualCustomer": "No Key Visual",
       "noVisualAgency": "Key Visual not available",
       "altText": "Key Visual",
       "clickToEdit": "Click to edit",
       "badge": "Key Visual"
+    },
+    "contacts": {
+      "title": "Customer Contact for Approval",
+      "selectPlaceholder": "Please select a contact...",
+      "unknownContact": "Unknown Contact",
+      "loadError": "Customer contacts could not be loaded",
+      "noContactsFound": "No contacts found for this customer. Please add contacts in the CRM system first.",
+      "nameNotAvailable": "Name not available",
+      "notificationInfo": "This contact will be notified via email about the approval request and can review and approve the campaign through a secure link.",
+      "hint": "Note:",
+      "hintDescription": "Select the main contact person at the customer who is responsible for approving press releases."
     }
   },
   "approvals": {
@@ -4458,6 +4528,25 @@
       "selectAll": "Select all",
       "deselectAll": "Deselect all",
       "outdatedWarning": "Some selected translations are outdated. The original has been changed since the last translation."
+    },
+    "project": {
+      "dialog": {
+        "title": "Confirm Project Assignment",
+        "description": "By assigning to the project {projectName}, all linked media will be reorganized into the corresponding project folders.",
+        "filesCount": "{count, plural, =1 {1 file will be} other {# files will be}} re-linked:",
+        "fileTypes": {
+          "keyVisuals": "Key Visuals → Project/Media",
+          "attachments": "Attachments → Project/Media",
+          "pdfs": "PDFs → Project/Press Releases"
+        },
+        "notice": "<strong>Note:</strong> The files will be reorganized without consuming additional storage space. The original links will be updated.",
+        "buttons": {
+          "cancel": "Cancel",
+          "organize": "Organize {count, plural, =1 {1 file} other {# files}}",
+          "organizing": "Organizing files..."
+        },
+        "processing": "Please wait while the files are being organized into the project structure..."
+      }
     }
   }
 }
