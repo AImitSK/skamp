@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from 'next-intl';
 import { 
   DocumentTextIcon,
   ChevronDownIcon,
@@ -34,7 +35,8 @@ export function TextbausteinDisplay({
   maxDisplay = isCustomerView ? 3 : 5,
   className = ""
 }: TextbausteinDisplayProps) {
-  
+  const t = useTranslations('campaigns.textbausteine');
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [loadedBoilerplates, setLoadedBoilerplates] = useState<Boilerplate[]>([]);
@@ -83,7 +85,7 @@ export function TextbausteinDisplay({
       boilerplatesService.getByIds(boilerplateIds)
         .then(setLoadedBoilerplates)
         .catch(error => {
-          console.error('Fehler beim Laden der Textbausteine:', error);
+          console.error(t('loadError'), error);
           setLoadedBoilerplates([]);
         })
         .finally(() => setLoading(false));
@@ -174,12 +176,12 @@ export function TextbausteinDisplay({
         <div className="flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
             <DocumentTextIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <span className="truncate">Textbausteine</span>
+            <span className="truncate">{t('title')}</span>
             <Badge color="blue" className="text-xs ml-2 flex-shrink-0">
               {textbausteine.length}
             </Badge>
           </h3>
-          
+
           {hasMore && (
             <Button
               onClick={toggleExpanded}
@@ -189,12 +191,12 @@ export function TextbausteinDisplay({
               {isExpanded ? (
                 <>
                   <ChevronDownIcon className="h-4 w-4 mr-1" />
-                  Weniger anzeigen
+                  {t('showLess')}
                 </>
               ) : (
                 <>
                   <ChevronRightIcon className="h-4 w-4 mr-1" />
-                  Alle {textbausteine.length} anzeigen
+                  {t('showAll', { count: textbausteine.length })}
                 </>
               )}
             </Button>
@@ -228,14 +230,14 @@ export function TextbausteinDisplay({
                         "font-medium",
                         isCustomerView ? "text-gray-900 text-sm" : "text-gray-900"
                       )}>
-                        {baustein.title || baustein.name || baustein.customTitle || 
+                        {baustein.title || baustein.name || baustein.customTitle ||
                          (isCustomerView ? (
-                           baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
-                           baustein.type === 'header' ? 'Header-Element' :
-                           baustein.type === 'footer' ? 'Footer-Element' :
-                           baustein.type === 'quote' ? 'Zitat' :
-                           `Textbaustein ${index + 1}`
-                         ) : `${baustein.type}-Element`)}
+                           baustein.type === 'boilerplate' ? t('types.standard') :
+                           baustein.type === 'header' ? t('types.header') :
+                           baustein.type === 'footer' ? t('types.footer') :
+                           baustein.type === 'quote' ? t('types.quote') :
+                           t('types.fallback', { index: index + 1 })
+                         ) : `${baustein.type}-${t('types.element')}`)}
                       </h4>
                       
                       {/* Kategorie/Typ */}
@@ -249,11 +251,11 @@ export function TextbausteinDisplay({
                     
                     {/* Typ-Badge */}
                     {baustein.type && !showSimplified && (
-                      <Badge 
-                        color={baustein.type === 'boilerplate' ? 'blue' : 'zinc'} 
+                      <Badge
+                        color={baustein.type === 'boilerplate' ? 'blue' : 'zinc'}
                         className="text-xs"
                       >
-                        {baustein.type === 'boilerplate' ? 'Standard' : 'Custom'}
+                        {baustein.type === 'boilerplate' ? t('badge.standard') : t('badge.custom')}
                       </Badge>
                     )}
                   </div>
@@ -276,30 +278,27 @@ export function TextbausteinDisplay({
                             );
                           } else if (isCustomerView) {
                             // Customer-View: Freundliche Beschreibung statt technische IDs
-                            const typeLabels = {
-                              'boilerplate': 'Standard-Textbaustein',
-                              'header': 'Header-Element', 
-                              'footer': 'Footer-Element',
-                              'quote': 'Zitat',
-                              'main': 'Haupttext-Element'
-                            };
-                            const typeLabel = typeLabels[baustein.type as keyof typeof typeLabels] || 'Textbaustein';
-                            
+                            const typeLabel = baustein.type === 'boilerplate' ? t('typeLabels.standard') :
+                                            baustein.type === 'header' ? t('typeLabels.header') :
+                                            baustein.type === 'footer' ? t('typeLabels.footer') :
+                                            baustein.type === 'quote' ? t('typeLabels.quote') :
+                                            baustein.type === 'main' ? t('typeLabels.main') :
+                                            t('typeLabels.default');
+
                             return (
                               <div className="text-gray-700">
                                 <p className="mb-2">
                                   <span className="font-medium">{typeLabel}</span>
                                   {baustein.position && (
                                     <span className="text-gray-500 text-sm ml-2">
-                                      ({baustein.position === 'header' ? 'Kopfbereich' : 
-                                        baustein.position === 'footer' ? 'Fußbereich' : 
+                                      ({baustein.position === 'header' ? t('positions.header') :
+                                        baustein.position === 'footer' ? t('positions.footer') :
                                         baustein.position})
                                     </span>
                                   )}
                                 </p>
                                 <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                                  Dieser Textbaustein sorgt für eine professionelle und konsistente 
-                                  Darstellung Ihrer Pressemitteilung gemäß bewährten PR-Standards.
+                                  {t('customerViewDescription')}
                                 </p>
                               </div>
                             );
@@ -307,7 +306,7 @@ export function TextbausteinDisplay({
                             // Agency-View: Technische Details
                             return (
                               <p className="text-gray-500 italic text-sm">
-                                ID: {baustein.id} ({baustein.type || 'unbekannt'})
+                                {t('agencyViewId', { id: baustein.id, type: baustein.type || t('unknown') })}
                                 {baustein.position && ` - ${baustein.position}`}
                               </p>
                             );
@@ -322,7 +321,7 @@ export function TextbausteinDisplay({
                           className="mt-2 text-[#005fab] hover:text-[#004a8c] text-sm"
                           plain
                         >
-                          {isItemExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                          {isItemExpanded ? t('showLess') : t('showMore')}
                         </Button>
                       )}
                     </div>
@@ -331,7 +330,7 @@ export function TextbausteinDisplay({
                   {/* Keywords/Tags (nur Agency-View) */}
                   {baustein.keywords && !isCustomerView && !showSimplified && baustein.keywords.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="text-xs text-gray-500 mb-1">Keywords:</div>
+                      <div className="text-xs text-gray-500 mb-1">{t('keywords')}:</div>
                       <div className="flex flex-wrap gap-1">
                         {baustein.keywords.slice(0, 5).map((keyword: string, kidx: number) => (
                           <span
@@ -343,7 +342,7 @@ export function TextbausteinDisplay({
                         ))}
                         {baustein.keywords.length > 5 && (
                           <span className="text-xs text-gray-500">
-                            +{baustein.keywords.length - 5} weitere
+                            {t('moreKeywords', { count: baustein.keywords.length - 5 })}
                           </span>
                         )}
                       </div>
@@ -364,7 +363,7 @@ export function TextbausteinDisplay({
               className="text-[#005fab] hover:text-[#004a8c]"
               plain
             >
-              {textbausteine.length - maxDisplay} weitere Textbausteine anzeigen
+              {t('showMoreItems', { count: textbausteine.length - maxDisplay })}
             </Button>
           </div>
         )}
@@ -373,8 +372,7 @@ export function TextbausteinDisplay({
         {isCustomerView && showSimplified && (
           <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm text-gray-600 text-center">
-              <strong>{textbausteine.length}</strong> Textbausteine wurden für 
-              eine konsistente und professionelle Darstellung verwendet.
+              {t('summary', { count: textbausteine.length })}
             </p>
           </div>
         )}

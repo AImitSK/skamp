@@ -2251,6 +2251,12 @@
     }
   },
   "campaigns": {
+    "common": {
+      "viewToggle": {
+        "listView": "Listen-Ansicht",
+        "gridView": "Kachel-Ansicht"
+      }
+    },
     "recipients": {
       "title": "Verteiler",
       "campaignListsTitle": "Kampagnen-Verteilerlisten",
@@ -2364,6 +2370,64 @@
         "emptyHint": "Klicken zum Auswählen"
       }
     },
+    "textbausteine": {
+      "title": "Textbausteine",
+      "showLess": "Weniger anzeigen",
+      "showAll": "Alle {count} anzeigen",
+      "showMore": "Mehr anzeigen",
+      "showMoreItems": "{count} weitere Textbausteine anzeigen",
+      "loadError": "Fehler beim Laden der Textbausteine:",
+      "keywords": "Keywords",
+      "moreKeywords": "+{count} weitere",
+      "unknown": "unbekannt",
+      "summary": "<strong>{count}</strong> Textbausteine wurden für eine konsistente und professionelle Darstellung verwendet.",
+      "types": {
+        "standard": "Standard-Textbaustein",
+        "header": "Header-Element",
+        "footer": "Footer-Element",
+        "quote": "Zitat",
+        "element": "Element",
+        "fallback": "Textbaustein {index}"
+      },
+      "typeLabels": {
+        "standard": "Standard-Textbaustein",
+        "header": "Header-Element",
+        "footer": "Footer-Element",
+        "quote": "Zitat",
+        "main": "Haupttext-Element",
+        "default": "Textbaustein"
+      },
+      "positions": {
+        "header": "Kopfbereich",
+        "footer": "Fußbereich"
+      },
+      "badge": {
+        "standard": "Standard",
+        "custom": "Custom"
+      },
+      "customerViewDescription": "Dieser Textbaustein sorgt für eine professionelle und konsistente Darstellung Ihrer Pressemitteilung gemäß bewährten PR-Standards.",
+      "agencyViewId": "ID: {id} ({type})"
+    },
+    "translation": {
+      "placeholder": "Text eingeben...",
+      "toolbar": {
+        "bold": "Fett (Strg+B)",
+        "italic": "Kursiv (Strg+I)",
+        "underline": "Unterstrichen (Strg+U)",
+        "strikethrough": "Durchgestrichen",
+        "headingNormal": "Normal",
+        "heading1": "Ü1",
+        "heading2": "Ü2",
+        "heading3": "Ü3",
+        "bulletList": "Aufzählungsliste",
+        "orderedList": "Nummerierte Liste",
+        "quote": "Zitat (Strg+Shift+Q)",
+        "hashtag": "Hashtag (Strg+Shift+H)",
+        "cta": "CTA/Call-to-Action (Strg+Shift+C)",
+        "undo": "Rückgängig (Strg+Z)",
+        "redo": "Wiederholen (Strg+Y)"
+      }
+    },
     "content": {
       "title": "Titel der Pressemitteilung",
       "titleTooltip": "Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet.",
@@ -2377,6 +2441,16 @@
       "generatingPdf": "PDF wird erstellt...",
       "previewTitle": "Vorschau",
       "noContent": "Noch kein Inhalt vorhanden"
+    },
+    "preview": {
+      "header": "Pressemitteilung zur Prüfung",
+      "label": "Pressemitteilung",
+      "defaultTitle": "Titel der Pressemitteilung",
+      "generating": "Inhalt wird generiert...",
+      "keywords": "Keywords",
+      "textModules": "Textbausteine",
+      "media": "Medien",
+      "more": "weitere"
     },
     "new": {
       "title": "Neue PR-Kampagne",
@@ -2399,6 +2473,21 @@
         "selectCustomerFirst": "Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen",
         "clickToSelect": "Klicken zum Auswählen",
         "selectCustomerPrompt": "Wählen Sie einen Kunden aus"
+      },
+      "keyVisual": {
+        "title": "Key Visual",
+        "add": "Key Visual hinzufügen",
+        "clickToSelect": "Klicken zum Auswählen oder Hochladen",
+        "altText": "Key Visual",
+        "edit": "Bearbeiten",
+        "remove": "Entfernen",
+        "selectClientFirst": "Bitte wählen Sie zuerst einen Kunden aus",
+        "uploadAnyway": "Trotzdem hochladen",
+        "cancel": "Abbrechen",
+        "smartRouterUploadTitle": "Smart Router Upload läuft...",
+        "smartRouterUploadMessage": "Key Visual wird intelligent geroutet und hochgeladen",
+        "cropperLoadingTitle": "Cropping-Tool wird geladen...",
+        "cropperLoadingMessage": "Bild wird für die Bearbeitung vorbereitet"
       },
       "approval": {
         "title": "Freigabe-Einstellungen",
@@ -2423,18 +2512,48 @@
       "pdf": {
         "preview": "PDF-Vorschau",
         "generate": "PDF generieren",
-        "generating": "PDF wird erstellt...",
+        "generating": "Generiere...",
         "generated": "PDF erfolgreich generiert!",
         "error": "Fehler bei der PDF-Erstellung",
         "previewPdf": "Vorschau PDF",
         "current": "Aktuell",
         "download": "Download",
         "noVersion": "Noch keine PDF-Version erstellt",
+        "noVersions": "Noch keine PDF-Versionen vorhanden",
         "generateHint": "Klicken Sie auf \"PDF generieren\" um eine Vorschau zu erstellen",
         "status": {
           "draft": "Entwurf",
           "approved": "Freigegeben",
-          "pending": "Freigabe angefordert"
+          "rejected": "Abgelehnt",
+          "pending": "Freigabe angefordert",
+          "pendingCustomer": "Zur Kundenfreigabe",
+          "pendingTeam": "Zur Teamfreigabe",
+          "changesRequested": "Änderungen angefordert"
+        },
+        "title": "Interne Pipeline-PDFs",
+        "versions": "Versionen: {count}",
+        "lastGenerated": "Zuletzt: {date}",
+        "autoGenerateOn": "Auto-Generation AN",
+        "copyLink": "Link kopieren",
+        "noPdfGenerated": "Noch keine Pipeline-PDF generiert",
+        "autoGenerateHint": "📄 Bei jeder Speicherung wird automatisch eine neue interne PDF-Version erstellt",
+        "stages": {
+          "creation": {
+            "label": "Erstellung",
+            "description": "Entwurfs-PDFs für interne Abstimmung"
+          },
+          "approval": {
+            "label": "Freigabe",
+            "description": "PDFs für Freigabe (Team & Kunde)"
+          },
+          "unknown": {
+            "label": "Unbekannt",
+            "description": "Pipeline-PDFs"
+          }
+        },
+        "errors": {
+          "missingIds": "Kampagne oder Projekt-ID fehlt",
+          "generationFailed": "PDF-Generierung fehlgeschlagen. Bitte versuchen Sie es erneut."
         }
       },
       "actions": {
@@ -2690,6 +2809,67 @@
           "rejected": "Abgelehnt",
           "pending": "Ausstehend"
         }
+      }
+    },
+    "preview": {
+      "pressRelease": "Pressemitteilung",
+      "titlePlaceholder": "Titel der Pressemitteilung",
+      "emptyPreviewHint": "Klicken Sie auf \"Weiter\" oder \"Vorschau\" um die finale Vorschau zu generieren",
+      "campaignInfo": "Kampagnen-Info",
+      "customer": "Kunde:",
+      "approval": "Freigabe:",
+      "required": "Erforderlich",
+      "statistics": "Statistiken",
+      "characters": "Zeichen",
+      "boilerplates": "Textbausteine",
+      "keywords": "Keywords",
+      "media": "Medien",
+      "prSeoAnalysis": "PR-SEO Analyse",
+      "totalScore": "Gesamt-Score",
+      "headline": "Headline",
+      "structure": "Struktur",
+      "social": "Social",
+      "relevance": "Relevanz",
+      "concreteness": "Konkretheit",
+      "engagement": "Engagement",
+      "keywordsLabel": "Keywords:",
+      "attachments": "Anhänge",
+      "more": "weitere"
+    },
+    "keyVisual": {
+      "noVisualCustomer": "Kein Key Visual",
+      "noVisualAgency": "Key Visual nicht verfügbar",
+      "altText": "Key Visual",
+      "clickToEdit": "Zum Bearbeiten klicken",
+      "badge": "Key Visual"
+    }
+  },
+  "approvals": {
+    "workflow": {
+      "title": "Freigabe-Workflow",
+      "currentStatus": "Aktueller Status",
+      "progress": "Workflow-Fortschritt",
+      "stagesCompleted": "{completed}/{total} Stufen abgeschlossen",
+      "sendingApproved": "Versand freigegeben",
+      "ready": "Bereit",
+      "started": "Gestartet",
+      "completed": "Abgeschlossen",
+      "approvals": "{received}/{required} Zustimmungen",
+      "stages": {
+        "team": "Team-Freigabe",
+        "customer": "Kunden-Freigabe"
+      },
+      "status": {
+        "completed": "Abgeschlossen",
+        "rejected": "Abgelehnt",
+        "inProgress": "In Bearbeitung",
+        "pending": "Wartend"
+      },
+      "messages": {
+        "completed": "<strong>Workflow abgeschlossen!</strong> Die Kampagne wurde vollständig freigegeben und kann versendet werden.",
+        "teamInProgress": "<strong>Team-Freigabe läuft:</strong> Warten auf Entscheidungen von allen ausgewählten Team-Mitgliedern.",
+        "customerInProgress": "<strong>Kunden-Freigabe läuft:</strong> Die Kampagne wurde an den Kunden zur Freigabe weitergeleitet.",
+        "started": "<strong>Workflow gestartet:</strong> Der Freigabe-Prozess wurde initiiert."
       }
     }
   },

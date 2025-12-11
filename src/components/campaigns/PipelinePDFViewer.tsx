@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import { 
+import {
   DocumentArrowDownIcon,
   DocumentTextIcon,
   ShareIcon,
@@ -34,12 +35,14 @@ interface PipelinePDFInfo {
   autoGenerate: boolean;
 }
 
-export const PipelinePDFViewer = ({ 
-  campaign, 
-  organizationId, 
+export const PipelinePDFViewer = ({
+  campaign,
+  organizationId,
   onPDFGenerated,
   className = ""
 }: PipelinePDFViewerProps) => {
+  const t = useTranslations('campaigns.pdf');
+
   const [pdfInfo, setPdfInfo] = useState<PipelinePDFInfo>({
     enabled: campaign.internalPDFs?.enabled || false,
     versionCount: campaign.internalPDFs?.versionCount || 0,
@@ -56,24 +59,24 @@ export const PipelinePDFViewer = ({
     switch (stage) {
       case 'creation':
         return {
-          label: 'Erstellung',
+          label: t('stages.creation.label'),
           color: 'blue' as const,
           icon: DocumentTextIcon,
-          description: 'Entwurfs-PDFs für interne Abstimmung'
+          description: t('stages.creation.description')
         };
       case 'approval':
         return {
-          label: 'Freigabe',
+          label: t('stages.approval.label'),
           color: 'green' as const,
           icon: CheckCircleIcon,
-          description: 'PDFs für Freigabe (Team & Kunde)'
+          description: t('stages.approval.description')
         };
       default:
         return {
-          label: 'Unbekannt',
+          label: t('stages.unknown.label'),
           color: 'zinc' as const,
           icon: DocumentTextIcon,
-          description: 'Pipeline-PDFs'
+          description: t('stages.unknown.description')
         };
     }
   };
@@ -83,7 +86,7 @@ export const PipelinePDFViewer = ({
   // Pipeline-PDF generieren
   const handleGeneratePipelinePDF = async () => {
     if (!campaign.id || !campaign.projectId) {
-      setError('Kampagne oder Projekt-ID fehlt');
+      setError(t('errors.missingIds'));
       return;
     }
 
@@ -107,7 +110,7 @@ export const PipelinePDFViewer = ({
       onPDFGenerated?.(pdfUrl);
     } catch (error) {
       console.error('Pipeline-PDF-Generierung fehlgeschlagen:', error);
-      setError('PDF-Generierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      setError(t('errors.generationFailed'));
     } finally {
       setGenerating(false);
     }
@@ -131,12 +134,12 @@ export const PipelinePDFViewer = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <stageConfig.icon className="h-5 w-5 text-gray-500" />
-          <Text className="font-medium">Interne Pipeline-PDFs</Text>
+          <Text className="font-medium">{t('title')}</Text>
           <Badge color={stageConfig.color} className="text-xs">
             {stageConfig.label}
           </Badge>
         </div>
-        
+
         <Button
           onClick={handleGeneratePipelinePDF}
           disabled={generating}
@@ -146,12 +149,12 @@ export const PipelinePDFViewer = ({
           {generating ? (
             <>
               <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-              Generiere...
+              {t('generating')}
             </>
           ) : (
             <>
               <DocumentTextIcon className="h-4 w-4 mr-2" />
-              PDF generieren
+              {t('generate')}
             </>
           )}
         </Button>
@@ -163,21 +166,23 @@ export const PipelinePDFViewer = ({
           {stageConfig.description}
         </Text>
         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-          <span>Versionen: {pdfInfo.versionCount}</span>
+          <span>{t('versions', { count: pdfInfo.versionCount })}</span>
           {pdfInfo.lastGenerated && (
             <span>
-              Zuletzt: {new Date(pdfInfo.lastGenerated.toDate()).toLocaleString('de-DE', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+              {t('lastGenerated', {
+                date: new Date(pdfInfo.lastGenerated.toDate()).toLocaleString('de-DE', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
               })}
             </span>
           )}
           {pdfInfo.autoGenerate && (
             <Badge color="green" className="text-xs">
-              Auto-Generation AN
+              {t('autoGenerateOn')}
             </Badge>
           )}
         </div>
@@ -203,9 +208,9 @@ export const PipelinePDFViewer = ({
               className="text-sm !text-gray-600 hover:!text-gray-900"
             >
               <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-              Download
+              {t('download')}
             </Button>
-            
+
             <Button
               onClick={() => {
                 if (lastPdfUrl) {
@@ -216,14 +221,14 @@ export const PipelinePDFViewer = ({
               className="text-sm !text-gray-600 hover:!text-gray-900"
             >
               <ShareIcon className="h-4 w-4 mr-1" />
-              Link kopieren
+              {t('copyLink')}
             </Button>
           </>
         )}
-        
+
         {!lastPdfUrl && pdfInfo.versionCount === 0 && (
           <Text className="text-sm text-gray-500">
-            Noch keine Pipeline-PDF generiert
+            {t('noPdfGenerated')}
           </Text>
         )}
       </div>
@@ -231,7 +236,7 @@ export const PipelinePDFViewer = ({
       {/* Auto-Generate Hinweis */}
       {pdfInfo.autoGenerate && (
         <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-          📄 Bei jeder Speicherung wird automatisch eine neue interne PDF-Version erstellt
+          {t('autoGenerateHint')}
         </div>
       )}
     </div>

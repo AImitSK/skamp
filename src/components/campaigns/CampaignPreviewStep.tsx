@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { KeyVisualData, CampaignAssetAttachment } from "@/types/pr";
 import { TemplateSelector } from "@/components/templates/TemplateSelector";
+import { useTranslations } from "next-intl";
 
 interface CampaignPreviewStepProps {
   campaignTitle: string;
@@ -64,6 +65,9 @@ export function CampaignPreviewStep({
   onTemplateSelect,
   showTemplateSelector = true
 }: CampaignPreviewStepProps) {
+  const t = useTranslations('campaigns.preview');
+  const tCommon = useTranslations('common');
+
   return (
     <div className="space-y-6">
       {/* Pressemitteilung-Vorschau */}
@@ -87,14 +91,14 @@ export function CampaignPreviewStep({
             
             {/* Pressemitteilung Header */}
             <div className="mb-8">
-              <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Pressemitteilung</p>
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+              <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">{t('pressRelease')}</p>
+              <h1 className="text-3xl font-bold text-gray-900 leading-tight">{campaignTitle || t('titlePlaceholder')}</h1>
             </div>
             
             {/* Hauptinhalt - Fertiges ContentHtml */}
-            <div 
+            <div
               className="prose max-w-none text-gray-800 text-base leading-relaxed campaign-preview-content"
-              dangerouslySetInnerHTML={{ __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' }} 
+              dangerouslySetInnerHTML={{ __html: finalContentHtml || `<p class="text-gray-400 italic text-center py-8">${t('emptyPreviewHint')}</p>` }}
             />
             
             <style jsx>{`
@@ -168,19 +172,19 @@ export function CampaignPreviewStep({
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <InformationCircleIcon className="h-5 w-5 text-gray-400" />
-            <h4 className="font-semibold text-gray-900">Kampagnen-Info</h4>
+            <h4 className="font-semibold text-gray-900">{t('campaignInfo')}</h4>
           </div>
           <div className="space-y-2 text-sm">
             {selectedCompanyName && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Kunde:</span>
+                <span className="text-gray-600">{t('customer')}</span>
                 <span className="font-medium text-right">{selectedCompanyName}</span>
               </div>
             )}
             {approvalData.customerApprovalRequired && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Freigabe:</span>
-                <Badge color="amber">Erforderlich</Badge>
+                <span className="text-gray-600">{t('approval')}</span>
+                <Badge color="amber">{t('required')}</Badge>
               </div>
             )}
           </div>
@@ -190,25 +194,25 @@ export function CampaignPreviewStep({
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-            <h4 className="font-semibold text-gray-900">Statistiken</h4>
+            <h4 className="font-semibold text-gray-900">{t('statistics')}</h4>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Zeichen</span>
+              <span className="text-sm text-gray-600">{t('characters')}</span>
               <span className="font-mono text-sm">
                 {(editorContent || '').replace(/<[^>]*>/g, '').length}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Textbausteine</span>
+              <span className="text-sm text-gray-600">{t('boilerplates')}</span>
               <span className="font-mono text-sm">{boilerplateSections.length}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Keywords</span>
+              <span className="text-sm text-gray-600">{t('keywords')}</span>
               <span className="font-mono text-sm">{keywords.length}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Medien</span>
+              <span className="text-sm text-gray-600">{t('media')}</span>
               <span className="font-mono text-sm">{attachedAssets.length}</span>
             </div>
           </div>
@@ -219,11 +223,11 @@ export function CampaignPreviewStep({
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-3">
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              <h4 className="font-semibold text-gray-900">PR-SEO Analyse</h4>
+              <h4 className="font-semibold text-gray-900">{t('prSeoAnalysis')}</h4>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Gesamt-Score</span>
+                <span className="text-sm text-gray-600">{t('totalScore')}</span>
                 <Badge
                   color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
                   className="text-sm font-semibold"
@@ -232,37 +236,37 @@ export function CampaignPreviewStep({
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Headline</span>
+                <span className="text-sm text-gray-600">{t('headline')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.headline || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Keywords</span>
+                <span className="text-sm text-gray-600">{t('keywords')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.keywords || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Struktur</span>
+                <span className="text-sm text-gray-600">{t('structure')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.structure || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Social</span>
+                <span className="text-sm text-gray-600">{t('social')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.social || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Relevanz</span>
+                <span className="text-sm text-gray-600">{t('relevance')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.relevance || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Konkretheit</span>
+                <span className="text-sm text-gray-600">{t('concreteness')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.concreteness || 0)}/100</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Engagement</span>
+                <span className="text-sm text-gray-600">{t('engagement')}</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.engagement || 0)}/100</span>
               </div>
 
               {realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-300">
-                  <div className="text-xs text-gray-600 mb-1">Keywords:</div>
+                  <div className="text-xs text-gray-600 mb-1">{t('keywordsLabel')}</div>
                   {realPrScore.keywordMetrics.slice(0, 2).map((kw: any, i: number) => (
                     <div key={i} className="text-xs text-gray-700">{kw.keyword}</div>
                   ))}
@@ -277,7 +281,7 @@ export function CampaignPreviewStep({
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <PaperClipIcon className="h-5 w-5 text-gray-400" />
-              <h4 className="font-semibold text-gray-900">Anhänge</h4>
+              <h4 className="font-semibold text-gray-900">{t('attachments')}</h4>
             </div>
             <div className="space-y-2">
               {attachedAssets.slice(0, 3).map((asset) => (
@@ -294,7 +298,7 @@ export function CampaignPreviewStep({
               ))}
               {attachedAssets.length > 3 && (
                 <div className="text-xs text-gray-500 pt-1">
-                  +{attachedAssets.length - 3} weitere
+                  +{attachedAssets.length - 3} {t('more')}
                 </div>
               )}
             </div>

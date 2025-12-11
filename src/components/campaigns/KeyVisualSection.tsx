@@ -3,6 +3,7 @@
 
 import { useState, useRef, useMemo } from 'react';
 import { PhotoIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
@@ -10,10 +11,10 @@ import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
 import { KeyVisualGenerator } from '@/components/pr/ai/KeyVisualGenerator';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { 
-  campaignMediaService, 
+import {
+  campaignMediaService,
   uploadCampaignHeroImage,
-  getCampaignUploadFeatureStatus 
+  getCampaignUploadFeatureStatus
 } from '@/lib/firebase/campaign-media-service';
 import {
   createFeatureFlagContext,
@@ -54,7 +55,7 @@ export function KeyVisualSection({
   clientName,
   organizationId,
   userId,
-  
+
   // Campaign Smart Router Props
   campaignId,
   campaignName,
@@ -65,6 +66,7 @@ export function KeyVisualSection({
   // KI-Bildgenerator Props
   pressReleaseContent
 }: KeyVisualSectionProps) {
+  const t = useTranslations('campaigns.keyVisual');
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
@@ -297,7 +299,7 @@ export function KeyVisualSection({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('title')}</h3>
 
         {/* KI-Bildgenerator Button */}
         {selectedProjectId && selectedProjectName && pressReleaseContent && (
@@ -317,29 +319,29 @@ export function KeyVisualSection({
 
       {!value ? (
         // Platzhalter wenn kein Key Visual - kompakte Höhe wie Medien-Platzhalter
-        <div 
+        <div
           className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
           onClick={() => setShowAssetSelector(true)}
         >
           <div className="flex flex-col items-center justify-center">
             <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
             <Text className="text-gray-600 group-hover:text-[#005fab] font-medium">
-              Key Visual hinzufügen
+              {t('add')}
             </Text>
             <Text className="text-sm text-gray-500 mt-1">
-              Klicken zum Auswählen oder Hochladen
+              {t('clickToSelect')}
             </Text>
           </div>
         </div>
       ) : (
         // Preview wenn Key Visual gesetzt
         <div className="relative aspect-[16/9] rounded-lg overflow-hidden border border-gray-200 group">
-          <img 
-            src={value.url} 
-            alt="Key Visual" 
+          <img
+            src={value.url}
+            alt={t('altText')}
             className="w-full h-full object-cover"
           />
-          
+
           {/* Overlay mit Edit/Remove Buttons */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
             <Button
@@ -347,14 +349,14 @@ export function KeyVisualSection({
               className="bg-gray-900 hover:bg-gray-800 text-white shadow-lg px-4 py-2 font-medium"
             >
               <PencilIcon className="h-4 w-4 mr-2" />
-              Bearbeiten
+              {t('edit')}
             </Button>
             <Button
               onClick={handleRemoveKeyVisual}
               className="bg-red-600 hover:bg-red-700 text-white shadow-sm px-4 py-2 font-medium"
             >
               <TrashIcon className="h-4 w-4 mr-2" />
-              Entfernen
+              {t('remove')}
             </Button>
           </div>
         </div>
@@ -399,20 +401,20 @@ export function KeyVisualSection({
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <Text className="font-medium text-gray-900 mb-4">
-              Bitte wählen Sie zuerst einen Kunden aus
+              {t('selectClientFirst')}
             </Text>
             <div className="flex gap-3">
               <Button
                 onClick={handleDirectUpload}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 flex-1"
               >
-                Trotzdem hochladen
+                {t('uploadAnyway')}
               </Button>
               <Button
                 onClick={() => setShowAssetSelector(false)}
                 className="bg-gray-50 hover:bg-gray-100 text-gray-900 px-4 py-2 flex-1"
               >
-                Abbrechen
+                {t('cancel')}
               </Button>
             </div>
           </div>
@@ -439,10 +441,10 @@ export function KeyVisualSection({
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <Text className="font-medium text-gray-900 mb-2">
-                Smart Router Upload läuft...
+                {t('smartRouterUploadTitle')}
               </Text>
               <Text className="text-sm text-gray-500">
-                Key Visual wird intelligent geroutet und hochgeladen
+                {t('smartRouterUploadMessage')}
               </Text>
             </div>
           </div>
@@ -456,10 +458,10 @@ export function KeyVisualSection({
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <Text className="font-medium text-gray-900 mb-2">
-                Cropping-Tool wird geladen...
+                {t('cropperLoadingTitle')}
               </Text>
               <Text className="text-sm text-gray-500">
-                Bild wird für die Bearbeitung vorbereitet
+                {t('cropperLoadingMessage')}
               </Text>
             </div>
           </div>

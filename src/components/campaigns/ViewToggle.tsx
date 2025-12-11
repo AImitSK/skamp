@@ -2,6 +2,7 @@
 "use client";
 
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/20/solid";
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 export type ViewMode = 'grid' | 'list';
@@ -13,9 +14,11 @@ interface ViewToggleProps {
 }
 
 export function ViewToggle({ value, onChange, className = "" }: ViewToggleProps) {
+  const t = useTranslations('campaigns.common');
+
   return (
     <div className={clsx(
-      'inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600', 
+      'inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600',
       className
     )}>
       <button
@@ -26,12 +29,12 @@ export function ViewToggle({ value, onChange, className = "" }: ViewToggleProps)
             ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
             : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
         )}
-        aria-label="Listen-Ansicht"
-        title="Listen-Ansicht"
+        aria-label={t('viewToggle.listView')}
+        title={t('viewToggle.listView')}
       >
         <ListBulletIcon className="h-5 w-5" />
       </button>
-      
+
       <button
         onClick={() => onChange('grid')}
         className={clsx(
@@ -40,8 +43,8 @@ export function ViewToggle({ value, onChange, className = "" }: ViewToggleProps)
             ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
             : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
         )}
-        aria-label="Kachel-Ansicht"
-        title="Kachel-Ansicht"
+        aria-label={t('viewToggle.gridView')}
+        title={t('viewToggle.gridView')}
       >
         <Squares2X2Icon className="h-5 w-5" />
       </button>

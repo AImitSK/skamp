@@ -2,10 +2,11 @@
 "use client";
 
 import { memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { KeyVisualData, CampaignAssetAttachment } from "@/types/pr";
 import { KeyVisualDisplay } from "./KeyVisualDisplay";
 import { TextbausteinDisplay } from "./TextbausteinDisplay";
-import { 
+import {
   InformationCircleIcon,
   DocumentTextIcon,
   CalendarIcon,
@@ -50,6 +51,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
   className = ""
 }: CampaignPreviewRendererProps) {
 
+  const t = useTranslations('campaigns.preview');
 
   const formattedDate = useMemo(() => {
     if (!createdAt) return '';
@@ -72,7 +74,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-              Pressemitteilung zur Prüfung
+              {t('header')}
             </h2>
             <div className="flex items-center gap-3 text-sm text-gray-500">
               {clientName && (
@@ -121,27 +123,27 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
               <div className="mb-6 sm:mb-8">
                 {isCustomerView && (
                   <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide mb-2">
-                    Pressemitteilung
+                    {t('label')}
                   </p>
                 )}
                 <h1 className={clsx(
                   "font-bold text-gray-900 leading-tight",
                   isCustomerView ? "text-xl sm:text-2xl lg:text-3xl" : "text-lg sm:text-2xl"
                 )}>
-                  {campaignTitle || 'Titel der Pressemitteilung'}
+                  {campaignTitle || t('defaultTitle')}
                 </h1>
               </div>
             )}
             
             {/* Hauptinhalt */}
-            <div 
+            <div
               className={clsx(
                 "prose max-w-none text-gray-800 leading-relaxed campaign-preview-content",
                 isCustomerView ? "text-sm sm:text-base" : "text-sm"
               )}
-              dangerouslySetInnerHTML={{ 
-                __html: contentHtml || '<p class="text-gray-400 italic text-center py-8">Inhalt wird generiert...</p>' 
-              }} 
+              dangerouslySetInnerHTML={{
+                __html: contentHtml || `<p class="text-gray-400 italic text-center py-8">${t('generating')}</p>`
+              }}
             />
 
             {/* Customer-optimierte Styles */}
@@ -204,18 +206,18 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
               {keywords.length > 0 && (
                 <div>
-                  <span className="font-medium">Keywords:</span> {keywords.slice(0, 3).join(', ')}
-                  {keywords.length > 3 && ` +${keywords.length - 3} weitere`}
+                  <span className="font-medium">{t('keywords')}:</span> {keywords.slice(0, 3).join(', ')}
+                  {keywords.length > 3 && ` +${keywords.length - 3} ${t('more')}`}
                 </div>
               )}
               {textbausteine.length > 0 && (
                 <div>
-                  <span className="font-medium">Textbausteine:</span> {textbausteine.length}
+                  <span className="font-medium">{t('textModules')}:</span> {textbausteine.length}
                 </div>
               )}
               {attachedAssets.length > 0 && (
                 <div>
-                  <span className="font-medium">Medien:</span> {attachedAssets.length}
+                  <span className="font-medium">{t('media')}:</span> {attachedAssets.length}
                 </div>
               )}
             </div>

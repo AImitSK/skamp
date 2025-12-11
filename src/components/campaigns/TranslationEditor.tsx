@@ -20,6 +20,7 @@ import {
 import { CTAExtension } from '@/components/editor/CTAExtension';
 import { HashtagExtension } from '@/components/editor/HashtagExtension';
 import { QuoteExtension } from '@/components/editor/QuoteExtension';
+import { useTranslations } from 'next-intl';
 
 interface TranslationEditorProps {
   content: string;
@@ -38,8 +39,11 @@ export function TranslationEditor({
   onChange,
   disabled = false,
   minHeight = '200px',
-  placeholder = 'Text eingeben...'
+  placeholder
 }: TranslationEditorProps) {
+  const t = useTranslations('campaigns.translation');
+  const defaultPlaceholder = t('placeholder');
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -70,7 +74,7 @@ export function TranslationEditor({
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none px-4 py-3 text-gray-900',
         style: `min-height: ${minHeight};`,
-        'data-placeholder': placeholder,
+        'data-placeholder': placeholder || defaultPlaceholder,
       },
     },
     onUpdate: ({ editor }) => {
@@ -104,7 +108,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bold') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Fett (Strg+B)"
+            title={t('toolbar.bold')}
             disabled={disabled}
           >
             <BoldIcon className="h-4 w-4" />
@@ -113,7 +117,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('italic') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Kursiv (Strg+I)"
+            title={t('toolbar.italic')}
             disabled={disabled}
           >
             <ItalicIcon className="h-4 w-4" />
@@ -122,7 +126,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleUnderline().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('underline') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Unterstrichen (Strg+U)"
+            title={t('toolbar.underline')}
             disabled={disabled}
           >
             <UnderlineIcon className="h-4 w-4" />
@@ -131,7 +135,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('strike') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Durchgestrichen"
+            title={t('toolbar.strikethrough')}
             disabled={disabled}
           >
             <StrikethroughIcon className="h-4 w-4" />
@@ -157,10 +161,10 @@ export function TranslationEditor({
             }
             disabled={disabled}
           >
-            <option value={0}>Normal</option>
-            <option value={1}>Ü1</option>
-            <option value={2}>Ü2</option>
-            <option value={3}>Ü3</option>
+            <option value={0}>{t('toolbar.headingNormal')}</option>
+            <option value={1}>{t('toolbar.heading1')}</option>
+            <option value={2}>{t('toolbar.heading2')}</option>
+            <option value={3}>{t('toolbar.heading3')}</option>
           </select>
         </div>
 
@@ -170,7 +174,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bulletList') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Aufzählungsliste"
+            title={t('toolbar.bulletList')}
             disabled={disabled}
           >
             <ListBulletIcon className="h-4 w-4" />
@@ -179,7 +183,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${editor.isActive('orderedList') ? 'bg-gray-200 text-blue-600' : 'text-gray-600'}`}
-            title="Nummerierte Liste"
+            title={t('toolbar.orderedList')}
             disabled={disabled}
           >
             <ListOrderedIcon className="h-4 w-4" />
@@ -192,7 +196,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBlockquote().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors text-xs font-medium ${editor.isActive('blockquote') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
-            title="Zitat (Strg+Shift+Q)"
+            title={t('toolbar.quote')}
             disabled={disabled}
           >
             ❝
@@ -201,7 +205,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleHashtag().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors text-xs font-medium ${editor.isActive('hashtag') ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}
-            title="Hashtag (Strg+Shift+H)"
+            title={t('toolbar.hashtag')}
             disabled={disabled}
           >
             #
@@ -210,7 +214,7 @@ export function TranslationEditor({
             type="button"
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCTA().run(); }}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors text-xs font-bold ${editor.isActive('ctaText') ? 'bg-amber-100 text-amber-700' : 'text-gray-600'}`}
-            title="CTA/Call-to-Action (Strg+Shift+C)"
+            title={t('toolbar.cta')}
             disabled={disabled}
           >
             CTA
@@ -224,7 +228,7 @@ export function TranslationEditor({
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().undo().run(); }}
             disabled={!editor.can().undo() || disabled}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${!editor.can().undo() ? 'opacity-40 cursor-not-allowed' : 'text-gray-600'}`}
-            title="Rückgängig (Strg+Z)"
+            title={t('toolbar.undo')}
           >
             <ArrowUturnLeftIcon className="h-4 w-4" />
           </button>
@@ -233,7 +237,7 @@ export function TranslationEditor({
             onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().redo().run(); }}
             disabled={!editor.can().redo() || disabled}
             className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${!editor.can().redo() ? 'opacity-40 cursor-not-allowed' : 'text-gray-600'}`}
-            title="Wiederholen (Strg+Y)"
+            title={t('toolbar.redo')}
           >
             <ArrowUturnRightIcon className="h-4 w-4" />
           </button>

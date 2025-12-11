@@ -4,6 +4,7 @@
 import { KeyVisualData } from "@/types/pr";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 
 interface KeyVisualDisplayProps {
   keyVisual: KeyVisualData;
@@ -24,6 +25,7 @@ export function KeyVisualDisplay({
   aspectRatio = "16/9",
   className = ""
 }: KeyVisualDisplayProps) {
+  const t = useTranslations("campaigns.keyVisual");
 
   // Fallback wenn kein Key Visual vorhanden
   if (!keyVisual?.url) {
@@ -37,7 +39,7 @@ export function KeyVisualDisplay({
         <div className="text-center">
           <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500">
-            {isCustomerView ? "Kein Key Visual" : "Key Visual nicht verfügbar"}
+            {isCustomerView ? t("noVisualCustomer") : t("noVisualAgency")}
           </p>
         </div>
       </div>
@@ -51,13 +53,13 @@ export function KeyVisualDisplay({
       className
     )}>
       {/* Key Visual Image */}
-      <div 
+      <div
         className="w-full bg-gray-100"
         style={{ aspectRatio }}
       >
-        <img 
-          src={keyVisual.url} 
-          alt="Key Visual" 
+        <img
+          src={keyVisual.url}
+          alt={t("altText")}
           className={clsx(
             "w-full h-full object-cover",
             isCustomerView ? "" : "transition-transform duration-200 hover:scale-105"
@@ -70,7 +72,7 @@ export function KeyVisualDisplay({
       {!isReadOnly && !isCustomerView && (
         <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
           <div className="text-white text-sm font-medium px-3 py-1 bg-black/50 rounded">
-            Zum Bearbeiten klicken
+            {t("clickToEdit")}
           </div>
         </div>
       )}
@@ -79,7 +81,7 @@ export function KeyVisualDisplay({
       {isCustomerView && (
         <div className="absolute top-4 left-4">
           <div className="bg-black/60 text-white text-xs px-2 py-1 rounded">
-            Key Visual
+            {t("badge")}
           </div>
         </div>
       )}

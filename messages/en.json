@@ -2251,6 +2251,12 @@
     }
   },
   "campaigns": {
+    "common": {
+      "viewToggle": {
+        "listView": "List View",
+        "gridView": "Grid View"
+      }
+    },
     "recipients": {
       "title": "Recipients",
       "campaignListsTitle": "Campaign Distribution Lists",
@@ -2364,6 +2370,64 @@
         "emptyHint": "Click to select"
       }
     },
+    "textbausteine": {
+      "title": "Boilerplates",
+      "showLess": "Show less",
+      "showAll": "Show all {count}",
+      "showMore": "Show more",
+      "showMoreItems": "Show {count} more boilerplates",
+      "loadError": "Error loading boilerplates:",
+      "keywords": "Keywords",
+      "moreKeywords": "+{count} more",
+      "unknown": "unknown",
+      "summary": "<strong>{count}</strong> boilerplates were used for a consistent and professional presentation.",
+      "types": {
+        "standard": "Standard Boilerplate",
+        "header": "Header Element",
+        "footer": "Footer Element",
+        "quote": "Quote",
+        "element": "Element",
+        "fallback": "Boilerplate {index}"
+      },
+      "typeLabels": {
+        "standard": "Standard Boilerplate",
+        "header": "Header Element",
+        "footer": "Footer Element",
+        "quote": "Quote",
+        "main": "Main Text Element",
+        "default": "Boilerplate"
+      },
+      "positions": {
+        "header": "Header Area",
+        "footer": "Footer Area"
+      },
+      "badge": {
+        "standard": "Standard",
+        "custom": "Custom"
+      },
+      "customerViewDescription": "This boilerplate ensures a professional and consistent presentation of your press release according to proven PR standards.",
+      "agencyViewId": "ID: {id} ({type})"
+    },
+    "translation": {
+      "placeholder": "Enter text...",
+      "toolbar": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "headingNormal": "Normal",
+        "heading1": "H1",
+        "heading2": "H2",
+        "heading3": "H3",
+        "bulletList": "Bullet List",
+        "orderedList": "Numbered List",
+        "quote": "Quote (Ctrl+Shift+Q)",
+        "hashtag": "Hashtag (Ctrl+Shift+H)",
+        "cta": "CTA/Call-to-Action (Ctrl+Shift+C)",
+        "undo": "Undo (Ctrl+Z)",
+        "redo": "Redo (Ctrl+Y)"
+      }
+    },
     "content": {
       "title": "Press Release Title",
       "titleTooltip": "Required field: The title should be concise and meaningful. It will be used as the headline in the press release and in the email subject.",
@@ -2377,6 +2441,16 @@
       "generatingPdf": "Generating PDF...",
       "previewTitle": "Preview",
       "noContent": "No content available yet"
+    },
+    "preview": {
+      "header": "Press Release for Review",
+      "label": "Press Release",
+      "defaultTitle": "Press Release Title",
+      "generating": "Content is being generated...",
+      "keywords": "Keywords",
+      "textModules": "Text Modules",
+      "media": "Media",
+      "more": "more"
     },
     "new": {
       "title": "New PR Campaign",
@@ -2399,6 +2473,21 @@
         "selectCustomerFirst": "Please select a customer first to add media",
         "clickToSelect": "Click to select",
         "selectCustomerPrompt": "Select a customer"
+      },
+      "keyVisual": {
+        "title": "Key Visual",
+        "add": "Add key visual",
+        "clickToSelect": "Click to select or upload",
+        "altText": "Key Visual",
+        "edit": "Edit",
+        "remove": "Remove",
+        "selectClientFirst": "Please select a client first",
+        "uploadAnyway": "Upload anyway",
+        "cancel": "Cancel",
+        "smartRouterUploadTitle": "Smart Router Upload in progress...",
+        "smartRouterUploadMessage": "Key Visual is being intelligently routed and uploaded",
+        "cropperLoadingTitle": "Loading cropping tool...",
+        "cropperLoadingMessage": "Preparing image for editing"
       },
       "approval": {
         "title": "Approval Settings",
@@ -2423,18 +2512,48 @@
       "pdf": {
         "preview": "PDF Preview",
         "generate": "Generate PDF",
-        "generating": "Generating PDF...",
+        "generating": "Generating...",
         "generated": "PDF successfully generated!",
         "error": "Error generating PDF",
         "previewPdf": "Preview PDF",
         "current": "Current",
         "download": "Download",
         "noVersion": "No PDF version created yet",
+        "noVersions": "No PDF versions available yet",
         "generateHint": "Click on \"Generate PDF\" to create a preview",
         "status": {
           "draft": "Draft",
           "approved": "Approved",
-          "pending": "Approval requested"
+          "rejected": "Rejected",
+          "pending": "Approval requested",
+          "pendingCustomer": "Pending customer approval",
+          "pendingTeam": "Pending team approval",
+          "changesRequested": "Changes requested"
+        },
+        "title": "Internal Pipeline PDFs",
+        "versions": "Versions: {count}",
+        "lastGenerated": "Last: {date}",
+        "autoGenerateOn": "Auto-Generation ON",
+        "copyLink": "Copy link",
+        "noPdfGenerated": "No pipeline PDF generated yet",
+        "autoGenerateHint": "📄 A new internal PDF version is automatically created with each save",
+        "stages": {
+          "creation": {
+            "label": "Creation",
+            "description": "Draft PDFs for internal coordination"
+          },
+          "approval": {
+            "label": "Approval",
+            "description": "PDFs for approval (team & customer)"
+          },
+          "unknown": {
+            "label": "Unknown",
+            "description": "Pipeline PDFs"
+          }
+        },
+        "errors": {
+          "missingIds": "Campaign or project ID missing",
+          "generationFailed": "PDF generation failed. Please try again."
         }
       },
       "actions": {
@@ -2690,6 +2809,67 @@
           "rejected": "Rejected",
           "pending": "Pending"
         }
+      }
+    },
+    "preview": {
+      "pressRelease": "Press Release",
+      "titlePlaceholder": "Press Release Title",
+      "emptyPreviewHint": "Click \"Next\" or \"Preview\" to generate the final preview",
+      "campaignInfo": "Campaign Info",
+      "customer": "Customer:",
+      "approval": "Approval:",
+      "required": "Required",
+      "statistics": "Statistics",
+      "characters": "Characters",
+      "boilerplates": "Boilerplates",
+      "keywords": "Keywords",
+      "media": "Media",
+      "prSeoAnalysis": "PR-SEO Analysis",
+      "totalScore": "Total Score",
+      "headline": "Headline",
+      "structure": "Structure",
+      "social": "Social",
+      "relevance": "Relevance",
+      "concreteness": "Concreteness",
+      "engagement": "Engagement",
+      "keywordsLabel": "Keywords:",
+      "attachments": "Attachments",
+      "more": "more"
+    },
+    "keyVisual": {
+      "noVisualCustomer": "No Key Visual",
+      "noVisualAgency": "Key Visual not available",
+      "altText": "Key Visual",
+      "clickToEdit": "Click to edit",
+      "badge": "Key Visual"
+    }
+  },
+  "approvals": {
+    "workflow": {
+      "title": "Approval Workflow",
+      "currentStatus": "Current Status",
+      "progress": "Workflow Progress",
+      "stagesCompleted": "{completed}/{total} stages completed",
+      "sendingApproved": "Sending approved",
+      "ready": "Ready",
+      "started": "Started",
+      "completed": "Completed",
+      "approvals": "{received}/{required} approvals",
+      "stages": {
+        "team": "Team Approval",
+        "customer": "Customer Approval"
+      },
+      "status": {
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "inProgress": "In Progress",
+        "pending": "Pending"
+      },
+      "messages": {
+        "completed": "<strong>Workflow completed!</strong> The campaign has been fully approved and can be sent.",
+        "teamInProgress": "<strong>Team approval in progress:</strong> Waiting for decisions from all selected team members.",
+        "customerInProgress": "<strong>Customer approval in progress:</strong> The campaign has been forwarded to the customer for approval.",
+        "started": "<strong>Workflow started:</strong> The approval process has been initiated."
       }
     }
   },

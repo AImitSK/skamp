@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { PDFVersion, pdfVersionsService } from '@/lib/firebase/pdf-versions-service';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ export function PDFVersionHistory({
   compact = false,
   onVersionSelect
 }: PDFVersionHistoryProps) {
+  const t = useTranslations('campaigns.pdf');
   const [versions, setVersions] = useState<PDFVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentVersion, setCurrentVersion] = useState<PDFVersion | null>(null);
@@ -83,17 +85,17 @@ export function PDFVersionHistory({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'Entwurf';
+        return t('status.draft');
       case 'pending_customer':
-        return 'Zur Kundenfreigabe';
+        return t('status.pendingCustomer');
       case 'pending_team':
-        return 'Zur Teamfreigabe';
+        return t('status.pendingTeam');
       case 'approved':
-        return 'Freigegeben';
+        return t('status.approved');
       case 'rejected':
-        return 'Abgelehnt';
+        return t('status.rejected');
       case 'changes_requested':
-        return 'Änderungen angefordert';
+        return t('status.changesRequested');
       default:
         return status;
     }
@@ -130,7 +132,7 @@ export function PDFVersionHistory({
     return (
       <div className="text-center py-8 bg-gray-50 rounded-lg">
         <DocumentTextIcon className="h-12 w-12 mx-auto text-gray-300" />
-        <Text className="mt-2 text-gray-500">Noch keine PDF-Versionen vorhanden</Text>
+        <Text className="mt-2 text-gray-500">{t('noVersions')}</Text>
       </div>
     );
   }
@@ -157,7 +159,7 @@ export function PDFVersionHistory({
                   PDF v{version.version}
                 </Text>
                 {isCurrent && (
-                  <Badge color="blue" className="text-xs">Aktuell</Badge>
+                  <Badge color="blue" className="text-xs">{t('current')}</Badge>
                 )}
                 <Badge color={getStatusColor(version.status)} className="text-xs">
                   {getStatusLabel(version.status)}
@@ -211,7 +213,7 @@ export function PDFVersionHistory({
                     className="!text-gray-600 hover:!text-gray-900 text-sm"
                   >
                     <DocumentArrowDownIcon className="h-4 w-4" />
-                    Download
+                    {t('download')}
                   </Button>
                 </div>
               )}

@@ -1,10 +1,11 @@
 // src/components/approvals/WorkflowVisualization.tsx - Workflow-Fortschritts-Anzeige
 "use client";
 
+import { useTranslations, useFormatter } from 'next-intl';
 import { ApprovalWorkflowStage } from '@/types/approvals-enhanced';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
-import { 
+import {
   UserGroupIcon,
   BuildingOfficeIcon,
   CheckCircleIcon,
@@ -23,6 +24,9 @@ export function WorkflowVisualization({
   stages,
   currentStage
 }: WorkflowVisualizationProps) {
+  const t = useTranslations('approvals.workflow');
+  const format = useFormatter();
+
   const getStageIcon = (stage: 'team' | 'customer') => {
     switch (stage) {
       case 'team': return UserGroupIcon;
@@ -33,8 +37,8 @@ export function WorkflowVisualization({
 
   const getStageLabel = (stage: 'team' | 'customer') => {
     switch (stage) {
-      case 'team': return 'Team-Freigabe';
-      case 'customer': return 'Kunden-Freigabe';
+      case 'team': return t('stages.team');
+      case 'customer': return t('stages.customer');
       default: return stage;
     }
   };
@@ -52,7 +56,7 @@ export function WorkflowVisualization({
     if (isCurrentStage && status === 'in_progress') {
       return 'text-blue-600 bg-blue-50 border-blue-200';
     }
-    
+
     switch (status) {
       case 'completed': return 'text-green-600 bg-green-50 border-green-200';
       case 'rejected': return 'text-red-600 bg-red-50 border-red-200';
@@ -63,10 +67,10 @@ export function WorkflowVisualization({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'completed': return 'Abgeschlossen';
-      case 'rejected': return 'Abgelehnt';
-      case 'in_progress': return 'In Bearbeitung';
-      case 'pending': return 'Wartend';
+      case 'completed': return t('status.completed');
+      case 'rejected': return t('status.rejected');
+      case 'in_progress': return t('status.inProgress');
+      case 'pending': return t('status.pending');
       default: return status;
     }
   };
@@ -74,7 +78,7 @@ export function WorkflowVisualization({
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleString('de-DE', {
+    return format.dateTime(date, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -86,9 +90,9 @@ export function WorkflowVisualization({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">Freigabe-Workflow</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
         <Text className="text-gray-600">
-          Aktueller Status: {currentStage === 'completed' ? 'Abgeschlossen' : getStageLabel(currentStage)}
+          {t('currentStatus')}: {currentStage === 'completed' ? t('status.completed') : getStageLabel(currentStage)}
         </Text>
       </div>
 
@@ -141,13 +145,13 @@ export function WorkflowVisualization({
                     {stage.status !== 'pending' && (
                       <div className="mt-2 text-xs text-gray-500">
                         {stage.status === 'in_progress' && (
-                          <p>{stage.receivedApprovals}/{stage.requiredApprovals} Zustimmungen</p>
+                          <p>{t('approvals', { received: stage.receivedApprovals, required: stage.requiredApprovals })}</p>
                         )}
                         {stage.startedAt && (
-                          <p>Gestartet: {formatDate(stage.startedAt)}</p>
+                          <p>{t('started')}: {formatDate(stage.startedAt)}</p>
                         )}
                         {stage.completedAt && (
-                          <p>Abgeschlossen: {formatDate(stage.completedAt)}</p>
+                          <p>{t('completed')}: {formatDate(stage.completedAt)}</p>
                         )}
                       </div>
                     )}
@@ -168,22 +172,22 @@ export function WorkflowVisualization({
             <div className="flex flex-col items-center">
               <div className={clsx(
                 "p-4 rounded-full border-2 transition-all",
-                currentStage === 'completed' 
+                currentStage === 'completed'
                   ? "text-green-600 bg-green-50 border-green-200"
                   : "text-gray-400 bg-gray-50 border-gray-200"
               )}>
                 <CheckCircleIcon className="h-6 w-6" />
               </div>
-              
+
               <div className="mt-3 text-center">
                 <p className="text-sm font-medium text-gray-900">
-                  Versand freigegeben
+                  {t('sendingApproved')}
                 </p>
-                <Badge 
+                <Badge
                   color={currentStage === 'completed' ? 'green' : 'zinc'}
                   className="mt-1"
                 >
-                  {currentStage === 'completed' ? 'Bereit' : 'Wartend'}
+                  {currentStage === 'completed' ? t('ready') : t('status.pending')}
                 </Badge>
               </div>
             </div>
@@ -193,20 +197,23 @@ export function WorkflowVisualization({
         {/* Progress Bar */}
         <div className="mt-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Workflow-Fortschritt</span>
+            <span>{t('progress')}</span>
             <span>
-              {stages.filter(s => s.status === 'completed').length}/{stages.length} Stufen abgeschlossen
+              {t('stagesCompleted', {
+                completed: stages.filter(s => s.status === 'completed').length,
+                total: stages.length
+              })}
             </span>
           </div>
-          
+
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className={clsx(
                 "h-2 rounded-full transition-all duration-500",
                 currentStage === 'completed' ? 'bg-green-600' : 'bg-blue-600'
               )}
-              style={{ 
-                width: `${currentStage === 'completed' ? 100 : (stages.filter(s => s.status === 'completed').length / stages.length) * 100}%` 
+              style={{
+                width: `${currentStage === 'completed' ? 100 : (stages.filter(s => s.status === 'completed').length / stages.length) * 100}%`
               }}
             />
           </div>
@@ -218,13 +225,21 @@ export function WorkflowVisualization({
             <ClockIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
               {currentStage === 'completed' ? (
-                <p><strong>Workflow abgeschlossen!</strong> Die Kampagne wurde vollständig freigegeben und kann versendet werden.</p>
+                <p dangerouslySetInnerHTML={{ __html: t.markup('messages.completed', {
+                  strong: (chunks) => `<strong>${chunks}</strong>`
+                }) }} />
               ) : currentStage === 'team' ? (
-                <p><strong>Team-Freigabe läuft:</strong> Warten auf Entscheidungen von allen ausgewählten Team-Mitgliedern.</p>
+                <p dangerouslySetInnerHTML={{ __html: t.markup('messages.teamInProgress', {
+                  strong: (chunks) => `<strong>${chunks}</strong>`
+                }) }} />
               ) : currentStage === 'customer' ? (
-                <p><strong>Kunden-Freigabe läuft:</strong> Die Kampagne wurde an den Kunden zur Freigabe weitergeleitet.</p>
+                <p dangerouslySetInnerHTML={{ __html: t.markup('messages.customerInProgress', {
+                  strong: (chunks) => `<strong>${chunks}</strong>`
+                }) }} />
               ) : (
-                <p><strong>Workflow gestartet:</strong> Der Freigabe-Prozess wurde initiiert.</p>
+                <p dangerouslySetInnerHTML={{ __html: t.markup('messages.started', {
+                  strong: (chunks) => `<strong>${chunks}</strong>`
+                }) }} />
               )}
             </div>
           </div>
