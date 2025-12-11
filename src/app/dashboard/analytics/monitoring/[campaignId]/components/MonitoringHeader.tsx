@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -10,6 +11,7 @@ import { useRouter } from 'next/navigation';
 
 export const MonitoringHeader = memo(function MonitoringHeader() {
   const router = useRouter();
+  const t = useTranslations('monitoring.header');
   const { campaign, isPDFGenerating } = useMonitoring();
 
   const handleBack = () => {
@@ -26,9 +28,13 @@ export const MonitoringHeader = memo(function MonitoringHeader() {
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div>
-            <Heading>Monitoring: {campaign.title}</Heading>
+            <Heading>{t('title', { campaignTitle: campaign.title })}</Heading>
             <Text className="text-gray-600">
-              Versendet am {campaign.sentAt ? new Date(campaign.sentAt.toDate()).toLocaleDateString('de-DE') : 'N/A'}
+              {t('sentAt', {
+                date: campaign.sentAt
+                  ? new Date(campaign.sentAt.toDate()).toLocaleDateString('de-DE')
+                  : t('noDate')
+              })}
             </Text>
           </div>
         </div>

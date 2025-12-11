@@ -26,6 +26,11 @@
     "settings": "Settings",
     "help": "Help",
     "unknown": "Unknown",
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirm": "Confirm"
+    },
     "widgets": {
       "myTasks": {
         "title": "My Tasks",
@@ -1548,35 +1553,35 @@
     },
     "importModal": {
       "title": "Import Data",
-      "globalMode": "GLOBAL MODE",
-      "fileSelected": "1 file selected",
-      "noFile": "No file",
+      "globalMode": "Global Mode",
+      "fileSelected": "File Selected",
+      "noFile": "No File",
       "tabs": {
-        "companies": "Import Companies",
-        "contacts": "Import Contacts"
+        "companies": "Companies",
+        "contacts": "Contacts"
       },
       "globalWarning": {
-        "title": "⚠️ GLOBAL IMPORT ACTIVE",
-        "companiesMessage": "You are logged in as SuperAdmin. All imported companies will be automatically global and immediately visible to all premium customers in the library!",
-        "contactsMessage": "You are logged in as SuperAdmin. All imported contacts will be automatically global and immediately visible to all premium customers in the library!"
+        "title": "Global Mode Active",
+        "companiesMessage": "Companies will be imported globally for all organizations and can be viewed by everyone.",
+        "contactsMessage": "Contacts will be imported globally for all organizations and can be viewed by everyone."
       },
       "instructions": {
-        "companiesTitle": "Company Import",
-        "contactsTitle": "Contact Import",
-        "companiesDescription": "Upload a CSV file to import companies. The file should be UTF-8 encoded and use semicolon (;) as delimiter (Excel standard for Germany).",
-        "contactsDescription": "Upload a CSV file to import contacts. The file should be UTF-8 encoded and use semicolon (;) as delimiter (Excel standard for Germany).",
-        "downloadTemplate": "Download template"
+        "companiesTitle": "CSV Import for Companies",
+        "companiesDescription": "Upload a CSV file with company data. The file must contain at least the columns \"Company Name\" and \"Type\".",
+        "contactsTitle": "CSV Import for Contacts",
+        "contactsDescription": "Upload a CSV file with contact data. The file must contain at least the columns \"First Name\" and \"Last Name\".",
+        "downloadTemplate": "Download Template"
       },
       "duplicateHandling": {
         "label": "Duplicate Handling",
-        "skip": "Skip duplicates",
-        "update": "Update existing entries"
+        "skip": "Skip duplicates (Existing entries remain unchanged)",
+        "update": "Update duplicates (Existing entries will be overwritten)"
       },
       "fileUpload": {
-        "label": "Select CSV file",
+        "label": "Upload CSV File",
         "clickOrDrag": "Click here",
         "orDrag": "or drag a file here",
-        "fileType": "CSV file (max. 10MB)",
+        "fileType": "CSV (max. 10 MB)",
         "selectedFile": "Selected file:",
         "reset": "Reset"
       },
@@ -1585,44 +1590,42 @@
         "more": "..."
       },
       "progress": {
-        "parsing": "Reading file...",
+        "parsing": "Processing file...",
         "validating": "Validating data...",
         "importing": "Importing {current} of {total}...",
-        "done": "Import complete!"
+        "done": "Import completed"
+      },
+      "confirmDialog": {
+        "companiesMessage": "⚠️ Global Mode Active!\n\nYou are about to import companies GLOBALLY.\nThey will be visible to ALL organizations.\n\nDo you want to continue?",
+        "contactsMessage": "⚠️ Global Mode Active!\n\nYou are about to import contacts GLOBALLY.\nThey will be visible to ALL organizations.\n\nDo you want to continue?"
+      },
+      "errors": {
+        "companyNameMissing": "Company name missing",
+        "firstNameMissing": "First name missing",
+        "lastNameMissing": "Last name missing",
+        "parsingError": "Error parsing row",
+        "importFailed": "Import failed: {count} errors",
+        "fileFormatError": "Error processing file. Please check the format.",
+        "fileReadError": "Error reading file: {message}"
       },
       "results": {
-        "successTitle": "Import successful!",
-        "warningsTitle": "Import completed with warnings",
+        "successTitle": "Import Successful!",
+        "warningsTitle": "Import with Warnings",
         "created": "Created",
         "updated": "Updated",
         "skipped": "Skipped",
         "errorsFound": "{count} errors found",
         "errorRow": "Row {row}: {error}",
-        "moreErrors": "... and {count} more errors",
+        "moreErrors": "...and {count} more errors",
         "warningsFound": "{count} warnings",
         "warningRow": "Row {row}: {warning}",
-        "moreWarnings": "... and {count} more warnings",
-        "newImport": "Start new import"
-      },
-      "errors": {
-        "fileFormatError": "An error occurred. Please check the file format.",
-        "fileReadError": "Error reading file: {message}",
-        "importFailed": "Import failed. {count} errors found.",
-        "companyNameMissing": "Company name missing",
-        "firstNameMissing": "First name missing",
-        "lastNameMissing": "Last name missing",
-        "parsingError": "Parsing error"
-      },
-      "confirmDialog": {
-        "companiesTitle": "⚠️ GLOBAL IMPORT WARNING",
-        "contactsTitle": "⚠️ GLOBAL IMPORT WARNING",
-        "companiesMessage": "You are logged in as SuperAdmin!\n\nThe imported companies will be GLOBAL and immediately visible to all premium customers.\n\nDo you really want to continue?",
-        "contactsMessage": "You are logged in as SuperAdmin!\n\nThe imported contacts will be GLOBAL and immediately visible to all premium customers.\n\nDo you really want to continue?"
+        "moreWarnings": "...and {count} more warnings",
+        "newImport": "New Import"
       },
       "actions": {
-        "close": "Close",
         "cancel": "Cancel",
-        "import": "Start import",
+        "close": "Close",
+        "import": "Import",
         "importing": "Importing..."
       }
     },
@@ -3755,25 +3758,11 @@
       },
       "tabs": {
         "pressRelease": "Press Release",
-        "attachments": "Attachments",
-        "approvals": "Approvals",
-        "preview": "Preview",
-        "approval": {
-          "title": "Approval Settings",
-          "description": "Define who must approve the campaign before sending.",
-          "workflow": {
-            "step1": "1. PDF is automatically generated",
-            "step2": "2. Approval link is sent to customer",
-            "step3": "3. Customer can review and approve PDF"
-          }
-        },
         "attachments": {
           "mediaTitle": "Media",
           "addMedia": "Add Media"
         },
-        "content": {
-          "pressReleaseTitle": "Press Release"
-        },
+        "approvals": "Approvals",
         "preview": {
           "workflowActive": "Approval Workflow Active",
           "workflowDescription": "The campaign is in the approval process. Links have been sent.",
@@ -3797,6 +3786,18 @@
           "noPdfCreated": "No PDF version created yet",
           "noPdfHint": "Click \"Generate PDF\" to create a preview",
           "pdfVersionHistory": "PDF Version History"
+        },
+        "approval": {
+          "title": "Approval Settings",
+          "description": "Define who must approve the campaign before sending.",
+          "workflow": {
+            "step1": "1. PDF is automatically generated",
+            "step2": "2. Approval link is sent to customer",
+            "step3": "3. Customer can review and approve PDF"
+          }
+        },
+        "content": {
+          "pressReleaseTitle": "Press Release"
         }
       },
       "media": {
@@ -3831,6 +3832,11 @@
           "sent": "Sent",
           "changesRequested": "Changes Requested"
         }
+      },
+      "pdf": {
+        "defaultTitle": "PDF Preview",
+        "loading": "Loading PDF...",
+        "noPreview": "No PDF preview available"
       },
       "aiAssistant": {
         "ctaTitle": "Quick Start with AI Assistant",
@@ -3935,6 +3941,11 @@
     "loadError": "Error loading",
     "retryButton": "Try again",
     "notFound": "Campaign not found",
+    "header": {
+      "title": "Monitoring: {campaignTitle}",
+      "sentAt": "Sent on {date}",
+      "noDate": "N/A"
+    },
     "reports": {
       "title": "Generated Reports ({count})",
       "folderLink": "Open Analysis Folder",
@@ -4152,7 +4163,17 @@
       "saving": "Saving...",
       "activate": "Activate",
       "deleteConfirm": "Really delete auto-reporting?",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "buttonLoading": "Loading...",
+      "buttonLabel": "Auto-Report",
+      "untitledCampaign": "Untitled Campaign"
+    },
+    "tabs": {
+      "analytics": "Analytics",
+      "emailPerformance": "Email Performance",
+      "recipientsAndPublications": "Recipients & Publications",
+      "clippingArchive": "Clipping Archive",
+      "autoFinds": "Auto-Finds"
     }
   },
   "reporting": {

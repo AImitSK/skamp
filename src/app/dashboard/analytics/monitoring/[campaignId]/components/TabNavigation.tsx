@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChartBarIcon, DocumentTextIcon, NewspaperIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useMonitoring } from '../context/MonitoringContext';
 
@@ -20,15 +21,16 @@ interface Props {
 
 export const TabNavigation = memo(function TabNavigation({ activeTab, onChange }: Props) {
   const { clippings, suggestions } = useMonitoring();
+  const t = useTranslations('monitoring.tabs');
 
   const tabs: Tab[] = [
-    { id: 'dashboard', label: 'Analytics', icon: ChartBarIcon },
-    { id: 'performance', label: 'E-Mail Performance', icon: ChartBarIcon },
-    { id: 'recipients', label: 'Empfänger & Veröffentlichungen', icon: DocumentTextIcon },
-    { id: 'clippings', label: 'Clipping-Archiv', icon: NewspaperIcon, count: clippings.length },
+    { id: 'dashboard', label: t('analytics'), icon: ChartBarIcon },
+    { id: 'performance', label: t('emailPerformance'), icon: ChartBarIcon },
+    { id: 'recipients', label: t('recipientsAndPublications'), icon: DocumentTextIcon },
+    { id: 'clippings', label: t('clippingArchive'), icon: NewspaperIcon, count: clippings.length },
     {
       id: 'suggestions',
-      label: 'Auto-Funde',
+      label: t('autoFinds'),
       icon: SparklesIcon,
       count: suggestions.filter(s => s.status === 'pending').length
     },

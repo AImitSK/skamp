@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import { useMonitoring } from '../context/MonitoringContext';
@@ -11,6 +12,7 @@ import { AutoReporting } from '@/types/auto-reporting';
 import { AutoReportingModal } from '@/components/monitoring/AutoReportingModal';
 
 export const AutoReportingButton = memo(function AutoReportingButton() {
+  const t = useTranslations('monitoring.autoReporting');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { campaign } = useMonitoring();
@@ -19,7 +21,6 @@ export const AutoReportingButton = memo(function AutoReportingButton() {
   const [existingReporting, setExistingReporting] = useState<AutoReporting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Lade existierendes Auto-Reporting für diese Kampagne
   useEffect(() => {
     async function loadExistingReporting() {
       if (!campaign?.id || !currentOrganization?.id) {
@@ -34,7 +35,7 @@ export const AutoReportingButton = memo(function AutoReportingButton() {
         );
         setExistingReporting(reporting);
       } catch (error) {
-        console.error('Fehler beim Laden des Auto-Reportings:', error);
+        console.error('Error loading auto-reporting:', error);
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +62,6 @@ export const AutoReportingButton = memo(function AutoReportingButton() {
     setIsModalOpen(false);
   };
 
-  // Nicht anzeigen wenn keine Kampagne
   if (!campaign) return null;
 
   const isActive = existingReporting?.isActive ?? false;
@@ -76,8 +76,7 @@ export const AutoReportingButton = memo(function AutoReportingButton() {
         className="relative"
       >
         <ClockIcon className="h-4 w-4 mr-2" />
-        {isLoading ? 'Laden...' : hasReporting ? 'Auto-Report' : 'Auto-Report'}
-        {/* Aktiv-Indikator */}
+        {isLoading ? t('buttonLoading') : t('buttonLabel')}
         {isActive && (
           <span className="absolute -top-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -91,7 +90,7 @@ export const AutoReportingButton = memo(function AutoReportingButton() {
           isOpen={isModalOpen}
           onClose={handleModalClose}
           campaignId={campaign.id!}
-          campaignName={campaign.title || 'Unbenannte Kampagne'}
+          campaignName={campaign.title || t('untitledCampaign')}
           organizationId={currentOrganization.id}
           existingReporting={existingReporting}
           onSaved={handleSaved}

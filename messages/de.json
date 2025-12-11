@@ -26,6 +26,11 @@
     "settings": "Einstellungen",
     "help": "Hilfe",
     "unknown": "Unbekannt",
+    "confirmDialog": {
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "confirm": "Bestätigen"
+    },
     "widgets": {
       "myTasks": {
         "title": "Meine Aufgaben",
@@ -1548,35 +1553,35 @@
     },
     "importModal": {
       "title": "Daten importieren",
-      "globalMode": "GLOBAL-MODUS",
-      "fileSelected": "1 Datei ausgewählt",
+      "globalMode": "Global-Modus",
+      "fileSelected": "Datei ausgewählt",
       "noFile": "Keine Datei",
       "tabs": {
-        "companies": "Firmen importieren",
-        "contacts": "Kontakte importieren"
+        "companies": "Firmen",
+        "contacts": "Kontakte"
       },
       "globalWarning": {
-        "title": "⚠️ GLOBAL-IMPORT AKTIV",
-        "companiesMessage": "Du bist als SuperAdmin angemeldet. Alle importierten Firmen werden automatisch global und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!",
-        "contactsMessage": "Du bist als SuperAdmin angemeldet. Alle importierten Kontakte werden automatisch global und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!"
+        "title": "Global-Modus aktiv",
+        "companiesMessage": "Firmen werden global für alle Organisationen importiert und können von jedem eingesehen werden.",
+        "contactsMessage": "Kontakte werden global für alle Organisationen importiert und können von jedem eingesehen werden."
       },
       "instructions": {
-        "companiesTitle": "Firmen-Import",
-        "contactsTitle": "Kontakte-Import",
-        "companiesDescription": "Laden Sie eine CSV-Datei hoch, um Firmen zu importieren. Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).",
-        "contactsDescription": "Laden Sie eine CSV-Datei hoch, um Kontakte zu importieren. Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).",
+        "companiesTitle": "CSV-Import für Firmen",
+        "companiesDescription": "Laden Sie eine CSV-Datei mit Firmendaten hoch. Die Datei muss mindestens die Spalten \"Firmenname\" und \"Typ\" enthalten.",
+        "contactsTitle": "CSV-Import für Kontakte",
+        "contactsDescription": "Laden Sie eine CSV-Datei mit Kontaktdaten hoch. Die Datei muss mindestens die Spalten \"Vorname\" und \"Nachname\" enthalten.",
         "downloadTemplate": "Vorlage herunterladen"
       },
       "duplicateHandling": {
         "label": "Duplikate-Behandlung",
-        "skip": "Duplikate überspringen",
-        "update": "Bestehende Einträge aktualisieren"
+        "skip": "Duplikate überspringen (Bestehende Einträge bleiben unverändert)",
+        "update": "Duplikate aktualisieren (Bestehende Einträge werden überschrieben)"
       },
       "fileUpload": {
-        "label": "CSV-Datei auswählen",
+        "label": "CSV-Datei hochladen",
         "clickOrDrag": "Klicken Sie hier",
         "orDrag": "oder ziehen Sie eine Datei hierher",
-        "fileType": "CSV-Datei (max. 10MB)",
+        "fileType": "CSV (max. 10 MB)",
         "selectedFile": "Ausgewählte Datei:",
         "reset": "Zurücksetzen"
       },
@@ -1585,44 +1590,42 @@
         "more": "..."
       },
       "progress": {
-        "parsing": "Datei wird gelesen...",
+        "parsing": "Datei wird verarbeitet...",
         "validating": "Daten werden validiert...",
         "importing": "Importiere {current} von {total}...",
-        "done": "Import abgeschlossen!"
+        "done": "Import abgeschlossen"
+      },
+      "confirmDialog": {
+        "companiesMessage": "⚠️ Global-Modus aktiv!\n\nSie sind dabei, Firmen GLOBAL zu importieren.\nDiese werden für ALLE Organisationen sichtbar sein.\n\nMöchten Sie fortfahren?",
+        "contactsMessage": "⚠️ Global-Modus aktiv!\n\nSie sind dabei, Kontakte GLOBAL zu importieren.\nDiese werden für ALLE Organisationen sichtbar sein.\n\nMöchten Sie fortfahren?"
+      },
+      "errors": {
+        "companyNameMissing": "Firmenname fehlt",
+        "firstNameMissing": "Vorname fehlt",
+        "lastNameMissing": "Nachname fehlt",
+        "parsingError": "Fehler beim Parsen der Zeile",
+        "importFailed": "Import fehlgeschlagen: {count} Fehler",
+        "fileFormatError": "Fehler beim Verarbeiten der Datei. Bitte überprüfen Sie das Format.",
+        "fileReadError": "Fehler beim Lesen der Datei: {message}"
       },
       "results": {
         "successTitle": "Import erfolgreich!",
-        "warningsTitle": "Import mit Warnungen abgeschlossen",
-        "created": "Neu erstellt",
+        "warningsTitle": "Import mit Warnungen",
+        "created": "Erstellt",
         "updated": "Aktualisiert",
         "skipped": "Übersprungen",
         "errorsFound": "{count} Fehler gefunden",
         "errorRow": "Zeile {row}: {error}",
-        "moreErrors": "... und {count} weitere Fehler",
+        "moreErrors": "...und {count} weitere Fehler",
         "warningsFound": "{count} Warnungen",
         "warningRow": "Zeile {row}: {warning}",
-        "moreWarnings": "... und {count} weitere Warnungen",
-        "newImport": "Neuen Import starten"
-      },
-      "errors": {
-        "fileFormatError": "Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.",
-        "fileReadError": "Fehler beim Lesen der Datei: {message}",
-        "importFailed": "Import fehlgeschlagen. {count} Fehler gefunden.",
-        "companyNameMissing": "Firmenname fehlt",
-        "firstNameMissing": "Vorname fehlt",
-        "lastNameMissing": "Nachname fehlt",
-        "parsingError": "Parsing-Fehler"
-      },
-      "confirmDialog": {
-        "companiesTitle": "⚠️ GLOBAL-IMPORT WARNUNG",
-        "contactsTitle": "⚠️ GLOBAL-IMPORT WARNUNG",
-        "companiesMessage": "Du bist als SuperAdmin angemeldet!\n\nDie importierten Firmen werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\nMöchtest du wirklich fortfahren?",
-        "contactsMessage": "Du bist als SuperAdmin angemeldet!\n\nDie importierten Kontakte werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\nMöchtest du wirklich fortfahren?"
+        "moreWarnings": "...und {count} weitere Warnungen",
+        "newImport": "Neuer Import"
       },
       "actions": {
-        "close": "Schließen",
         "cancel": "Abbrechen",
-        "import": "Import starten",
+        "close": "Schließen",
+        "import": "Importieren",
         "importing": "Importiere..."
       }
     },
@@ -3751,25 +3754,11 @@
       },
       "tabs": {
         "pressRelease": "Pressemeldung",
-        "attachments": "Anhänge",
-        "approvals": "Freigaben",
-        "preview": "Vorschau",
-        "approval": {
-          "title": "Freigabe-Einstellungen",
-          "description": "Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.",
-          "workflow": {
-            "step1": "1. PDF wird automatisch generiert",
-            "step2": "2. Freigabe-Link wird an Kunde versendet",
-            "step3": "3. Kunde kann PDF prüfen und freigeben"
-          }
-        },
         "attachments": {
           "mediaTitle": "Medien",
           "addMedia": "Medien hinzufügen"
         },
-        "content": {
-          "pressReleaseTitle": "Pressemeldung"
-        },
+        "approvals": "Freigaben",
         "preview": {
           "workflowActive": "Freigabe-Workflow aktiv",
           "workflowDescription": "Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet.",
@@ -3793,6 +3782,18 @@
           "noPdfCreated": "Noch keine PDF-Version erstellt",
           "noPdfHint": "Klicken Sie auf \"PDF generieren\" um eine Vorschau zu erstellen",
           "pdfVersionHistory": "PDF-Versionen Historie"
+        },
+        "approval": {
+          "title": "Freigabe-Einstellungen",
+          "description": "Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.",
+          "workflow": {
+            "step1": "1. PDF wird automatisch generiert",
+            "step2": "2. Freigabe-Link wird an Kunde versendet",
+            "step3": "3. Kunde kann PDF prüfen und freigeben"
+          }
+        },
+        "content": {
+          "pressReleaseTitle": "Pressemeldung"
         }
       },
       "approval": {
@@ -3835,6 +3836,11 @@
           "sent": "Versendet",
           "changesRequested": "Änderungen Angefordert"
         }
+      },
+      "pdf": {
+        "defaultTitle": "PDF Vorschau",
+        "loading": "PDF wird geladen...",
+        "noPreview": "Keine PDF-Vorschau verfügbar"
       }
     }
   },
@@ -3935,6 +3941,11 @@
     "loadError": "Fehler beim Laden",
     "retryButton": "Erneut versuchen",
     "notFound": "Kampagne nicht gefunden",
+    "header": {
+      "title": "Monitoring: {campaignTitle}",
+      "sentAt": "Versendet am {date}",
+      "noDate": "N/A"
+    },
     "reports": {
       "title": "Generierte Reports ({count})",
       "folderLink": "Zum Analysen-Ordner",
@@ -4152,7 +4163,17 @@
       "saving": "Speichern...",
       "activate": "Aktivieren",
       "deleteConfirm": "Auto-Reporting wirklich löschen?",
-      "unknown": "Unbekannt"
+      "unknown": "Unbekannt",
+      "buttonLoading": "Laden...",
+      "buttonLabel": "Auto-Report",
+      "untitledCampaign": "Unbenannte Kampagne"
+    },
+    "tabs": {
+      "analytics": "Analytics",
+      "emailPerformance": "E-Mail Performance",
+      "recipientsAndPublications": "Empfänger & Veröffentlichungen",
+      "clippingArchive": "Clipping-Archiv",
+      "autoFinds": "Auto-Funde"
     }
   },
   "reporting": {
