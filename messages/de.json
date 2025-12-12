@@ -3148,6 +3148,22 @@
         "needHelp": "Weitere Hilfe benötigt?",
         "contact": "Support kontaktieren"
       }
+    },
+    "providerGuide": {
+      "guideFor": "Anleitung für {providerName}",
+      "videoTutorial": "Video-Tutorial",
+      "dnsRecordsNeeded": "Diese Einträge benötigen Sie:",
+      "stepProgress": "Schritt {current} von {total}",
+      "goToStep": "Gehe zu Schritt {step}",
+      "back": "Zurück",
+      "next": "Weiter",
+      "commonIssues": {
+        "title": "Häufige Probleme & Lösungen"
+      },
+      "support": {
+        "needHelp": "Benötigen Sie weitere Hilfe?",
+        "openArticle": "{providerName} Support-Artikel öffnen"
+      }
     }
   },
   "developer": {
@@ -3652,6 +3668,200 @@
           "title": "Vollständige Kommunikationshistorie",
           "attachments": "Anhänge:"
         }
+      }
+    },
+    "alert": {
+      "close": "Schließen"
+    },
+    "signatures": {
+      "validation": {
+        "nameRequired": "Name ist erforderlich",
+        "contentRequired": "Signatur-Inhalt ist erforderlich",
+        "saveError": "Fehler beim Speichern. Bitte versuchen Sie es erneut."
+      },
+      "editor": {
+        "titleEdit": "Signatur bearbeiten",
+        "titleCreate": "Neue Signatur erstellen",
+        "nameLabel": "Name der Signatur *",
+        "namePlaceholder": "z.B. Standard Signatur",
+        "contentLabel": "Signatur-Inhalt",
+        "contentTooltip": "Gestalten Sie Ihre E-Mail-Signatur mit Texten, Formatierungen, Links und Logos. Das Logo kann direkt im Editor über den Foto-Button eingefügt werden.",
+        "contentPlaceholder": "Mit freundlichen Grüßen...",
+        "previewButton": "Vorschau",
+        "assignmentLabel": "Diese Signatur verwenden für",
+        "assignmentTooltip": "Wählen Sie die E-Mail-Adressen aus, die diese Signatur verwenden sollen."
+      },
+      "preview": {
+        "title": "Signatur-Vorschau: {name}",
+        "description": "So wird Ihre Signatur in E-Mails aussehen:",
+        "noContent": "Keine Inhalte vorhanden",
+        "close": "Schließen"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "saving": "Speichern...",
+        "save": "Speichern",
+        "create": "Signatur erstellen"
+      }
+    },
+    "routing": {
+      "title": {
+        "edit": "Regel bearbeiten",
+        "create": "Neue Regel erstellen"
+      },
+      "fields": {
+        "ruleName": {
+          "label": "Regelname *",
+          "placeholder": "z.B. Wichtige Journalisten"
+        },
+        "senderContains": {
+          "label": "Absender enthält",
+          "placeholder": "z.B. @spiegel.de oder max.mustermann@",
+          "hint": "E-Mail-Adresse oder Domain des Absenders"
+        },
+        "subjectContains": {
+          "label": "Betreff enthält",
+          "placeholder": "z.B. Urgent, Interview"
+        },
+        "keywords": {
+          "label": "Schlüsselwörter im Inhalt",
+          "placeholder": "Keyword eingeben und Enter drücken"
+        },
+        "assignToTeam": {
+          "label": "An Team-Mitglieder zuweisen"
+        },
+        "priority": {
+          "label": "Priorität setzen",
+          "noChange": "Keine Änderung",
+          "low": "Niedrig",
+          "normal": "Normal",
+          "high": "Hoch"
+        },
+        "tags": {
+          "label": "Tags hinzufügen",
+          "placeholder": "Tag eingeben und Enter drücken"
+        },
+        "autoReply": {
+          "label": "Auto-Antwort (Coming Soon)",
+          "selectTemplate": "Vorlage wählen...",
+          "comingSoon": "Diese Funktion wird in einer zukünftigen Version verfügbar sein"
+        },
+        "enabled": "Regel aktiv"
+      },
+      "sections": {
+        "conditions": "Bedingungen (WENN)",
+        "actions": "Aktionen (DANN)"
+      },
+      "validation": {
+        "nameRequired": "Name ist erforderlich",
+        "conditionRequired": "Mindestens eine Bedingung muss definiert sein",
+        "actionRequired": "Mindestens eine Aktion muss definiert sein"
+      },
+      "buttons": {
+        "cancel": "Abbrechen",
+        "saving": "Speichern...",
+        "save": "Speichern",
+        "create": "Regel erstellen"
+      },
+      "testDialog": {
+        "title": "Routing-Regeln testen",
+        "defaultSubject": "Test E-Mail",
+        "defaultContent": "Dies ist eine Test-E-Mail für die Routing-Regeln.",
+        "sectionTitle": "Test-E-Mail",
+        "fields": {
+          "sender": "Absender",
+          "subject": "Betreff",
+          "content": "Inhalt"
+        },
+        "placeholders": {
+          "sender": "absender@example.com",
+          "subject": "Betreff der Test-E-Mail",
+          "content": "E-Mail-Inhalt für Keyword-Test..."
+        },
+        "runTest": "Test durchführen",
+        "results": {
+          "title": "Testergebnisse",
+          "noActiveRules": "Keine aktiven Regeln zum Testen vorhanden",
+          "priority": "Priorität {number}",
+          "actionsWouldExecute": "Diese Aktionen würden ausgeführt:"
+        },
+        "actions": {
+          "assignTo": "Zuweisen an",
+          "priority": "Priorität",
+          "tags": "Tags"
+        },
+        "conditionTypes": {
+          "sender": "Absender",
+          "subject": "Betreff",
+          "keywords": "Keywords"
+        },
+        "summary": {
+          "matched": "Die E-Mail würde von der Regel \"{ruleName}\" verarbeitet.",
+          "noMatch": "Keine Regel würde auf diese E-Mail zutreffen."
+        },
+        "close": "Schließen"
+      }
+    },
+    "routingRuleEditor": {
+      "dialog": {
+        "title": "Routing-Regeln für {email}",
+        "description": "Definieren Sie Regeln, um eingehende E-Mails automatisch zu verarbeiten. Die Regeln werden in der angegebenen Reihenfolge ausgeführt."
+      },
+      "empty": {
+        "title": "Keine Routing-Regeln definiert",
+        "description": "Fügen Sie Regeln hinzu, um E-Mails automatisch zu verarbeiten"
+      },
+      "rule": {
+        "conditions": "Bedingungen:",
+        "conditionSubject": "Betreff",
+        "conditionFrom": "Von",
+        "conditionKeyword": "Keyword",
+        "actions": "Aktionen:",
+        "actionAssign": "{count} Personen zuweisen",
+        "actionTags": "{count} Tags",
+        "actionAutoReply": "Auto-Reply",
+        "priority": {
+          "low": "Niedrig",
+          "high": "Hoch"
+        }
+      },
+      "addRule": "Neue Regel hinzufügen",
+      "cancel": "Abbrechen",
+      "saving": "Speichern...",
+      "saveRules": "Regeln speichern",
+      "modal": {
+        "titleEdit": "Regel bearbeiten",
+        "titleNew": "Neue Routing-Regel",
+        "ruleName": "Regelname",
+        "ruleNamePlaceholder": "z.B. Presseanfragen an PR-Team",
+        "conditionsTitle": "Bedingungen",
+        "conditionsDescription": "E-Mails, die mindestens eine dieser Bedingungen erfüllen, werden verarbeitet",
+        "subjectContains": "Betreff enthält",
+        "subjectPlaceholder": "z.B. Presseanfrage",
+        "fromContains": "Absender enthält",
+        "fromPlaceholder": "z.B. @journalist.de",
+        "keywords": "Keywords",
+        "keywordPlaceholder": "Keyword hinzufügen",
+        "addButton": "Hinzufügen",
+        "actionsTitle": "Aktionen",
+        "actionsDescription": "Was soll mit E-Mails passieren, die die Bedingungen erfüllen?",
+        "assignTeamMembers": "Team-Mitglieder zuweisen",
+        "multiSelectHint": "Halten Sie Strg/Cmd gedrückt für Mehrfachauswahl",
+        "addTags": "Tags hinzufügen",
+        "tagPlaceholder": "Tag hinzufügen",
+        "setPriority": "Priorität setzen",
+        "priorityLow": "Niedrig",
+        "priorityNormal": "Normal",
+        "priorityHigh": "Hoch",
+        "autoReplyTemplate": "Auto-Reply Template",
+        "noAutoReply": "Keine automatische Antwort",
+        "save": "Speichern",
+        "addRule": "Regel hinzufügen"
+      },
+      "templates": {
+        "welcome": "Willkommensnachricht",
+        "received": "Empfangsbestätigung",
+        "outOfOffice": "Abwesenheitsnotiz"
       }
     }
   },

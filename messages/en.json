@@ -3148,6 +3148,22 @@
         "needHelp": "Need more help?",
         "contact": "Contact Support"
       }
+    },
+    "providerGuide": {
+      "guideFor": "Setup guide for {providerName}",
+      "videoTutorial": "Video Tutorial",
+      "dnsRecordsNeeded": "You need these records:",
+      "stepProgress": "Step {current} of {total}",
+      "goToStep": "Go to step {step}",
+      "back": "Back",
+      "next": "Next",
+      "commonIssues": {
+        "title": "Common Issues & Solutions"
+      },
+      "support": {
+        "needHelp": "Need more help?",
+        "openArticle": "Open {providerName} Support Article"
+      }
     }
   },
   "developer": {
@@ -3652,6 +3668,200 @@
           "title": "Complete Communication History",
           "attachments": "Attachments:"
         }
+      }
+    },
+    "alert": {
+      "close": "Close"
+    },
+    "signatures": {
+      "validation": {
+        "nameRequired": "Name is required",
+        "contentRequired": "Signature content is required",
+        "saveError": "Error saving. Please try again."
+      },
+      "editor": {
+        "titleEdit": "Edit Signature",
+        "titleCreate": "Create New Signature",
+        "nameLabel": "Signature Name *",
+        "namePlaceholder": "e.g. Standard Signature",
+        "contentLabel": "Signature Content",
+        "contentTooltip": "Design your email signature with text, formatting, links and logos. The logo can be inserted directly in the editor using the photo button.",
+        "contentPlaceholder": "Best regards...",
+        "previewButton": "Preview",
+        "assignmentLabel": "Use this signature for",
+        "assignmentTooltip": "Select the email addresses that should use this signature."
+      },
+      "preview": {
+        "title": "Signature Preview: {name}",
+        "description": "This is how your signature will appear in emails:",
+        "noContent": "No content available",
+        "close": "Close"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save",
+        "create": "Create Signature"
+      }
+    },
+    "routing": {
+      "title": {
+        "edit": "Edit Rule",
+        "create": "Create New Rule"
+      },
+      "fields": {
+        "ruleName": {
+          "label": "Rule Name *",
+          "placeholder": "e.g. Important Journalists"
+        },
+        "senderContains": {
+          "label": "Sender contains",
+          "placeholder": "e.g. @spiegel.de or max.mustermann@",
+          "hint": "Email address or domain of the sender"
+        },
+        "subjectContains": {
+          "label": "Subject contains",
+          "placeholder": "e.g. Urgent, Interview"
+        },
+        "keywords": {
+          "label": "Keywords in content",
+          "placeholder": "Enter keyword and press Enter"
+        },
+        "assignToTeam": {
+          "label": "Assign to team members"
+        },
+        "priority": {
+          "label": "Set priority",
+          "noChange": "No change",
+          "low": "Low",
+          "normal": "Normal",
+          "high": "High"
+        },
+        "tags": {
+          "label": "Add tags",
+          "placeholder": "Enter tag and press Enter"
+        },
+        "autoReply": {
+          "label": "Auto-Reply (Coming Soon)",
+          "selectTemplate": "Select template...",
+          "comingSoon": "This feature will be available in a future version"
+        },
+        "enabled": "Rule active"
+      },
+      "sections": {
+        "conditions": "Conditions (IF)",
+        "actions": "Actions (THEN)"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "conditionRequired": "At least one condition must be defined",
+        "actionRequired": "At least one action must be defined"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save",
+        "create": "Create Rule"
+      },
+      "testDialog": {
+        "title": "Test Routing Rules",
+        "defaultSubject": "Test Email",
+        "defaultContent": "This is a test email for the routing rules.",
+        "sectionTitle": "Test Email",
+        "fields": {
+          "sender": "Sender",
+          "subject": "Subject",
+          "content": "Content"
+        },
+        "placeholders": {
+          "sender": "sender@example.com",
+          "subject": "Subject of test email",
+          "content": "Email content for keyword test..."
+        },
+        "runTest": "Run Test",
+        "results": {
+          "title": "Test Results",
+          "noActiveRules": "No active rules to test",
+          "priority": "Priority {number}",
+          "actionsWouldExecute": "These actions would be executed:"
+        },
+        "actions": {
+          "assignTo": "Assign to",
+          "priority": "Priority",
+          "tags": "Tags"
+        },
+        "conditionTypes": {
+          "sender": "Sender",
+          "subject": "Subject",
+          "keywords": "Keywords"
+        },
+        "summary": {
+          "matched": "The email would be processed by rule \"{ruleName}\".",
+          "noMatch": "No rule would apply to this email."
+        },
+        "close": "Close"
+      }
+    },
+    "routingRuleEditor": {
+      "dialog": {
+        "title": "Routing Rules for {email}",
+        "description": "Define rules to automatically process incoming emails. Rules are executed in the order shown."
+      },
+      "empty": {
+        "title": "No routing rules defined",
+        "description": "Add rules to automatically process emails"
+      },
+      "rule": {
+        "conditions": "Conditions:",
+        "conditionSubject": "Subject",
+        "conditionFrom": "From",
+        "conditionKeyword": "Keyword",
+        "actions": "Actions:",
+        "actionAssign": "Assign to {count} people",
+        "actionTags": "{count} tags",
+        "actionAutoReply": "Auto-Reply",
+        "priority": {
+          "low": "Low",
+          "high": "High"
+        }
+      },
+      "addRule": "Add new rule",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveRules": "Save rules",
+      "modal": {
+        "titleEdit": "Edit rule",
+        "titleNew": "New routing rule",
+        "ruleName": "Rule name",
+        "ruleNamePlaceholder": "e.g. Press inquiries to PR team",
+        "conditionsTitle": "Conditions",
+        "conditionsDescription": "Emails meeting at least one of these conditions will be processed",
+        "subjectContains": "Subject contains",
+        "subjectPlaceholder": "e.g. Press inquiry",
+        "fromContains": "Sender contains",
+        "fromPlaceholder": "e.g. @journalist.com",
+        "keywords": "Keywords",
+        "keywordPlaceholder": "Add keyword",
+        "addButton": "Add",
+        "actionsTitle": "Actions",
+        "actionsDescription": "What should happen with emails that meet the conditions?",
+        "assignTeamMembers": "Assign team members",
+        "multiSelectHint": "Hold Ctrl/Cmd for multiple selection",
+        "addTags": "Add tags",
+        "tagPlaceholder": "Add tag",
+        "setPriority": "Set priority",
+        "priorityLow": "Low",
+        "priorityNormal": "Normal",
+        "priorityHigh": "High",
+        "autoReplyTemplate": "Auto-reply template",
+        "noAutoReply": "No automatic reply",
+        "save": "Save",
+        "addRule": "Add rule"
+      },
+      "templates": {
+        "welcome": "Welcome message",
+        "received": "Receipt confirmation",
+        "outOfOffice": "Out of office"
       }
     }
   },

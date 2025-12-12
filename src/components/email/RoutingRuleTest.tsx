@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -53,10 +54,12 @@ interface RoutingRuleTestProps {
 }
 
 export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTestProps) {
+  const t = useTranslations('email.routing.testDialog');
+
   const [testEmail, setTestEmail] = useState({
     from: 'test@example.com',
-    subject: 'Test E-Mail',
-    content: 'Dies ist eine Test-E-Mail für die Routing-Regeln.'
+    subject: t('defaultSubject'),
+    content: t('defaultContent')
   });
   
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
@@ -75,32 +78,32 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
       if (rule.conditions.from) {
         const matched = testEmail.from.toLowerCase().includes(rule.conditions.from.toLowerCase());
         conditionResults.push({
-          type: 'Absender',
+          type: t('conditionTypes.sender'),
           value: rule.conditions.from,
           matched
         });
         if (!matched) allConditionsMet = false;
       }
-      
+
       // Test "subject" condition
       if (rule.conditions.subject) {
         const matched = testEmail.subject.toLowerCase().includes(rule.conditions.subject.toLowerCase());
         conditionResults.push({
-          type: 'Betreff',
+          type: t('conditionTypes.subject'),
           value: rule.conditions.subject,
           matched
         });
         if (!matched) allConditionsMet = false;
       }
-      
+
       // Test "keywords" condition
       if (rule.conditions.keywords && rule.conditions.keywords.length > 0) {
         const contentLower = testEmail.content.toLowerCase();
-        const keywordMatched = rule.conditions.keywords.some(keyword => 
+        const keywordMatched = rule.conditions.keywords.some(keyword =>
           contentLower.includes(keyword.toLowerCase())
         );
         conditionResults.push({
-          type: 'Keywords',
+          type: t('conditionTypes.keywords'),
           value: rule.conditions.keywords.join(', '),
           matched: keywordMatched
         });
@@ -124,99 +127,99 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
 
   const renderActions = (actions: RoutingRule['actions']) => {
     const parts = [];
-    
+
     if (actions.assignTo?.length) {
-      const names = actions.assignTo.map(id => 
+      const names = actions.assignTo.map(id =>
         teamMembers.find(m => m.id === id)?.name || id
       ).join(', ');
       parts.push(
         <div key="assign" className="flex items-center gap-2">
           <ArrowRightIcon className="h-4 w-4 text-gray-400" />
-          <span>Zuweisen an: <strong>{names}</strong></span>
+          <span>{t('actions.assignTo')}: <strong>{names}</strong></span>
         </div>
       );
     }
-    
+
     if (actions.setPriority) {
       parts.push(
         <div key="priority" className="flex items-center gap-2">
           <ArrowRightIcon className="h-4 w-4 text-gray-400" />
-          <span>Priorität: <Badge color="purple">{actions.setPriority}</Badge></span>
+          <span>{t('actions.priority')}: <Badge color="purple">{actions.setPriority}</Badge></span>
         </div>
       );
     }
-    
+
     if (actions.addTags?.length) {
       parts.push(
         <div key="tags" className="flex items-center gap-2">
           <ArrowRightIcon className="h-4 w-4 text-gray-400" />
-          <span>Tags: {actions.addTags.map(tag => (
+          <span>{t('actions.tags')}: {actions.addTags.map(tag => (
             <Badge key={tag} color="zinc" className="ml-1">{tag}</Badge>
           ))}</span>
         </div>
       );
     }
-    
+
     return parts;
   };
 
   return (
     <Dialog open={true} onClose={onClose} className="sm:max-w-3xl">
       <DialogTitle className="px-6 py-4">
-        Routing-Regeln testen
+        {t('title')}
       </DialogTitle>
       <DialogBody className="p-6">
         <div className="space-y-6">
           {/* Test-E-Mail Eingabe */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Test-E-Mail</h3>
-            
+            <h3 className="text-sm font-medium text-gray-900">{t('sectionTitle')}</h3>
+
             <Field>
-              <Label>Absender</Label>
+              <Label>{t('fields.sender')}</Label>
               <Input
                 type="email"
                 value={testEmail.from}
                 onChange={(e) => setTestEmail({ ...testEmail, from: e.target.value })}
-                placeholder="absender@example.com"
+                placeholder={t('placeholders.sender')}
               />
             </Field>
-            
+
             <Field>
-              <Label>Betreff</Label>
+              <Label>{t('fields.subject')}</Label>
               <Input
                 value={testEmail.subject}
                 onChange={(e) => setTestEmail({ ...testEmail, subject: e.target.value })}
-                placeholder="Betreff der Test-E-Mail"
+                placeholder={t('placeholders.subject')}
               />
             </Field>
-            
+
             <Field>
-              <Label>Inhalt</Label>
+              <Label>{t('fields.content')}</Label>
               <Textarea
                 value={testEmail.content}
                 onChange={(e) => setTestEmail({ ...testEmail, content: e.target.value })}
                 rows={4}
-                placeholder="E-Mail-Inhalt für Keyword-Test..."
+                placeholder={t('placeholders.content')}
               />
             </Field>
-            
+
             <Button
               onClick={testRules}
               className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             >
               <PlayIcon className="h-4 w-4 mr-2" />
-              Test durchführen
+              {t('runTest')}
             </Button>
           </div>
           
           {/* Test-Ergebnisse */}
           {testResults && (
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">Testergebnisse</h3>
-              
+              <h3 className="text-sm font-medium text-gray-900">{t('results.title')}</h3>
+
               {testResults.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">
-                  <p>Keine aktiven Regeln zum Testen vorhanden</p>
+                  <p>{t('results.noActiveRules')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -230,7 +233,7 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{result.rule.name}</h4>
-                          <Badge color="zinc" className="text-xs">Priorität {index + 1}</Badge>
+                          <Badge color="zinc" className="text-xs">{t('results.priority', { number: index + 1 })}</Badge>
                         </div>
                         {result.matched ? (
                           <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -259,26 +262,26 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
                       {result.matched && (
                         <div className="border-t pt-3 space-y-1">
                           <p className="text-sm font-medium text-gray-700 mb-2">
-                            Diese Aktionen würden ausgeführt:
+                            {t('results.actionsWouldExecute')}
                           </p>
                           {renderActions(result.rule.actions)}
                         </div>
                       )}
                     </div>
                   ))}
-                  
+
                   {/* Zusammenfassung */}
                   <div className="mt-4 p-4 bg-gray-100 rounded-lg">
                     <p className="text-sm font-medium">
                       {testResults.some(r => r.matched) ? (
                         <>
                           <CheckCircleIcon className="h-4 w-4 inline mr-1 text-green-600" />
-                          Die E-Mail würde von der Regel &ldquo;{testResults.find(r => r.matched)?.rule.name}&rdquo; verarbeitet.
+                          {t('summary.matched', { ruleName: testResults.find(r => r.matched)?.rule.name || '' })}
                         </>
                       ) : (
                         <>
                           <XCircleIcon className="h-4 w-4 inline mr-1 text-gray-600" />
-                          Keine Regel würde auf diese E-Mail zutreffen.
+                          {t('summary.noMatch')}
                         </>
                       )}
                     </p>
@@ -291,7 +294,7 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
       </DialogBody>
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          Schließen
+          {t('close')}
         </Button>
       </DialogActions>
     </Dialog>

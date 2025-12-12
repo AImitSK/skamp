@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -10,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/ui/checkbox';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   TrashIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -49,6 +50,8 @@ export function RoutingRuleBuilder({
   onClose,
   saving = false
 }: RoutingRuleBuilderProps) {
+  const t = useTranslations('email.routing');
+
   const [formData, setFormData] = useState<RoutingRule>({
     id: '',
     name: '',
@@ -56,7 +59,7 @@ export function RoutingRuleBuilder({
     conditions: {},
     actions: {}
   });
-  
+
   const [keywordInput, setKeywordInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -151,30 +154,30 @@ export function RoutingRuleBuilder({
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name ist erforderlich';
+      newErrors.name = t('validation.nameRequired');
     }
-    
+
     // Mindestens eine Bedingung muss gesetzt sein
-    const hasCondition = formData.conditions.subject || 
-                        formData.conditions.from || 
+    const hasCondition = formData.conditions.subject ||
+                        formData.conditions.from ||
                         (formData.conditions.keywords && formData.conditions.keywords.length > 0);
-    
+
     if (!hasCondition) {
-      newErrors.conditions = 'Mindestens eine Bedingung muss definiert sein';
+      newErrors.conditions = t('validation.conditionRequired');
     }
-    
+
     // Mindestens eine Aktion muss gesetzt sein
     const hasAction = (formData.actions.assignTo && formData.actions.assignTo.length > 0) ||
                      (formData.actions.addTags && formData.actions.addTags.length > 0) ||
                      formData.actions.setPriority ||
                      formData.actions.autoReply;
-    
+
     if (!hasAction) {
-      newErrors.actions = 'Mindestens eine Aktion muss definiert sein';
+      newErrors.actions = t('validation.actionRequired');
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -187,17 +190,17 @@ export function RoutingRuleBuilder({
   return (
     <Dialog open={true} onClose={onClose} className="sm:max-w-2xl">
       <DialogTitle className="px-6 py-4">
-        {rule ? 'Regel bearbeiten' : 'Neue Regel erstellen'}
+        {rule ? t('title.edit') : t('title.create')}
       </DialogTitle>
       <DialogBody className="p-6">
         <div className="space-y-6">
           {/* Regel-Name */}
           <Field>
-            <Label>Regelname *</Label>
+            <Label>{t('fields.ruleName.label')}</Label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="z.B. Wichtige Journalisten"
+              placeholder={t('fields.ruleName.placeholder')}
               className={errors.name ? 'border-red-500' : ''}
             />
             {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
@@ -205,40 +208,40 @@ export function RoutingRuleBuilder({
 
           {/* Bedingungen */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Bedingungen (WENN)</h3>
+            <h3 className="text-sm font-medium text-gray-900">{t('sections.conditions')}</h3>
             {errors.conditions && (
               <p className="text-sm text-red-600">{errors.conditions}</p>
             )}
-            
+
             <Field>
-              <Label>Absender enthält</Label>
+              <Label>{t('fields.senderContains.label')}</Label>
               <Input
                 value={formData.conditions.from || ''}
                 onChange={(e) => setFormData({
                   ...formData,
                   conditions: { ...formData.conditions, from: e.target.value }
                 })}
-                placeholder="z.B. @spiegel.de oder max.mustermann@"
+                placeholder={t('fields.senderContains.placeholder')}
               />
               <p className="text-xs text-gray-500 mt-1">
-                E-Mail-Adresse oder Domain des Absenders
+                {t('fields.senderContains.hint')}
               </p>
             </Field>
 
             <Field>
-              <Label>Betreff enthält</Label>
+              <Label>{t('fields.subjectContains.label')}</Label>
               <Input
                 value={formData.conditions.subject || ''}
                 onChange={(e) => setFormData({
                   ...formData,
                   conditions: { ...formData.conditions, subject: e.target.value }
                 })}
-                placeholder="z.B. Urgent, Interview"
+                placeholder={t('fields.subjectContains.placeholder')}
               />
             </Field>
 
             <Field>
-              <Label>Schlüsselwörter im Inhalt</Label>
+              <Label>{t('fields.keywords.label')}</Label>
               <div className="flex gap-2">
                 <Input
                   value={keywordInput}
@@ -249,7 +252,7 @@ export function RoutingRuleBuilder({
                       handleAddKeyword();
                     }
                   }}
-                  placeholder="Keyword eingeben und Enter drücken"
+                  placeholder={t('fields.keywords.placeholder')}
                 />
                 <Button type="button" plain onClick={handleAddKeyword}>
                   <PlusIcon className="h-4 w-4" />
@@ -276,14 +279,14 @@ export function RoutingRuleBuilder({
 
           {/* Aktionen */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Aktionen (DANN)</h3>
+            <h3 className="text-sm font-medium text-gray-900">{t('sections.actions')}</h3>
             {errors.actions && (
               <p className="text-sm text-red-600">{errors.actions}</p>
             )}
-            
+
             {/* Team-Zuweisung */}
             <div>
-              <span className="block text-sm font-medium text-gray-700 mb-1">An Team-Mitglieder zuweisen</span>
+              <span className="block text-sm font-medium text-gray-700 mb-1">{t('fields.assignToTeam.label')}</span>
               <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
                 {teamMembers.map((member) => (
                   <label key={member.id} className="flex items-center gap-2 cursor-pointer">
@@ -301,27 +304,27 @@ export function RoutingRuleBuilder({
 
             {/* Priorität */}
             <Field>
-              <Label>Priorität setzen</Label>
+              <Label>{t('fields.priority.label')}</Label>
               <Select
                 value={formData.actions.setPriority || ''}
                 onChange={(e) => setFormData({
                   ...formData,
-                  actions: { 
-                    ...formData.actions, 
-                    setPriority: e.target.value as any || undefined 
+                  actions: {
+                    ...formData.actions,
+                    setPriority: e.target.value as any || undefined
                   }
                 })}
               >
-                <option value="">Keine Änderung</option>
-                <option value="low">Niedrig</option>
-                <option value="normal">Normal</option>
-                <option value="high">Hoch</option>
+                <option value="">{t('fields.priority.noChange')}</option>
+                <option value="low">{t('fields.priority.low')}</option>
+                <option value="normal">{t('fields.priority.normal')}</option>
+                <option value="high">{t('fields.priority.high')}</option>
               </Select>
             </Field>
 
             {/* Tags */}
             <Field>
-              <Label>Tags hinzufügen</Label>
+              <Label>{t('fields.tags.label')}</Label>
               <div className="flex gap-2">
                 <Input
                   value={tagInput}
@@ -332,7 +335,7 @@ export function RoutingRuleBuilder({
                       handleAddTag();
                     }
                   }}
-                  placeholder="Tag eingeben und Enter drücken"
+                  placeholder={t('fields.tags.placeholder')}
                 />
                 <Button type="button" plain onClick={handleAddTag}>
                   <PlusIcon className="h-4 w-4" />
@@ -358,19 +361,19 @@ export function RoutingRuleBuilder({
 
             {/* Auto-Reply (Placeholder) */}
             <div className="opacity-50">
-              <span className="block text-sm font-medium text-gray-700 mb-1">Auto-Antwort (Coming Soon)</span>
+              <span className="block text-sm font-medium text-gray-700 mb-1">{t('fields.autoReply.label')}</span>
               <Select disabled>
-                <option>Vorlage wählen...</option>
+                <option>{t('fields.autoReply.selectTemplate')}</option>
               </Select>
               <p className="text-xs text-gray-500 mt-1">
-                Diese Funktion wird in einer zukünftigen Version verfügbar sein
+                {t('fields.autoReply.comingSoon')}
               </p>
             </div>
           </div>
 
           {/* Regel aktiv */}
           <div className="flex items-center justify-between pt-4 border-t">
-            <span className="text-sm font-medium text-gray-700">Regel aktiv</span>
+            <span className="text-sm font-medium text-gray-700">{t('fields.enabled')}</span>
             <SimpleSwitch
               checked={formData.enabled !== false}
               onChange={(checked) => setFormData({ ...formData, enabled: checked })}
@@ -380,14 +383,14 @@ export function RoutingRuleBuilder({
       </DialogBody>
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          Abbrechen
+          {t('buttons.cancel')}
         </Button>
         <Button
           className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           onClick={handleSave}
           disabled={saving}
         >
-          {saving ? 'Speichern...' : (rule ? 'Speichern' : 'Regel erstellen')}
+          {saving ? t('buttons.saving') : (rule ? t('buttons.save') : t('buttons.create'))}
         </Button>
       </DialogActions>
     </Dialog>

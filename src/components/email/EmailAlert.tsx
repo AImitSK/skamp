@@ -1,11 +1,13 @@
 // src/components/email/EmailAlert.tsx
-import { 
-  CheckCircleIcon, 
-  ExclamationCircleIcon, 
-  InformationCircleIcon, 
+'use client';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon,
   XCircleIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
+import { useTranslations } from 'next-intl';
 import { ICON_SIZES } from "@/constants/ui";
 
 interface EmailAlertProps {
@@ -20,6 +22,8 @@ interface EmailAlertProps {
 }
 
 export function EmailAlert({ type, title, message, onClose, action }: EmailAlertProps) {
+  const t = useTranslations('email.alert');
+
   const config = {
     success: {
       bgColor: 'bg-green-50 border-green-200',
@@ -91,7 +95,7 @@ export function EmailAlert({ type, title, message, onClose, action }: EmailAlert
               onClick={onClose}
               className={`inline-flex rounded-md p-1.5 ${textColor} hover:bg-opacity-20 hover:bg-current`}
             >
-              <span className="sr-only">Schließen</span>
+              <span className="sr-only">{t('close')}</span>
               <XMarkIcon className={ICON_SIZES.md} aria-hidden="true" />
             </button>
           </div>

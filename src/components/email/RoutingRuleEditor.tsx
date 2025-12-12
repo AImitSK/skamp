@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -11,9 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { EmailAddress } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
-import { 
-  PlusIcon, 
-  TrashIcon, 
+import {
+  PlusIcon,
+  TrashIcon,
   PencilIcon,
   FunnelIcon,
   UserGroupIcon,
@@ -49,21 +50,23 @@ interface LocalRoutingRule {
   enabled: boolean; // Lokaler State für UI
 }
 
-export function RoutingRuleEditor({ 
-  emailAddress, 
-  isOpen, 
-  onClose, 
+export function RoutingRuleEditor({
+  emailAddress,
+  isOpen,
+  onClose,
   onUpdate,
-  teamMembers 
+  teamMembers
 }: RoutingRuleEditorProps) {
+  const t = useTranslations('email.routingRuleEditor');
+
   // Konvertiere die gespeicherten Regeln zum lokalen Format mit enabled flag
-  const [rules, setRules] = useState<LocalRoutingRule[]>(() => 
+  const [rules, setRules] = useState<LocalRoutingRule[]>(() =>
     (emailAddress.routingRules || []).map(rule => ({
       ...rule,
       enabled: true // Alle gespeicherten Regeln sind standardmäßig aktiv
     }))
   );
-  
+
   const [editingRule, setEditingRule] = useState<LocalRoutingRule | null>(null);
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -92,9 +95,9 @@ export function RoutingRuleEditor({
 
   // Mock template options - TODO: Ersetzen mit echten Templates
   const mockTemplates = [
-    { id: 'welcome', name: 'Willkommensnachricht' },
-    { id: 'received', name: 'Empfangsbestätigung' },
-    { id: 'out-of-office', name: 'Abwesenheitsnotiz' }
+    { id: 'welcome', name: t('templates.welcome') },
+    { id: 'received', name: t('templates.received') },
+    { id: 'out-of-office', name: t('templates.outOfOffice') }
   ];
 
   const handleAddRule = () => {
@@ -250,13 +253,12 @@ export function RoutingRuleEditor({
     <>
       <Dialog open={isOpen} onClose={onClose} size="xl">
         <DialogTitle className="px-6 py-4">
-          Routing-Regeln für {emailAddress.email}
+          {t('dialog.title', { email: emailAddress.email })}
         </DialogTitle>
         <DialogBody className="p-6">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Definieren Sie Regeln, um eingehende E-Mails automatisch zu verarbeiten.
-              Die Regeln werden in der angegebenen Reihenfolge ausgeführt.
+              {t('dialog.description')}
             </p>
           </div>
 
@@ -265,9 +267,9 @@ export function RoutingRuleEditor({
             {rules.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <FunnelIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <p className="text-gray-500">Keine Routing-Regeln definiert</p>
+                <p className="text-gray-500">{t('empty.title')}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Fügen Sie Regeln hinzu, um E-Mails automatisch zu verarbeiten
+                  {t('empty.description')}
                 </p>
               </div>
             ) : (
@@ -298,61 +300,61 @@ export function RoutingRuleEditor({
                           onChange={() => toggleRuleEnabled(rule.id)}
                         />
                       </div>
-                      
+
                       {/* Conditions */}
                       <div className="mb-2">
-                        <span className="text-xs font-medium text-gray-500 uppercase">Bedingungen:</span>
+                        <span className="text-xs font-medium text-gray-500 uppercase">{t('rule.conditions')}</span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {rule.conditions.subject && (
                             <Badge color="zinc" className="whitespace-nowrap">
-                              Betreff: {rule.conditions.subject}
+                              {t('rule.conditionSubject')}: {rule.conditions.subject}
                             </Badge>
                           )}
                           {rule.conditions.from && (
                             <Badge color="zinc" className="whitespace-nowrap">
-                              Von: {rule.conditions.from}
+                              {t('rule.conditionFrom')}: {rule.conditions.from}
                             </Badge>
                           )}
                           {rule.conditions.keywords?.map(keyword => (
                             <Badge key={keyword} color="zinc" className="whitespace-nowrap">
-                              Keyword: {keyword}
+                              {t('rule.conditionKeyword')}: {keyword}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      
+
                       {/* Actions */}
                       <div>
-                        <span className="text-xs font-medium text-gray-500 uppercase">Aktionen:</span>
+                        <span className="text-xs font-medium text-gray-500 uppercase">{t('rule.actions')}</span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {rule.actions.assignTo && rule.actions.assignTo.length > 0 && (
                             <Badge color="blue" className="whitespace-nowrap">
                               <UserGroupIcon className="h-3 w-3 mr-1" />
-                              {rule.actions.assignTo.length} Personen zuweisen
+                              {t('rule.actionAssign', { count: rule.actions.assignTo.length })}
                             </Badge>
                           )}
                           {rule.actions.addTags && rule.actions.addTags.length > 0 && (
                             <Badge color="purple" className="whitespace-nowrap">
                               <TagIcon className="h-3 w-3 mr-1" />
-                              {rule.actions.addTags.length} Tags
+                              {t('rule.actionTags', { count: rule.actions.addTags.length })}
                             </Badge>
                           )}
                           {rule.actions.setPriority && rule.actions.setPriority !== 'normal' && (
-                            <Badge 
+                            <Badge
                               color={
-                                rule.actions.setPriority === 'high' ? 'orange' : 
+                                rule.actions.setPriority === 'high' ? 'orange' :
                                 'zinc'
-                              } 
+                              }
                               className="whitespace-nowrap"
                             >
                               <FlagIcon className="h-3 w-3 mr-1" />
-                              {rule.actions.setPriority}
+                              {t(`rule.priority.${rule.actions.setPriority}`)}
                             </Badge>
                           )}
                           {rule.actions.autoReply && (
                             <Badge color="green" className="whitespace-nowrap">
                               <ArrowPathIcon className="h-3 w-3 mr-1" />
-                              Auto-Reply
+                              {t('rule.actionAutoReply')}
                             </Badge>
                           )}
                         </div>
@@ -382,24 +384,24 @@ export function RoutingRuleEditor({
           </div>
 
           {/* Add Rule Button */}
-          <Button 
+          <Button
             onClick={handleAddRule}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Neue Regel hinzufügen
+            {t('addRule')}
           </Button>
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={onClose}>
-            Abbrechen
+            {t('cancel')}
           </Button>
-          <Button 
+          <Button
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             onClick={handleSaveAllRules}
             disabled={saving}
           >
-            {saving ? 'Speichern...' : 'Regeln speichern'}
+            {saving ? t('saving') : t('saveRules')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -407,67 +409,67 @@ export function RoutingRuleEditor({
       {/* Rule Editor Modal */}
       <Dialog open={showRuleModal} onClose={() => setShowRuleModal(false)}>
         <DialogTitle className="px-6 py-4">
-          {editingRule ? 'Regel bearbeiten' : 'Neue Routing-Regel'}
+          {editingRule ? t('modal.titleEdit') : t('modal.titleNew')}
         </DialogTitle>
         <DialogBody className="p-6">
           <div className="space-y-6">
             {/* Rule Name */}
             <Field>
-              <Label>Regelname</Label>
+              <Label>{t('modal.ruleName')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="z.B. Presseanfragen an PR-Team"
+                placeholder={t('modal.ruleNamePlaceholder')}
               />
             </Field>
 
             {/* Conditions */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Bedingungen</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">{t('modal.conditionsTitle')}</h3>
               <p className="text-xs text-gray-500 mb-4">
-                E-Mails, die mindestens eine dieser Bedingungen erfüllen, werden verarbeitet
+                {t('modal.conditionsDescription')}
               </p>
-              
+
               <div className="space-y-4">
                 <Field>
-                  <Label>Betreff enthält</Label>
+                  <Label>{t('modal.subjectContains')}</Label>
                   <Input
                     value={formData.conditions.subject || ''}
                     onChange={(e) => setFormData({
                       ...formData,
                       conditions: { ...formData.conditions, subject: e.target.value }
                     })}
-                    placeholder="z.B. Presseanfrage"
+                    placeholder={t('modal.subjectPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Absender enthält</Label>
+                  <Label>{t('modal.fromContains')}</Label>
                   <Input
                     value={formData.conditions.from || ''}
                     onChange={(e) => setFormData({
                       ...formData,
                       conditions: { ...formData.conditions, from: e.target.value }
                     })}
-                    placeholder="z.B. @journalist.de"
+                    placeholder={t('modal.fromPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Keywords</Label>
+                  <Label>{t('modal.keywords')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={keywordInput}
                       onChange={(e) => setKeywordInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyword())}
-                      placeholder="Keyword hinzufügen"
+                      placeholder={t('modal.keywordPlaceholder')}
                     />
                     <Button
                       type="button"
                       onClick={handleAddKeyword}
                       className="bg-gray-100 hover:bg-gray-200 text-gray-700 whitespace-nowrap"
                     >
-                      Hinzufügen
+                      {t('modal.addButton')}
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -489,14 +491,14 @@ export function RoutingRuleEditor({
 
             {/* Actions */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Aktionen</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">{t('modal.actionsTitle')}</h3>
               <p className="text-xs text-gray-500 mb-4">
-                Was soll mit E-Mails passieren, die die Bedingungen erfüllen?
+                {t('modal.actionsDescription')}
               </p>
-              
+
               <div className="space-y-4">
                 <Field>
-                  <Label>Team-Mitglieder zuweisen</Label>
+                  <Label>{t('modal.assignTeamMembers')}</Label>
                   <Select
                     multiple
                     value={formData.actions.assignTo || []}
@@ -515,25 +517,25 @@ export function RoutingRuleEditor({
                     ))}
                   </Select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Halten Sie Strg/Cmd gedrückt für Mehrfachauswahl
+                    {t('modal.multiSelectHint')}
                   </p>
                 </Field>
 
                 <Field>
-                  <Label>Tags hinzufügen</Label>
+                  <Label>{t('modal.addTags')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                      placeholder="Tag hinzufügen"
+                      placeholder={t('modal.tagPlaceholder')}
                     />
                     <Button
                       type="button"
                       onClick={handleAddTag}
                       className="bg-gray-100 hover:bg-gray-200 text-gray-700 whitespace-nowrap"
                     >
-                      Hinzufügen
+                      {t('modal.addButton')}
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -552,25 +554,25 @@ export function RoutingRuleEditor({
                 </Field>
 
                 <Field>
-                  <Label>Priorität setzen</Label>
+                  <Label>{t('modal.setPriority')}</Label>
                   <Select
                     value={formData.actions.setPriority || 'normal'}
                     onChange={(e) => setFormData({
                       ...formData,
-                      actions: { 
-                        ...formData.actions, 
+                      actions: {
+                        ...formData.actions,
                         setPriority: e.target.value as 'low' | 'normal' | 'high'
                       }
                     })}
                   >
-                    <option value="low">Niedrig</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">Hoch</option>
+                    <option value="low">{t('modal.priorityLow')}</option>
+                    <option value="normal">{t('modal.priorityNormal')}</option>
+                    <option value="high">{t('modal.priorityHigh')}</option>
                   </Select>
                 </Field>
 
                 <Field>
-                  <Label>Auto-Reply Template</Label>
+                  <Label>{t('modal.autoReplyTemplate')}</Label>
                   <Select
                     value={formData.actions.autoReply || ''}
                     onChange={(e) => setFormData({
@@ -578,7 +580,7 @@ export function RoutingRuleEditor({
                       actions: { ...formData.actions, autoReply: e.target.value }
                     })}
                   >
-                    <option value="">Keine automatische Antwort</option>
+                    <option value="">{t('modal.noAutoReply')}</option>
                     {mockTemplates.map(template => (
                       <option key={template.id} value={template.id}>
                         {template.name}
@@ -592,14 +594,14 @@ export function RoutingRuleEditor({
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={() => setShowRuleModal(false)}>
-            Abbrechen
+            {t('cancel')}
           </Button>
-          <Button 
+          <Button
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             onClick={handleSaveRule}
             disabled={!formData.name}
           >
-            {editingRule ? 'Speichern' : 'Regel hinzufügen'}
+            {editingRule ? t('modal.save') : t('modal.addRule')}
           </Button>
         </DialogActions>
       </Dialog>

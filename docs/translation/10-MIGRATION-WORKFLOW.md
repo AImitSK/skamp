@@ -1,6 +1,6 @@
 # i18n Migration Workflow
 
-**Letzte Aktualisierung:** 2025-12-11
+**Letzte Aktualisierung:** 2025-12-12
 
 ---
 
@@ -10,10 +10,11 @@
 |-------|-----------|--------|
 | **Phase 1: Seiten** | `09-MIGRATION-CHECKLIST.md` | ✅ Abgeschlossen (50/50) |
 | **Phase 2: Komponenten** | `09.1-COMPONENT-MIGRATION-CHECKLIST.md` | ✅ Abgeschlossen (45/47, 2 übersprungen) |
+| **Phase 3: Erweitert** | `09.2-EXTENDED-MIGRATION-CHECKLIST.md` | 🔄 In Bearbeitung |
 
-### ✅ UI-MIGRATION VOLLSTÄNDIG ABGESCHLOSSEN!
+### 🔄 Phase 3: Erweiterte Migration
 
-Die gesamte UI-Migration auf next-intl i18n ist abgeschlossen. Alle Seiten und Komponenten unterstützen nun Deutsch und Englisch.
+Priorität 1-8 abgeschlossen. Aktuell: **Priorität 9 (src/components)**
 
 ---
 

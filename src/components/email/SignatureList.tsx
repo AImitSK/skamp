@@ -2,14 +2,15 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { EmailSignature } from '@/types/email-enhanced';
 import { SignatureEditor } from './SignatureEditor';
-import { 
-  PlusIcon, 
-  PencilIcon, 
+import {
+  PlusIcon,
+  PencilIcon,
   TrashIcon,
   EllipsisVerticalIcon,
   PencilSquareIcon,
@@ -35,6 +36,7 @@ export function SignatureList({
   onDuplicate,
   loading = false
 }: SignatureListProps) {
+  const t = useTranslations('email.signatures');
   const [showEditor, setShowEditor] = useState(false);
   const [editingSignature, setEditingSignature] = useState<EmailSignature | null>(null);
   const [showPreview, setShowPreview] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export function SignatureList({
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Möchten Sie diese Signatur wirklich löschen?')) {
+    if (confirm(t('deleteConfirm'))) {
       await onDelete(id);
     }
   };
@@ -72,7 +74,7 @@ export function SignatureList({
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    if (!timestamp || !timestamp.toDate) return t('dateUnknown');
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
@@ -81,7 +83,7 @@ export function SignatureList({
   };
 
   const getPreviewHtml = (signature: EmailSignature): string => {
-    return signature.content || '<p>Keine Inhalte vorhanden</p>';
+    return signature.content || `<p>${t('noContent')}</p>`;
   };
 
   // Debug log für showEditor state
@@ -90,7 +92,7 @@ export function SignatureList({
     return (
       <div className="bg-white rounded-lg border p-8 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-        <p className="mt-4 text-gray-600">Signaturen werden geladen...</p>
+        <p className="mt-4 text-gray-600">{t('loading')}</p>
       </div>
     );
   }
@@ -100,16 +102,16 @@ export function SignatureList({
       <>
         <div className="bg-white rounded-lg border p-8 text-center">
           <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Keine Signaturen vorhanden</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('empty.title')}</h3>
           <p className="text-gray-500 mb-4">
-            Erstellen Sie professionelle Signaturen für Ihre E-Mails
+            {t('empty.description')}
           </p>
-          <Button 
+          <Button
             onClick={handleAdd}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Erste Signatur erstellen
+            {t('empty.createFirst')}
           </Button>
         </div>
 
@@ -134,12 +136,12 @@ export function SignatureList({
     <>
       {/* Action Button */}
       <div className="flex justify-end mb-4">
-        <Button 
-          onClick={handleAdd} 
+        <Button
+          onClick={handleAdd}
           className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
-          Neue Signatur
+          {t('newSignature')}
         </Button>
       </div>
 
@@ -163,12 +165,12 @@ export function SignatureList({
                     {signature.isDefault && (
                       <Badge color="blue" className="whitespace-nowrap">
                         <CheckCircleIcon className="h-3 w-3 mr-1" />
-                        Standard
+                        {t('default')}
                       </Badge>
                     )}
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Erstellt am {formatDate(signature.createdAt)}
+                    {t('createdOn', { date: formatDate(signature.createdAt) })}
                   </p>
                 </div>
                 
@@ -180,23 +182,23 @@ export function SignatureList({
                   <DropdownMenu anchor="bottom end">
                     <DropdownItem onClick={() => setShowPreview(signature.id!)}>
                       <EyeIcon className="h-4 w-4" />
-                      Vorschau
+                      {t('actions.preview')}
                     </DropdownItem>
                     <DropdownItem onClick={() => handleEdit(signature)}>
                       <PencilIcon className="h-4 w-4" />
-                      Bearbeiten
+                      {t('actions.edit')}
                     </DropdownItem>
                     <DropdownItem onClick={() => onDuplicate(signature.id!)}>
                       <DocumentDuplicateIcon className="h-4 w-4" />
-                      Duplizieren
+                      {t('actions.duplicate')}
                     </DropdownItem>
                     <DropdownDivider />
-                    <DropdownItem 
+                    <DropdownItem
                       onClick={() => handleDelete(signature.id!)}
                       disabled={signature.isDefault}
                     >
                       <TrashIcon className="h-4 w-4" />
-                      <span className="text-red-600">Löschen</span>
+                      <span className="text-red-600">{t('actions.delete')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
@@ -204,7 +206,7 @@ export function SignatureList({
 
               {/* Assigned Emails */}
               <div className="border-t pt-4">
-                <p className="text-xs text-gray-600 mb-2">Zugewiesen an:</p>
+                <p className="text-xs text-gray-600 mb-2">{t('assignedTo')}</p>
                 {assignedEmails.length > 0 ? (
                   <div className="space-y-1">
                     {assignedEmails.slice(0, 3).map((email) => (
@@ -214,12 +216,12 @@ export function SignatureList({
                     ))}
                     {assignedEmails.length > 3 && (
                       <p className="text-xs text-gray-500">
-                        +{assignedEmails.length - 3} weitere
+                        {t('moreCount', { count: assignedEmails.length - 3 })}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">Keine E-Mail-Adressen zugewiesen</p>
+                  <p className="text-sm text-gray-400">{t('noEmailsAssigned')}</p>
                 )}
               </div>
 
@@ -229,21 +231,21 @@ export function SignatureList({
                   <div className="flex min-h-full items-center justify-center p-4">
                     <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setShowPreview(null)} />
                     <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 z-50">
-                      <h3 className="text-lg font-medium mb-4">Signatur-Vorschau: {signature.name}</h3>
+                      <h3 className="text-lg font-medium mb-4">{t('preview.title', { name: signature.name })}</h3>
                       <div className="bg-gray-50 rounded-lg p-6">
-                        <div 
+                        <div
                           className="bg-white rounded border p-4"
-                          dangerouslySetInnerHTML={{ 
+                          dangerouslySetInnerHTML={{
                             __html: getPreviewHtml(signature)
                           }}
                         />
                       </div>
-                      <Button 
+                      <Button
                         className="mt-4"
-                        plain 
+                        plain
                         onClick={() => setShowPreview(null)}
                       >
-                        Schließen
+                        {t('preview.close')}
                       </Button>
                     </div>
                   </div>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,6 +19,7 @@ import type { ProviderGuideViewProps } from '@/types/email-domains-enhanced';
 import { DnsRecordsList } from './DnsRecordsList';
 
 export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewProps) {
+  const t = useTranslations('domains.providerGuide');
   const [currentStep, setCurrentStep] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
 
@@ -36,7 +38,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
             />
           )}
           <h3 className="text-lg font-semibold">
-            Anleitung für {provider.name}
+            {t('guideFor', { providerName: provider.name })}
           </h3>
         </div>
         
@@ -47,7 +49,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
             className="whitespace-nowrap"
           >
             <PlayCircleIcon className="w-4 h-4 mr-1" />
-            Video-Tutorial
+            {t('videoTutorial')}
           </Button>
         )}
       </div>
@@ -65,7 +67,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
 
       {/* DNS Records */}
       <div>
-        <Text className="font-medium mb-3">Diese Einträge benötigen Sie:</Text>
+        <Text className="font-medium mb-3">{t('dnsRecordsNeeded')}</Text>
         <DnsRecordsList records={dnsRecords} compact />
       </div>
 
@@ -73,7 +75,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
       <div className="bg-gray-50 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <Text className="text-sm text-gray-600">
-            Schritt {currentStep + 1} von {provider.steps.length}
+            {t('stepProgress', { current: currentStep + 1, total: provider.steps.length })}
           </Text>
           <div className="flex gap-1">
             {provider.steps.map((_, index) => (
@@ -134,7 +136,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
             className="whitespace-nowrap"
           >
             <ChevronLeftIcon className="w-4 h-4 mr-1" />
-            Zurück
+            {t('back')}
           </Button>
           <Button
             plain
@@ -142,7 +144,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
             disabled={currentStep === provider.steps.length - 1}
             className="whitespace-nowrap"
           >
-            Weiter
+            {t('next')}
             <ChevronRightIcon className="w-4 h-4 ml-1" />
           </Button>
         </div>
@@ -153,7 +155,7 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
         <div className="border-t pt-6">
           <h4 className="font-medium mb-3 flex items-center gap-2">
             <DocumentTextIcon className="w-5 h-5 text-gray-400" />
-            Häufige Probleme & Lösungen
+            {t('commonIssues.title')}
           </h4>
           <div className="space-y-3">
             {provider.commonIssues.map((issue, index) => (
@@ -179,14 +181,14 @@ export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewPro
       {provider.supportUrl && (
         <div className="text-center pt-4 border-t">
           <Text className="text-sm text-gray-600 mb-2">
-            Benötigen Sie weitere Hilfe?
+            {t('support.needHelp')}
           </Text>
           <Button
             plain
             onClick={() => window.open(provider.supportUrl, '_blank')}
             className="whitespace-nowrap"
           >
-            {provider.name} Support-Artikel öffnen
+            {t('support.openArticle', { providerName: provider.name })}
           </Button>
         </div>
       )}

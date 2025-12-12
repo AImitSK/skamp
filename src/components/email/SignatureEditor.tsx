@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label, Description } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ export function SignatureEditor({
   onSave,
   emailAddresses
 }: SignatureEditorProps) {
+  const t = useTranslations('email.signatures');
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
 
@@ -64,28 +66,28 @@ export function SignatureEditor({
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name ist erforderlich';
+      newErrors.name = t('validation.nameRequired');
     }
-    
+
     if (!formData.content.trim()) {
-      newErrors.content = 'Signatur-Inhalt ist erforderlich';
+      newErrors.content = t('validation.contentRequired');
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    
+
     setSaving(true);
     try {
       await onSave(formData);
       onClose();
     } catch (error) {
-      setErrors({ submit: 'Fehler beim Speichern. Bitte versuchen Sie es erneut.' });
+      setErrors({ submit: t('validation.saveError') });
     } finally {
       setSaving(false);
     }
@@ -101,7 +103,7 @@ export function SignatureEditor({
   };
 
   const getPreviewHtml = () => {
-    return formData.content || '<p>Keine Inhalte vorhanden</p>';
+    return formData.content || `<p>${t('preview.noContent')}</p>`;
   };
 
   return (
@@ -109,7 +111,7 @@ export function SignatureEditor({
       <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
         <div className="h-[75vh] flex flex-col overflow-hidden">
           <DialogTitle className="px-6 py-4 flex-shrink-0">
-            {signature ? 'Signatur bearbeiten' : 'Neue Signatur erstellen'}
+            {signature ? t('editor.titleEdit') : t('editor.titleCreate')}
           </DialogTitle>
           <DialogBody className="p-6 flex-1 overflow-y-auto">
           {errors.submit && (
@@ -121,11 +123,11 @@ export function SignatureEditor({
           <div className="space-y-6">
             {/* Name */}
             <Field>
-              <Label>Name der Signatur *</Label>
+              <Label>{t('editor.nameLabel')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="z.B. Standard Signatur"
+                placeholder={t('editor.namePlaceholder')}
                 className={errors.name ? 'border-red-500' : ''}
               />
               {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
@@ -134,8 +136,8 @@ export function SignatureEditor({
             {/* Signatur Content */}
             <Field>
               <div className="flex items-center gap-2 mb-2">
-                <Label>Signatur-Inhalt</Label>
-                <InfoTooltip content="Gestalten Sie Ihre E-Mail-Signatur mit Texten, Formatierungen, Links und Logos. Das Logo kann direkt im Editor über den Foto-Button eingefügt werden." />
+                <Label>{t('editor.contentLabel')}</Label>
+                <InfoTooltip content={t('editor.contentTooltip')} />
                 <Button
                   type="button"
                   plain
@@ -143,13 +145,13 @@ export function SignatureEditor({
                   className="text-sm ml-auto"
                 >
                   <EyeIcon className="h-4 w-4 mr-1" />
-                  Vorschau
+                  {t('editor.previewButton')}
                 </Button>
               </div>
               <EmailEditor
                 content={formData.content}
                 onChange={(content) => setFormData({ ...formData, content })}
-                placeholder="Mit freundlichen Grüßen..."
+                placeholder={t('editor.contentPlaceholder')}
                 minHeight="200px"
                 error={errors.content}
               />
@@ -160,8 +162,8 @@ export function SignatureEditor({
             {emailAddresses.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">Diese Signatur verwenden für</span>
-                  <InfoTooltip content="Wählen Sie die E-Mail-Adressen aus, die diese Signatur verwenden sollen." />
+                  <span className="text-sm font-medium text-gray-700">{t('editor.assignmentLabel')}</span>
+                  <InfoTooltip content={t('editor.assignmentTooltip')} />
                 </div>
                 <div className="max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2">
                   {emailAddresses.map((email) => (
@@ -190,14 +192,14 @@ export function SignatureEditor({
           </DialogBody>
           <DialogActions className="px-6 py-4 flex-shrink-0">
             <Button plain onClick={onClose} disabled={saving}>
-              Abbrechen
+              {t('actions.cancel')}
             </Button>
             <Button
               className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               onClick={handleSubmit}
               disabled={saving}
             >
-              {saving ? 'Speichern...' : (signature ? 'Speichern' : 'Signatur erstellen')}
+              {saving ? t('actions.saving') : (signature ? t('actions.save') : t('actions.create'))}
             </Button>
           </DialogActions>
         </div>
@@ -205,11 +207,11 @@ export function SignatureEditor({
 
       {/* Preview Modal */}
       <Dialog open={showPreview} onClose={() => setShowPreview(false)} className="sm:max-w-2xl">
-        <DialogTitle className="px-6 py-4">Signatur-Vorschau</DialogTitle>
+        <DialogTitle className="px-6 py-4">{t('preview.title')}</DialogTitle>
         <DialogBody className="p-6">
           <div className="bg-gray-50 rounded-lg p-6">
-            <p className="text-sm text-gray-600 mb-4">So wird Ihre Signatur in E-Mails aussehen:</p>
-            <div 
+            <p className="text-sm text-gray-600 mb-4">{t('preview.description')}</p>
+            <div
               className="bg-white rounded border p-4"
               dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
             />
@@ -217,7 +219,7 @@ export function SignatureEditor({
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={() => setShowPreview(false)}>
-            Schließen
+            {t('preview.close')}
           </Button>
         </DialogActions>
       </Dialog>
