@@ -1641,6 +1641,38 @@
         "label": "AI Assistant",
         "show": "Show AI Assistant",
         "hide": "Hide AI Assistant"
+      },
+      "toolbar": {
+        "headings": {
+          "normal": "Normal",
+          "heading1": "Heading 1",
+          "heading2": "Heading 2",
+          "heading3": "Heading 3"
+        },
+        "formatting": {
+          "bold": "Bold",
+          "italic": "Italic",
+          "strikethrough": "Strikethrough",
+          "bulletList": "Bullet List",
+          "orderedList": "Numbered List"
+        },
+        "link": {
+          "insert": "Insert Link",
+          "dialogTitle": "Insert Link",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com",
+          "targetLabel": "Open link in",
+          "targetSelf": "Same Window",
+          "targetBlank": "New Window",
+          "cancel": "Cancel",
+          "remove": "Remove Link",
+          "set": "Set Link"
+        },
+        "colors": {
+          "textColorLabel": "Text Color:",
+          "reset": "Reset Color",
+          "celeropressBlue": "CeleroPress Blue"
+        }
       }
     },
     "alert": {
@@ -4179,6 +4211,36 @@
           "title": "📄 Immutable PDF Version",
           "description": "This PDF version was automatically created when approval was requested and can no longer be changed. It represents exactly the content submitted for approval. After your approval, it serves as the binding reference for publication."
         }
+      },
+      "history": {
+        "status": {
+          "draft": "Draft",
+          "pendingCustomer": "Pending Approval",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "unknown": "Unknown"
+        },
+        "modal": {
+          "title": "PDF Version History",
+          "infoCustomer": "Here you can see all PDF versions of this campaign. Each version is immutable and shows the exact state at the time the approval was requested.",
+          "open": "Open",
+          "close": "Close",
+          "version": "Version",
+          "unnamed": "Unnamed",
+          "immutable": "Immutable"
+        },
+        "overview": {
+          "title": "PDF Document for Approval",
+          "version": "Version",
+          "createdAt": "Created on",
+          "openAndReview": "Open and review PDF",
+          "moreVersions": "More versions ({count})",
+          "approvalInfo": "Approval Information",
+          "requestedAt": "Requested on",
+          "approvedAt": "Approved on",
+          "comment": "Comment:",
+          "approvalDecision": "Approval Decision:"
+        }
       }
     },
     "feedback": {
@@ -5211,6 +5273,17 @@
       "recipientsAndPublications": "Recipients & Publications",
       "clippingArchive": "Clipping Archive",
       "autoFinds": "Auto-Finds"
+    },
+    "analytics": {
+      "performance": {
+        "title": "Performance Overview",
+        "publications": "Publications",
+        "totalReach": "Total Reach",
+        "totalAve": "Total AVE",
+        "openRate": "Open Rate",
+        "conversion": "Conversion",
+        "conversionSubtitle": "Opens → Clippings"
+      }
     }
   },
   "navigation": {
@@ -5963,6 +6036,54 @@
       }
     }
   },
+  "subscription": {
+    "management": {
+      "plan": "Plan",
+      "perMonth": "/month",
+      "changePlan": "Change Plan",
+      "endOfBillingPeriod": "End of Billing Period",
+      "tierWarning": {
+        "title": "Organization tier is missing or invalid!",
+        "message": "Your account may not have been created correctly. Please contact support@celeropress.com"
+      },
+      "features": {
+        "emailsPerMonth": "{count} Emails per month",
+        "contacts": "{count} Contacts",
+        "aiWords": "{count} AI words",
+        "unlimitedAiWords": "Unlimited AI words",
+        "teamMembers": "{count, plural, =1 {# Team Member} other {# Team Members}}",
+        "cloudStorage": "{gb} GB Cloud Storage",
+        "journalistDb": "Journalist Database Access",
+        "support": "{types} Support"
+      },
+      "usage": {
+        "title": "Current Usage",
+        "notAvailable": "Usage data not available. Click the 3-dot menu at the top right and select \"Refresh usage\".",
+        "incomplete": "Usage data incomplete. Click the 3-dot menu at the top right and select \"Refresh usage\".",
+        "unlimited": "Unlimited ∞",
+        "labels": {
+          "emails": "Emails",
+          "contacts": "Contacts",
+          "aiWords": "AI Words",
+          "storage": "Storage",
+          "teamMembers": "Team Members"
+        }
+      },
+      "payment": {
+        "title": "Payment Management",
+        "openingPortal": "Opening portal...",
+        "manageButton": "Manage Payment Method & Invoices"
+      },
+      "cancellation": {
+        "expiringTitle": "Subscription expiring",
+        "accessUntil": "Your access remains active until {date}",
+        "daysRemaining": "({count, plural, =1 {# day} other {# days}} remaining)",
+        "reactivating": "Reactivating...",
+        "reactivateButton": "Reactivate Subscription",
+        "cancelButton": "Cancel Subscription"
+      }
+    }
+  },
   "settings": {
     "navigation": {
       "ariaLabel": "Settings Navigation",
@@ -6182,6 +6303,194 @@
         "preview": "Preview",
         "edit": "Edit",
         "delete": "Delete"
+      },
+      "preview": {
+        "title": "Template Preview: {name}",
+        "version": "Version {version}",
+        "mockData": {
+          "default": {
+            "label": "Standard Press Release",
+            "industry": "General"
+          },
+          "tech": {
+            "label": "Tech Startup Announcement",
+            "industry": "Technology"
+          },
+          "healthcare": {
+            "label": "Pharma Product Launch",
+            "industry": "Healthcare"
+          },
+          "finance": {
+            "label": "Financial Services Update",
+            "industry": "Finance"
+          }
+        },
+        "ariaLabels": {
+          "selectMockData": "Select mock data",
+          "fullscreen": "Fullscreen",
+          "exitFullscreen": "Exit fullscreen",
+          "refreshPreview": "Refresh preview",
+          "closeModal": "Close modal"
+        },
+        "loading": {
+          "title": "Generating Preview",
+          "description": "Template is being created with {mockData}..."
+        },
+        "error": {
+          "title": "Error Generating Preview",
+          "retryButton": "Try Again"
+        },
+        "status": {
+          "ready": "Preview ready with {mockData}",
+          "preparing": "Template preview is being prepared..."
+        },
+        "actions": {
+          "close": "Close",
+          "useTemplate": "Use Template"
+        }
+      },
+      "comparison": {
+        "title": "Template Comparison",
+        "headerInfo": "{selected} of {total} Templates • Page {currentPage} of {totalPages}",
+        "maxTemplatesWarning": "Maximum 6 templates can be compared simultaneously.",
+        "mockData": {
+          "default": "Standard Press Release",
+          "tech": "Tech Startup Announcement",
+          "healthcare": "Pharma Product Launch",
+          "finance": "Financial Service Update",
+          "industries": {
+            "general": "General",
+            "technology": "Technology",
+            "health": "Health",
+            "finance": "Finance"
+          }
+        },
+        "ariaLabels": {
+          "selectMockData": "Select mock data",
+          "fullscreen": "Fullscreen",
+          "exitFullscreen": "Exit fullscreen"
+        },
+        "emptyState": {
+          "title": "No templates selected",
+          "description": "Select templates to compare them."
+        },
+        "badges": {
+          "system": "System"
+        },
+        "actions": {
+          "use": "Use"
+        },
+        "preview": {
+          "loadError": "Error loading",
+          "retry": "Retry",
+          "iframeTitle": "Preview: {name}"
+        },
+        "footer": {
+          "info": "{count} templates in comparison • Mock data: {mockData}",
+          "refreshAll": "Refresh all"
+        }
+      },
+      "editor": {
+        "title": {
+          "edit": "Edit Template",
+          "create": "Create New Template"
+        },
+        "defaultName": "New Template",
+        "tabs": {
+          "html": "HTML",
+          "css": "CSS",
+          "variables": "Variables",
+          "preview": "Preview"
+        },
+        "labels": {
+          "htmlTemplate": "HTML Template",
+          "cssStyling": "CSS Styling",
+          "templateVariables": "Template Variables",
+          "livePreview": "Live Preview",
+          "previewTitle": "Template Preview"
+        },
+        "placeholders": {
+          "name": "Template Name",
+          "description": "Template Description",
+          "html": "Enter HTML content here...",
+          "css": "Enter CSS styles here..."
+        },
+        "hints": {
+          "variableSyntax": "Use {{variableName}} for dynamic content",
+          "cssEmbed": "CSS will be automatically embedded in the template"
+        },
+        "status": {
+          "valid": "Valid",
+          "errors": "{count} errors"
+        },
+        "actions": {
+          "refresh": "Refresh",
+          "close": "Close",
+          "addVariable": "Add Variable",
+          "removeVariable": "Remove",
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "saveChanges": "Save Changes",
+          "createTemplate": "Create Template"
+        },
+        "variableFields": {
+          "name": "Variable Name",
+          "type": "Type",
+          "description": "Description",
+          "defaultValue": "Default Value",
+          "required": "Required"
+        },
+        "variableTypes": {
+          "text": "Text",
+          "html": "HTML",
+          "image": "Image",
+          "date": "Date"
+        },
+        "newVariable": {
+          "description": "Variable description"
+        },
+        "defaultVariables": {
+          "templateTitle": {
+            "description": "HTML page title (appears in browser tab)",
+            "defaultValue": "Template Document"
+          },
+          "companyName": {
+            "description": "Company name",
+            "defaultValue": "Your Company"
+          },
+          "companySlogan": {
+            "description": "Company slogan/tagline",
+            "defaultValue": "Your slogan here"
+          },
+          "title": {
+            "description": "Main document title",
+            "defaultValue": "Document Title"
+          },
+          "content": {
+            "description": "Main document content",
+            "defaultValue": "<p>Your content here...</p>"
+          },
+          "footerText": {
+            "description": "Footer text",
+            "defaultValue": "© 2024 Your Company"
+          }
+        },
+        "validation": {
+          "title": "Validation Errors:",
+          "htmlEmpty": "HTML content must not be empty",
+          "htmlStructure": "HTML must have a complete HTML structure",
+          "undefinedVariable": "Variable '{variable}' is used in HTML but not defined",
+          "requiredVariable": "Required variable '{variable}' is not used"
+        },
+        "errors": {
+          "loadFailed": "Template could not be loaded",
+          "saveFailed": "Template could not be saved",
+          "validationFailed": "Template has validation errors. Please fix them first."
+        },
+        "preview": {
+          "noPreview": "No preview available",
+          "addHtml": "Add HTML content to see a preview"
+        }
       }
     },
     "domain": {
@@ -7011,5 +7320,81 @@
       "detectionErrorRetry": "Error detecting RSS feed. Please try again."
     },
     "pipelinePdfGenerated": "Pipeline PDF successfully generated"
+  },
+  "listen": {
+    "publicationFilter": {
+      "loading": "Loading publications...",
+      "sections": {
+        "basic": "Publication Selection",
+        "geographic": "Geographic",
+        "thematic": "Thematic",
+        "metrics": "Reach & Metrics",
+        "quality": "Publishers & Quality"
+      },
+      "labels": {
+        "specificPublications": "Specific Publications",
+        "publicationTypes": "Publication Types",
+        "formats": "Formats",
+        "frequency": "Frequency",
+        "targetCountries": "Target Countries",
+        "reach": "Reach",
+        "languages": "Languages",
+        "focusAreas": "Focus Areas",
+        "targetIndustries": "Target Industries",
+        "minPrintCirculation": "Min. Print Circulation",
+        "maxPrintCirculation": "Max. Print Circulation",
+        "minOnlineVisitors": "Min. Online Visitors/Month",
+        "maxOnlineVisitors": "Max. Online Visitors/Month",
+        "publishers": "Publishers/Media Houses",
+        "onlyVerified": "Only verified publications",
+        "status": "Status"
+      },
+      "placeholders": {
+        "allPublications": "All Publications",
+        "allTypes": "All Types",
+        "allFormats": "All Formats",
+        "allFrequencies": "All Frequencies",
+        "allCountries": "All Countries",
+        "allReaches": "All Reaches",
+        "allLanguages": "All Languages",
+        "allTopics": "All Topics",
+        "allIndustries": "All Industries",
+        "allPublishers": "All Publishers",
+        "allStatuses": "All Statuses",
+        "exampleSmall": "e.g. 5000",
+        "exampleMedium": "e.g. 100000",
+        "exampleMedium2": "e.g. 50000",
+        "exampleLarge": "e.g. 1000000"
+      },
+      "formats": {
+        "print": "Print",
+        "digital": "Digital",
+        "printAndDigital": "Print & Digital",
+        "broadcast": "Broadcast",
+        "audio": "Audio"
+      },
+      "reach": {
+        "local": "Local",
+        "regional": "Regional",
+        "national": "National",
+        "international": "International",
+        "global": "Global"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "discontinued": "Discontinued",
+        "planned": "Planned"
+      },
+      "activeFilters": {
+        "title": "Active Filters",
+        "resetAll": "Reset All",
+        "publicationsSelected": "{count} publications selected",
+        "typesCount": "{count} types",
+        "topicAreasCount": "{count} topic areas",
+        "circulationMin": "Circulation ≥ {value}",
+        "onlyVerified": "Only verified"
+      }
+    }
   }
 }

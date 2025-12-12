@@ -1641,6 +1641,38 @@
         "label": "KI-Assistent",
         "show": "KI-Assistent einblenden",
         "hide": "KI-Assistent ausblenden"
+      },
+      "toolbar": {
+        "headings": {
+          "normal": "Normal",
+          "heading1": "Überschrift 1",
+          "heading2": "Überschrift 2",
+          "heading3": "Überschrift 3"
+        },
+        "formatting": {
+          "bold": "Fett",
+          "italic": "Kursiv",
+          "strikethrough": "Durchgestrichen",
+          "bulletList": "Liste",
+          "orderedList": "Nummerierte Liste"
+        },
+        "link": {
+          "insert": "Link einfügen",
+          "dialogTitle": "Link einfügen",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com",
+          "targetLabel": "Link öffnen in",
+          "targetSelf": "Gleichem Fenster",
+          "targetBlank": "Neuem Fenster",
+          "cancel": "Abbrechen",
+          "remove": "Link entfernen",
+          "set": "Link setzen"
+        },
+        "colors": {
+          "textColorLabel": "Textfarbe:",
+          "reset": "Farbe zurücksetzen",
+          "celeropressBlue": "CeleroPress Blau"
+        }
       }
     },
     "alert": {
@@ -4232,6 +4264,36 @@
           "title": "📄 Unveränderliche PDF-Version",
           "description": "Diese PDF-Version wurde automatisch beim Anfordern der Freigabe erstellt und kann nicht mehr verändert werden. Sie bildet genau den Inhalt ab, der zur Freigabe vorgelegt wird. Nach Ihrer Freigabe dient sie als verbindliche Referenz für die Veröffentlichung."
         }
+      },
+      "history": {
+        "status": {
+          "draft": "Entwurf",
+          "pendingCustomer": "Zur Freigabe",
+          "approved": "Freigegeben",
+          "rejected": "Abgelehnt",
+          "unknown": "Unbekannt"
+        },
+        "modal": {
+          "title": "PDF-Versions-Historie",
+          "infoCustomer": "Hier sehen Sie alle PDF-Versionen dieser Kampagne. Jede Version ist unveränderlich und zeigt den exakten Stand zum Zeitpunkt der Freigabe-Anforderung.",
+          "open": "Öffnen",
+          "close": "Schließen",
+          "version": "Version",
+          "unnamed": "Unbenannt",
+          "immutable": "Unveränderlich"
+        },
+        "overview": {
+          "title": "PDF-Dokument zur Freigabe",
+          "version": "Version",
+          "createdAt": "Erstellt am",
+          "openAndReview": "PDF öffnen und prüfen",
+          "moreVersions": "Weitere Versionen ({count})",
+          "approvalInfo": "Freigabe-Information",
+          "requestedAt": "Angefordert am",
+          "approvedAt": "Freigegeben am",
+          "comment": "Kommentar:",
+          "approvalDecision": "Freigabe-Entscheidung:"
+        }
       }
     }
   },
@@ -5211,6 +5273,17 @@
       "recipientsAndPublications": "Empfänger & Veröffentlichungen",
       "clippingArchive": "Clipping-Archiv",
       "autoFinds": "Auto-Funde"
+    },
+    "analytics": {
+      "performance": {
+        "title": "Performance-Übersicht",
+        "publications": "Veröffentlichungen",
+        "totalReach": "Gesamtreichweite",
+        "totalAve": "Gesamt-AVE",
+        "openRate": "Öffnungsrate",
+        "conversion": "Conversion",
+        "conversionSubtitle": "Öffnungen → Clippings"
+      }
     }
   },
   "navigation": {
@@ -5963,6 +6036,54 @@
       }
     }
   },
+  "subscription": {
+    "management": {
+      "plan": "Plan",
+      "perMonth": "/Monat",
+      "changePlan": "Plan ändern",
+      "endOfBillingPeriod": "Ende der Billing Period",
+      "tierWarning": {
+        "title": "Organization Tier fehlt oder ist ungültig!",
+        "message": "Dein Account wurde möglicherweise nicht korrekt erstellt. Bitte kontaktiere support@celeropress.com"
+      },
+      "features": {
+        "emailsPerMonth": "{count} Emails pro Monat",
+        "contacts": "{count} Kontakte",
+        "aiWords": "{count} AI-Wörter",
+        "unlimitedAiWords": "Unlimited AI-Wörter",
+        "teamMembers": "{count, plural, =1 {# Team-Mitglied} other {# Team-Mitglieder}}",
+        "cloudStorage": "{gb} GB Cloud-Speicher",
+        "journalistDb": "Journalisten-Datenbank Zugriff",
+        "support": "{types} Support"
+      },
+      "usage": {
+        "title": "Aktuelle Nutzung",
+        "notAvailable": "Nutzungsdaten nicht verfügbar. Klicke auf das 3-Punkte-Menü oben rechts und wähle \"Usage aktualisieren\".",
+        "incomplete": "Nutzungsdaten unvollständig. Klicke auf das 3-Punkte-Menü oben rechts und wähle \"Usage aktualisieren\".",
+        "unlimited": "Unlimited ∞",
+        "labels": {
+          "emails": "Emails",
+          "contacts": "Kontakte",
+          "aiWords": "AI-Wörter",
+          "storage": "Speicher",
+          "teamMembers": "Team-Mitglieder"
+        }
+      },
+      "payment": {
+        "title": "Zahlungsverwaltung",
+        "openingPortal": "Öffne Portal...",
+        "manageButton": "Zahlungsmethode & Rechnungen verwalten"
+      },
+      "cancellation": {
+        "expiringTitle": "Subscription läuft aus",
+        "accessUntil": "Dein Zugriff bleibt bis zum {date} aktiv",
+        "daysRemaining": "({count, plural, =1 {# Tag} other {# Tage}} verbleibend)",
+        "reactivating": "Wird reaktiviert...",
+        "reactivateButton": "Subscription reaktivieren",
+        "cancelButton": "Subscription kündigen"
+      }
+    }
+  },
   "settings": {
     "navigation": {
       "ariaLabel": "Einstellungen-Navigation",
@@ -6251,6 +6372,194 @@
         "preview": "Vorschau",
         "edit": "Bearbeiten",
         "delete": "Löschen"
+      },
+      "preview": {
+        "title": "Template-Vorschau: {name}",
+        "version": "Version {version}",
+        "mockData": {
+          "default": {
+            "label": "Standard Pressemitteilung",
+            "industry": "Allgemein"
+          },
+          "tech": {
+            "label": "Tech-Startup Ankündigung",
+            "industry": "Technologie"
+          },
+          "healthcare": {
+            "label": "Pharma Produktlaunch",
+            "industry": "Gesundheit"
+          },
+          "finance": {
+            "label": "Finanzdienstleistung Update",
+            "industry": "Finanzen"
+          }
+        },
+        "ariaLabels": {
+          "selectMockData": "Mock-Daten auswählen",
+          "fullscreen": "Vollbild",
+          "exitFullscreen": "Vollbild verlassen",
+          "refreshPreview": "Vorschau aktualisieren",
+          "closeModal": "Modal schließen"
+        },
+        "loading": {
+          "title": "Vorschau wird generiert",
+          "description": "Template wird mit {mockData} erstellt..."
+        },
+        "error": {
+          "title": "Fehler beim Generieren der Vorschau",
+          "retryButton": "Erneut versuchen"
+        },
+        "status": {
+          "ready": "Vorschau bereit mit {mockData}",
+          "preparing": "Template-Vorschau wird vorbereitet..."
+        },
+        "actions": {
+          "close": "Schließen",
+          "useTemplate": "Template verwenden"
+        }
+      },
+      "comparison": {
+        "title": "Template-Vergleich",
+        "headerInfo": "{selected} von {total} Templates • Seite {currentPage} von {totalPages}",
+        "maxTemplatesWarning": "Maximal 6 Templates können gleichzeitig verglichen werden.",
+        "mockData": {
+          "default": "Standard Pressemitteilung",
+          "tech": "Tech-Startup Ankündigung",
+          "healthcare": "Pharma Produktlaunch",
+          "finance": "Finanzdienstleistung Update",
+          "industries": {
+            "general": "Allgemein",
+            "technology": "Technologie",
+            "health": "Gesundheit",
+            "finance": "Finanzen"
+          }
+        },
+        "ariaLabels": {
+          "selectMockData": "Mock-Daten auswählen",
+          "fullscreen": "Vollbild",
+          "exitFullscreen": "Vollbild verlassen"
+        },
+        "emptyState": {
+          "title": "Keine Templates ausgewählt",
+          "description": "Wählen Sie Templates aus um sie zu vergleichen."
+        },
+        "badges": {
+          "system": "System"
+        },
+        "actions": {
+          "use": "Verwenden"
+        },
+        "preview": {
+          "loadError": "Fehler beim Laden",
+          "retry": "Erneut",
+          "iframeTitle": "Vorschau: {name}"
+        },
+        "footer": {
+          "info": "{count} Templates im Vergleich • Mock-Daten: {mockData}",
+          "refreshAll": "Alle aktualisieren"
+        }
+      },
+      "editor": {
+        "title": {
+          "edit": "Template bearbeiten",
+          "create": "Neues Template erstellen"
+        },
+        "defaultName": "Neues Template",
+        "tabs": {
+          "html": "HTML",
+          "css": "CSS",
+          "variables": "Variablen",
+          "preview": "Vorschau"
+        },
+        "labels": {
+          "htmlTemplate": "HTML-Template",
+          "cssStyling": "CSS-Styling",
+          "templateVariables": "Template-Variablen",
+          "livePreview": "Live-Vorschau",
+          "previewTitle": "Template Vorschau"
+        },
+        "placeholders": {
+          "name": "Template-Name",
+          "description": "Template-Beschreibung",
+          "html": "HTML-Inhalt hier eingeben...",
+          "css": "CSS-Styles hier eingeben..."
+        },
+        "hints": {
+          "variableSyntax": "Verwenden Sie {{variableName}} für dynamische Inhalte",
+          "cssEmbed": "CSS wird automatisch in das Template eingebettet"
+        },
+        "status": {
+          "valid": "Gültig",
+          "errors": "{count} Fehler"
+        },
+        "actions": {
+          "refresh": "Aktualisieren",
+          "close": "Schließen",
+          "addVariable": "Variable hinzufügen",
+          "removeVariable": "Entfernen",
+          "cancel": "Abbrechen",
+          "saving": "Wird gespeichert...",
+          "saveChanges": "Änderungen speichern",
+          "createTemplate": "Template erstellen"
+        },
+        "variableFields": {
+          "name": "Variable Name",
+          "type": "Typ",
+          "description": "Beschreibung",
+          "defaultValue": "Standardwert",
+          "required": "Erforderlich"
+        },
+        "variableTypes": {
+          "text": "Text",
+          "html": "HTML",
+          "image": "Bild",
+          "date": "Datum"
+        },
+        "newVariable": {
+          "description": "Beschreibung der Variable"
+        },
+        "defaultVariables": {
+          "templateTitle": {
+            "description": "Titel der HTML-Seite (erscheint im Browser-Tab)",
+            "defaultValue": "Template Dokument"
+          },
+          "companyName": {
+            "description": "Name des Unternehmens",
+            "defaultValue": "Ihr Unternehmen"
+          },
+          "companySlogan": {
+            "description": "Unternehmen Slogan/Tagline",
+            "defaultValue": "Ihr Slogan hier"
+          },
+          "title": {
+            "description": "Haupttitel des Dokuments",
+            "defaultValue": "Dokumenttitel"
+          },
+          "content": {
+            "description": "Hauptinhalt des Dokuments",
+            "defaultValue": "<p>Ihr Inhalt hier...</p>"
+          },
+          "footerText": {
+            "description": "Footer-Text",
+            "defaultValue": "© 2024 Ihr Unternehmen"
+          }
+        },
+        "validation": {
+          "title": "Validierungsfehler:",
+          "htmlEmpty": "HTML-Inhalt darf nicht leer sein",
+          "htmlStructure": "HTML muss eine vollständige HTML-Struktur haben",
+          "undefinedVariable": "Variable '{variable}' ist im HTML verwendet aber nicht definiert",
+          "requiredVariable": "Erforderliche Variable '{variable}' wird nicht verwendet"
+        },
+        "errors": {
+          "loadFailed": "Template konnte nicht geladen werden",
+          "saveFailed": "Template konnte nicht gespeichert werden",
+          "validationFailed": "Template hat Validierungsfehler. Bitte beheben Sie diese zuerst."
+        },
+        "preview": {
+          "noPreview": "Keine Vorschau verfügbar",
+          "addHtml": "Fügen Sie HTML-Inhalt hinzu für eine Vorschau"
+        }
       }
     },
     "domain": {
@@ -7011,5 +7320,81 @@
       "detectionErrorRetry": "Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut."
     },
     "pipelinePdfGenerated": "Pipeline-PDF erfolgreich generiert"
+  },
+  "listen": {
+    "publicationFilter": {
+      "loading": "Lade Publikationen...",
+      "sections": {
+        "basic": "Publikations-Auswahl",
+        "geographic": "Geografisch",
+        "thematic": "Thematisch",
+        "metrics": "Reichweite & Metriken",
+        "quality": "Verlage & Qualität"
+      },
+      "labels": {
+        "specificPublications": "Spezifische Publikationen",
+        "publicationTypes": "Publikationstypen",
+        "formats": "Formate",
+        "frequency": "Erscheinungsweise",
+        "targetCountries": "Zielländer",
+        "reach": "Reichweite",
+        "languages": "Sprachen",
+        "focusAreas": "Themenschwerpunkte",
+        "targetIndustries": "Zielbranchen",
+        "minPrintCirculation": "Min. Druckauflage",
+        "maxPrintCirculation": "Max. Druckauflage",
+        "minOnlineVisitors": "Min. Online-Besucher/Monat",
+        "maxOnlineVisitors": "Max. Online-Besucher/Monat",
+        "publishers": "Verlage/Medienhäuser",
+        "onlyVerified": "Nur verifizierte Publikationen",
+        "status": "Status"
+      },
+      "placeholders": {
+        "allPublications": "Alle Publikationen",
+        "allTypes": "Alle Typen",
+        "allFormats": "Alle Formate",
+        "allFrequencies": "Alle Frequenzen",
+        "allCountries": "Alle Länder",
+        "allReaches": "Alle Reichweiten",
+        "allLanguages": "Alle Sprachen",
+        "allTopics": "Alle Themen",
+        "allIndustries": "Alle Branchen",
+        "allPublishers": "Alle Verlage",
+        "allStatuses": "Alle Status",
+        "exampleSmall": "z.B. 5000",
+        "exampleMedium": "z.B. 100000",
+        "exampleMedium2": "z.B. 50000",
+        "exampleLarge": "z.B. 1000000"
+      },
+      "formats": {
+        "print": "Print",
+        "digital": "Digital",
+        "printAndDigital": "Print & Digital",
+        "broadcast": "Broadcast",
+        "audio": "Audio"
+      },
+      "reach": {
+        "local": "Lokal",
+        "regional": "Regional",
+        "national": "National",
+        "international": "International",
+        "global": "Global"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "discontinued": "Eingestellt",
+        "planned": "Geplant"
+      },
+      "activeFilters": {
+        "title": "Aktive Filter",
+        "resetAll": "Alle zurücksetzen",
+        "publicationsSelected": "{count} Publikationen ausgewählt",
+        "typesCount": "{count} Typen",
+        "topicAreasCount": "{count} Themenbereiche",
+        "circulationMin": "Auflage ≥ {value}",
+        "onlyVerified": "Nur verifiziert"
+      }
+    }
   }
 }

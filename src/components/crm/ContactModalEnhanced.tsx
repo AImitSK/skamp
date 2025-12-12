@@ -814,14 +814,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                         </Select>
                       </div>
                       <div className="col-span-6">
-                        <Input 
-                          value={profile.url} 
+                        <Input
+                          value={profile.url}
                           onChange={(e) => {
                             const updated = [...formData.socialProfiles!];
                             updated[index].url = e.target.value;
                             setFormData({ ...formData, socialProfiles: updated });
                           }}
-                          placeholder="https://..." 
+                          placeholder={t('communication.social.urlPlaceholder')}
                         />
                       </div>
                       <div className="col-span-1">
@@ -898,7 +898,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <FieldGroup>
                 {/* Media Types */}
                 <Field>
-                  <Label>Medientypen</Label>
+                  <Label>{t('media.types.title')}</Label>
                   <div className="space-y-2">
                     {MEDIA_TYPES.map(type => (
                       <label key={type.value} className="flex items-center gap-2">
@@ -906,7 +906,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                           checked={formData.mediaProfile?.mediaTypes?.includes(type.value as any) || false}
                           onChange={(checked) => {
                             const types = formData.mediaProfile?.mediaTypes || [];
-                            const updated = checked 
+                            const updated = checked
                               ? [...types, type.value as any]
                               : types.filter(t => t !== type.value);
                             setFormData({
@@ -923,7 +923,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Beats/Ressorts */}
                 <Field>
-                  <Label>Ressorts/Themengebiete</Label>
+                  <Label>{t('media.beats.title')}</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {STANDARD_BEATS.map(beat => (
                       <label key={beat} className="flex items-center gap-2">
@@ -931,7 +931,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                           checked={formData.mediaProfile?.beats?.includes(beat) || false}
                           onChange={(checked) => {
                             const beats = formData.mediaProfile?.beats || [];
-                            const updated = checked 
+                            const updated = checked
                               ? [...beats, beat]
                               : beats.filter(b => b !== beat);
                             setFormData({
@@ -948,7 +948,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Submission Formats */}
                 <Field>
-                  <Label>Bevorzugte Formate</Label>
+                  <Label>{t('media.formats.title')}</Label>
                   <div className="space-y-2">
                     {SUBMISSION_FORMATS.map(format => (
                       <label key={format.value} className="flex items-center gap-2">
@@ -956,7 +956,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                           checked={formData.mediaProfile?.preferredFormats?.includes(format.value as any) || false}
                           onChange={(checked) => {
                             const formats = formData.mediaProfile?.preferredFormats || [];
-                            const updated = checked 
+                            const updated = checked
                               ? [...formats, format.value as any]
                               : formats.filter(f => f !== format.value);
                             setFormData({
@@ -973,7 +973,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Submission Guidelines */}
                 <Field>
-                  <Label>Einreichungsrichtlinien</Label>
+                  <Label>{t('media.guidelines.title')}</Label>
                   <Textarea
                     value={formData.mediaProfile?.submissionGuidelines || ''}
                     onChange={(e) => setFormData({
@@ -981,7 +981,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       mediaProfile: { ...formData.mediaProfile!, submissionGuidelines: e.target.value }
                     })}
                     rows={4}
-                    placeholder="Spezielle Anforderungen oder Hinweise für Einreichungen..."
+                    placeholder={t('media.guidelines.placeholder')}
                   />
                 </Field>
               </FieldGroup>
@@ -992,7 +992,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <FieldGroup>
                 {/* Education */}
                 <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Ausbildung</div>
+                  <div className="text-sm font-medium text-gray-900">{t('professional.education.title')}</div>
                   {formData.professionalInfo?.education?.map((edu, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center p-3 border rounded-lg">
                       <div className="col-span-4">
@@ -1006,7 +1006,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                               professionalInfo: { ...formData.professionalInfo!, education: updated }
                             });
                           }}
-                          placeholder="Abschluss"
+                          placeholder={t('professional.education.degree')}
                         />
                       </div>
                       <div className="col-span-5">
@@ -1020,7 +1020,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                               professionalInfo: { ...formData.professionalInfo!, education: updated }
                             });
                           }}
-                          placeholder="Institution"
+                          placeholder={t('professional.education.institution')}
                         />
                       </div>
                       <div className="col-span-2">
@@ -1035,13 +1035,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                               professionalInfo: { ...formData.professionalInfo!, education: updated }
                             });
                           }}
-                          placeholder="Jahr"
+                          placeholder={t('professional.education.year')}
                         />
                       </div>
                       <div className="col-span-1">
-                        <Button 
-                          type="button" 
-                          plain 
+                        <Button
+                          type="button"
+                          plain
                           onClick={() => {
                             const updated = (formData.professionalInfo?.education || []).filter((_, i) => i !== index);
                             setFormData({
@@ -1055,9 +1055,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </div>
                     </div>
                   ))}
-                  <Button 
-                    type="button" 
-                    plain 
+                  <Button
+                    type="button"
+                    plain
                     className="w-full"
                     onClick={() => {
                       const newEdu = { degree: '', institution: '', year: undefined };
@@ -1071,13 +1071,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                     }}
                   >
                     <PlusIcon className="h-4 w-4" />
-                    Ausbildung hinzufügen
+                    {t('professional.education.addButton')}
                   </Button>
                 </div>
 
                 {/* Certifications */}
                 <Field>
-                  <Label>Zertifizierungen</Label>
+                  <Label>{t('professional.certifications.title')}</Label>
                   <Textarea
                     value={formData.professionalInfo?.certifications?.join('\n') || ''}
                     onChange={(e) => setFormData({
@@ -1088,13 +1088,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                       }
                     })}
                     rows={3}
-                    placeholder="Eine Zertifizierung pro Zeile..."
+                    placeholder={t('professional.certifications.placeholder')}
                   />
                 </Field>
 
                 {/* Memberships */}
                 <Field>
-                  <Label>Mitgliedschaften</Label>
+                  <Label>{t('professional.memberships.title')}</Label>
                   <Textarea
                     value={formData.professionalInfo?.memberships?.join('\n') || ''}
                     onChange={(e) => setFormData({
@@ -1105,13 +1105,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                       }
                     })}
                     rows={3}
-                    placeholder="Eine Mitgliedschaft pro Zeile..."
+                    placeholder={t('professional.memberships.placeholder')}
                   />
                 </Field>
 
                 {/* Biography */}
                 <Field>
-                  <Label>Biografie</Label>
+                  <Label>{t('professional.biography')}</Label>
                   <Textarea
                     value={formData.professionalInfo?.biography || ''}
                     onChange={(e) => setFormData({
@@ -1119,7 +1119,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       professionalInfo: { ...formData.professionalInfo!, biography: e.target.value }
                     })}
                     rows={5}
-                    placeholder="Professionelle Biografie..."
+                    placeholder={t('professional.biographyPlaceholder')}
                   />
                 </Field>
               </FieldGroup>
@@ -1130,20 +1130,20 @@ const handleSubmit = async (e: React.FormEvent) => {
               <FieldGroup>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">DSGVO Einwilligungen</div>
+                    <div className="text-sm font-medium text-gray-900">{t('gdpr.title')}</div>
                     <Button type="button" onClick={addGdprConsent} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      Einwilligung hinzufügen
+                      {t('gdpr.addButton')}
                     </Button>
                   </div>
-                  
+
                   {formData.gdprConsents && formData.gdprConsents.length > 0 ? (
                     <div className="space-y-4">
                       {formData.gdprConsents.map((consent, index) => (
                         <div key={consent.id} className="border rounded-lg p-4 space-y-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2">
-                              <CheckCircleIcon 
+                              <CheckCircleIcon
                                 className={clsx(
                                   'h-5 w-5',
                                   consent.status === 'granted' ? 'text-green-500' :
@@ -1151,82 +1151,82 @@ const handleSubmit = async (e: React.FormEvent) => {
                                   'text-gray-400'
                                 )}
                               />
-                              <span className="font-medium text-sm">Einwilligung {index + 1}</span>
+                              <span className="font-medium text-sm">{t('gdpr.consentNumber', { number: index + 1 })}</span>
                             </div>
-                            <Button 
-                              type="button" 
-                              plain 
+                            <Button
+                              type="button"
+                              plain
                               onClick={() => removeGdprConsent(index)}
                             >
                               <TrashIcon className="h-4 w-4 text-red-500" />
                             </Button>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <Field>
-                              <Label>Zweck</Label>
-                              <Input 
-                                value={consent.purpose} 
+                              <Label>{t('gdpr.fields.purpose')}</Label>
+                              <Input
+                                value={consent.purpose}
                                 onChange={(e) => {
                                   const updated = [...formData.gdprConsents!];
                                   updated[index].purpose = e.target.value;
                                   setFormData({ ...formData, gdprConsents: updated });
                                 }}
-                                placeholder="z.B. Marketing-Newsletter"
+                                placeholder={t('gdpr.fields.purposePlaceholder')}
                               />
                             </Field>
                             <Field>
-                              <Label>Status</Label>
-                              <Select 
-                                value={consent.status} 
+                              <Label>{t('gdpr.fields.status')}</Label>
+                              <Select
+                                value={consent.status}
                                 onChange={(e) => {
                                   const updated = [...formData.gdprConsents!];
                                   updated[index].status = e.target.value as any;
                                   setFormData({ ...formData, gdprConsents: updated });
                                 }}
                               >
-                                <option value="pending">Ausstehend</option>
-                                <option value="granted">Erteilt</option>
-                                <option value="revoked">Widerrufen</option>
+                                <option value="pending">{t('gdpr.status.pending')}</option>
+                                <option value="granted">{t('gdpr.status.granted')}</option>
+                                <option value="revoked">{t('gdpr.status.revoked')}</option>
                               </Select>
                             </Field>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <Field>
-                              <Label>Rechtsgrundlage</Label>
-                              <Select 
-                                value={consent.legalBasis} 
+                              <Label>{t('gdpr.fields.legalBasis')}</Label>
+                              <Select
+                                value={consent.legalBasis}
                                 onChange={(e) => {
                                   const updated = [...formData.gdprConsents!];
                                   updated[index].legalBasis = e.target.value as any;
                                   setFormData({ ...formData, gdprConsents: updated });
                                 }}
                               >
-                                <option value="consent">Einwilligung</option>
-                                <option value="contract">Vertrag</option>
-                                <option value="legal_obligation">Rechtliche Verpflichtung</option>
-                                <option value="vital_interests">Lebenswichtige Interessen</option>
-                                <option value="public_task">Öffentliche Aufgabe</option>
-                                <option value="legitimate_interests">Berechtigte Interessen</option>
+                                <option value="consent">{t('gdpr.legalBasis.consent')}</option>
+                                <option value="contract">{t('gdpr.legalBasis.contract')}</option>
+                                <option value="legal_obligation">{t('gdpr.legalBasis.legal_obligation')}</option>
+                                <option value="vital_interests">{t('gdpr.legalBasis.vital_interests')}</option>
+                                <option value="public_task">{t('gdpr.legalBasis.public_task')}</option>
+                                <option value="legitimate_interests">{t('gdpr.legalBasis.legitimate_interests')}</option>
                               </Select>
                             </Field>
                             <Field>
-                              <Label>Methode</Label>
-                              <Select 
-                                value={consent.method} 
+                              <Label>{t('gdpr.fields.method')}</Label>
+                              <Select
+                                value={consent.method}
                                 onChange={(e) => {
                                   const updated = [...formData.gdprConsents!];
                                   updated[index].method = e.target.value as any;
                                   setFormData({ ...formData, gdprConsents: updated });
                                 }}
                               >
-                                <option value="webform">Web-Formular</option>
-                                <option value="email">E-Mail</option>
-                                <option value="phone">Telefon</option>
-                                <option value="written">Schriftlich</option>
-                                <option value="double_opt_in">Double Opt-In</option>
-                                <option value="import">Import</option>
+                                <option value="webform">{t('gdpr.method.webform')}</option>
+                                <option value="email">{t('gdpr.method.email')}</option>
+                                <option value="phone">{t('gdpr.method.phone')}</option>
+                                <option value="written">{t('gdpr.method.written')}</option>
+                                <option value="double_opt_in">{t('gdpr.method.double_opt_in')}</option>
+                                <option value="import">{t('gdpr.method.import')}</option>
                               </Select>
                             </Field>
                           </div>
@@ -1236,7 +1236,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   ) : (
                     <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
                       <ShieldCheckIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <Text>Keine DSGVO Einwilligungen erfasst</Text>
+                      <Text>{t('gdpr.empty')}</Text>
                     </div>
                   )}
                 </div>
@@ -1248,7 +1248,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <FieldGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Geburtstag</Label>
+                    <Label>{t('personal.birthday')}</Label>
                     <Input
                       type="date"
                       value={formData.personalInfo?.birthday ? new Date(formData.personalInfo.birthday).toISOString().split('T')[0] : ''}
@@ -1262,7 +1262,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     />
                   </Field>
                   <Field>
-                    <Label>Nationalität</Label>
+                    <Label>{t('personal.nationality')}</Label>
                     <CountrySelector
                       value={formData.personalInfo?.nationality || null}
                       onChange={(country) => setFormData({
@@ -1276,8 +1276,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </Field>
                 </div>
 
-<Field>
-                  <Label>Sprachen</Label>
+                <Field>
+                  <Label>{t('personal.languages.title')}</Label>
                   <LanguageSelectorMulti
                     value={formData.personalInfo?.languages || []}
                     onChange={(languages) => setFormData({
@@ -1292,7 +1292,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </Field>
 
                 <Field>
-                  <Label>Interessen</Label>
+                  <Label>{t('personal.interests')}</Label>
                   <Textarea
                     value={formData.personalInfo?.interests?.join('\n') || ''}
                     onChange={(e) => setFormData({
@@ -1303,12 +1303,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                       }
                     })}
                     rows={4}
-                    placeholder="Ein Interesse pro Zeile..."
+                    placeholder={t('personal.interestsPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Persönliche Notizen</Label>
+                  <Label>{t('personal.personalNotes')}</Label>
                   <Textarea
                     value={formData.personalInfo?.notes || ''}
                     onChange={(e) => setFormData({
@@ -1316,7 +1316,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       personalInfo: { ...formData.personalInfo!, notes: e.target.value }
                     })}
                     rows={5}
-                    placeholder="Persönliche Notizen (Hobbies, Familie, etc.)..."
+                    placeholder={t('personal.personalNotesPlaceholder')}
                   />
                 </Field>
               </FieldGroup>

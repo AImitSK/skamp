@@ -12,12 +12,15 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Label } from '@/components/ui/fieldset';
+import { useTranslations } from 'next-intl';
 
 type ToolbarProps = {
   editor: Editor | null;
 };
 
 export const TiptapToolbar = ({ editor }: ToolbarProps) => {
+  const t = useTranslations('common.editor.toolbar');
+  const tColors = useTranslations('common.editor.colors');
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTarget, setLinkTarget] = useState('_self');
@@ -28,10 +31,10 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
 
   // Heading options
   const headingOptions = [
-    { value: 0, label: 'Normal' },
-    { value: 1, label: 'Überschrift 1' },
-    { value: 2, label: 'Überschrift 2' },
-    { value: 3, label: 'Überschrift 3' },
+    { value: 0, label: t('headings.normal') },
+    { value: 1, label: t('headings.heading1') },
+    { value: 2, label: t('headings.heading2') },
+    { value: 3, label: t('headings.heading3') },
   ];
 
   const getCurrentHeading = () => {
@@ -51,16 +54,16 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
 
   // Color presets
   const colorPresets = [
-    { name: 'Schwarz', value: '#000000' },
-    { name: 'Grau', value: '#6B7280' },
-    { name: 'Rot', value: '#DC2626' },
-    { name: 'Orange', value: '#EA580C' },
-    { name: 'Gelb', value: '#CA8A04' },
-    { name: 'Grün', value: '#16A34A' },
-    { name: 'Blau', value: '#2563EB' },
-    { name: 'Indigo', value: '#4F46E5' },
-    { name: 'Lila', value: '#9333EA' },
-    { name: 'CeleroPress Blau', value: '#005fab' },
+    { name: tColors('black'), value: '#000000' },
+    { name: tColors('gray'), value: '#6B7280' },
+    { name: tColors('red'), value: '#DC2626' },
+    { name: tColors('orange'), value: '#EA580C' },
+    { name: tColors('yellow'), value: '#CA8A04' },
+    { name: tColors('green'), value: '#16A34A' },
+    { name: tColors('blue'), value: '#2563EB' },
+    { name: tColors('indigo'), value: '#4F46E5' },
+    { name: tColors('purple'), value: '#9333EA' },
+    { name: t('colors.celeropressBlue'), value: '#005fab' },
   ];
 
   const handleLinkSubmit = () => {
@@ -91,11 +94,11 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
   };
 
   const buttons = [
-    { command: 'toggleBold', icon: 'B', label: 'Fett', activeName: 'bold' },
-    { command: 'toggleItalic', icon: 'I', label: 'Kursiv', activeName: 'italic' },
-    { command: 'toggleStrike', icon: 'S', label: 'Durchgestrichen', activeName: 'strike' },
-    { command: 'toggleBulletList', icon: '•', label: 'Liste', activeName: 'bulletList' },
-    { command: 'toggleOrderedList', icon: '1.', label: 'Nummerierte Liste', activeName: 'orderedList' },
+    { command: 'toggleBold', icon: 'B', label: t('formatting.bold'), activeName: 'bold' },
+    { command: 'toggleItalic', icon: 'I', label: t('formatting.italic'), activeName: 'italic' },
+    { command: 'toggleStrike', icon: 'S', label: t('formatting.strikethrough'), activeName: 'strike' },
+    { command: 'toggleBulletList', icon: '•', label: t('formatting.bulletList'), activeName: 'bulletList' },
+    { command: 'toggleOrderedList', icon: '1.', label: t('formatting.orderedList'), activeName: 'orderedList' },
   ];
 
   return (
@@ -175,7 +178,7 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
               'hover:bg-zinc-200': !editor.isActive('link'),
             }
           )}
-          title="Link einfügen"
+          title={t('link.insert')}
         >
           <LinkIcon className="h-4 w-4" />
         </button>
@@ -185,7 +188,7 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
 
         {/* Color Picker */}
         <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-600 ml-2">Textfarbe:</span>
+          <span className="text-xs text-gray-600 ml-2">{t('colors.textColorLabel')}</span>
           <div className="flex gap-1">
             {colorPresets.map(color => (
               <button
@@ -218,7 +221,7 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
                 e.stopPropagation();
               }}
               className="px-2 text-xs bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
-              title="Farbe zurücksetzen"
+              title={t('colors.reset')}
             >
               ✕
             </button>
@@ -228,33 +231,33 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
 
       {/* Link Dialog */}
       <Dialog open={showLinkDialog} onClose={() => setShowLinkDialog(false)}>
-        <DialogTitle className="px-6 py-4">Link einfügen</DialogTitle>
+        <DialogTitle className="px-6 py-4">{t('link.dialogTitle')}</DialogTitle>
         <DialogBody className="px-6">
           <Field>
-            <Label>URL</Label>
+            <Label>{t('link.urlLabel')}</Label>
             <Input
               type="url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t('link.urlPlaceholder')}
               autoFocus
             />
           </Field>
           <Field className="mt-4">
-            <Label>Link öffnen in</Label>
+            <Label>{t('link.targetLabel')}</Label>
             <select
               value={linkTarget}
               onChange={(e) => setLinkTarget(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
             >
-              <option value="_self">Gleichem Fenster</option>
-              <option value="_blank">Neuem Fenster</option>
+              <option value="_self">{t('link.targetSelf')}</option>
+              <option value="_blank">{t('link.targetBlank')}</option>
             </select>
           </Field>
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={() => setShowLinkDialog(false)}>
-            Abbrechen
+            {t('link.cancel')}
           </Button>
           {editor.isActive('link') && (
             <Button
@@ -264,14 +267,14 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
                 setShowLinkDialog(false);
               }}
             >
-              Link entfernen
+              {t('link.remove')}
             </Button>
           )}
           <Button
             onClick={handleLinkSubmit}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
-            {linkUrl ? 'Link setzen' : 'Link entfernen'}
+            {linkUrl ? t('link.set') : t('link.remove')}
           </Button>
         </DialogActions>
       </Dialog>

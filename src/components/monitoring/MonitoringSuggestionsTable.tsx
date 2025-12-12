@@ -452,25 +452,25 @@ export function MonitoringSuggestionsTable({
             )}
 
             <Field>
-              <Label>Sentiment</Label>
+              <Label>{t('confirmDialog.sentiment')}</Label>
               <div className="flex gap-3 mt-2">
                 <SentimentButton
                   sentiment="positive"
                   selected={selectedSentiment === 'positive'}
                   onClick={() => setSelectedSentiment('positive')}
-                  label="Positiv"
+                  label={t('confirmDialog.sentimentOptions.positive')}
                 />
                 <SentimentButton
                   sentiment="neutral"
                   selected={selectedSentiment === 'neutral'}
                   onClick={() => setSelectedSentiment('neutral')}
-                  label="Neutral"
+                  label={t('confirmDialog.sentimentOptions.neutral')}
                 />
                 <SentimentButton
                   sentiment="negative"
                   selected={selectedSentiment === 'negative'}
                   onClick={() => setSelectedSentiment('negative')}
-                  label="Negativ"
+                  label={t('confirmDialog.sentimentOptions.negative')}
                 />
               </div>
             </Field>

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -28,11 +29,12 @@ interface PublicationFilterSectionProps {
   onChange: (filters: ListFilters['publications']) => void;
 }
 
-export default function PublicationFilterSection({ 
-  filters = {}, 
-  organizationId, 
-  onChange 
+export default function PublicationFilterSection({
+  filters = {},
+  organizationId,
+  onChange
 }: PublicationFilterSectionProps) {
+  const t = useTranslations('listen.publicationFilter');
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']));
@@ -133,7 +135,7 @@ export default function PublicationFilterSection({
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-500">Lade Publikationen...</p>
+        <p className="mt-2 text-sm text-gray-500">{t('loading')}</p>
       </div>
     );
   }
@@ -149,18 +151,18 @@ export default function PublicationFilterSection({
         >
           <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <NewspaperIcon className="h-5 w-5 text-gray-400" />
-            Publikations-Auswahl
+            {t('sections.basic')}
           </h4>
           <span className="text-gray-400">
             {expandedSections.has('basic') ? '−' : '+'}
           </span>
         </button>
-        
+
         {expandedSections.has('basic') && (
           <div className="space-y-4 pl-7">
             <MultiSelectDropdown
-              label="Spezifische Publikationen"
-              placeholder="Alle Publikationen"
+              label={t('labels.specificPublications')}
+              placeholder={t('placeholders.allPublications')}
               options={publications.map(p => ({
                 value: p.id!,
                 label: `${p.title} ${p.publisherName ? `(${p.publisherName})` : ''}`
@@ -170,8 +172,8 @@ export default function PublicationFilterSection({
             />
 
             <MultiSelectDropdown
-              label="Publikationstypen"
-              placeholder="Alle Typen"
+              label={t('labels.publicationTypes')}
+              placeholder={t('placeholders.allTypes')}
               options={options.types.map(type => ({
                 value: type,
                 label: PUBLICATION_TYPE_LABELS[type as keyof typeof PUBLICATION_TYPE_LABELS] || type
@@ -181,22 +183,22 @@ export default function PublicationFilterSection({
             />
 
             <MultiSelectDropdown
-              label="Formate"
-              placeholder="Alle Formate"
+              label={t('labels.formats')}
+              placeholder={t('placeholders.allFormats')}
               options={[
-                { value: 'print', label: 'Print' },
-                { value: 'online', label: 'Digital' },
-                { value: 'both', label: 'Print & Digital' },
-                { value: 'broadcast', label: 'Broadcast' },
-                { value: 'audio', label: 'Audio' }
+                { value: 'print', label: t('formats.print') },
+                { value: 'online', label: t('formats.digital') },
+                { value: 'both', label: t('formats.printAndDigital') },
+                { value: 'broadcast', label: t('formats.broadcast') },
+                { value: 'audio', label: t('formats.audio') }
               ]}
               selectedValues={filters.formats || []}
               onChange={(values) => onChange({ ...filters, formats: values as any })}
             />
 
             <MultiSelectDropdown
-              label="Erscheinungsweise"
-              placeholder="Alle Frequenzen"
+              label={t('labels.frequency')}
+              placeholder={t('placeholders.allFrequencies')}
               options={options.frequencies.map(freq => ({
                 value: freq,
                 label: PUBLICATION_FREQUENCY_LABELS[freq as keyof typeof PUBLICATION_FREQUENCY_LABELS] || freq
@@ -217,18 +219,18 @@ export default function PublicationFilterSection({
         >
           <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <GlobeAltIcon className="h-5 w-5 text-gray-400" />
-            Geografisch
+            {t('sections.geographic')}
           </h4>
           <span className="text-gray-400">
             {expandedSections.has('geographic') ? '−' : '+'}
           </span>
         </button>
-        
+
         {expandedSections.has('geographic') && (
           <div className="space-y-4 pl-7">
             <MultiSelectDropdown
-              label="Zielländer"
-              placeholder="Alle Länder"
+              label={t('labels.targetCountries')}
+              placeholder={t('placeholders.allCountries')}
               options={options.countries.map(c => ({
                 value: c,
                 label: COUNTRY_NAMES[c] || c
@@ -238,22 +240,22 @@ export default function PublicationFilterSection({
             />
 
             <MultiSelectDropdown
-              label="Reichweite"
-              placeholder="Alle Reichweiten"
+              label={t('labels.reach')}
+              placeholder={t('placeholders.allReaches')}
               options={[
-                { value: 'local', label: 'Lokal' },
-                { value: 'regional', label: 'Regional' },
-                { value: 'national', label: 'National' },
-                { value: 'international', label: 'International' },
-                { value: 'global', label: 'Global' }
+                { value: 'local', label: t('reach.local') },
+                { value: 'regional', label: t('reach.regional') },
+                { value: 'national', label: t('reach.national') },
+                { value: 'international', label: t('reach.international') },
+                { value: 'global', label: t('reach.global') }
               ]}
               selectedValues={filters.geographicScopes || []}
               onChange={(values) => onChange({ ...filters, geographicScopes: values as any })}
             />
 
             <MultiSelectDropdown
-              label="Sprachen"
-              placeholder="Alle Sprachen"
+              label={t('labels.languages')}
+              placeholder={t('placeholders.allLanguages')}
               options={options.languages.map(lang => ({
                 value: lang,
                 label: LANGUAGE_NAMES[lang] || lang
@@ -274,18 +276,18 @@ export default function PublicationFilterSection({
         >
           <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <TagIcon className="h-5 w-5 text-gray-400" />
-            Thematisch
+            {t('sections.thematic')}
           </h4>
           <span className="text-gray-400">
             {expandedSections.has('thematic') ? '−' : '+'}
           </span>
         </button>
-        
+
         {expandedSections.has('thematic') && (
           <div className="space-y-4 pl-7">
             <MultiSelectDropdown
-              label="Themenschwerpunkte"
-              placeholder="Alle Themen"
+              label={t('labels.focusAreas')}
+              placeholder={t('placeholders.allTopics')}
               options={options.focusAreas.map(area => ({
                 value: area,
                 label: area
@@ -296,8 +298,8 @@ export default function PublicationFilterSection({
 
             {options.industries.length > 0 && (
               <MultiSelectDropdown
-                label="Zielbranchen"
-                placeholder="Alle Branchen"
+                label={t('labels.targetIndustries')}
+                placeholder={t('placeholders.allIndustries')}
                 options={options.industries.map(ind => ({
                   value: ind,
                   label: ind
@@ -319,18 +321,18 @@ export default function PublicationFilterSection({
         >
           <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <ChartBarIcon className="h-5 w-5 text-gray-400" />
-            Reichweite & Metriken
+            {t('sections.metrics')}
           </h4>
           <span className="text-gray-400">
             {expandedSections.has('metrics') ? '−' : '+'}
           </span>
         </button>
-        
+
         {expandedSections.has('metrics') && (
           <div className="space-y-4 pl-7">
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label>Min. Druckauflage</Label>
+                <Label>{t('labels.minPrintCirculation')}</Label>
                 <Input
                   type="number"
                   value={filters.minPrintCirculation || ''}
@@ -338,12 +340,12 @@ export default function PublicationFilterSection({
                     ...filters,
                     minPrintCirculation: e.target.value ? parseInt(e.target.value) : undefined
                   })}
-                  placeholder="z.B. 5000"
+                  placeholder={t('placeholders.exampleSmall')}
                 />
               </Field>
-              
+
               <Field>
-                <Label>Max. Druckauflage</Label>
+                <Label>{t('labels.maxPrintCirculation')}</Label>
                 <Input
                   type="number"
                   value={filters.maxPrintCirculation || ''}
@@ -351,14 +353,14 @@ export default function PublicationFilterSection({
                     ...filters,
                     maxPrintCirculation: e.target.value ? parseInt(e.target.value) : undefined
                   })}
-                  placeholder="z.B. 100000"
+                  placeholder={t('placeholders.exampleMedium')}
                 />
               </Field>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label>Min. Online-Besucher/Monat</Label>
+                <Label>{t('labels.minOnlineVisitors')}</Label>
                 <Input
                   type="number"
                   value={filters.minOnlineVisitors || ''}
@@ -366,12 +368,12 @@ export default function PublicationFilterSection({
                     ...filters,
                     minOnlineVisitors: e.target.value ? parseInt(e.target.value) : undefined
                   })}
-                  placeholder="z.B. 50000"
+                  placeholder={t('placeholders.exampleMedium2')}
                 />
               </Field>
-              
+
               <Field>
-                <Label>Max. Online-Besucher/Monat</Label>
+                <Label>{t('labels.maxOnlineVisitors')}</Label>
                 <Input
                   type="number"
                   value={filters.maxOnlineVisitors || ''}
@@ -379,7 +381,7 @@ export default function PublicationFilterSection({
                     ...filters,
                     maxOnlineVisitors: e.target.value ? parseInt(e.target.value) : undefined
                   })}
-                  placeholder="z.B. 1000000"
+                  placeholder={t('placeholders.exampleLarge')}
                 />
               </Field>
             </div>
@@ -396,18 +398,18 @@ export default function PublicationFilterSection({
         >
           <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-            Verlage & Qualität
+            {t('sections.quality')}
           </h4>
           <span className="text-gray-400">
             {expandedSections.has('quality') ? '−' : '+'}
           </span>
         </button>
-        
+
         {expandedSections.has('quality') && (
           <div className="space-y-4 pl-7">
             <MultiSelectDropdown
-              label="Verlage/Medienhäuser"
-              placeholder="Alle Verlage"
+              label={t('labels.publishers')}
+              placeholder={t('placeholders.allPublishers')}
               options={options.publishers.map(pub => ({
                 value: pub.id,
                 label: pub.name
@@ -422,18 +424,18 @@ export default function PublicationFilterSection({
                 onChange={(checked) => onChange({ ...filters, onlyVerified: checked })}
               />
               <label className="text-sm text-gray-700">
-                Nur verifizierte Publikationen
+                {t('labels.onlyVerified')}
               </label>
             </div>
 
             <MultiSelectDropdown
-              label="Status"
-              placeholder="Alle Status"
+              label={t('labels.status')}
+              placeholder={t('placeholders.allStatuses')}
               options={[
-                { value: 'active', label: 'Aktiv' },
-                { value: 'inactive', label: 'Inaktiv' },
-                { value: 'discontinued', label: 'Eingestellt' },
-                { value: 'planned', label: 'Geplant' }
+                { value: 'active', label: t('status.active') },
+                { value: 'inactive', label: t('status.inactive') },
+                { value: 'discontinued', label: t('status.discontinued') },
+                { value: 'planned', label: t('status.planned') }
               ]}
               selectedValues={filters.status || []}
               onChange={(values) => onChange({ ...filters, status: values as any })}
@@ -446,39 +448,39 @@ export default function PublicationFilterSection({
       {Object.keys(filters).length > 0 && (
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-gray-700">Aktive Filter</h4>
+            <h4 className="text-sm font-medium text-gray-700">{t('activeFilters.title')}</h4>
             <Button
               plain
               onClick={() => onChange({})}
               className="text-xs text-red-600 hover:text-red-700"
             >
-              Alle zurücksetzen
+              {t('activeFilters.resetAll')}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
             {filters.publicationIds?.length ? (
               <Badge color="blue">
-                {filters.publicationIds.length} Publikationen ausgewählt
+                {t('activeFilters.publicationsSelected', { count: filters.publicationIds.length })}
               </Badge>
             ) : null}
             {filters.types?.length ? (
               <Badge color="purple">
-                {filters.types.length} Typen
+                {t('activeFilters.typesCount', { count: filters.types.length })}
               </Badge>
             ) : null}
             {filters.focusAreas?.length ? (
               <Badge color="green">
-                {filters.focusAreas.length} Themenbereiche
+                {t('activeFilters.topicAreasCount', { count: filters.focusAreas.length })}
               </Badge>
             ) : null}
             {filters.minPrintCirculation ? (
               <Badge color="amber">
-                Auflage ≥ {filters.minPrintCirculation.toLocaleString()}
+                {t('activeFilters.circulationMin', { value: filters.minPrintCirculation.toLocaleString() })}
               </Badge>
             ) : null}
             {filters.onlyVerified ? (
               <Badge color="emerald">
-                Nur verifiziert
+                {t('activeFilters.onlyVerified')}
               </Badge>
             ) : null}
           </div>

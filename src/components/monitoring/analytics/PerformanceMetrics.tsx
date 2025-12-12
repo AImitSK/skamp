@@ -1,4 +1,6 @@
+'use client';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import {
@@ -24,30 +26,32 @@ export const PerformanceMetrics = React.memo(function PerformanceMetrics({
   openRate,
   conversionRate,
 }: PerformanceMetricsProps) {
+  const t = useTranslations('monitoring.analytics.performance');
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center gap-2 mb-4">
         <ChartBarIcon className="h-5 w-5 text-[#005fab]" />
-        <Subheading>Performance-Übersicht</Subheading>
+        <Subheading>{t('title')}</Subheading>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <MetricCard
           icon={NewspaperIcon}
-          label="Veröffentlichungen"
+          label={t('publications')}
           value={totalClippings.toString()}
         />
 
         <MetricCard
           icon={EyeIcon}
-          label="Gesamtreichweite"
+          label={t('totalReach')}
           value={totalReach.toLocaleString('de-DE')}
         />
 
         {totalAVE > 0 && (
           <MetricCard
             icon={CurrencyEuroIcon}
-            label="Gesamt-AVE"
+            label={t('totalAve')}
             value={`${totalAVE.toLocaleString('de-DE', {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
@@ -57,15 +61,15 @@ export const PerformanceMetrics = React.memo(function PerformanceMetrics({
 
         <MetricCard
           icon={ChartBarIcon}
-          label="Öffnungsrate"
+          label={t('openRate')}
           value={`${openRate}%`}
         />
 
         <MetricCard
           icon={FaceSmileIcon}
-          label="Conversion"
+          label={t('conversion')}
           value={`${conversionRate}%`}
-          subtitle="Öffnungen → Clippings"
+          subtitle={t('conversionSubtitle')}
         />
       </div>
     </div>

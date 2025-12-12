@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
@@ -30,15 +31,15 @@ type MockDataType = 'default' | 'tech' | 'healthcare' | 'finance';
 
 interface MockDataOption {
   value: MockDataType;
-  label: string;
-  industry: string;
+  labelKey: string;
+  industryKey: string;
 }
 
 const MOCK_DATA_OPTIONS: MockDataOption[] = [
-  { value: 'default', label: 'Standard Pressemitteilung', industry: 'Allgemein' },
-  { value: 'tech', label: 'Tech-Startup Ankündigung', industry: 'Technologie' },
-  { value: 'healthcare', label: 'Pharma Produktlaunch', industry: 'Gesundheit' },
-  { value: 'finance', label: 'Finanzdienstleistung Update', industry: 'Finanzen' }
+  { value: 'default', labelKey: 'mockData.default.label', industryKey: 'mockData.default.industry' },
+  { value: 'tech', labelKey: 'mockData.tech.label', industryKey: 'mockData.tech.industry' },
+  { value: 'healthcare', labelKey: 'mockData.healthcare.label', industryKey: 'mockData.healthcare.industry' },
+  { value: 'finance', labelKey: 'mockData.finance.label', industryKey: 'mockData.finance.industry' }
 ];
 
 /**
@@ -53,6 +54,7 @@ export function TemplatePreviewModal({
   organizationId,
   className = ""
 }: TemplatePreviewModalProps) {
+  const t = useTranslations('templates.preview');
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,10 +203,10 @@ export function TemplatePreviewModal({
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-zinc-900">
-                  Template-Vorschau: {template.name}
+                  {t('title', { name: template.name })}
                 </h2>
                 <p className="text-sm text-zinc-600 mt-1">
-                  {template.description} • Version {template.version}
+                  {template.description} • {t('version', { version: template.version })}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -220,12 +222,12 @@ export function TemplatePreviewModal({
               <Select
                 value={selectedMockData}
                 onChange={handleMockDataChange}
-                aria-label="Mock-Daten auswählen"
+                aria-label={t('ariaLabels.selectMockData')}
                 className="min-w-48"
               >
                 {MOCK_DATA_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label} ({option.industry})
+                    {t(option.labelKey)} ({t(option.industryKey)})
                   </option>
                 ))}
               </Select>
@@ -234,7 +236,7 @@ export function TemplatePreviewModal({
               <Button
                 onClick={toggleFullscreen}
                 color="secondary"
-                aria-label={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+                aria-label={isFullscreen ? t('ariaLabels.exitFullscreen') : t('ariaLabels.fullscreen')}
               >
                 {isFullscreen ? (
                   <ArrowsPointingInIcon className="h-4 w-4" />
@@ -248,7 +250,7 @@ export function TemplatePreviewModal({
                 onClick={generatePreview}
                 disabled={loading}
                 color="secondary"
-                aria-label="Vorschau aktualisieren"
+                aria-label={t('ariaLabels.refreshPreview')}
               >
                 <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
@@ -257,7 +259,7 @@ export function TemplatePreviewModal({
               <Button
                 onClick={onClose}
                 color="secondary"
-                aria-label="Modal schließen"
+                aria-label={t('ariaLabels.closeModal')}
               >
                 <XMarkIcon className="h-4 w-4" />
               </Button>
@@ -269,15 +271,17 @@ export function TemplatePreviewModal({
             {loading && (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <div 
+                  <div
                     data-testid="loading-spinner"
                     className="animate-spin h-8 w-8 border-2 border-zinc-200 border-t-blue-500 rounded-full mx-auto mb-4"
                   />
                   <h3 className="text-lg font-medium text-zinc-900 mb-2">
-                    Vorschau wird generiert
+                    {t('loading.title')}
                   </h3>
                   <p className="text-sm text-zinc-600">
-                    Template wird mit {MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.label} erstellt...
+                    {t('loading.description', {
+                      mockData: t(MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.labelKey || 'mockData.default.label')
+                    })}
                   </p>
                 </div>
               </div>
@@ -288,7 +292,7 @@ export function TemplatePreviewModal({
                 <div className="text-center max-w-md">
                   <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-zinc-900 mb-2">
-                    Fehler beim Generieren der Vorschau
+                    {t('error.title')}
                   </h3>
                   <p className="text-sm text-zinc-600 mb-4">
                     {error}
@@ -298,7 +302,7 @@ export function TemplatePreviewModal({
                     color="secondary"
                   >
                     <ArrowPathIcon className="h-4 w-4 mr-2" />
-                    Erneut versuchen
+                    {t('error.retryButton')}
                   </Button>
                 </div>
               </div>
@@ -309,7 +313,7 @@ export function TemplatePreviewModal({
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full h-full border-0 bg-white"
-                  title={`Template-Vorschau: ${template.name}`}
+                  title={t('title', { name: template.name })}
                   sandbox="allow-same-origin allow-scripts"
                 />
               </div>
@@ -322,29 +326,31 @@ export function TemplatePreviewModal({
               {previewHtml ? (
                 <span className="flex items-center gap-2">
                   <CheckIcon className="h-4 w-4 text-green-500" />
-                  Vorschau bereit mit {MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.label}
+                  {t('status.ready', {
+                    mockData: t(MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.labelKey || 'mockData.default.label')
+                  })}
                 </span>
               ) : (
-                <span>Template-Vorschau wird vorbereitet...</span>
+                <span>{t('status.preparing')}</span>
               )}
             </div>
-            
+
             <div className="flex gap-3">
               <Button
                 onClick={onClose}
                 color="secondary"
                 disabled={loading}
               >
-                Schließen
+                {t('actions.close')}
               </Button>
-              
+
               <Button
                 onClick={handleSelectTemplate}
                 disabled={loading || !previewHtml}
                 className="text-white"
               >
                 <CheckIcon className="h-4 w-4 mr-2" />
-                Template verwenden
+                {t('actions.useTemplate')}
               </Button>
             </div>
           </div>

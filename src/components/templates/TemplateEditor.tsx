@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
@@ -23,15 +24,15 @@ interface TemplateEditorProps {
 
 interface EditorTab {
   id: 'html' | 'css' | 'preview' | 'variables';
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const editorTabs: EditorTab[] = [
-  { id: 'html', label: 'HTML', icon: CodeBracketIcon },
-  { id: 'css', label: 'CSS', icon: PaintBrushIcon },
-  { id: 'variables', label: 'Variablen', icon: DocumentTextIcon },
-  { id: 'preview', label: 'Vorschau', icon: EyeIcon },
+  { id: 'html', labelKey: 'tabs.html', icon: CodeBracketIcon },
+  { id: 'css', labelKey: 'tabs.css', icon: PaintBrushIcon },
+  { id: 'variables', labelKey: 'tabs.variables', icon: DocumentTextIcon },
+  { id: 'preview', labelKey: 'tabs.preview', icon: EyeIcon },
 ];
 
 interface TemplateVariable {
@@ -43,6 +44,7 @@ interface TemplateVariable {
 }
 
 export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: TemplateEditorProps) {
+  const t = useTranslations('settings.templates.editor');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [activeTab, setActiveTab] = useState<'html' | 'css' | 'preview' | 'variables'>('html');
@@ -68,13 +70,14 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
     } else if (isOpen && !templateId) {
       // New template - set defaults
       setTemplateData({
-        name: 'Neues Template',
+        name: t('defaultName'),
         description: '',
         htmlContent: getDefaultHtmlTemplate(),
         cssContent: getDefaultCssTemplate(),
         variables: getDefaultVariables(),
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, isOpen]);
 
   const loadTemplate = async () => {
@@ -86,7 +89,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
       }
     } catch (error) {
       console.error('Fehler beim Laden des Templates:', error);
-      setError('Template konnte nicht geladen werden');
+      setError(t('errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -202,43 +205,43 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
   const getDefaultVariables = (): TemplateVariable[] => [
     {
       name: 'templateTitle',
-      description: 'Titel der HTML-Seite (erscheint im Browser-Tab)',
-      defaultValue: 'Template Dokument',
+      description: t('defaultVariables.templateTitle.description'),
+      defaultValue: t('defaultVariables.templateTitle.defaultValue'),
       required: false,
       type: 'text'
     },
     {
       name: 'companyName',
-      description: 'Name des Unternehmens',
-      defaultValue: 'Ihr Unternehmen',
+      description: t('defaultVariables.companyName.description'),
+      defaultValue: t('defaultVariables.companyName.defaultValue'),
       required: true,
       type: 'text'
     },
     {
       name: 'companySlogan',
-      description: 'Unternehmen Slogan/Tagline',
-      defaultValue: 'Ihr Slogan hier',
+      description: t('defaultVariables.companySlogan.description'),
+      defaultValue: t('defaultVariables.companySlogan.defaultValue'),
       required: false,
       type: 'text'
     },
     {
       name: 'title',
-      description: 'Haupttitel des Dokuments',
-      defaultValue: 'Dokumenttitel',
+      description: t('defaultVariables.title.description'),
+      defaultValue: t('defaultVariables.title.defaultValue'),
       required: true,
       type: 'text'
     },
     {
       name: 'content',
-      description: 'Hauptinhalt des Dokuments',
-      defaultValue: '<p>Ihr Inhalt hier...</p>',
+      description: t('defaultVariables.content.description'),
+      defaultValue: t('defaultVariables.content.defaultValue'),
       required: true,
       type: 'html'
     },
     {
       name: 'footerText',
-      description: 'Footer-Text',
-      defaultValue: '© 2024 Ihr Unternehmen',
+      description: t('defaultVariables.footerText.description'),
+      defaultValue: t('defaultVariables.footerText.defaultValue'),
       required: false,
       type: 'text'
     }
@@ -268,38 +271,38 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
   const validateTemplate = useCallback(() => {
     const errors: string[] = [];
-    
+
     // HTML Validation
     if (!htmlContent.trim()) {
-      errors.push('HTML-Inhalt darf nicht leer sein');
+      errors.push(t('validation.htmlEmpty'));
     } else {
       // Prüfe auf grundlegende HTML-Struktur
       if (!htmlContent.includes('<html') || !htmlContent.includes('<body')) {
-        errors.push('HTML muss eine vollständige HTML-Struktur haben');
+        errors.push(t('validation.htmlStructure'));
       }
     }
 
     // Variable Validation
     const htmlVariables = extractVariablesFromHtml(htmlContent);
     const definedVariables = variables.map(v => v.name);
-    
+
     // Prüfe auf undefinierte Variablen im HTML
     htmlVariables.forEach(variable => {
       if (!definedVariables.includes(variable)) {
-        errors.push(`Variable '${variable}' ist im HTML verwendet aber nicht definiert`);
+        errors.push(t('validation.undefinedVariable', { variable }));
       }
     });
 
     // Prüfe auf erforderliche Variablen
     variables.forEach(variable => {
       if (variable.required && !htmlVariables.includes(variable.name)) {
-        errors.push(`Erforderliche Variable '${variable.name}' wird nicht verwendet`);
+        errors.push(t('validation.requiredVariable', { variable: variable.name }));
       }
     });
 
     setValidationErrors(errors);
     return errors.length === 0;
-  }, [htmlContent, variables]);
+  }, [htmlContent, variables, t]);
 
   const extractVariablesFromHtml = (html: string): string[] => {
     const variableRegex = /\{\{([^}]+)\}\}/g;
@@ -350,7 +353,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
   const handleSave = useCallback(async () => {
     if (!validateTemplate()) {
-      setError('Template hat Validierungsfehler. Bitte beheben Sie diese zuerst.');
+      setError(t('errors.validationFailed'));
       return;
     }
 
@@ -384,16 +387,16 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
       onClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      setError('Template konnte nicht gespeichert werden');
+      setError(t('errors.saveFailed'));
     } finally {
       setIsSaving(false);
     }
-  }, [templateId, templateName, templateDescription, htmlContent, cssContent, variables, user, validateTemplate, onSave, onClose]);
+  }, [templateId, templateName, templateDescription, htmlContent, cssContent, variables, user, validateTemplate, onSave, onClose, t]);
 
   const addVariable = () => {
     const newVariable: TemplateVariable = {
       name: 'neueVariable',
-      description: 'Beschreibung der Variable',
+      description: t('newVariable.description'),
       defaultValue: '',
       required: false,
       type: 'text'
@@ -433,7 +436,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {templateId ? 'Template bearbeiten' : 'Neues Template erstellen'}
+                {templateId ? t('title.edit') : t('title.create')}
               </h2>
               <div className="flex items-center mt-2 space-x-4">
                 <input
@@ -441,18 +444,18 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   className="text-sm bg-transparent border-none focus:outline-none focus:ring-0 font-medium text-gray-700"
-                  placeholder="Template-Name"
+                  placeholder={t('placeholders.name')}
                 />
                 {validationErrors.length === 0 && htmlContent && (
                   <div className="flex items-center text-green-600">
                     <CheckCircleIcon className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Gültig</span>
+                    <span className="text-xs">{t('status.valid')}</span>
                   </div>
                 )}
                 {validationErrors.length > 0 && (
                   <div className="flex items-center text-red-600">
                     <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-                    <span className="text-xs">{validationErrors.length} Fehler</span>
+                    <span className="text-xs">{t('status.errors', { count: validationErrors.length })}</span>
                   </div>
                 )}
               </div>
@@ -461,16 +464,16 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
               <button
                 onClick={() => updatePreview(htmlContent, cssContent)}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 flex items-center"
-                title="Vorschau aktualisieren"
+                title={t('actions.refresh')}
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
-                Aktualisieren
+                {t('actions.refresh')}
               </button>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <span className="sr-only">Schließen</span>
+                <span className="sr-only">{t('actions.close')}</span>
                 ✕
               </button>
             </div>
@@ -492,7 +495,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
               >
                 <div className="flex items-center">
                   <tab.icon className="h-4 w-4 mr-2" />
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </div>
               </button>
             ))}
@@ -512,7 +515,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
           {validationErrors.length > 0 && (
             <div className="mx-6 mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <h4 className="font-medium text-yellow-900 mb-2">Validierungsfehler:</h4>
+              <h4 className="font-medium text-yellow-900 mb-2">{t('validation.title')}</h4>
               <ul className="text-sm text-yellow-700 space-y-1">
                 {validationErrors.map((error, index) => (
                   <li key={index}>• {error}</li>
@@ -526,17 +529,17 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
             {activeTab === 'html' && (
               <div className="h-full">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  HTML-Template
+                  {t('labels.htmlTemplate')}
                 </label>
                 <textarea
                   value={htmlContent}
                   onChange={(e) => setHtmlContent(e.target.value)}
                   className="w-full h-5/6 p-4 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="HTML-Inhalt hier eingeben..."
+                  placeholder={t('placeholders.html')}
                   spellCheck={false}
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Verwenden Sie {'{'}{'{'} variableName {'}'}{'}'}  für dynamische Inhalte
+                  {t('hints.variableSyntax')}
                 </p>
               </div>
             )}
@@ -545,17 +548,17 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
             {activeTab === 'css' && (
               <div className="h-full">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  CSS-Styling
+                  {t('labels.cssStyling')}
                 </label>
                 <textarea
                   value={cssContent}
                   onChange={(e) => setCssContent(e.target.value)}
                   className="w-full h-5/6 p-4 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="CSS-Styles hier eingeben..."
+                  placeholder={t('placeholders.css')}
                   spellCheck={false}
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  CSS wird automatisch in das Template eingebettet
+                  {t('hints.cssEmbed')}
                 </p>
               </div>
             )}
@@ -565,13 +568,13 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
               <div className="h-full">
                 <div className="flex items-center justify-between mb-4">
                   <label className="text-sm font-medium text-gray-700">
-                    Template-Variablen
+                    {t('labels.templateVariables')}
                   </label>
                   <button
                     onClick={addVariable}
                     className="px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50"
                   >
-                    Variable hinzufügen
+                    {t('actions.addVariable')}
                   </button>
                 </div>
 
@@ -581,7 +584,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Variable Name
+                            {t('variableFields.name')}
                           </label>
                           <input
                             type="text"
@@ -592,24 +595,24 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Typ
+                            {t('variableFields.type')}
                           </label>
                           <select
                             value={variable.type}
                             onChange={(e) => updateVariable(index, 'type', e.target.value)}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
-                            <option value="text">Text</option>
-                            <option value="html">HTML</option>
-                            <option value="image">Bild</option>
-                            <option value="date">Datum</option>
+                            <option value="text">{t('variableTypes.text')}</option>
+                            <option value="html">{t('variableTypes.html')}</option>
+                            <option value="image">{t('variableTypes.image')}</option>
+                            <option value="date">{t('variableTypes.date')}</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="mb-3">
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Beschreibung
+                          {t('variableFields.description')}
                         </label>
                         <input
                           type="text"
@@ -621,7 +624,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
                       <div className="mb-3">
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Standardwert
+                          {t('variableFields.defaultValue')}
                         </label>
                         <input
                           type="text"
@@ -639,13 +642,13 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                             onChange={(e) => updateVariable(index, 'required', e.target.checked)}
                             className="mr-2"
                           />
-                          Erforderlich
+                          {t('variableFields.required')}
                         </label>
                         <button
                           onClick={() => removeVariable(index)}
                           className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          Entfernen
+                          {t('actions.removeVariable')}
                         </button>
                       </div>
                     </div>
@@ -658,22 +661,22 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
             {activeTab === 'preview' && (
               <div className="h-full">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Live-Vorschau
+                  {t('labels.livePreview')}
                 </label>
                 <div className="w-full h-5/6 border border-gray-300 rounded-lg overflow-auto bg-white">
                   {previewHtml ? (
                     <iframe
                       srcDoc={previewHtml}
                       className="w-full h-full"
-                      title="Template Vorschau"
+                      title={t('labels.previewTitle')}
                       sandbox="allow-same-origin allow-scripts"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       <div className="text-center">
                         <EyeIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p>Keine Vorschau verfügbar</p>
-                        <p className="text-sm">Fügen Sie HTML-Inhalt hinzu für eine Vorschau</p>
+                        <p>{t('preview.noPreview')}</p>
+                        <p className="text-sm">{t('preview.addHtml')}</p>
                       </div>
                     </div>
                   )}
@@ -692,7 +695,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                 value={templateDescription}
                 onChange={(e) => setTemplateDescription(e.target.value)}
                 className="bg-transparent border-none focus:outline-none focus:ring-0"
-                placeholder="Template-Beschreibung"
+                placeholder={t('placeholders.description')}
               />
             )}
           </div>
@@ -702,14 +705,14 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Abbrechen
+              {t('actions.cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || validationErrors.length > 0 || !templateName.trim()}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'Wird gespeichert...' : templateId ? 'Änderungen speichern' : 'Template erstellen'}
+              {isSaving ? t('actions.saving') : templateId ? t('actions.saveChanges') : t('actions.createTemplate')}
             </button>
           </div>
         </div>

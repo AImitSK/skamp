@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
@@ -41,12 +42,7 @@ interface PreviewState {
   error: string | null;
 }
 
-const MOCK_DATA_OPTIONS: MockDataOption[] = [
-  { value: 'default', label: 'Standard Pressemitteilung', industry: 'Allgemein' },
-  { value: 'tech', label: 'Tech-Startup Ankündigung', industry: 'Technologie' },
-  { value: 'healthcare', label: 'Pharma Produktlaunch', industry: 'Gesundheit' },
-  { value: 'finance', label: 'Finanzdienstleistung Update', industry: 'Finanzen' }
-];
+// Mock data options will be translated dynamically in the component
 
 /**
  * Template-Vergleich-Modal für Side-by-Side Template-Vorschau
@@ -60,11 +56,22 @@ export function TemplateComparison({
   organizationId,
   className = ""
 }: TemplateComparisonProps) {
+  const t = useTranslations('templates.comparison');
+  const tCommon = useTranslations('common');
+
   const [selectedTemplates, setSelectedTemplates] = useState<PDFTemplate[]>([]);
   const [selectedMockData, setSelectedMockData] = useState<MockDataType>('default');
   const [previewStates, setPreviewStates] = useState<Map<string, PreviewState>>(new Map());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Mock data options with translations
+  const MOCK_DATA_OPTIONS: MockDataOption[] = [
+    { value: 'default', label: t('mockData.default'), industry: t('mockData.industries.general') },
+    { value: 'tech', label: t('mockData.tech'), industry: t('mockData.industries.technology') },
+    { value: 'healthcare', label: t('mockData.healthcare'), industry: t('mockData.industries.health') },
+    { value: 'finance', label: t('mockData.finance'), industry: t('mockData.industries.finance') }
+  ];
 
   const maxTemplatesPerPage = isFullscreen ? 3 : 2;
   const totalPages = Math.ceil(selectedTemplates.length / maxTemplatesPerPage);
@@ -276,11 +283,15 @@ export function TemplateComparison({
           <div className="flex items-center justify-between p-6 border-b border-zinc-200 flex-shrink-0">
             <div>
               <h2 className="text-xl font-semibold text-zinc-900">
-                Template-Vergleich
+                {t('title')}
               </h2>
               <p className="text-sm text-zinc-600 mt-1">
-                {selectedTemplates.length} von {templates.length} Templates • 
-                Seite {currentPage + 1} von {totalPages}
+                {t('headerInfo', {
+                  selected: selectedTemplates.length,
+                  total: templates.length,
+                  currentPage: currentPage + 1,
+                  totalPages
+                })}
               </p>
             </div>
             
@@ -289,7 +300,7 @@ export function TemplateComparison({
               <Select
                 value={selectedMockData}
                 onChange={handleMockDataChange}
-                aria-label="Mock-Daten auswählen"
+                aria-label={t('ariaLabels.selectMockData')}
                 className="min-w-48"
               >
                 {MOCK_DATA_OPTIONS.map((option) => (
@@ -303,7 +314,7 @@ export function TemplateComparison({
               <Button
                 onClick={toggleFullscreen}
                 color="secondary"
-                aria-label={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+                aria-label={isFullscreen ? t('ariaLabels.exitFullscreen') : t('ariaLabels.fullscreen')}
               >
                 {isFullscreen ? (
                   <ArrowsPointingInIcon className="h-4 w-4" />
@@ -374,7 +385,7 @@ export function TemplateComparison({
             </div>
             {selectedTemplates.length >= 6 && (
               <p className="text-xs text-amber-600 mt-2">
-                Maximal 6 Templates können gleichzeitig verglichen werden.
+                {t('maxTemplatesWarning')}
               </p>
             )}
           </div>
@@ -386,10 +397,10 @@ export function TemplateComparison({
                 <div className="text-center">
                   <DocumentTextIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-zinc-900 mb-2">
-                    Keine Templates ausgewählt
+                    {t('emptyState.title')}
                   </h3>
                   <p className="text-sm text-zinc-600">
-                    Wählen Sie Templates aus um sie zu vergleichen.
+                    {t('emptyState.description')}
                   </p>
                 </div>
               </div>
@@ -422,14 +433,14 @@ export function TemplateComparison({
                             </div>
                             <div className="flex gap-1">
                               {template.isSystem && (
-                                <Badge color="blue">System</Badge>
+                                <Badge color="blue">{t('badges.system')}</Badge>
                               )}
                               <Button
                                 onClick={() => handleSelectTemplate(template)}
                                 color="secondary"
                                 className="text-xs px-2 py-1"
                               >
-                                Verwenden
+                                {t('actions.use')}
                               </Button>
                             </div>
                           </div>
@@ -441,7 +452,7 @@ export function TemplateComparison({
                             <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                               <div className="text-center">
                                 <div className="animate-spin h-6 w-6 border-2 border-zinc-200 border-t-blue-500 rounded-full mx-auto mb-2" />
-                                <p className="text-xs text-zinc-600">Lädt...</p>
+                                <p className="text-xs text-zinc-600">{tCommon('loading')}</p>
                               </div>
                             </div>
                           )}
@@ -451,7 +462,7 @@ export function TemplateComparison({
                               <div className="text-center p-4">
                                 <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto mb-2" />
                                 <p className="text-xs text-red-600 mb-2">
-                                  Fehler beim Laden
+                                  {t('preview.loadError')}
                                 </p>
                                 <Button
                                   onClick={() => generateTemplatePreview(template)}
@@ -459,7 +470,7 @@ export function TemplateComparison({
                                   className="text-xs"
                                 >
                                   <ArrowPathIcon className="h-3 w-3 mr-1" />
-                                  Erneut
+                                  {t('preview.retry')}
                                 </Button>
                               </div>
                             </div>
@@ -469,7 +480,7 @@ export function TemplateComparison({
                             <iframe
                               srcDoc={previewState.html}
                               className="absolute inset-0 w-full h-full border-0 bg-white"
-                              title={`Vorschau: ${template.name}`}
+                              title={t('preview.iframeTitle', { name: template.name })}
                               sandbox="allow-same-origin allow-scripts"
                               style={{
                                 transform: 'scale(0.5)',
@@ -491,10 +502,12 @@ export function TemplateComparison({
           {/* Modal Footer */}
           <div className="flex items-center justify-between p-6 border-t border-zinc-200 bg-zinc-50 flex-shrink-0">
             <div className="text-sm text-zinc-600">
-              {selectedTemplates.length} Templates im Vergleich • 
-              Mock-Daten: {MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.label}
+              {t('footer.info', {
+                count: selectedTemplates.length,
+                mockData: MOCK_DATA_OPTIONS.find(o => o.value === selectedMockData)?.label || ''
+              })}
             </div>
-            
+
             <div className="flex gap-3">
               <Button
                 onClick={regenerateAllPreviews}
@@ -502,14 +515,14 @@ export function TemplateComparison({
                 disabled={selectedTemplates.length === 0}
               >
                 <ArrowPathIcon className="h-4 w-4 mr-2" />
-                Alle aktualisieren
+                {t('footer.refreshAll')}
               </Button>
-              
+
               <Button
                 onClick={onClose}
                 color="secondary"
               >
-                Schließen
+                {tCommon('close')}
               </Button>
             </div>
           </div>
