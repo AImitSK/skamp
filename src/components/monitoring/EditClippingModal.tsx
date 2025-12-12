@@ -100,12 +100,12 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                 </Field>
 
                 <Field>
-                  <Label>Artikel-Titel</Label>
+                  <Label>{t('articleTitle')}</Label>
                   <Input
                     type="text"
                     value={formData.articleTitle}
                     onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
-                    placeholder="Optional"
+                    placeholder={t('articleTitlePlaceholder')}
                   />
                 </Field>
               </div>
@@ -113,25 +113,25 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
               {/* Medium/Outlet und Medientyp - 2-spaltig */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Medium/Outlet</Label>
+                  <Label>{t('outlet')}</Label>
                   <Input
                     type="text"
                     value={formData.outletName}
                     onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
-                    placeholder="z.B. Süddeutsche Zeitung"
+                    placeholder={t('outletPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Medientyp</Label>
+                  <Label>{t('mediaType')}</Label>
                   <Select
                     value={formData.outletType}
                     onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
                   >
-                    <option value="print">📰 Print (Zeitung/Magazin)</option>
-                    <option value="online">💻 Online</option>
-                    <option value="broadcast">📺 Broadcast (TV/Radio)</option>
-                    <option value="audio">🎙️ Podcast</option>
+                    <option value="print">{t('mediaTypes.print')}</option>
+                    <option value="online">{t('mediaTypes.online')}</option>
+                    <option value="broadcast">{t('mediaTypes.broadcast')}</option>
+                    <option value="audio">{t('mediaTypes.audio')}</option>
                   </Select>
                 </Field>
               </div>
@@ -139,7 +139,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
               {/* Veröffentlichungsdatum und Reichweite - 2-spaltig */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Veröffentlichungsdatum</Label>
+                  <Label>{t('publishedAt')}</Label>
                   <Input
                     type="date"
                     value={formData.publishedAt}
@@ -148,12 +148,12 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                 </Field>
 
                 <Field>
-                  <Label>Reichweite (optional)</Label>
+                  <Label>{t('reach')}</Label>
                   <Input
                     type="number"
                     value={formData.reach}
                     onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
-                    placeholder="z.B. 2500000"
+                    placeholder={t('reachPlaceholder')}
                   />
                 </Field>
               </div>
@@ -161,7 +161,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
               {/* Sentiment & AVE Preview */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Sentiment</Label>
+                  <Label>{t('sentiment')}</Label>
                   <Select
                     value={formData.sentiment}
                     onChange={(e) => {
@@ -172,21 +172,21 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                       setFormData({ ...formData, sentiment, sentimentScore: score });
                     }}
                   >
-                    <option value="positive">😊 Positiv</option>
-                    <option value="neutral">😐 Neutral</option>
-                    <option value="negative">😞 Negativ</option>
+                    <option value="positive">{t('sentimentOptions.positive')}</option>
+                    <option value="neutral">{t('sentimentOptions.neutral')}</option>
+                    <option value="negative">{t('sentimentOptions.negative')}</option>
                   </Select>
                 </Field>
 
                 {formData.reach && (
                   <Field>
-                    <Label>Voraussichtlicher AVE</Label>
+                    <Label>{t('estimatedAve')}</Label>
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <Text className="text-2xl font-bold text-gray-900">
                         {calculatedAVE.toLocaleString('de-DE')} €
                       </Text>
                       <Text className="text-xs text-gray-500">
-                        Basierend auf {parseInt(formData.reach).toLocaleString('de-DE')} Reichweite
+                        {t('basedOnReach', { reach: parseInt(formData.reach).toLocaleString('de-DE') })}
                       </Text>
                     </div>
                   </Field>
@@ -194,7 +194,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
               </div>
 
               <Field>
-                <Label>Sentiment-Score (optional)</Label>
+                <Label>{t('sentimentScore')}</Label>
                 <div className="space-y-2">
                   <input
                     type="range"
@@ -215,16 +215,16 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
 
                       setFormData({ ...formData, sentimentScore: score, sentiment });
                     }}
-                    aria-label="Sentiment-Score"
+                    aria-label={t('sentimentScoreLabel')}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
                     }}
                   />
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>Sehr negativ</span>
+                    <span>{t('sentimentRange.veryNegative')}</span>
                     <span className="font-medium">{formData.sentimentScore.toFixed(1)}</span>
-                    <span>Sehr positiv</span>
+                    <span>{t('sentimentRange.veryPositive')}</span>
                   </div>
                 </div>
               </Field>
@@ -233,10 +233,10 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
 
         <DialogActions>
           <Button plain onClick={onClose} disabled={updateClipping.isPending}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button type="submit" disabled={updateClipping.isPending}>
-            {updateClipping.isPending ? 'Speichern...' : 'Änderungen speichern'}
+            {updateClipping.isPending ? t('saving') : t('saveChanges')}
           </Button>
         </DialogActions>
       </form>

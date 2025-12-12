@@ -192,7 +192,7 @@ export function PublicationSelector({
               type="text"
               value={manualPublication}
               onChange={(e) => handleManualPublicationChange(e.target.value)}
-              placeholder="Publikationsname eingeben..."
+              placeholder={t('manualPlaceholder')}
             />
           </Field>
         )}

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,22 +12,23 @@ import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/ui/
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import QRCode from 'qrcode';
-import { 
+import {
   multiFactor,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
   RecaptchaVerifier
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
-import { 
+import {
   ShieldCheckIcon,
   DevicePhoneMobileIcon,
   QrCodeIcon,
-  ExclamationTriangleIcon 
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 export function TwoFactorSettings() {
   const { user } = useAuth();
+  const t = useTranslations('profile.twoFactor');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [setupStep, setSetupStep] = useState<'phone' | 'verify' | 'complete'>('phone');
@@ -76,7 +78,7 @@ export function TwoFactorSettings() {
         },
         'expired-callback': () => {
           console.log('reCAPTCHA expired');
-          setError('reCAPTCHA ist abgelaufen. Bitte versuche es erneut.');
+          setError(t('errors.recaptchaExpired'));
         }
       });
 
@@ -101,17 +103,17 @@ export function TwoFactorSettings() {
       console.error('2FA setup error:', error);
       
       if (error.code === 'auth/operation-not-allowed') {
-        setError('SMS-basierte 2FA ist nicht aktiviert. Bitte kontaktiere den Support.');
+        setError(t('errors.smsNotEnabled'));
       } else if (error.code === 'auth/captcha-check-failed') {
-        setError('reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuche es erneut.');
+        setError(t('errors.recaptchaFailed'));
       } else if (error.code === 'auth/invalid-phone-number') {
-        setError('Ungültige Telefonnummer. Verwende das internationale Format (+49...).');
+        setError(t('errors.invalidPhoneNumber'));
       } else if (error.code === 'auth/quota-exceeded') {
-        setError('SMS-Quota überschritten. Versuche es später erneut.');
+        setError(t('errors.quotaExceeded'));
       } else if (error.message?.includes('reCAPTCHA Enterprise')) {
-        setError('reCAPTCHA-Konfigurationsfehler. Bitte kontaktiere den Support.');
+        setError(t('errors.recaptchaConfig'));
       } else {
-        setError(`Fehler beim Senden des Codes: ${error.message || 'Unbekannter Fehler'}`);
+        setError(t('errors.sendCodeFailed', { message: error.message || t('errors.unknownError') }));
       }
     } finally {
       setLoading(false);
@@ -132,7 +134,7 @@ export function TwoFactorSettings() {
       const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
       
       // Enroll the phone number
-      await mfaUser.enroll(multiFactorAssertion, 'Haupttelefon');
+      await mfaUser.enroll(multiFactorAssertion, t('mainPhone'));
       
       // Generate backup codes
       const codes = generateBackupCodes();
@@ -146,7 +148,7 @@ export function TwoFactorSettings() {
       setSetupStep('complete');
       setIsEnabled(true);
     } catch (error: any) {
-      setError('Ungültiger Verifizierungscode. Bitte versuche es erneut.');
+      setError(t('errors.invalidVerificationCode'));
       console.error('Verification error:', error);
     } finally {
       setLoading(false);
@@ -171,7 +173,7 @@ export function TwoFactorSettings() {
       setIsEnabled(false);
       setIsSettingUp(false);
     } catch (error: any) {
-      setError('Fehler beim Deaktivieren der 2FA. Bitte versuche es erneut.');
+      setError(t('errors.disableFailed'));
       console.error('Disable 2FA error:', error);
     } finally {
       setLoading(false);
@@ -205,31 +207,31 @@ export function TwoFactorSettings() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <Subheading level={3}>Zwei-Faktor-Authentifizierung</Subheading>
+                <Subheading level={3}>{t('title')}</Subheading>
                 {isEnabled ? (
-                  <Badge color="green">Aktiv</Badge>
+                  <Badge color="green">{t('status.active')}</Badge>
                 ) : (
-                  <Badge color="zinc">Inaktiv</Badge>
+                  <Badge color="zinc">{t('status.inactive')}</Badge>
                 )}
               </div>
               <Text className="text-sm text-gray-600 mt-1">
-                {isEnabled 
-                  ? 'Dein Account ist mit 2FA geschützt'
-                  : 'Erhöhe die Sicherheit deines Accounts mit 2FA'
+                {isEnabled
+                  ? t('description.protected')
+                  : t('description.recommendation')
                 }
               </Text>
             </div>
           </div>
           
           <Button
-            className={isEnabled 
+            className={isEnabled
               ? "!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
               : "bg-[#005fab] hover:bg-[#004a8c] px-4 py-2"
             }
             onClick={isEnabled ? handleDisable2FA : handleSetup2FA}
             disabled={loading}
           >
-            {loading ? 'Verarbeite...' : (isEnabled ? '2FA deaktivieren' : '2FA einrichten')}
+            {loading ? t('buttons.processing') : (isEnabled ? t('buttons.disable') : t('buttons.setup'))}
           </Button>
         </div>
 
@@ -238,9 +240,7 @@ export function TwoFactorSettings() {
           <div className="mt-4 p-3 bg-yellow-50 rounded-lg flex items-start gap-2">
             <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-yellow-800">
-              <strong>Empfohlen:</strong> Die Zwei-Faktor-Authentifizierung bietet zusätzlichen Schutz 
-              für deinen Account. Nach der Aktivierung benötigst du neben deinem Passwort auch einen 
-              Code von deinem Smartphone zum Einloggen.
+              <strong>{t('warning.title')}</strong> {t('warning.message')}
             </div>
           </div>
         )}
@@ -249,9 +249,9 @@ export function TwoFactorSettings() {
       {/* Setup Dialog */}
       <Dialog open={isSettingUp} onClose={handleClose}>
         <DialogTitle className="px-6 py-4">
-          {setupStep === 'phone' && '2FA einrichten - Telefonnummer'}
-          {setupStep === 'verify' && '2FA einrichten - Verifizierung'}
-          {setupStep === 'complete' && '2FA erfolgreich aktiviert'}
+          {setupStep === 'phone' && t('dialog.titlePhone')}
+          {setupStep === 'verify' && t('dialog.titleVerify')}
+          {setupStep === 'complete' && t('dialog.titleComplete')}
         </DialogTitle>
         
         <DialogBody className="p-6">
@@ -264,15 +264,15 @@ export function TwoFactorSettings() {
           {setupStep === 'phone' && (
             <>
               <Text className="mb-4">
-                Gib deine Telefonnummer ein, um SMS-Verifizierung zu aktivieren.
+                {t('dialog.phoneDescription')}
               </Text>
               <Field>
-                <Label>Telefonnummer</Label>
+                <Label>{t('dialog.phoneLabel')}</Label>
                 <Input
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="+49 123 456789"
+                  placeholder={t('dialog.phonePlaceholder')}
                 />
               </Field>
               <div id="recaptcha-container"></div>
@@ -282,10 +282,10 @@ export function TwoFactorSettings() {
           {setupStep === 'verify' && (
             <>
               <Text className="mb-4">
-                Wir haben einen Verifizierungscode an {phoneNumber} gesendet.
+                {t('dialog.verifyDescription', { phoneNumber })}
               </Text>
               <Field>
-                <Label>Verifizierungscode</Label>
+                <Label>{t('dialog.verifyLabel')}</Label>
                 <Input
                   type="text"
                   value={verificationCode}
@@ -304,14 +304,14 @@ export function TwoFactorSettings() {
                   <ShieldCheckIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <Text className="font-medium text-lg">
-                  2FA wurde erfolgreich aktiviert!
+                  {t('dialog.successMessage')}
                 </Text>
               </div>
 
               <div className="bg-yellow-50 p-4 rounded-lg mb-4">
-                <Text className="font-medium mb-2">Wichtig: Speichere deine Backup-Codes</Text>
+                <Text className="font-medium mb-2">{t('dialog.backupCodesTitle')}</Text>
                 <Text className="text-sm text-gray-600 mb-3">
-                  Diese Codes kannst du verwenden, falls du keinen Zugriff auf dein Telefon hast.
+                  {t('dialog.backupCodesDescription')}
                 </Text>
                 <div className="grid grid-cols-2 gap-2">
                   {backupCodes.map((code, index) => (
@@ -325,7 +325,7 @@ export function TwoFactorSettings() {
               {qrCodeUrl && (
                 <div className="text-center">
                   <Text className="text-sm text-gray-600 mb-2">
-                    QR-Code mit Backup-Codes:
+                    {t('dialog.qrCodeLabel')}
                   </Text>
                   <img src={qrCodeUrl} alt="Backup Codes QR" className="mx-auto" />
                 </div>
@@ -342,14 +342,14 @@ export function TwoFactorSettings() {
                 onClick={handleClose}
                 disabled={loading}
               >
-                Abbrechen
+                {t('buttons.cancel')}
               </Button>
               <Button
                 className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
                 onClick={handleSendVerificationCode}
                 disabled={loading || !phoneNumber}
               >
-                {loading ? 'Sende...' : 'Code senden'}
+                {loading ? t('buttons.sending') : t('buttons.sendCode')}
               </Button>
             </>
           )}
@@ -361,14 +361,14 @@ export function TwoFactorSettings() {
                 onClick={() => setSetupStep('phone')}
                 disabled={loading}
               >
-                Zurück
+                {t('buttons.back')}
               </Button>
               <Button
                 className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
                 onClick={handleVerifyCode}
                 disabled={loading || verificationCode.length !== 6}
               >
-                {loading ? 'Verifiziere...' : 'Verifizieren'}
+                {loading ? t('buttons.verifying') : t('buttons.verify')}
               </Button>
             </>
           )}
@@ -378,7 +378,7 @@ export function TwoFactorSettings() {
               className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
               onClick={handleClose}
             >
-              Fertig
+              {t('buttons.done')}
             </Button>
           )}
         </DialogActions>

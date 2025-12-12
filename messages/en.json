@@ -257,6 +257,135 @@
           "member": "Member",
           "notAssigned": "Not assigned"
         }
+      },
+      "passwordChange": {
+        "title": "Password",
+        "description": "Change your password for enhanced security",
+        "changePasswordButton": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password",
+        "save": "Change Password",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "successMessage": "Password changed successfully!",
+        "errors": {
+          "currentPasswordRequired": "Current password is required",
+          "newPasswordRequired": "New password is required",
+          "passwordTooShort": "Password must be at least 6 characters long",
+          "confirmPasswordRequired": "Password confirmation is required",
+          "passwordsDoNotMatch": "Passwords do not match",
+          "wrongPassword": "Incorrect password",
+          "weakPassword": "Password is too weak",
+          "recentLoginRequired": "Please sign in again to change your password.",
+          "changeFailed": "Error changing password: {error}"
+        }
+      },
+      "deleteAccount": {
+        "dangerZone": {
+          "title": "Danger Zone",
+          "description": "Deleting your account is permanent and cannot be undone. All your data, settings, and access to the platform will be irrevocably deleted.",
+          "deleteButton": "Delete Account"
+        },
+        "dialog": {
+          "titleWarning": "Delete Account - Warning",
+          "titleConfirm": "Delete Account - Confirmation",
+          "titleFinal": "Delete Account - Final Confirmation",
+          "initial": {
+            "warningTitle": "⚠️ This action has the following consequences:",
+            "consequences": {
+              "accountDeleted": "Your account will be permanently deleted",
+              "dataRemoved": "All your personal data will be removed",
+              "emailNotReusable": "Your email address cannot be reused",
+              "organizationsLost": "You will lose access to all organizations",
+              "settingsLost": "All your settings and preferences will be lost",
+              "irreversible": "This action CANNOT be undone"
+            },
+            "checkboxLabel": "I understand the consequences and want to proceed"
+          },
+          "confirm": {
+            "instruction": "To ensure you really want to perform this action, please type <strong>DELETE</strong> in the field below:",
+            "label": "Confirmation Text",
+            "placeholder": "Type DELETE"
+          },
+          "final": {
+            "lastChance": "Last Chance - Are you really sure?",
+            "instruction": "Enter your password to permanently delete your account:",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "Your Password"
+          },
+          "actions": {
+            "cancel": "Cancel",
+            "proceed": "Continue",
+            "back": "Back",
+            "proceedFinal": "Proceed to Final Confirmation",
+            "cancelKeep": "Cancel - Keep Account",
+            "deleteConfirm": "Permanently Delete Account",
+            "deleting": "Deleting Account..."
+          }
+        },
+        "errors": {
+          "mustConfirm": "You must confirm that you understand the consequences",
+          "mustTypeDelete": "Please type \"DELETE\" to proceed",
+          "passwordRequired": "Password is required",
+          "wrongPassword": "Wrong password",
+          "recentLoginRequired": "Please log in again and then try again",
+          "deleteFailed": "Error deleting account. Please try again later."
+        }
+      },
+      "twoFactor": {
+        "title": "Two-Factor Authentication",
+        "mainPhone": "Main Phone",
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "description": {
+          "protected": "Your account is protected with 2FA",
+          "recommendation": "Increase the security of your account with 2FA"
+        },
+        "warning": {
+          "title": "Recommended:",
+          "message": "Two-factor authentication provides additional protection for your account. After activation, you will need a code from your smartphone in addition to your password to log in."
+        },
+        "buttons": {
+          "setup": "Set up 2FA",
+          "disable": "Disable 2FA",
+          "processing": "Processing...",
+          "cancel": "Cancel",
+          "sendCode": "Send Code",
+          "sending": "Sending...",
+          "back": "Back",
+          "verify": "Verify",
+          "verifying": "Verifying...",
+          "done": "Done"
+        },
+        "dialog": {
+          "titlePhone": "Set up 2FA - Phone Number",
+          "titleVerify": "Set up 2FA - Verification",
+          "titleComplete": "2FA Successfully Activated",
+          "phoneDescription": "Enter your phone number to enable SMS verification.",
+          "phoneLabel": "Phone Number",
+          "phonePlaceholder": "+1 123 456789",
+          "verifyDescription": "We have sent a verification code to {phoneNumber}.",
+          "verifyLabel": "Verification Code",
+          "successMessage": "2FA has been successfully activated!",
+          "backupCodesTitle": "Important: Save your backup codes",
+          "backupCodesDescription": "You can use these codes if you don't have access to your phone.",
+          "qrCodeLabel": "QR Code with backup codes:"
+        },
+        "errors": {
+          "recaptchaExpired": "reCAPTCHA has expired. Please try again.",
+          "smsNotEnabled": "SMS-based 2FA is not enabled. Please contact support.",
+          "recaptchaFailed": "reCAPTCHA verification failed. Please try again.",
+          "invalidPhoneNumber": "Invalid phone number. Use the international format (+1...).",
+          "quotaExceeded": "SMS quota exceeded. Try again later.",
+          "recaptchaConfig": "reCAPTCHA configuration error. Please contact support.",
+          "sendCodeFailed": "Error sending code: {message}",
+          "unknownError": "Unknown error",
+          "invalidVerificationCode": "Invalid verification code. Please try again.",
+          "disableFailed": "Error disabling 2FA. Please try again."
+        }
       }
     },
     "api": {
@@ -5135,6 +5264,7 @@
       "estimatedAve": "Estimated AVE",
       "basedOnReach": "Based on {reach} reach",
       "sentimentScore": "Sentiment Score (optional)",
+      "sentimentScoreLabel": "Sentiment Score",
       "sentimentRange": {
         "veryNegative": "Very negative",
         "veryPositive": "Very positive"
@@ -5144,15 +5274,53 @@
     },
     "markPublishedModal": {
       "title": "Mark as Published",
+      "articleUrl": "Article URL *",
+      "articleUrlPlaceholder": "https://...",
       "checkingDuplicates": "Checking for duplicates...",
+      "articleTitle": "Article Title",
+      "articleTitlePlaceholder": "Optional",
       "duplicateFound": "Possible duplicate found",
       "duplicateMessage": "A clipping with this URL already exists:",
-      "manualEntry": "Manually recorded",
-      "autoFind": "Auto-Find",
+      "detectionMethod": {
+        "manual": "Manually recorded",
+        "autoFind": "Auto-Find"
+      },
+      "reach": "Reach",
       "duplicateWarning": "If you continue, a second clipping will be created. The reach will then be counted twice.",
+      "outletName": "Medium/Outlet",
+      "outletNamePlaceholder": "e.g. New York Times",
+      "outletType": "Media Type",
+      "outletTypes": {
+        "print": "📰 Print (Newspaper/Magazine)",
+        "online": "💻 Online",
+        "broadcast": "📺 Broadcast (TV/Radio)",
+        "audio": "🎙️ Podcast",
+        "printShort": "📰 Print",
+        "onlineShort": "💻 Online",
+        "broadcastShort": "📺 Broadcast",
+        "audioShort": "🎙️ Podcast"
+      },
       "autoSetFromPublication": "Automatically set based on {name}",
+      "reachLabel": "Reach",
+      "reachPlaceholder": "e.g. 2500000",
       "fromMediaData": "From media house data: {reach}",
-      "save": "Save"
+      "publishedAt": "Publication Date",
+      "reachOptional": "Reach (optional)",
+      "sentiment": "Sentiment",
+      "sentiments": {
+        "positive": "😊 Positive",
+        "neutral": "😐 Neutral",
+        "negative": "😞 Negative"
+      },
+      "estimatedAve": "Estimated AVE",
+      "basedOnReach": "Based on {reach} reach",
+      "sentimentScore": "Sentiment Score (optional)",
+      "sentimentScoreAriaLabel": "Sentiment Score",
+      "veryNegative": "Very negative",
+      "veryPositive": "Very positive",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
     },
     "recipientTracking": {
       "searchPlaceholder": "Search recipients...",
@@ -5178,6 +5346,10 @@
         "pending": "Pending",
         "declined": "Declined"
       },
+      "hover": {
+        "reach": "Reach: {reach}",
+        "sentiment": "Sentiment: {sentiment}"
+      },
       "viewArticle": "View article",
       "edit": "Edit",
       "deletePublication": "Delete publication",
@@ -5192,6 +5364,13 @@
         "positive": "Positive",
         "neutral": "Neutral",
         "negative": "Negative"
+      },
+      "errors": {
+        "loadingClipping": "Could not load clipping",
+        "deletingPublication": "Could not delete publication"
+      },
+      "success": {
+        "publicationDeleted": "Publication has been deleted"
       }
     },
     "suggestions": {
@@ -7394,6 +7573,95 @@
         "topicAreasCount": "{count} topic areas",
         "circulationMin": "Circulation ≥ {value}",
         "onlyVerified": "Only verified"
+      }
+    }
+  },
+  "mediathek": {
+    "assetDetails": {
+      "title": "Edit Asset Details",
+      "fileInfo": {
+        "type": "Type",
+        "created": "Created",
+        "url": "URL",
+        "unknown": "Unknown"
+      },
+      "fields": {
+        "fileName": {
+          "label": "File Name *",
+          "placeholder": "e.g. ProductPhoto_2024.jpg",
+          "description": "The displayed name of the file (does not change the filename in storage)."
+        },
+        "description": {
+          "label": "Description (optional)",
+          "placeholder": "Description of image content, intended use, etc...",
+          "description": "Helps with search and media organization."
+        }
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save Changes",
+        "saving": "Saving..."
+      },
+      "saveError": "Error saving:"
+    },
+    "folderModal": {
+      "createTitle": "Create New Folder",
+      "editTitle": "Edit Folder",
+      "nameLabel": "Folder Name *",
+      "namePlaceholder": "e.g. Client XYZ, Campaign 2024, Product Photos...",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Brief description of folder contents...",
+      "colorLabel": "Folder Color",
+      "colorTitle": "Color: {color}",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "create": "Create Folder"
+    },
+    "shareModal": {
+      "create": {
+        "title": "Create Share Link",
+        "form": {
+          "titleLabel": "Title for Shared Content *",
+          "titlePlaceholder": "e.g. Product Photos Q4 2024, Logo Variants...",
+          "descriptionLabel": "Description (optional)",
+          "descriptionPlaceholder": "Additional information for the recipient...",
+          "settingsLabel": "Settings",
+          "downloadAllowedLabel": "Allow download",
+          "passwordLabel": "Password Protection (optional)",
+          "passwordPlaceholder": "Leave empty for public access"
+        },
+        "info": {
+          "title": "Share Link Info",
+          "validityUnlimited": "Links are unlimited by default",
+          "canDeactivate": "You can deactivate links at any time",
+          "trackingEnabled": "Access is automatically tracked",
+          "folderGallery": "Folder contents are displayed as a gallery"
+        },
+        "cancelButton": "Cancel",
+        "createButton": "Create Share Link",
+        "creatingButton": "Creating Link..."
+      },
+      "success": {
+        "title": "Share Link Created",
+        "message": "Link successfully created!",
+        "subtitle": "Share this link with your clients:",
+        "copyButton": "Copy",
+        "copied": "Copied!",
+        "details": {
+          "title": "Link Details:",
+          "labelTitle": "Title:",
+          "labelType": "Type:",
+          "labelDownload": "Download:",
+          "labelPassword": "Password:",
+          "labelAccess": "Access Count:",
+          "typeFolder": "Folder",
+          "typeFile": "File",
+          "downloadAllowed": "Allowed",
+          "downloadNotAllowed": "Not allowed",
+          "passwordRequired": "Required"
+        },
+        "doneButton": "Done"
       }
     }
   }

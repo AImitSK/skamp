@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ export default function FolderModal({
   onClose,
   onSave
 }: FolderModalProps) {
+  const t = useTranslations('mediathek.folderModal');
   const [name, setName] = useState(folder?.name || '');
   const [description, setDescription] = useState(folder?.description || '');
   const [selectedColor, setSelectedColor] = useState(folder?.color || FOLDER_COLORS[0]);
@@ -69,33 +71,33 @@ export default function FolderModal({
   return (
     <Dialog open={true} onClose={onClose} size="lg">
       <DialogTitle>
-        {isEdit ? 'Ordner bearbeiten' : 'Neuen Ordner erstellen'}
+        {isEdit ? t('editTitle') : t('createTitle')}
       </DialogTitle>
 
       <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
         <FieldGroup>
             <Field>
-              <Label>Ordnername *</Label>
+              <Label>{t('nameLabel')}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="z.B. Kunde XYZ, Kampagne 2024, Produktfotos..."
+                placeholder={t('namePlaceholder')}
                 autoFocus
               />
             </Field>
 
             <Field>
-              <Label>Beschreibung (optional)</Label>
+              <Label>{t('descriptionLabel')}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Kurze Beschreibung des Ordnerinhalts..."
+                placeholder={t('descriptionPlaceholder')}
                 rows={3}
               />
             </Field>
 
             <Field>
-              <Label>Ordnerfarbe</Label>
+              <Label>{t('colorLabel')}</Label>
               <div className="mt-3 flex flex-wrap gap-3">
                 {FOLDER_COLORS.map((color) => (
                   <button
@@ -108,7 +110,7 @@ export default function FolderModal({
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}
-                    title={`Farbe: ${color}`}
+                    title={t('colorTitle', { color })}
                   />
                 ))}
               </div>
@@ -118,14 +120,14 @@ export default function FolderModal({
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={saving}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleSave}
           disabled={!name.trim() || saving}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {saving ? 'Speichern...' : (isEdit ? 'Speichern' : 'Ordner erstellen')}
+          {saving ? t('saving') : (isEdit ? t('save') : t('create'))}
         </Button>
       </DialogActions>
     </Dialog>

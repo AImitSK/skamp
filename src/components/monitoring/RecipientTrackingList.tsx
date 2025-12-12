@@ -76,7 +76,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
         setEditingClipping(clipping);
       }
     } catch (error) {
-      toastService.error('Clipping konnte nicht geladen werden');
+      toastService.error(t('errors.loadingClipping'));
     }
   };
 
@@ -108,10 +108,10 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
       });
 
       setDeletingSend(null);
-      toastService.success('Veröffentlichung wurde gelöscht');
+      toastService.success(t('success.publicationDeleted'));
       onSendUpdated();
     } catch (error) {
-      toastService.error('Veröffentlichung konnte nicht gelöscht werden');
+      toastService.error(t('errors.deletingPublication'));
     } finally {
       setLoading(false);
     }
@@ -165,7 +165,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
           <div className="flex-1">
             <Input
               type="text"
-              placeholder="Empfänger suchen..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -175,27 +175,27 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">Alle</option>
-              <option value="published">Veröffentlicht</option>
-              <option value="not_published">Nicht veröffentlicht</option>
+              <option value="all">{t('filterAll')}</option>
+              <option value="published">{t('filterPublished')}</option>
+              <option value="not_published">{t('filterNotPublished')}</option>
             </Select>
           </div>
         </div>
 
         {filteredSends.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-            <Text className="text-gray-500">Keine Empfänger gefunden</Text>
+            <Text className="text-gray-500">{t('noRecipients')}</Text>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-visible">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Empfänger</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interaktion</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Veröffentlichung</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.recipient')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.interaction')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.publication')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -256,15 +256,12 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
                                 {send.reach && (
                                   <div className="flex items-center gap-2">
                                     <EyeIcon className="h-4 w-4" />
-                                    <span>Reichweite: {send.reach.toLocaleString('de-DE')}</span>
+                                    <span>{t('hover.reach', { reach: send.reach.toLocaleString('de-DE') })}</span>
                                   </div>
                                 )}
                                 {send.sentiment && (
                                   <div className="flex items-center gap-2">
-                                    <span>Sentiment: {
-                                      send.sentiment === 'positive' ? 'Positiv' :
-                                      send.sentiment === 'neutral' ? 'Neutral' : 'Negativ'
-                                    }</span>
+                                    <span>{t('hover.sentiment', { sentiment: t(`sentimentLabels.${send.sentiment}`) })}</span>
                                   </div>
                                 )}
                               </div>
@@ -287,23 +284,23 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
                                 onClick={() => window.open(send.articleUrl, '_blank')}
                               >
                                 <LinkIcon className="h-4 w-4" />
-                                Artikel ansehen
+                                {t('viewArticle')}
                               </DropdownItem>
                               <DropdownItem onClick={() => handleEdit(send)}>
                                 <PencilIcon className="h-4 w-4" />
-                                Bearbeiten
+                                {t('edit')}
                               </DropdownItem>
                               <DropdownDivider />
                               <DropdownItem onClick={() => setDeletingSend(send)}>
                                 <TrashIcon className="h-4 w-4 text-red-600" />
-                                <span className="text-red-600">Veröffentlichung löschen</span>
+                                <span className="text-red-600">{t('deletePublication')}</span>
                               </DropdownItem>
                             </>
                           )}
                           {send.status !== 'bounced' && send.status !== 'failed' && send.publishedStatus !== 'published' && (
                             <DropdownItem onClick={() => setSelectedSend(send)}>
                               <DocumentCheckIcon className="h-4 w-4" />
-                              Als veröffentlicht markieren
+                              {t('markPublished')}
                             </DropdownItem>
                           )}
                         </DropdownMenu>
@@ -346,21 +343,21 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
       )}
 
       <Dialog open={!!deletingSend} onClose={() => setDeletingSend(null)}>
-        <DialogTitle>Veröffentlichung löschen</DialogTitle>
+        <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
         <DialogBody>
           <Text>
-            Möchten Sie die Veröffentlichung für <strong>{deletingSend?.recipientName}</strong> wirklich löschen?
+            {t('deleteDialog.message', { name: deletingSend?.recipientName || '' })}
           </Text>
           <Text className="mt-2 text-sm text-gray-600">
-            Das Clipping wird dauerhaft gelöscht und der Status wird auf "Nicht veröffentlicht" zurückgesetzt.
+            {t('deleteDialog.description')}
           </Text>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setDeletingSend(null)} disabled={loading}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button color="secondary" onClick={handleDelete} disabled={loading}>
-            {loading ? 'Löschen...' : 'Löschen'}
+            {loading ? t('deleteDialog.deleting') : tCommon('delete')}
           </Button>
         </DialogActions>
       </Dialog>

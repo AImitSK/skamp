@@ -2,24 +2,26 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
-import { 
+import {
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential
 } from 'firebase/auth';
-import { 
+import {
   KeyIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon 
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 export function PasswordChange() {
+  const t = useTranslations('profile.passwordChange');
   const { user } = useAuth();
   const [isChanging, setIsChanging] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,19 +43,19 @@ export function PasswordChange() {
     const newErrors: typeof errors = {};
 
     if (!passwords.currentPassword) {
-      newErrors.currentPassword = 'Aktuelles Passwort ist erforderlich';
+      newErrors.currentPassword = t('errors.currentPasswordRequired');
     }
 
     if (!passwords.newPassword) {
-      newErrors.newPassword = 'Neues Passwort ist erforderlich';
+      newErrors.newPassword = t('errors.newPasswordRequired');
     } else if (passwords.newPassword.length < 6) {
-      newErrors.newPassword = 'Passwort muss mindestens 6 Zeichen lang sein';
+      newErrors.newPassword = t('errors.passwordTooShort');
     }
 
     if (!passwords.confirmPassword) {
-      newErrors.confirmPassword = 'Passwort-Bestätigung ist erforderlich';
+      newErrors.confirmPassword = t('errors.confirmPasswordRequired');
     } else if (passwords.newPassword !== passwords.confirmPassword) {
-      newErrors.confirmPassword = 'Passwörter stimmen nicht überein';
+      newErrors.confirmPassword = t('errors.passwordsDoNotMatch');
     }
 
     setErrors(newErrors);
@@ -79,9 +81,9 @@ export function PasswordChange() {
       // 2. Passwort ändern
       await updatePassword(user, passwords.newPassword);
 
-      setMessage({ 
-        type: 'success', 
-        text: 'Passwort erfolgreich geändert!' 
+      setMessage({
+        type: 'success',
+        text: t('successMessage')
       });
       
       // Reset form
@@ -93,22 +95,22 @@ export function PasswordChange() {
       setIsChanging(false);
     } catch (error: any) {
       console.error('Password change error:', error);
-      
+
       if (error.code === 'auth/wrong-password') {
-        setErrors({ currentPassword: 'Falsches Passwort' });
+        setErrors({ currentPassword: t('errors.wrongPassword') });
         // Nur aktuelles Passwort leeren, neue Passwörter behalten
         setPasswords(prev => ({ ...prev, currentPassword: '' }));
       } else if (error.code === 'auth/weak-password') {
-        setErrors({ newPassword: 'Passwort ist zu schwach' });
+        setErrors({ newPassword: t('errors.weakPassword') });
       } else if (error.code === 'auth/requires-recent-login') {
-        setMessage({ 
-          type: 'error', 
-          text: 'Bitte melde dich erneut an, um dein Passwort zu ändern.' 
+        setMessage({
+          type: 'error',
+          text: t('errors.recentLoginRequired')
         });
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: `Fehler beim Ändern des Passworts: ${error.message || 'Unbekannter Fehler'}` 
+        setMessage({
+          type: 'error',
+          text: t('errors.changeFailed', { error: error.message || 'Unknown error' })
         });
       }
     } finally {
@@ -137,19 +139,19 @@ export function PasswordChange() {
             <KeyIcon className="h-5 w-5 text-gray-600" />
           </div>
           <div>
-            <Subheading level={3}>Passwort</Subheading>
+            <Subheading level={3}>{t('title')}</Subheading>
             <Text className="text-sm text-gray-600">
-              Ändere dein Passwort für erhöhte Sicherheit
+              {t('description')}
             </Text>
           </div>
         </div>
-        
+
         {!isChanging && (
           <Button
             className="bg-[#005fab] hover:bg-[#004a8c] px-4 py-2"
             onClick={() => setIsChanging(true)}
           >
-            Passwort ändern
+            {t('changePasswordButton')}
           </Button>
         )}
       </div>
@@ -158,7 +160,7 @@ export function PasswordChange() {
         <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }}>
           <FieldGroup className="mt-6">
             <Field>
-              <Label>Aktuelles Passwort</Label>
+              <Label>{t('currentPassword')}</Label>
               <Input
                 type="password"
                 value={passwords.currentPassword}
@@ -174,7 +176,7 @@ export function PasswordChange() {
             </Field>
 
             <Field>
-              <Label>Neues Passwort</Label>
+              <Label>{t('newPassword')}</Label>
               <Input
                 type="password"
                 value={passwords.newPassword}
@@ -190,7 +192,7 @@ export function PasswordChange() {
             </Field>
 
             <Field>
-              <Label>Neues Passwort bestätigen</Label>
+              <Label>{t('confirmPassword')}</Label>
               <Input
                 type="password"
                 value={passwords.confirmPassword}
@@ -212,7 +214,7 @@ export function PasswordChange() {
               className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
               disabled={saving}
             >
-              {saving ? 'Speichere...' : 'Passwort ändern'}
+              {saving ? t('saving') : t('save')}
             </Button>
             <Button
               type="button"
@@ -220,7 +222,7 @@ export function PasswordChange() {
               onClick={handleCancel}
               disabled={saving}
             >
-              Abbrechen
+              {t('cancel')}
             </Button>
           </div>
         </form>

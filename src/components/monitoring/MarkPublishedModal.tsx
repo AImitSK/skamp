@@ -33,8 +33,6 @@ interface MarkPublishedModalProps {
 
 export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: MarkPublishedModalProps) {
   const t = useTranslations('monitoring.markPublishedModal');
-  const tEdit = useTranslations('monitoring.editClippingModal');
-  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const markAsPublished = useMarkAsPublished();
@@ -159,26 +157,26 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               {/* Artikel-URL und Titel - 2-spaltig */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Artikel-URL *</Label>
+                  <Label>{t('articleUrl')}</Label>
                   <Input
                     type="url"
                     value={formData.articleUrl}
                     onChange={(e) => setFormData({ ...formData, articleUrl: e.target.value })}
-                    placeholder="https://..."
+                    placeholder={t('articleUrlPlaceholder')}
                     required
                   />
                   {checkingDuplicate && (
-                    <Text className="text-xs text-gray-500 mt-1">Prüfe auf Duplikate...</Text>
+                    <Text className="text-xs text-gray-500 mt-1">{t('checkingDuplicates')}</Text>
                   )}
                 </Field>
 
                 <Field>
-                  <Label>Artikel-Titel</Label>
+                  <Label>{t('articleTitle')}</Label>
                   <Input
                     type="text"
                     value={formData.articleTitle}
                     onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
-                    placeholder="Optional"
+                    placeholder={t('articleTitlePlaceholder')}
                   />
                 </Field>
               </div>
@@ -190,10 +188,10 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                     <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <Text className="font-medium text-amber-800">
-                        Mögliches Duplikat gefunden
+                        {t('duplicateFound')}
                       </Text>
                       <Text className="text-sm text-amber-700 mt-1">
-                        Ein Clipping mit dieser URL existiert bereits:
+                        {t('duplicateMessage')}
                       </Text>
                       <div className="mt-2 bg-white rounded border border-amber-200 p-3">
                         <Text className="font-medium text-gray-900">
@@ -211,21 +209,20 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                                 : 'zinc'
                           }>
                             {duplicateCheck.existingClipping.detectionMethod === 'manual'
-                              ? 'Manuell erfasst'
+                              ? t('detectionMethod.manual')
                               : duplicateCheck.existingClipping.detectionMethod === 'rss' || duplicateCheck.existingClipping.detectionMethod === 'google_news'
-                                ? 'Auto-Fund'
+                                ? t('detectionMethod.autoFind')
                                 : duplicateCheck.existingClipping.detectionMethod}
                           </Badge>
                           {duplicateCheck.existingClipping.reach && (
                             <Text className="text-sm text-gray-500">
-                              Reichweite: {duplicateCheck.existingClipping.reach.toLocaleString('de-DE')}
+                              {t('reach')}: {duplicateCheck.existingClipping.reach.toLocaleString('de-DE')}
                             </Text>
                           )}
                         </div>
                       </div>
                       <Text className="text-xs text-amber-600 mt-2">
-                        Wenn Sie fortfahren, wird ein zweites Clipping erstellt.
-                        Die Reichweite wird dann doppelt gezählt.
+                        {t('duplicateWarning')}
                       </Text>
                     </div>
                   </div>
@@ -236,25 +233,25 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               {!selectedPublication && (
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <Label>Medium/Outlet</Label>
+                    <Label>{t('outletName')}</Label>
                     <Input
                       type="text"
                       value={formData.outletName}
                       onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
-                      placeholder="z.B. Süddeutsche Zeitung"
+                      placeholder={t('outletNamePlaceholder')}
                     />
                   </Field>
 
                   <Field>
-                    <Label>Medientyp</Label>
+                    <Label>{t('outletType')}</Label>
                     <Select
                       value={formData.outletType}
                       onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
                     >
-                      <option value="print">📰 Print (Zeitung/Magazin)</option>
-                      <option value="online">💻 Online</option>
-                      <option value="broadcast">📺 Broadcast (TV/Radio)</option>
-                      <option value="audio">🎙️ Podcast</option>
+                      <option value="print">{t('outletTypes.print')}</option>
+                      <option value="online">{t('outletTypes.online')}</option>
+                      <option value="broadcast">{t('outletTypes.broadcast')}</option>
+                      <option value="audio">{t('outletTypes.audio')}</option>
                     </Select>
                   </Field>
                 </div>
@@ -264,36 +261,36 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               {selectedPublication && (
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
-                    <Label>Medientyp</Label>
+                    <Label>{t('outletType')}</Label>
                     <Select
                       value={formData.outletType}
                       onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
                       disabled={selectedPublication.source === 'company'}
                     >
-                      <option value="print">📰 Print</option>
-                      <option value="online">💻 Online</option>
-                      <option value="broadcast">📺 Broadcast</option>
-                      <option value="audio">🎙️ Podcast</option>
+                      <option value="print">{t('outletTypes.printShort')}</option>
+                      <option value="online">{t('outletTypes.onlineShort')}</option>
+                      <option value="broadcast">{t('outletTypes.broadcastShort')}</option>
+                      <option value="audio">{t('outletTypes.audioShort')}</option>
                     </Select>
                     {selectedPublication.source === 'company' && (
                       <Text className="text-xs text-gray-500">
-                        Automatisch gesetzt basierend auf {selectedPublication.name}
+                        {t('autoSetFromPublication', { name: selectedPublication.name })}
                       </Text>
                     )}
                   </Field>
 
                   <Field>
-                    <Label>Reichweite</Label>
+                    <Label>{t('reachLabel')}</Label>
                     <Input
                       type="number"
                       value={formData.reach}
                       onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
-                      placeholder="z.B. 2500000"
+                      placeholder={t('reachPlaceholder')}
                       disabled={!!selectedPublication.reach}
                     />
                     {selectedPublication.reach && (
                       <Text className="text-xs text-gray-500">
-                        Aus Medienhaus-Daten: {selectedPublication.reach.toLocaleString('de-DE')}
+                        {t('fromMediaData', { reach: selectedPublication.reach.toLocaleString('de-DE') })}
                       </Text>
                     )}
                   </Field>
@@ -303,7 +300,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               {/* Veröffentlichungsdatum und Reichweite - 2-spaltig */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Veröffentlichungsdatum</Label>
+                  <Label>{t('publishedAt')}</Label>
                   <Input
                     type="date"
                     value={formData.publishedAt}
@@ -314,12 +311,12 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                 {/* Reichweite nur wenn nicht automatisch gefüllt */}
                 {!selectedPublication && (
                   <Field>
-                    <Label>Reichweite (optional)</Label>
+                    <Label>{t('reachOptional')}</Label>
                     <Input
                       type="number"
                       value={formData.reach}
                       onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
-                      placeholder="z.B. 2500000"
+                      placeholder={t('reachPlaceholder')}
                     />
                   </Field>
                 )}
@@ -328,7 +325,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               {/* Sentiment & AVE Preview */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Sentiment</Label>
+                  <Label>{t('sentiment')}</Label>
                   <Select
                     value={formData.sentiment}
                     onChange={(e) => {
@@ -339,21 +336,21 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                       setFormData({ ...formData, sentiment, sentimentScore: score });
                     }}
                   >
-                    <option value="positive">😊 Positiv</option>
-                    <option value="neutral">😐 Neutral</option>
-                    <option value="negative">😞 Negativ</option>
+                    <option value="positive">{t('sentiments.positive')}</option>
+                    <option value="neutral">{t('sentiments.neutral')}</option>
+                    <option value="negative">{t('sentiments.negative')}</option>
                   </Select>
                 </Field>
 
                 {formData.reach && (
                   <Field>
-                    <Label>Voraussichtlicher AVE</Label>
+                    <Label>{t('estimatedAve')}</Label>
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <Text className="text-2xl font-bold text-gray-900">
                         {calculatedAVE.toLocaleString('de-DE')} €
                       </Text>
                       <Text className="text-xs text-gray-500">
-                        Basierend auf {parseInt(formData.reach).toLocaleString('de-DE')} Reichweite
+                        {t('basedOnReach', { reach: parseInt(formData.reach).toLocaleString('de-DE') })}
                       </Text>
                     </div>
                   </Field>
@@ -361,7 +358,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
               </div>
 
               <Field>
-                <Label>Sentiment-Score (optional)</Label>
+                <Label>{t('sentimentScore')}</Label>
                 <div className="space-y-2">
                   <input
                     type="range"
@@ -382,16 +379,16 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
                       setFormData({ ...formData, sentimentScore: score, sentiment });
                     }}
-                    aria-label="Sentiment-Score"
+                    aria-label={t('sentimentScoreAriaLabel')}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
                     }}
                   />
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>Sehr negativ</span>
+                    <span>{t('veryNegative')}</span>
                     <span className="font-medium">{formData.sentimentScore.toFixed(1)}</span>
-                    <span>Sehr positiv</span>
+                    <span>{t('veryPositive')}</span>
                   </div>
                 </div>
               </Field>
@@ -400,10 +397,10 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
         <DialogActions>
           <Button plain onClick={onClose} disabled={markAsPublished.isPending}>
-            Abbrechen
+            {t('cancel')}
           </Button>
           <Button type="submit" disabled={markAsPublished.isPending}>
-            {markAsPublished.isPending ? 'Speichern...' : 'Speichern'}
+            {markAsPublished.isPending ? t('saving') : t('save')}
           </Button>
         </DialogActions>
       </form>

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ export default function AssetDetailsModal({
   organizationId,
   onClose
 }: AssetDetailsModalProps) {
+  const t = useTranslations('mediathek.assetDetails');
   const [fileName, setFileName] = useState(asset.fileName || '');
   const [description, setDescription] = useState(asset.description || '');
 
@@ -77,7 +79,7 @@ export default function AssetDetailsModal({
       onClose();
     } catch (error) {
       // Error handling could be improved with proper user feedback
-      console.error('Fehler beim Speichern:', error);
+      console.error(t('saveError'), error);
     }
   };
 
@@ -85,7 +87,7 @@ export default function AssetDetailsModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="lg">
-      <DialogTitle>Asset-Details bearbeiten</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
 
       <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
           {/* Asset Preview & Info */}
@@ -94,8 +96,8 @@ export default function AssetDetailsModal({
               {/* Preview */}
               <div className="flex-shrink-0">
                 {asset.fileType?.startsWith('image/') ? (
-                  <img 
-                    src={asset.downloadUrl} 
+                  <img
+                    src={asset.downloadUrl}
                     alt={asset.fileName}
                     className="w-20 h-20 object-cover rounded-lg"
                   />
@@ -105,16 +107,16 @@ export default function AssetDetailsModal({
                   </div>
                 )}
               </div>
-              
+
               {/* File Info */}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900 mb-1">
                   {asset.fileName}
                 </div>
                 <div className="space-y-1 text-xs text-gray-500">
-                  <p><strong>Typ:</strong> {asset.fileType}</p>
-                  <p><strong>Erstellt:</strong> {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
-                  <p className="truncate"><strong>URL:</strong> {asset.downloadUrl}</p>
+                  <p><strong>{t('fileInfo.type')}:</strong> {asset.fileType}</p>
+                  <p><strong>{t('fileInfo.created')}:</strong> {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : t('fileInfo.unknown')}</p>
+                  <p className="truncate"><strong>{t('fileInfo.url')}:</strong> {asset.downloadUrl}</p>
                 </div>
               </div>
             </div>
@@ -122,27 +124,27 @@ export default function AssetDetailsModal({
 
           <FieldGroup>
             <Field>
-              <Label>Dateiname *</Label>
+              <Label>{t('fields.fileName.label')}</Label>
               <Input
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
-                placeholder="z.B. Produktfoto_2024.jpg"
+                placeholder={t('fields.fileName.placeholder')}
               />
               <Description>
-                Der angezeigte Name der Datei (ändert nicht den Dateinamen im Storage).
+                {t('fields.fileName.description')}
               </Description>
             </Field>
 
             <Field>
-              <Label>Beschreibung (optional)</Label>
+              <Label>{t('fields.description.label')}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Beschreibung des Bildinhalts, Verwendungszweck, etc..."
+                placeholder={t('fields.description.placeholder')}
                 rows={3}
               />
               <Description>
-                Hilft bei der Suche und Organisation der Medien.
+                {t('fields.description.description')}
               </Description>
             </Field>
         </FieldGroup>
@@ -150,14 +152,14 @@ export default function AssetDetailsModal({
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={updateAssetMutation.isPending}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button
           onClick={handleSave}
           disabled={!fileName.trim() || updateAssetMutation.isPending}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {updateAssetMutation.isPending ? 'Speichern...' : 'Änderungen speichern'}
+          {updateAssetMutation.isPending ? t('actions.saving') : t('actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

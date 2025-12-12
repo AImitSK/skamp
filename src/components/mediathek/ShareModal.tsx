@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -37,19 +38,20 @@ interface CreatedShareLink {
   accessCount: number;
 }
 
-export default function ShareModal({ 
-  target, 
-  type, 
-  onClose, 
+export default function ShareModal({
+  target,
+  type,
+  onClose,
   onSuccess,
   organizationId, // NEW
   userId // NEW
 }: ShareModalProps) {
-  
-  const defaultTitle = type === 'folder' 
-    ? (target as MediaFolder).name 
+  const t = useTranslations('mediathek.shareModal');
+
+  const defaultTitle = type === 'folder'
+    ? (target as MediaFolder).name
     : (target as MediaAsset).fileName;
-    
+
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState('');
   const [downloadAllowed, setDownloadAllowed] = useState(true);
@@ -148,7 +150,7 @@ export default function ShareModal({
         <DialogTitle>
           <div className="flex items-center gap-2">
             <LinkIcon className="h-5 w-5 text-green-600" />
-            Share-Link erstellt
+            {t('success.title')}
           </div>
         </DialogTitle>
 
@@ -158,10 +160,10 @@ export default function ShareModal({
                 <CheckIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
               </div>
               <Text className="text-lg font-medium text-gray-900 mb-2">
-                Link erfolgreich erstellt!
+                {t('success.message')}
               </Text>
               <Text className="text-sm text-gray-500 mb-6">
-                Teilen Sie diesen Link mit Ihren Kunden:
+                {t('success.subtitle')}
               </Text>
               
               {/* Share URL */}
@@ -178,12 +180,12 @@ export default function ShareModal({
                     {copied ? (
                       <>
                         <CheckIcon className="h-4 w-4" />
-                        Kopiert!
+                        {t('success.copied')}
                       </>
                     ) : (
                       <>
                         <ClipboardDocumentIcon className="h-4 w-4" />
-                        Kopieren
+                        {t('success.copyButton')}
                       </>
                     )}
                   </Button>
@@ -192,15 +194,15 @@ export default function ShareModal({
 
               {/* Link Details */}
               <div className="text-left bg-white border rounded-lg p-4">
-                <Text className="font-medium text-gray-900 mb-2">Link-Details:</Text>
+                <Text className="font-medium text-gray-900 mb-2">{t('success.details.title')}</Text>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li><strong>Titel:</strong> {createdLink.title}</li>
-                  <li><strong>Typ:</strong> {type === 'folder' ? 'Ordner' : 'Datei'}</li>
-                  <li><strong>Download:</strong> {createdLink.downloadAllowed ? 'Erlaubt' : 'Nicht erlaubt'}</li>
+                  <li><strong>{t('success.details.labelTitle')}</strong> {createdLink.title}</li>
+                  <li><strong>{t('success.details.labelType')}</strong> {type === 'folder' ? t('success.details.typeFolder') : t('success.details.typeFile')}</li>
+                  <li><strong>{t('success.details.labelDownload')}</strong> {createdLink.downloadAllowed ? t('success.details.downloadAllowed') : t('success.details.downloadNotAllowed')}</li>
                   {createdLink.passwordRequired && (
-                    <li><strong>Passwort:</strong> Erforderlich</li>
+                    <li><strong>{t('success.details.labelPassword')}</strong> {t('success.details.passwordRequired')}</li>
                   )}
-                  <li><strong>Zugriffe:</strong> {createdLink.accessCount}</li>
+                  <li><strong>{t('success.details.labelAccess')}</strong> {createdLink.accessCount}</li>
                 </ul>
               </div>
             </div>
@@ -211,7 +213,7 @@ export default function ShareModal({
             onClick={handleClose}
             className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            Fertig
+            {t('success.doneButton')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -224,50 +226,50 @@ export default function ShareModal({
       <DialogTitle>
         <div className="flex items-center gap-2">
           <LinkIcon className="h-5 w-5" />
-          Share-Link erstellen
+          {t('create.title')}
         </div>
       </DialogTitle>
 
       <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
         <FieldGroup>
             <Field>
-              <Label>Titel für geteilten Inhalt *</Label>
+              <Label>{t('create.form.titleLabel')}</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="z.B. Produktfotos Q4 2024, Logo-Varianten..."
+                placeholder={t('create.form.titlePlaceholder')}
                 autoFocus
               />
             </Field>
 
             <Field>
-              <Label>Beschreibung (optional)</Label>
+              <Label>{t('create.form.descriptionLabel')}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Zusätzliche Informationen für den Empfänger..."
+                placeholder={t('create.form.descriptionPlaceholder')}
                 rows={3}
               />
             </Field>
 
             <Field>
-              <Label>Einstellungen</Label>
+              <Label>{t('create.form.settingsLabel')}</Label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
                   checked={downloadAllowed}
                   onChange={setDownloadAllowed}
                 />
-                <span className="text-sm">Download erlauben</span>
+                <span className="text-sm">{t('create.form.downloadAllowedLabel')}</span>
               </label>
             </Field>
 
             <Field>
-              <Label>Passwort-Schutz (optional)</Label>
+              <Label>{t('create.form.passwordLabel')}</Label>
               <Input
                 type="password"
                 value={passwordRequired}
                 onChange={(e) => setPasswordRequired(e.target.value)}
-                placeholder="Leer lassen für öffentlichen Zugang"
+                placeholder={t('create.form.passwordPlaceholder')}
               />
             </Field>
 
@@ -275,12 +277,12 @@ export default function ShareModal({
               <div className="flex gap-2">
                 <InformationCircleIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <div>
-                  <Text className="text-sm font-medium text-blue-900 mb-2">Share-Link Info</Text>
+                  <Text className="text-sm font-medium text-blue-900 mb-2">{t('create.info.title')}</Text>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Links sind standardmäßig unbegrenzt gültig</li>
-                    <li>• Sie können Links jederzeit deaktivieren</li>
-                    <li>• Zugriffe werden automatisch getrackt</li>
-                    {type === 'folder' && <li>• Ordner-Inhalte werden als Galerie angezeigt</li>}
+                    <li>• {t('create.info.validityUnlimited')}</li>
+                    <li>• {t('create.info.canDeactivate')}</li>
+                    <li>• {t('create.info.trackingEnabled')}</li>
+                    {type === 'folder' && <li>• {t('create.info.folderGallery')}</li>}
                   </ul>
                 </div>
               </div>
@@ -295,14 +297,14 @@ export default function ShareModal({
           disabled={creating}
           className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors"
         >
-          Abbrechen
+          {t('create.cancelButton')}
         </Button>
         <Button
           onClick={handleCreateLink}
           disabled={!title.trim() || creating}
           className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
-          {creating ? 'Erstelle Link...' : 'Share-Link erstellen'}
+          {creating ? t('create.creatingButton') : t('create.createButton')}
         </Button>
       </DialogActions>
     </Dialog>
