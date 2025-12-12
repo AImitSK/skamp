@@ -442,7 +442,9 @@ export default function EmailSettingsPage() {
                             <p className="text-xs text-gray-500 truncate">{address.displayName}</p>
                             {address.aliasType && address.aliasType !== 'specific' && (
                               <p className="text-xs text-gray-500">
-                                {address.aliasType === 'catch-all' ? 'Catch-All' : `Pattern: ${address.aliasPattern}`}
+                                {address.aliasType === 'catch-all'
+                                  ? t('aliasTypes.catchAll')
+                                  : t('aliasTypes.pattern', { pattern: address.aliasPattern || '' })}
                               </p>
                             )}
                           </div>
@@ -590,7 +592,7 @@ export default function EmailSettingsPage() {
                     <option value="">{t('modal.selectDomain')}</option>
                     {domains.map(domain => (
                       <option key={domain.id} value={domain.id}>
-                        @{domain.name} ({domain.verified ? 'verified' : 'pending'})
+                        @{domain.name} ({domain.verified ? t('modal.domainVerified') : t('modal.domainPending')})
                       </option>
                     ))}
                   </Select>
@@ -681,7 +683,7 @@ export default function EmailSettingsPage() {
                           <Label>
                         {member.displayName} ({member.email})
                         {member.role === 'owner' && (
-                          <Badge color="blue" className="ml-2">Owner</Badge>
+                          <Badge color="blue" className="ml-2">{t('modal.ownerBadge')}</Badge>
                         )}
                       </Label>
                     </CheckboxField>

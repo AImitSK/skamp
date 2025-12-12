@@ -40,20 +40,6 @@ function calculateQualityScore(contact: any): number {
   return Math.min(score, 100);
 }
 
-// Deutsche Übersetzungen
-const roleTranslations = {
-  'editor': 'Chefredakteur',
-  'reporter': 'Reporter',
-  'columnist': 'Kolumnist'
-} as const;
-
-const frequencyTranslations = {
-  'daily': 'täglich',
-  'weekly': 'wöchentlich',
-  'monthly': 'monatlich',
-  'occasional': 'gelegentlich'
-} as const;
-
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -406,7 +392,7 @@ export default function EditorsPage() {
       if (directPublications.length > 0) {
         publicationAssignments = directPublications.map((publication: any) => ({
           publication: {
-            title: publication.title || publication.name || 'Unbekannt',
+            title: publication.title || publication.name || '',
             type: publication.type,
             format: publication.format,
             frequency: publication.metrics?.frequency,
@@ -423,24 +409,24 @@ export default function EditorsPage() {
         if (companyPublications.length > 0) {
           publicationAssignments = companyPublications.map((publication: any) => ({
             publication: {
-              title: publication.title || publication.name || 'Unbekannt',
+              title: publication.title || publication.name || '',
               type: publication.type,
               format: publication.format,
               frequency: publication.metrics?.frequency,
               globalPublicationId: publication.id
             },
-            role: contact.position || 'Redakteur',
+            role: contact.position || 'editor',
             isMainPublication: false
           }));
         } else {
-          const companyName = company?.name || contact.companyName || 'Unbekannt';
+          const companyName = company?.name || contact.companyName || '';
           publicationAssignments = [{
             publication: {
               title: companyName,
-              type: companyTypeLabels[companyType] || 'Sonstige',
+              type: companyTypeLabels[companyType] || 'other',
               globalPublicationId: company ? `company-${company.id}` : `company-${contact.companyId}`
             },
-            role: contact.position || 'Mitarbeiter',
+            role: contact.position || 'employee',
             isMainPublication: true
           }];
         }
@@ -468,14 +454,14 @@ export default function EditorsPage() {
         },
         professionalData: {
           currentEmployment: {
-            mediumName: contact.companyName || 'Selbstständig',
+            mediumName: contact.companyName || '',
             position: contact.position || '',
             department: '',
             isFreelance: !contact.companyName
           },
           employment: {
             company: {
-              name: contact.companyName || 'Selbstständig',
+              name: contact.companyName || '',
               type: companyType
             },
             position: contact.position || ''
@@ -567,7 +553,7 @@ export default function EditorsPage() {
         const searchLower = debouncedSearchTerm.toLowerCase();
         const matches =
           journalist.personalData.displayName.toLowerCase().includes(searchLower) ||
-          (journalist.professionalData.employment?.company?.name || 'Selbstständig').toLowerCase().includes(searchLower) ||
+          (journalist.professionalData.employment?.company?.name || '').toLowerCase().includes(searchLower) ||
           (journalist.professionalData.expertise.primaryTopics || []).some(t => t.toLowerCase().includes(searchLower));
         if (!matches) return false;
       }
@@ -933,10 +919,10 @@ export default function EditorsPage() {
                       <div className="w-48 px-4">
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-zinc-900 truncate">
-                            {journalist.professionalData.employment?.company?.name || 'Selbstständig'}
+                            {journalist.professionalData.employment?.company?.name || t('labels.freelance')}
                           </div>
                           <div className="text-xs text-zinc-500 truncate">
-                            {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || 'Medienhaus'}
+                            {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || t('labels.unknown')}
                           </div>
                         </div>
                       </div>
@@ -1051,7 +1037,7 @@ export default function EditorsPage() {
                               color: '#4b5563',
                               border: '1px solid #d1d5db'
                             }}
-                            title="Kontakt importieren"
+                            title={t('actions.importContact')}
                           >
                             {importingIds.has(journalist.id!) ? (
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
@@ -1073,6 +1059,7 @@ export default function EditorsPage() {
                           <Button
                             onClick={() => handleUpgrade(journalist)}
                             className="!bg-white !border !border-zinc-300 !text-zinc-700 hover:!bg-zinc-100 text-xs px-3 py-1.5"
+                            title={t('actions.importContact')}
                           >
                             <StarIcon className="h-3 w-3" />
                           </Button>
@@ -1297,11 +1284,11 @@ export default function EditorsPage() {
 
                         <div className="space-y-1">
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            {t('detail.role', { role: roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role })}
+                            {t('detail.role', { role: t(`roles.${assignment.role}`, { default: assignment.role }) })}
                           </div>
                           {assignment.publication.frequency && (
                             <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                              {t('detail.frequency', { frequency: frequencyTranslations[assignment.publication.frequency as keyof typeof frequencyTranslations] || assignment.publication.frequency })}
+                              {t('detail.frequency', { frequency: t(`frequency.${assignment.publication.frequency}`, { default: assignment.publication.frequency }) })}
                             </div>
                           )}
                         </div>

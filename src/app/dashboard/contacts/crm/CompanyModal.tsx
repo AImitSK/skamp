@@ -405,27 +405,27 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const errors: string[] = [];
     if (!formData.name?.trim()) {
-      errors.push('Firmenname ist erforderlich');
+      errors.push(t('validation.nameRequired'));
     }
     if (formData.emails?.some(e => e.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email))) {
-      errors.push('Ungültige E-Mail-Adresse');
+      errors.push(t('validation.invalidEmail'));
     }
     if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
-      errors.push('Website muss mit http:// oder https:// beginnen');
+      errors.push(t('validation.websiteProtocol'));
     }
-    
+
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
     }
-    
+
     setValidationErrors([]);
     setLoading(true);
-    
+
     try {
       // Ensure officialName is set
       if (!formData.officialName) {
@@ -460,7 +460,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
       onSave();
       onClose();
     } catch (error) {
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      setValidationErrors([t('validation.generalError')]);
     } finally {
       setLoading(false);
     }
@@ -962,7 +962,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                                 });
                                 setFormData({ ...formData, phones: updated });
                               }}
-                              aria-label="Primär"
+                              aria-label={t('media.primary')}
                             />
                           </div>
                           <div className="col-span-1 pt-2">
@@ -974,17 +974,17 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('international.phones.empty')}</Text>
                   )}
                 </div>
 
                 {/* Email Addresses */}
                 <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+                    <div className="text-sm font-medium text-gray-900">{t('international.emails.title')}</div>
                     <Button type="button" onClick={addEmailField} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      E-Mail hinzufügen
+                      {t('international.emails.addButton')}
                     </Button>
                   </div>
                   
@@ -993,31 +993,31 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       {formData.emails.map((email, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-center">
                           <div className="col-span-3">
-                            <Select 
-                              value={email.type} 
+                            <Select
+                              value={email.type}
                               onChange={(e) => {
                                 const updated = [...formData.emails!];
                                 updated[index].type = e.target.value as any;
                                 setFormData({ ...formData, emails: updated });
                               }}
                             >
-                              <option value="general">Allgemein</option>
-                              <option value="support">Support</option>
-                              <option value="sales">Vertrieb</option>
-                              <option value="billing">Buchhaltung</option>
-                              <option value="press">Presse</option>
+                              <option value="general">{t('international.emails.types.general')}</option>
+                              <option value="support">{t('international.emails.types.support')}</option>
+                              <option value="sales">{t('international.emails.types.sales')}</option>
+                              <option value="billing">{t('international.emails.types.billing')}</option>
+                              <option value="press">{t('international.emails.types.press')}</option>
                             </Select>
                           </div>
                           <div className="col-span-7">
-                            <Input 
+                            <Input
                               type="email"
-                              value={email.email} 
+                              value={email.email}
                               onChange={(e) => {
                                 const updated = [...formData.emails!];
                                 updated[index].email = e.target.value;
                                 setFormData({ ...formData, emails: updated });
                               }}
-                              placeholder="email@firma.de" 
+                              placeholder={t('international.emails.emailPlaceholder')}
                             />
                           </div>
                           <div className="col-span-1 flex items-center">
@@ -1031,7 +1031,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                                 });
                                 setFormData({ ...formData, emails: updated });
                               }}
-                              aria-label="Primär"
+                              aria-label={t('media.primary')}
                             />
                           </div>
                           <div className="col-span-1">
@@ -1043,17 +1043,17 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine E-Mail-Adressen hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('international.emails.empty')}</Text>
                   )}
                 </div>
 
                 {/* Social Media */}
                 <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+                    <div className="text-sm font-medium text-gray-900">{t('international.socialMedia.title')}</div>
                     <Button type="button" onClick={addSocialMediaField} plain className="text-sm">
                       <PlusIcon className="h-4 w-4" />
-                      Profil hinzufügen
+                      {t('international.socialMedia.addButton')}
                     </Button>
                   </div>
 
@@ -1072,10 +1072,10 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                         </Select>
                       </div>
                       <div className="col-span-6">
-                        <Input 
-                          value={profile.url} 
-                          onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)} 
-                          placeholder="https://..." 
+                        <Input
+                          value={profile.url}
+                          onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)}
+                          placeholder={t('international.socialMedia.urlPlaceholder')}
                         />
                       </div>
                       <div className="col-span-1">
@@ -1087,7 +1087,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-sm text-gray-500">Keine Social Media Profile hinzugefügt</Text>
+                    <Text className="text-sm text-gray-500">{t('international.socialMedia.empty')}</Text>
                   )}
                 </div>
               </FieldGroup>
@@ -1098,7 +1098,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
               <FieldGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
-                    <Label>Jahresumsatz</Label>
+                    <Label>{t('financial.annualRevenue')}</Label>
                     <CurrencyInput
                       value={formData.financial?.annualRevenue?.amount}
                       onChange={(value) => setFormData({ 
@@ -1110,30 +1110,30 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       })}
                       currency={'EUR'}
                       currencyPosition="right"
-                      placeholder="0,00"
+                      placeholder={t('financial.annualRevenuePlaceholder')}
                     />
                   </Field>
                   <Field>
-                    <Label>Mitarbeiterzahl</Label>
-                    <Input 
-                      type="number" 
-                      value={formData.financial?.employees || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        financial: { 
-                          ...formData.financial!, 
+                    <Label>{t('financial.employees')}</Label>
+                    <Input
+                      type="number"
+                      value={formData.financial?.employees || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        financial: {
+                          ...formData.financial!,
                           employees: e.target.value ? parseInt(e.target.value) : undefined
                         }
                       })}
-                      placeholder="0" 
+                      placeholder={t('financial.employeesPlaceholder')}
                     />
                   </Field>
                 </div>
 
                 <Field>
                   <Label>
-                    Geschäftsjahresende
-                    <InfoTooltip content="Format: TT.MM. (z.B. 31.12. für 31. Dezember)" className="ml-1.5 inline-flex align-text-top" />
+                    {t('financial.fiscalYearEnd')}
+                    <InfoTooltip content={t('financial.fiscalYearEndHint')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
                   <Input
                     type="text"
@@ -1145,19 +1145,19 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                         fiscalYearEnd: e.target.value || undefined
                       }
                     })}
-                    placeholder="31.12."
+                    placeholder={t('financial.fiscalYearEndPlaceholder')}
                   />
                 </Field>
 
                 <Field>
-                  <Label>Kreditrating</Label>
-                  <Input 
-                    value={formData.financial?.creditRating || ''} 
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
+                  <Label>{t('financial.creditRating')}</Label>
+                  <Input
+                    value={formData.financial?.creditRating || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
                       financial: { ...formData.financial!, creditRating: e.target.value || undefined }
                     })}
-                    placeholder="AAA, BB+, etc." 
+                    placeholder={t('financial.creditRatingPlaceholder')}
                   />
                 </Field>
               </FieldGroup>
@@ -1168,14 +1168,14 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
               <FieldGroup>
                 <Field>
                   <Label>
-                    Muttergesellschaft
-                    <InfoTooltip content="Direkte Muttergesellschaft dieses Unternehmens" className="ml-1.5 inline-flex align-text-top" />
+                    {t('corporate.parentCompany')}
+                    <InfoTooltip content={t('corporate.parentCompanyTooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
-                  <Select 
-                    value={formData.parentCompanyId || ''} 
+                  <Select
+                    value={formData.parentCompanyId || ''}
                     onChange={(e) => setFormData({ ...formData, parentCompanyId: e.target.value || undefined })}
                   >
-                    <option value="">Keine Muttergesellschaft</option>
+                    <option value="">{t('corporate.noParentCompany')}</option>
                     {companies.map(comp => (
                       <option key={comp.id} value={comp.id}>{comp.name}</option>
                     ))}
@@ -1184,14 +1184,14 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
                 <Field>
                   <Label>
-                    Oberste Muttergesellschaft
-                    <InfoTooltip content="Oberste Muttergesellschaft in der Konzernstruktur" className="ml-1.5 inline-flex align-text-top" />
+                    {t('corporate.ultimateParent')}
+                    <InfoTooltip content={t('corporate.ultimateParentTooltip')} className="ml-1.5 inline-flex align-text-top" />
                   </Label>
-                  <Select 
-                    value={formData.ultimateParentId || ''} 
+                  <Select
+                    value={formData.ultimateParentId || ''}
                     onChange={(e) => setFormData({ ...formData, ultimateParentId: e.target.value || undefined })}
                   >
-                    <option value="">Keine oberste Muttergesellschaft</option>
+                    <option value="">{t('corporate.noUltimateParent')}</option>
                     {companies.map(comp => (
                       <option key={comp.id} value={comp.id}>{comp.name}</option>
                     ))}
@@ -1205,10 +1205,10 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
             {activeTab === 'media' && isMediaCompany && (
               <div className="space-y-6">
                 {/* Info Alert */}
-                <Alert 
-                  type="info" 
-                  title="Medien-Verwaltung"
-                  message="Publikationen werden jetzt zentral im Bibliotheks-Bereich verwaltet. Hier sehen Sie alle verknüpften Publikationen." 
+                <Alert
+                  type="info"
+                  title={t('media.alert.title')}
+                  message={t('media.alert.message')}
                 />
 
                 {/* Publikationen */}
@@ -1217,13 +1217,13 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     <div className="flex items-center gap-2">
                       <BookOpenIcon className="h-5 w-5 text-gray-400" />
                       <div className="text-sm font-medium text-gray-900">
-                        Publikationen
-                        <InfoTooltip content="Alle Publikationen dieses Verlags/Medienhauses" className="ml-1.5 inline-flex align-text-top" />
+                        {t('media.publications.title')}
+                        <InfoTooltip content={t('media.publications.tooltip')} className="ml-1.5 inline-flex align-text-top" />
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       type="button"
-                      plain 
+                      plain
                       onClick={() => {
                         // Save current form state if needed
                         const publisherId = company?.id;
@@ -1232,7 +1232,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       className="text-sm"
                     >
                       <PlusIcon className="h-4 w-4" />
-                      Neue Publikation
+                      {t('media.publications.addButton')}
                     </Button>
                   </div>
                   
@@ -1254,26 +1254,16 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                               <div className="font-medium text-sm">{pub.title}</div>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge color="zinc" className="text-xs">
-                                  {pub.type === 'magazine' ? 'Magazin' :
-                                   pub.type === 'newspaper' ? 'Zeitung' :
-                                   pub.type === 'website' ? 'Website' :
-                                   pub.type === 'blog' ? 'Blog' :
-                                   pub.type === 'newsletter' ? 'Newsletter' :
-                                   pub.type === 'podcast' ? 'Podcast' :
-                                   pub.type === 'tv' ? 'TV' :
-                                   pub.type === 'radio' ? 'Radio' :
-                                   pub.type === 'trade_journal' ? 'Fachzeitschrift' :
-                                   pub.type === 'social_media' ? 'Social Media' :
-                                   pub.type}
+                                  {tPublicationTypes(pub.type === 'trade_journal' ? 'tradeJournal' : pub.type === 'social_media' ? 'socialMedia' : pub.type)}
                                 </Badge>
                                 {pub.verified && (
                                   <Badge color="green" className="text-xs">
-                                    Verifiziert
+                                    {t('media.publications.badges.verified')}
                                   </Badge>
                                 )}
                                 {adCount > 0 && (
                                   <Badge color="blue" className="text-xs">
-                                    {adCount} {adCount === 1 ? 'Werbemittel' : 'Werbemittel'}
+                                    {t('media.publications.badges.advertisements', { count: adCount })}
                                   </Badge>
                                 )}
                               </div>
@@ -1282,7 +1272,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                               href={`/dashboard/library/publications/${pub.id}`}
                               className="text-sm text-primary hover:text-primary-hover ml-4"
                             >
-                              Anzeigen
+                              {t('media.publications.view')}
                             </Link>
                           </div>
                         );
@@ -1290,7 +1280,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     </div>
                   ) : (
                     <Text className="text-sm text-gray-500 text-center py-4">
-                      Noch keine Publikationen verknüpft
+                      {t('media.publications.empty')}
                     </Text>
                   )}
                 </div>
@@ -1300,13 +1290,13 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         </DialogBody>
 
         <DialogActions className="px-6 py-4">
-          <Button plain onClick={onClose}>Abbrechen</Button>
-          <Button 
-            type="submit" 
+          <Button plain onClick={onClose}>{t('actions.cancel')}</Button>
+          <Button
+            type="submit"
             disabled={loading}
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
           >
-            {loading ? 'Speichern...' : 'Speichern'}
+            {loading ? t('actions.saving') : t('actions.save')}
           </Button>
         </DialogActions>
       </form>

@@ -47,6 +47,7 @@ export function CompanyFilters({
   companies
 }: CompanyFiltersProps) {
   const t = useTranslations('companies.filters');
+  const tTypes = useTranslations('crm.companyTypes');
   const activeFiltersCount = selectedTypes.length + selectedTagIds.length;
 
   // Get tags that are actually used in the current filtered data
@@ -63,9 +64,9 @@ export function CompanyFilters({
     onTagChange([]);
   };
 
-  const typeOptions = Object.entries(companyTypeLabels).map(([value, label]) => ({
+  const typeOptions = Object.keys(companyTypeLabels).map((value) => ({
     value,
-    label
+    label: tTypes(value as CompanyType)
   }));
 
   const tagOptions = usedTags.map(tag => ({

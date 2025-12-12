@@ -1931,6 +1931,15 @@
       }
     },
     "redirecting": "Weiterleitung...",
+    "companyTypes": {
+      "customer": "Kunde",
+      "supplier": "Lieferant",
+      "partner": "Partner",
+      "publisher": "Verlag",
+      "media_house": "Medienhaus",
+      "agency": "Agentur",
+      "other": "Sonstiges"
+    },
     "contactTable": {
       "headers": {
         "namePosition": "Name & Position",
@@ -3459,7 +3468,8 @@
       "title": "Themen ({count})"
     },
     "actions": {
-      "inCrm": "Im CRM"
+      "inCrm": "Im CRM",
+      "importContact": "Kontakt importieren"
     },
     "empty": {
       "title": "Keine Journalisten gefunden",
@@ -3486,6 +3496,24 @@
       "close": "Schließen",
       "removeReference": "Verweis entfernen",
       "addReference": "Als Verweis hinzufügen"
+    },
+    "labels": {
+      "unknown": "Unbekannt",
+      "freelance": "Selbstständig",
+      "employee": "Mitarbeiter",
+      "editor": "Redakteur",
+      "other": "Sonstige"
+    },
+    "roles": {
+      "editor": "Chefredakteur",
+      "reporter": "Reporter",
+      "columnist": "Kolumnist"
+    },
+    "frequency": {
+      "daily": "täglich",
+      "weekly": "wöchentlich",
+      "monthly": "monatlich",
+      "occasional": "gelegentlich"
     }
   },
   "email": {
@@ -5971,6 +5999,10 @@
       },
       "availableToAll": "Für alle verfügbar",
       "notAssigned": "Nicht zugewiesen",
+      "aliasTypes": {
+        "catchAll": "Catch-All",
+        "pattern": "Pattern: {pattern}"
+      },
       "actions": {
         "setAsDefault": "Als Standard setzen"
       },
@@ -5992,6 +6024,9 @@
         "availableToAllDescription": "Wenn aktiviert, kann jedes Teammitglied diese Email-Adresse verwenden",
         "noTeamMembers": "Keine Team-Mitglieder vorhanden.",
         "manageTeam": "Team verwalten",
+        "ownerBadge": "Owner",
+        "domainVerified": "verifiziert",
+        "domainPending": "ausstehend",
         "settings": "Einstellungen",
         "active": "Aktiv",
         "inboxEnabled": "Inbox aktiviert",

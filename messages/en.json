@@ -1931,6 +1931,15 @@
       }
     },
     "redirecting": "Redirecting...",
+    "companyTypes": {
+      "customer": "Customer",
+      "supplier": "Supplier",
+      "partner": "Partner",
+      "publisher": "Publisher",
+      "media_house": "Media House",
+      "agency": "Agency",
+      "other": "Other"
+    },
     "contactTable": {
       "headers": {
         "namePosition": "Name & Position",
@@ -3459,7 +3468,8 @@
       "title": "Topics ({count})"
     },
     "actions": {
-      "inCrm": "In CRM"
+      "inCrm": "In CRM",
+      "importContact": "Import contact"
     },
     "empty": {
       "title": "No journalists found",
@@ -3486,6 +3496,24 @@
       "close": "Close",
       "removeReference": "Remove reference",
       "addReference": "Add as reference"
+    },
+    "labels": {
+      "unknown": "Unknown",
+      "freelance": "Freelance",
+      "employee": "Employee",
+      "editor": "Editor",
+      "other": "Other"
+    },
+    "roles": {
+      "editor": "Editor-in-Chief",
+      "reporter": "Reporter",
+      "columnist": "Columnist"
+    },
+    "frequency": {
+      "daily": "daily",
+      "weekly": "weekly",
+      "monthly": "monthly",
+      "occasional": "occasional"
     }
   },
   "email": {
@@ -5971,6 +5999,10 @@
       },
       "availableToAll": "Available to all",
       "notAssigned": "Not assigned",
+      "aliasTypes": {
+        "catchAll": "Catch-All",
+        "pattern": "Pattern: {pattern}"
+      },
       "actions": {
         "setAsDefault": "Set as default"
       },
@@ -5992,6 +6024,9 @@
         "availableToAllDescription": "When enabled, any team member can use this email address",
         "noTeamMembers": "No team members available.",
         "manageTeam": "Manage team",
+        "ownerBadge": "Owner",
+        "domainVerified": "verified",
+        "domainPending": "pending",
         "settings": "Settings",
         "active": "Active",
         "inboxEnabled": "Inbox enabled",

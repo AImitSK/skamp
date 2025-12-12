@@ -351,11 +351,11 @@ export default function CompanyDetailPage() {
 
   // Helper function to get status/lifecycle labels
   const getStatusLabel = (status?: string) => {
-    return COMPANY_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || 'Unbekannt';
+    return COMPANY_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || tCommon('unknown');
   };
 
   const getLifecycleLabel = (stage?: string) => {
-    return LIFECYCLE_STAGE_OPTIONS.find(opt => opt.value === stage)?.label || stage || 'Unbekannt';
+    return LIFECYCLE_STAGE_OPTIONS.find(opt => opt.value === stage)?.label || stage || tCommon('unknown');
   };
 
   // Get last contact date
@@ -650,7 +650,7 @@ export default function CompanyDetailPage() {
                     {company.socialMedia && company.socialMedia.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {company.socialMedia.map((social, index) => {
-                          const platformLabel = socialPlatformLabels[social.platform as keyof typeof socialPlatformLabels] || social.platform || 'Unbekannt';
+                          const platformLabel = socialPlatformLabels[social.platform as keyof typeof socialPlatformLabels] || social.platform || tCommon('unknown');
                           return (
                             <a
                               key={index}
