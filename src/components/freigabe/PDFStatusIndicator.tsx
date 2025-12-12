@@ -1,7 +1,7 @@
 // src/components/freigabe/PDFStatusIndicator.tsx - PDF-Status für vereinfachten 1-stufigen Customer-Workflow
 "use client";
 
-import { 
+import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 
 interface PDFStatusIndicatorProps {
   status: 'pending_customer' | 'approved' | 'rejected';
@@ -24,38 +25,38 @@ interface PDFStatusIndicatorProps {
 }
 
 // Status-Konfiguration für vereinfachten 1-stufigen Workflow
-const STATUS_CONFIG = {
+const getStatusConfig = (t: ReturnType<typeof useTranslations>) => ({
   pending_customer: {
-    label: 'Zur Kundenfreigabe',
-    color: 'yellow',
+    label: t('pendingCustomer.label'),
+    color: 'yellow' as const,
     icon: ClockIcon,
-    description: 'PDF wartet auf Kundenfreigabe',
+    description: t('pendingCustomer.description'),
     bgColor: 'bg-yellow-50',
     borderColor: 'border-yellow-200',
     textColor: 'text-yellow-800',
     iconColor: 'text-yellow-500'
   },
   approved: {
-    label: 'Vom Kunden freigegeben',
-    color: 'green',
+    label: t('approved.label'),
+    color: 'green' as const,
     icon: CheckCircleIcon,
-    description: 'PDF wurde vom Kunden freigegeben',
+    description: t('approved.description'),
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200',
     textColor: 'text-green-800',
     iconColor: 'text-green-500'
   },
   rejected: {
-    label: 'Änderungen erbeten',
-    color: 'red',
+    label: t('rejected.label'),
+    color: 'red' as const,
     icon: XCircleIcon,
-    description: 'Kunde hat Änderungen angefordert',
+    description: t('rejected.description'),
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200',
     textColor: 'text-red-800',
     iconColor: 'text-red-500'
   }
-} as const;
+});
 
 const formatDate = (timestamp: any) => {
   if (!timestamp) return '';
@@ -78,7 +79,7 @@ const formatDate = (timestamp: any) => {
   });
 };
 
-export default function PDFStatusIndicator({ 
+export default function PDFStatusIndicator({
   status,
   version,
   approvedAt,
@@ -88,7 +89,9 @@ export default function PDFStatusIndicator({
   size = 'md',
   className = ""
 }: PDFStatusIndicatorProps) {
-  
+  const t = useTranslations('freigabe.status');
+
+  const STATUS_CONFIG = getStatusConfig(t);
   const config = STATUS_CONFIG[status];
   const StatusIcon = config.icon;
   
@@ -124,7 +127,7 @@ export default function PDFStatusIndicator({
       <Badge color={config.color} className={clsx(classes.badge, "inline-flex items-center gap-1", className)}>
         <StatusIcon className={clsx(classes.icon, "flex-shrink-0")} />
         {config.label}
-        {version && ` v${version}`}
+        {version && ` ${t('version', { version })}`}
       </Badge>
     );
   }
@@ -155,7 +158,7 @@ export default function PDFStatusIndicator({
             </h4>
             {version && (
               <Badge color={config.color} className="text-xs">
-                Version {version}
+                {t('version', { version })}
               </Badge>
             )}
           </div>
@@ -168,10 +171,10 @@ export default function PDFStatusIndicator({
           {(approvedAt || rejectedAt) && (
             <div className={clsx(classes.subtitle, config.textColor, "opacity-60 mb-2")}>
               {status === 'approved' && approvedAt && (
-                <span>Freigegeben am {formatDate(approvedAt)}</span>
+                <span>{t('approvedAt', { date: formatDate(approvedAt) })}</span>
               )}
               {status === 'rejected' && rejectedAt && (
-                <span>Änderungen erbeten am {formatDate(rejectedAt)}</span>
+                <span>{t('rejectedAt', { date: formatDate(rejectedAt) })}</span>
               )}
             </div>
           )}
@@ -185,7 +188,7 @@ export default function PDFStatusIndicator({
                 <InformationCircleIcon className={clsx("h-4 w-4 flex-shrink-0 mt-0.5", config.iconColor)} />
                 <div>
                   <div className={clsx("text-xs font-medium", config.textColor, "mb-1")}>
-                    Änderungswunsch:
+                    {t('changeRequest')}
                   </div>
                   <div className={clsx("text-xs", config.textColor, "opacity-90")}>
                     "{customerComment}"
@@ -202,25 +205,25 @@ export default function PDFStatusIndicator({
         <div className="mt-3 pt-3 border-t border-current border-opacity-20">
           <div className="flex items-center gap-2 text-xs text-yellow-600">
             <DocumentTextIcon className="h-3 w-3" />
-            <span>1-stufiger Workflow: Direkt zur Kundenfreigabe</span>
+            <span>{t('workflowHint.pending')}</span>
           </div>
         </div>
       )}
-      
+
       {status === 'approved' && (
         <div className="mt-3 pt-3 border-t border-current border-opacity-20">
           <div className="flex items-center gap-2 text-xs text-green-600">
             <CheckCircleIcon className="h-3 w-3" />
-            <span>Freigabe abgeschlossen - PDF kann verwendet werden</span>
+            <span>{t('workflowHint.approved')}</span>
           </div>
         </div>
       )}
-      
+
       {status === 'rejected' && (
         <div className="mt-3 pt-3 border-t border-current border-opacity-20">
           <div className="flex items-center gap-2 text-xs text-red-600">
             <XCircleIcon className="h-3 w-3" />
-            <span>Neue Version wird nach Überarbeitung erstellt</span>
+            <span>{t('workflowHint.rejected')}</span>
           </div>
         </div>
       )}

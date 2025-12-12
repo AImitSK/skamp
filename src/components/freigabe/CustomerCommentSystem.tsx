@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ui/text";
@@ -43,6 +44,7 @@ export function CustomerCommentSystem({
   onRequestChanges,
   isSubmitting = false
 }: CustomerCommentSystemProps) {
+  const t = useTranslations('freigabe.comments');
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [generalComment, setGeneralComment] = useState("");
   const [isCommentMode, setIsCommentMode] = useState(false);
@@ -113,7 +115,7 @@ export function CustomerCommentSystem({
   // Handle changes request
   const handleRequestChanges = () => {
     if (!generalComment.trim() && inlineComments.length === 0) {
-      alert("Bitte geben Sie einen Kommentar ein oder fügen Sie Inline-Kommentare hinzu.");
+      alert(t('validation.commentRequired'));
       return;
     }
     onRequestChanges(generalComment.trim(), inlineComments);
@@ -133,34 +135,34 @@ export function CustomerCommentSystem({
         <div className="bg-gray-50 rounded-lg p-4">
           <Text className="font-medium mb-3 flex items-center gap-2">
             <ChatBubbleLeftRightIcon className="h-4 w-4" />
-            Bisherige Rückmeldungen ({previousFeedback.length})
+            {t('previousFeedback.title', { count: previousFeedback.length })}
           </Text>
           <div className="space-y-3">
             {previousFeedback.map((entry, index) => (
               <div key={entry.id || index} className="bg-white rounded p-3 border border-gray-200">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <Badge color={entry.actorEmail?.includes('agentur@') ? 'yellow' : 'orange'}>
-                    {entry.actorName || 'Unbekannt'}
+                    {entry.actorName || t('previousFeedback.unknown')}
                   </Badge>
                   {(entry.details as any)?.manualApproval && (
                     <>
                       <Badge color="green">
-                        Freigabe erteilt
+                        {t('previousFeedback.approved')}
                       </Badge>
                       <Badge color="blue">
                         <ExclamationTriangleIcon className="h-3 w-3 inline mr-1" />
-                        Manuell freigegeben
+                        {t('previousFeedback.manuallyApproved')}
                       </Badge>
                     </>
                   )}
                   {(entry.details as any)?.manualChangesRequested && (
                     <>
                       <Badge color="orange">
-                        Änderungen erbeten
+                        {t('previousFeedback.changesRequested')}
                       </Badge>
                       <Badge color="blue">
                         <ExclamationTriangleIcon className="h-3 w-3 inline mr-1" />
-                        Manuell entsperrt
+                        {t('previousFeedback.manuallyUnlocked')}
                       </Badge>
                     </>
                   )}
@@ -176,7 +178,7 @@ export function CustomerCommentSystem({
                 {entry.inlineComments && entry.inlineComments.length > 0 && (
                   <div className="mt-2 space-y-1">
                     <Text className="text-xs font-medium text-gray-500">
-                      Inline-Kommentare:
+                      {t('previousFeedback.inlineComments')}
                     </Text>
                     {entry.inlineComments.map((comment: any, idx: number) => (
                       <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
@@ -200,11 +202,11 @@ export function CustomerCommentSystem({
           disabled={isSubmitting}
         >
           <PlusIcon className="h-4 w-4" />
-          Inline-Kommentar hinzufügen
+          {t('inlineComment.addButton')}
         </Button>
         {isCommentMode && (
           <Text className="text-sm text-orange-600">
-            Markieren Sie Text im PDF um einen Kommentar hinzuzufügen
+            {t('inlineComment.selectTextHint')}
           </Text>
         )}
       </div>
@@ -213,7 +215,7 @@ export function CustomerCommentSystem({
       {inlineComments.length > 0 && (
         <div className="bg-orange-50 rounded-lg p-4">
           <Text className="font-medium mb-3">
-            Ihre Inline-Kommentare ({inlineComments.length})
+            {t('inlineComment.yourComments', { count: inlineComments.length })}
           </Text>
           <div className="space-y-2">
             {inlineComments.map(comment => (
@@ -245,12 +247,12 @@ export function CustomerCommentSystem({
       {/* General Comment */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Allgemeine Rückmeldung
+          {t('generalComment.label')}
         </label>
         <Textarea
           value={generalComment}
           onChange={(e) => setGeneralComment(e.target.value)}
-          placeholder="Ihre Rückmeldung zu dieser Kampagne..."
+          placeholder={t('generalComment.placeholder')}
           rows={4}
           disabled={isSubmitting}
           className="w-full"
@@ -266,10 +268,10 @@ export function CustomerCommentSystem({
           className="flex-1"
         >
           <CheckIcon className="h-4 w-4" />
-          Freigeben
-          {generalComment.trim() && " (mit Kommentar)"}
+          {t('actions.approve')}
+          {generalComment.trim() && t('actions.withComment')}
         </Button>
-        
+
         <Button
           color="zinc"
           onClick={handleRequestChanges}
@@ -277,7 +279,7 @@ export function CustomerCommentSystem({
           className="flex-1"
         >
           <ChatBubbleLeftRightIcon className="h-4 w-4" />
-          Änderungen anfordern
+          {t('actions.requestChanges')}
         </Button>
       </div>
 
@@ -291,14 +293,14 @@ export function CustomerCommentSystem({
             top: commentPosition.y + 10
           }}
         >
-          <Text className="font-medium text-sm mb-2">Kommentar hinzufügen</Text>
+          <Text className="font-medium text-sm mb-2">{t('inlineComment.dialog.title')}</Text>
           <Text className="text-xs text-gray-600 mb-2 italic">
             &quot;{selectedText}&quot;
           </Text>
           <Textarea
             value={newCommentText}
             onChange={(e) => setNewCommentText(e.target.value)}
-            placeholder="Ihr Kommentar..."
+            placeholder={t('inlineComment.dialog.placeholder')}
             rows={3}
             className="w-72 text-sm"
             autoFocus
@@ -309,7 +311,7 @@ export function CustomerCommentSystem({
               onClick={handleAddInlineComment}
               disabled={!newCommentText.trim()}
             >
-              Hinzufügen
+              {t('inlineComment.dialog.add')}
             </Button>
             <Button
                             plain
@@ -322,7 +324,7 @@ export function CustomerCommentSystem({
                 window.getSelection()?.removeAllRanges();
               }}
             >
-              Abbrechen
+              {t('inlineComment.dialog.cancel')}
             </Button>
           </div>
         </div>

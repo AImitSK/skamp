@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useMemo, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
-import { 
+import {
   DocumentTextIcon,
   DocumentIcon,
   ClockIcon,
@@ -56,45 +57,46 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const getPDFStatusConfig = (status: string) => {
+const getPDFStatusConfig = (status: string, t: any) => {
   const configs = {
-    pending_customer: { 
-      color: 'yellow', 
-      label: 'Wartet auf Ihre Freigabe', 
+    pending_customer: {
+      color: 'yellow',
+      label: t('statusLabels.pendingCustomer'),
       icon: ClockIcon,
-      description: 'Diese PDF-Version wartet auf Ihre Prüfung und Freigabe.'
+      description: t('statusDescriptions.pendingCustomer')
     },
-    approved: { 
-      color: 'green', 
-      label: 'Von Ihnen freigegeben', 
+    approved: {
+      color: 'green',
+      label: t('statusLabels.approved'),
       icon: CheckCircleIcon,
-      description: 'Sie haben diese PDF-Version am {date} freigegeben.'
+      description: t('statusDescriptions.approved')
     },
-    rejected: { 
-      color: 'red', 
-      label: 'Änderungen erbeten', 
+    rejected: {
+      color: 'red',
+      label: t('statusLabels.rejected'),
       icon: XCircleIcon,
-      description: 'Sie haben für diese Version Änderungen angefordert.'
+      description: t('statusDescriptions.rejected')
     }
   };
   return configs[status as keyof typeof configs] || {
-    color: 'zinc', 
-    label: 'Unbekannter Status', 
+    color: 'zinc',
+    label: t('statusLabels.unknown'),
     icon: DocumentIcon,
-    description: 'Status konnte nicht ermittelt werden.'
+    description: t('statusDescriptions.unknown')
   };
 };
 
-export default memo(function CustomerPDFViewer({ 
-  version, 
+export default memo(function CustomerPDFViewer({
+  version,
   campaignTitle,
   onHistoryToggle,
   totalVersions = 1,
   className = ""
 }: CustomerPDFViewerProps) {
-  
+
+  const t = useTranslations('freigabe.pdf');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const config = useMemo(() => getPDFStatusConfig(version.status), [version.status]);
+  const config = useMemo(() => getPDFStatusConfig(version.status, t), [version.status, t]);
   
   // PDF-URL prüfen (memoized for performance)
   const hasPDFUrl = useMemo(() => 
@@ -107,9 +109,9 @@ export default memo(function CustomerPDFViewer({
       <div className="border-b border-gray-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-          PDF-Dokument zur Freigabe
+          {t('header.title')}
           <Badge color="blue" className="text-xs ml-2">
-            Unveränderlich
+            {t('header.immutable')}
           </Badge>
         </h2>
       </div>
@@ -130,7 +132,7 @@ export default memo(function CustomerPDFViewer({
                 {campaignTitle} - Version {version.version}
               </h3>
               <div className="text-sm text-gray-600 mt-1">
-                Erstellt am {formatDate(version.createdAt)}
+                {t('versionInfo.createdAt')} {formatDate(version.createdAt)}
                 {version.fileSize && ` • ${formatFileSize(version.fileSize)}`}
               </div>
             </div>
@@ -146,8 +148,8 @@ export default memo(function CustomerPDFViewer({
         {/* PDF Metadaten */}
         {version.metadata && (
           <div className="text-sm text-gray-600 mb-4 flex items-center gap-4">
-            <span>{version.metadata.pageCount} Seiten</span>
-            <span>{version.metadata.wordCount} Wörter</span>
+            <span>{version.metadata.pageCount} {t('metadata.pages')}</span>
+            <span>{version.metadata.wordCount} {t('metadata.words')}</span>
           </div>
         )}
         
@@ -164,7 +166,7 @@ export default memo(function CustomerPDFViewer({
               >
                 <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white text-base py-3">
                   <DocumentIcon className="h-5 w-5 mr-3" />
-                  PDF öffnen und prüfen
+                  {t('actions.openAndReview')}
                 </Button>
               </a>
               
@@ -178,10 +180,10 @@ export default memo(function CustomerPDFViewer({
                 >
                   <Button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700" plain>
                     <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-                    Herunterladen
+                    {t('actions.download')}
                   </Button>
                 </a>
-                
+
                 {/* Versions-Historie */}
                 {totalVersions > 1 && (
                   <Button
@@ -190,7 +192,7 @@ export default memo(function CustomerPDFViewer({
                     plain
                   >
                     <EyeIcon className="h-4 w-4 mr-2" />
-                    Weitere Versionen ({totalVersions - 1})
+                    {t('actions.moreVersions', { count: totalVersions - 1 })}
                   </Button>
                 )}
               </div>
@@ -201,9 +203,9 @@ export default memo(function CustomerPDFViewer({
               <div className="flex items-center gap-3">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
                 <div>
-                  <h4 className="font-medium text-red-900">PDF nicht verfügbar</h4>
+                  <h4 className="font-medium text-red-900">{t('error.notAvailable')}</h4>
                   <p className="text-sm text-red-700 mt-1">
-                    Das PDF-Dokument konnte nicht geladen werden. Bitte kontaktieren Sie den Support.
+                    {t('error.notAvailableDescription')}
                   </p>
                 </div>
               </div>
@@ -217,10 +219,9 @@ export default memo(function CustomerPDFViewer({
             <div className="flex">
               <ClockIcon className="h-5 w-5 text-yellow-500 mr-3 flex-shrink-0" />
               <div className="text-sm text-yellow-800">
-                <p className="font-medium mb-1">📋 Wartet auf Ihre Prüfung</p>
+                <p className="font-medium mb-1">{t('infoBoxes.pending.title')}</p>
                 <p>
-                  Diese PDF-Version wurde zur Freigabe vorgelegt. Bitte prüfen Sie das Dokument 
-                  sorgfältig und entscheiden Sie, ob Sie es freigeben oder Änderungen wünschen.
+                  {t('infoBoxes.pending.description')}
                 </p>
               </div>
             </div>
@@ -232,10 +233,9 @@ export default memo(function CustomerPDFViewer({
             <div className="flex">
               <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
               <div className="text-sm text-green-800">
-                <p className="font-medium mb-1">✅ Von Ihnen freigegeben</p>
+                <p className="font-medium mb-1">{t('infoBoxes.approved.title')}</p>
                 <p>
-                  Sie haben diese PDF-Version am {formatDate(version.customerApproval.approvedAt)} freigegeben. 
-                  Das Dokument kann jetzt von der Agentur verwendet werden.
+                  {t('infoBoxes.approved.description', { date: formatDate(version.customerApproval.approvedAt) })}
                 </p>
               </div>
             </div>
@@ -247,10 +247,9 @@ export default memo(function CustomerPDFViewer({
             <div className="flex">
               <XCircleIcon className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" />
               <div className="text-sm text-red-800">
-                <p className="font-medium mb-1">❌ Änderungen erbeten</p>
+                <p className="font-medium mb-1">{t('infoBoxes.rejected.title')}</p>
                 <p>
-                  Sie haben für diese Version Änderungen angefordert. Die Agentur wurde 
-                  benachrichtigt und wird eine überarbeitete Version erstellen.
+                  {t('infoBoxes.rejected.description')}
                 </p>
               </div>
             </div>
@@ -262,12 +261,9 @@ export default memo(function CustomerPDFViewer({
           <div className="flex">
             <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">📄 Unveränderliche PDF-Version</p>
+              <p className="font-medium mb-1">{t('infoBoxes.immutable.title')}</p>
               <p>
-                Diese PDF-Version wurde automatisch beim Anfordern der Freigabe erstellt und 
-                kann nicht mehr verändert werden. Sie bildet genau den Inhalt ab, der zur 
-                Freigabe vorgelegt wird. Nach Ihrer Freigabe dient sie als verbindliche 
-                Referenz für die Veröffentlichung.
+                {t('infoBoxes.immutable.description')}
               </p>
             </div>
           </div>

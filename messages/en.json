@@ -2925,6 +2925,173 @@
       "copyright": "© {year} CeleroPress. All rights reserved."
     }
   },
+  "developer": {
+    "sdks": {
+      "backToDeveloperPortal": "Back to Developer Portal",
+      "title": "SDKs & Libraries",
+      "subtitle": "Pre-built client libraries for various programming languages",
+      "availableSDKs": "Available SDKs",
+      "soon": "Soon",
+      "installation": "Installation",
+      "packageManager": "Package Manager",
+      "packageInfo": "Package Info",
+      "package": "Package",
+      "version": "Version",
+      "license": "License",
+      "npmPackage": "NPM Package",
+      "githubRepository": "GitHub Repository",
+      "sdkInDevelopment": "SDK in Development",
+      "sdkInDevelopmentDesc": "This SDK is still in development. Please use the direct API calls from the code example for now.",
+      "quickStart": "Quick Start",
+      "comingSoon": "Coming Soon",
+      "features": {
+        "title": "SDK Features",
+        "apiCoverage": {
+          "title": "Full API Coverage",
+          "desc": "All REST, GraphQL and WebSocket endpoints are implemented"
+        },
+        "typeSafety": {
+          "title": "Type Safety",
+          "desc": "Complete typing for TypeScript and statically typed languages"
+        },
+        "autoRetry": {
+          "title": "Auto-Retry",
+          "desc": "Automatic retries on network errors with exponential backoff"
+        },
+        "rateLimiting": {
+          "title": "Rate Limiting",
+          "desc": "Built-in rate limit handling with automatic queuing"
+        },
+        "pagination": {
+          "title": "Pagination",
+          "desc": "Easy pagination with cursor-based and offset-based support"
+        },
+        "errorHandling": {
+          "title": "Error Handling",
+          "desc": "Structured error handling with detailed error messages"
+        }
+      },
+      "documentation": {
+        "title": "Documentation & Resources",
+        "apiReference": {
+          "title": "API Reference",
+          "desc": "Complete API documentation with all endpoints"
+        },
+        "codeExamples": {
+          "title": "Code Examples",
+          "desc": "Examples for Salesforce, HubSpot and Zapier integration"
+        },
+        "githubExamples": {
+          "title": "GitHub Examples",
+          "desc": "Complete example projects on GitHub"
+        },
+        "communitySupport": {
+          "title": "Community Support",
+          "desc": "Help and discussions in our Discord community"
+        }
+      },
+      "analytics": {
+        "title": "API Analytics",
+        "description": "Monitor your API usage and performance",
+        "backToPortal": "Back to Developer Portal",
+        "filters": {
+          "allKeys": "All API Keys",
+          "lastHour": "Last Hour",
+          "last24Hours": "Last 24 Hours",
+          "last7Days": "Last 7 Days",
+          "last30Days": "Last 30 Days"
+        },
+        "metrics": {
+          "requestsToday": "Requests Today",
+          "errorRate": "Error Rate",
+          "errorRateLow": "Low",
+          "avgLatency": "Avg. Latency",
+          "quotaUsage": "Quota Usage"
+        },
+        "charts": {
+          "requestTimeline": "Request Timeline",
+          "requests": "Requests",
+          "errors": "Errors",
+          "statusCodeDistribution": "Status Code Distribution",
+          "topEndpoints": "Top Endpoints",
+          "dailyUsage": "Daily Usage",
+          "uniqueIPs": "Unique IPs"
+        },
+        "statusCodes": {
+          "success": "2xx Success",
+          "clientError": "4xx Client Error",
+          "serverError": "5xx Server Error"
+        },
+        "rateLimit": {
+          "title": "Rate Limit Details",
+          "hourly": "Hourly Limit",
+          "daily": "Daily Limit",
+          "monthly": "Monthly Limit",
+          "used": "Used",
+          "resetIn": "Reset in {minutes} minutes",
+          "resetAtMidnight": "Reset at midnight",
+          "resetFirstOfMonth": "Reset on 1st of month"
+        },
+        "table": {
+          "title": "API Key Performance",
+          "headers": {
+            "apiKey": "API Key",
+            "requests": "Requests",
+            "errorRate": "Error Rate",
+            "avgLatency": "Avg. Latency",
+            "lastRequest": "Last Request",
+            "status": "Status"
+          },
+          "neverUsed": "Never used",
+          "active": "Active"
+        }
+      },
+      "examples": {
+        "title": "Code Examples",
+        "description": "Integration examples for popular platforms",
+        "backToDeveloperPortal": "Back to Developer Portal",
+        "sidebar": {
+          "integrationsTitle": "Integrations",
+          "resourcesTitle": "Additional Resources",
+          "resources": {
+            "postman": "Postman Collection",
+            "github": "GitHub Repository",
+            "videos": "Video Tutorials",
+            "forum": "Community Forum"
+          }
+        },
+        "mainContent": {
+          "integrationTitle": "{name} Integration"
+        },
+        "codeSection": {
+          "title": "Example Code",
+          "copyButton": "Copy Code",
+          "copied": "Copied!"
+        },
+        "quickStart": {
+          "title": "Quick Start Guide",
+          "steps": {
+            "createKey": {
+              "title": "Create API Key",
+              "description": "Create an API key with the required permissions in the Admin Dashboard"
+            },
+            "installSdk": {
+              "title": "Install SDK",
+              "description": "Install the CeleroPress SDK for your programming language"
+            },
+            "configure": {
+              "title": "Configure Integration",
+              "description": "Copy the example code and adapt it to your requirements"
+            },
+            "webhooks": {
+              "title": "Enable Webhooks",
+              "description": "Register webhooks for real-time updates (optional)"
+            }
+          }
+        }
+      }
+    }
+  },
   "domains": {
     "dnsStatus": {
       "title": "DNS Status Check",
@@ -3163,173 +3330,6 @@
       "support": {
         "needHelp": "Need more help?",
         "openArticle": "Open {providerName} Support Article"
-      }
-    }
-  },
-  "developer": {
-    "sdks": {
-      "backToDeveloperPortal": "Back to Developer Portal",
-      "title": "SDKs & Libraries",
-      "subtitle": "Pre-built client libraries for various programming languages",
-      "availableSDKs": "Available SDKs",
-      "soon": "Soon",
-      "installation": "Installation",
-      "packageManager": "Package Manager",
-      "packageInfo": "Package Info",
-      "package": "Package",
-      "version": "Version",
-      "license": "License",
-      "npmPackage": "NPM Package",
-      "githubRepository": "GitHub Repository",
-      "sdkInDevelopment": "SDK in Development",
-      "sdkInDevelopmentDesc": "This SDK is still in development. Please use the direct API calls from the code example for now.",
-      "quickStart": "Quick Start",
-      "comingSoon": "Coming Soon",
-      "features": {
-        "title": "SDK Features",
-        "apiCoverage": {
-          "title": "Full API Coverage",
-          "desc": "All REST, GraphQL and WebSocket endpoints are implemented"
-        },
-        "typeSafety": {
-          "title": "Type Safety",
-          "desc": "Complete typing for TypeScript and statically typed languages"
-        },
-        "autoRetry": {
-          "title": "Auto-Retry",
-          "desc": "Automatic retries on network errors with exponential backoff"
-        },
-        "rateLimiting": {
-          "title": "Rate Limiting",
-          "desc": "Built-in rate limit handling with automatic queuing"
-        },
-        "pagination": {
-          "title": "Pagination",
-          "desc": "Easy pagination with cursor-based and offset-based support"
-        },
-        "errorHandling": {
-          "title": "Error Handling",
-          "desc": "Structured error handling with detailed error messages"
-        }
-      },
-      "documentation": {
-        "title": "Documentation & Resources",
-        "apiReference": {
-          "title": "API Reference",
-          "desc": "Complete API documentation with all endpoints"
-        },
-        "codeExamples": {
-          "title": "Code Examples",
-          "desc": "Examples for Salesforce, HubSpot and Zapier integration"
-        },
-        "githubExamples": {
-          "title": "GitHub Examples",
-          "desc": "Complete example projects on GitHub"
-        },
-        "communitySupport": {
-          "title": "Community Support",
-          "desc": "Help and discussions in our Discord community"
-        }
-      },
-      "analytics": {
-        "title": "API Analytics",
-        "description": "Monitor your API usage and performance",
-        "backToPortal": "Back to Developer Portal",
-        "filters": {
-          "allKeys": "All API Keys",
-          "lastHour": "Last Hour",
-          "last24Hours": "Last 24 Hours",
-          "last7Days": "Last 7 Days",
-          "last30Days": "Last 30 Days"
-        },
-        "metrics": {
-          "requestsToday": "Requests Today",
-          "errorRate": "Error Rate",
-          "errorRateLow": "Low",
-          "avgLatency": "Avg. Latency",
-          "quotaUsage": "Quota Usage"
-        },
-        "charts": {
-          "requestTimeline": "Request Timeline",
-          "requests": "Requests",
-          "errors": "Errors",
-          "statusCodeDistribution": "Status Code Distribution",
-          "topEndpoints": "Top Endpoints",
-          "dailyUsage": "Daily Usage",
-          "uniqueIPs": "Unique IPs"
-        },
-        "statusCodes": {
-          "success": "2xx Success",
-          "clientError": "4xx Client Error",
-          "serverError": "5xx Server Error"
-        },
-        "rateLimit": {
-          "title": "Rate Limit Details",
-          "hourly": "Hourly Limit",
-          "daily": "Daily Limit",
-          "monthly": "Monthly Limit",
-          "used": "Used",
-          "resetIn": "Reset in {minutes} minutes",
-          "resetAtMidnight": "Reset at midnight",
-          "resetFirstOfMonth": "Reset on 1st of month"
-        },
-        "table": {
-          "title": "API Key Performance",
-          "headers": {
-            "apiKey": "API Key",
-            "requests": "Requests",
-            "errorRate": "Error Rate",
-            "avgLatency": "Avg. Latency",
-            "lastRequest": "Last Request",
-            "status": "Status"
-          },
-          "neverUsed": "Never used",
-          "active": "Active"
-        }
-      },
-      "examples": {
-        "title": "Code Examples",
-        "description": "Integration examples for popular platforms",
-        "backToDeveloperPortal": "Back to Developer Portal",
-        "sidebar": {
-          "integrationsTitle": "Integrations",
-          "resourcesTitle": "Additional Resources",
-          "resources": {
-            "postman": "Postman Collection",
-            "github": "GitHub Repository",
-            "videos": "Video Tutorials",
-            "forum": "Community Forum"
-          }
-        },
-        "mainContent": {
-          "integrationTitle": "{name} Integration"
-        },
-        "codeSection": {
-          "title": "Example Code",
-          "copyButton": "Copy Code",
-          "copied": "Copied!"
-        },
-        "quickStart": {
-          "title": "Quick Start Guide",
-          "steps": {
-            "createKey": {
-              "title": "Create API Key",
-              "description": "Create an API key with the required permissions in the Admin Dashboard"
-            },
-            "installSdk": {
-              "title": "Install SDK",
-              "description": "Install the CeleroPress SDK for your programming language"
-            },
-            "configure": {
-              "title": "Configure Integration",
-              "description": "Copy the example code and adapt it to your requirements"
-            },
-            "webhooks": {
-              "title": "Enable Webhooks",
-              "description": "Register webhooks for real-time updates (optional)"
-            }
-          }
-        }
       }
     }
   },
@@ -3874,6 +3874,238 @@
     "validationError": "Validation error",
     "unknownError": "Unknown error",
     "tryAgain": "Please try again"
+  },
+  "freigabe": {
+    "status": {
+      "pendingCustomer": {
+        "label": "Pending Customer Approval",
+        "description": "PDF is awaiting customer approval"
+      },
+      "approved": {
+        "label": "Approved by Customer",
+        "description": "PDF has been approved by customer"
+      },
+      "rejected": {
+        "label": "Changes Requested",
+        "description": "Customer has requested changes"
+      },
+      "version": "Version {version}",
+      "approvedAt": "Approved on {date}",
+      "rejectedAt": "Changes requested on {date}",
+      "changeRequest": "Change Request:",
+      "workflowHint": {
+        "pending": "1-stage workflow: Direct customer approval",
+        "approved": "Approval completed - PDF can be used",
+        "rejected": "New version will be created after revision"
+      }
+    },
+    "approval": {
+      "title": "Your Decision",
+      "description": "Please review the PDF document carefully. You can either approve it or request specific changes.",
+      "completed": {
+        "title": "Approval Successfully Granted",
+        "description": "You have approved PDF version {version}. The document can now be used by the agency.",
+        "approvedAt": "Approved on {date}"
+      },
+      "actions": {
+        "approve": "Approve PDF",
+        "requestChanges": "Request Changes",
+        "processing": "Processing..."
+      },
+      "feedback": {
+        "label": "What changes would you like to see in the PDF?",
+        "placeholder": "Please describe specifically what should be changed in the PDF...",
+        "hint": "Your change requests will be sent directly to the agency.",
+        "submit": "Send Changes",
+        "sending": "Sending...",
+        "cancel": "Cancel"
+      },
+      "status": {
+        "pending": "This PDF is awaiting your initial review",
+        "viewed": "You have already viewed this PDF",
+        "commented": "You have already requested changes to a previous version"
+      },
+      "notice": {
+        "label": "Notice:",
+        "text": "After your approval, this PDF version is binding and cannot be changed. If you want changes, a new version will be created."
+      },
+      "errors": {
+        "approveError": "Error during approval:",
+        "feedbackError": "Error sending feedback:"
+      }
+    },
+    "comments": {
+      "validation": {
+        "commentRequired": "Please enter a comment or add inline comments."
+      },
+      "previousFeedback": {
+        "title": "Previous Feedback ({count})",
+        "unknown": "Unknown",
+        "approved": "Approval Granted",
+        "manuallyApproved": "Manually Approved",
+        "changesRequested": "Changes Requested",
+        "manuallyUnlocked": "Manually Unlocked",
+        "inlineComments": "Inline Comments:"
+      },
+      "inlineComment": {
+        "addButton": "Add Inline Comment",
+        "selectTextHint": "Select text in the PDF to add a comment",
+        "yourComments": "Your Inline Comments ({count})",
+        "dialog": {
+          "title": "Add Comment",
+          "placeholder": "Your comment...",
+          "add": "Add",
+          "cancel": "Cancel"
+        }
+      },
+      "generalComment": {
+        "label": "General Feedback",
+        "placeholder": "Your feedback on this campaign..."
+      },
+      "actions": {
+        "approve": "Approve",
+        "withComment": " (with comment)",
+        "requestChanges": "Request Changes"
+      }
+    },
+    "chat": {
+      "timeAgo": {
+        "unknown": "unknown",
+        "justNow": "just now",
+        "minutesAgo": "{minutes} min. ago",
+        "hoursAgo": "{hours} hrs. ago",
+        "daysAgo": "{days} day(s) ago"
+      },
+      "types": {
+        "feedback": "Feedback",
+        "comment": "Comment",
+        "approvalRequest": "Approval Request",
+        "question": "Question",
+        "message": "Message"
+      },
+      "empty": {
+        "title": "No communication yet",
+        "description": "Messages and feedback will appear here"
+      },
+      "latest": {
+        "title": "Latest Message",
+        "from": "From:"
+      },
+      "badges": {
+        "approvalGranted": "Approval Granted",
+        "manuallyApproved": "Manually Approved",
+        "changesRequested": "Changes Requested",
+        "manuallyUnlocked": "Manually Unlocked"
+      },
+      "history": {
+        "title": "Complete Communication History"
+      }
+    },
+    "pdf": {
+      "header": {
+        "title": "PDF Document for Approval",
+        "immutable": "Immutable"
+      },
+      "versionInfo": {
+        "createdAt": "Created on"
+      },
+      "metadata": {
+        "pages": "Pages",
+        "words": "Words"
+      },
+      "actions": {
+        "openAndReview": "Open and review PDF",
+        "download": "Download",
+        "moreVersions": "More versions ({count})"
+      },
+      "statusLabels": {
+        "pendingCustomer": "Awaiting your approval",
+        "approved": "Approved by you",
+        "rejected": "Changes requested",
+        "unknown": "Unknown status"
+      },
+      "statusDescriptions": {
+        "pendingCustomer": "This PDF version is awaiting your review and approval.",
+        "approved": "You approved this PDF version on {date}.",
+        "rejected": "You have requested changes for this version.",
+        "unknown": "Status could not be determined."
+      },
+      "error": {
+        "notAvailable": "PDF not available",
+        "notAvailableDescription": "The PDF document could not be loaded. Please contact support."
+      },
+      "infoBoxes": {
+        "pending": {
+          "title": "📋 Awaiting your review",
+          "description": "This PDF version has been submitted for approval. Please review the document carefully and decide whether to approve it or request changes."
+        },
+        "approved": {
+          "title": "✅ Approved by you",
+          "description": "You approved this PDF version on {date}. The document can now be used by the agency."
+        },
+        "rejected": {
+          "title": "❌ Changes requested",
+          "description": "You have requested changes for this version. The agency has been notified and will create a revised version."
+        },
+        "immutable": {
+          "title": "📄 Immutable PDF Version",
+          "description": "This PDF version was automatically created when approval was requested and can no longer be changed. It represents exactly the content submitted for approval. After your approval, it serves as the binding reference for publication."
+        }
+      }
+    },
+    "feedback": {
+      "title": "Request Changes",
+      "subtitle": "Describe specifically what changes you would like",
+      "types": {
+        "changes": "Specific Changes",
+        "general": "General Feedback"
+      },
+      "templatesShow": "Show templates",
+      "templatesHide": "Hide templates",
+      "templates": {
+        "content-changes": {
+          "title": "Content Changes",
+          "template": "Please change the following content:\n\n- \n- \n- \n\nThank you!"
+        },
+        "formatting": {
+          "title": "Layout/Formatting",
+          "template": "Please adjust the layout:\n\n- \n- \n\nThank you for the revision!"
+        },
+        "corrections": {
+          "title": "Corrections",
+          "template": "Please correct:\n\n- \n- \n\nBest regards"
+        },
+        "additions": {
+          "title": "Additions",
+          "template": "Please add:\n\n- \n- \n\nThank you for your work!"
+        }
+      },
+      "labels": {
+        "desiredChanges": "Desired Changes",
+        "yourFeedback": "Your Feedback"
+      },
+      "placeholders": {
+        "changes": "Please describe specifically what should be changed:\n\n- Point 1\n- Point 2\n- Point 3\n\nThe more precise your specifications, the better the agency can implement your wishes.",
+        "general": "Share your general feedback on the PDF..."
+      },
+      "characterCount": "{count} characters (minimum 10 required)",
+      "tooShort": "Too short for meaningful feedback",
+      "tip": {
+        "title": "💡 Tip for better feedback",
+        "description": "The more specific you formulate your change requests, the faster and more precisely the agency can implement them. Feel free to use bullet points and line numbers for reference."
+      },
+      "sending": "Sending...",
+      "buttons": {
+        "sendChanges": "Send Changes",
+        "sendFeedback": "Send Feedback",
+        "cancel": "Cancel"
+      },
+      "notice": {
+        "title": "Important:",
+        "description": "After sending your feedback, the agency will be notified and will create a revised version. You will receive a new approval request once the changes have been implemented."
+      },
+      "errorSending": "The feedback could not be sent. Please try again."
+    }
   },
   "inbox": {
     "title": "Inbox",

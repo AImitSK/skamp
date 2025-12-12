@@ -2925,6 +2925,173 @@
       "copyright": "© {year} CeleroPress. Alle Rechte vorbehalten."
     }
   },
+  "developer": {
+    "sdks": {
+      "backToDeveloperPortal": "Zurück zum Developer Portal",
+      "title": "SDKs & Libraries",
+      "subtitle": "Vorgefertigte Client-Libraries für verschiedene Programmiersprachen",
+      "availableSDKs": "Verfügbare SDKs",
+      "soon": "Soon",
+      "installation": "Installation",
+      "packageManager": "Package Manager",
+      "packageInfo": "Package Info",
+      "package": "Package",
+      "version": "Version",
+      "license": "License",
+      "npmPackage": "NPM Package",
+      "githubRepository": "GitHub Repository",
+      "sdkInDevelopment": "SDK in Entwicklung",
+      "sdkInDevelopmentDesc": "Dieses SDK ist noch in Entwicklung. Verwende vorerst die direkten API-Calls im Code-Beispiel.",
+      "quickStart": "Quick Start",
+      "comingSoon": "Coming Soon",
+      "features": {
+        "title": "SDK Features",
+        "apiCoverage": {
+          "title": "Vollständige API-Abdeckung",
+          "desc": "Alle REST, GraphQL und WebSocket Endpoints sind implementiert"
+        },
+        "typeSafety": {
+          "title": "Type Safety",
+          "desc": "Vollständige Typisierung für TypeScript und statisch typisierte Sprachen"
+        },
+        "autoRetry": {
+          "title": "Auto-Retry",
+          "desc": "Automatische Wiederholungen bei Netzwerkfehlern mit exponential backoff"
+        },
+        "rateLimiting": {
+          "title": "Rate Limiting",
+          "desc": "Eingebaute Rate-Limit-Behandlung mit automatischer Warteschlange"
+        },
+        "pagination": {
+          "title": "Pagination",
+          "desc": "Einfache Pagination mit Cursor-basiertem und Offset-basiertem Support"
+        },
+        "errorHandling": {
+          "title": "Error Handling",
+          "desc": "Strukturierte Fehlerbehandlung mit detaillierten Fehlermeldungen"
+        }
+      },
+      "documentation": {
+        "title": "Dokumentation & Ressourcen",
+        "apiReference": {
+          "title": "API Referenz",
+          "desc": "Vollständige API-Dokumentation mit allen Endpoints"
+        },
+        "codeExamples": {
+          "title": "Code Examples",
+          "desc": "Beispiele für Salesforce, HubSpot und Zapier Integration"
+        },
+        "githubExamples": {
+          "title": "GitHub Examples",
+          "desc": "Vollständige Beispielprojekte auf GitHub"
+        },
+        "communitySupport": {
+          "title": "Community Support",
+          "desc": "Hilfe und Diskussionen in unserer Discord Community"
+        }
+      },
+      "analytics": {
+        "title": "API Analytics",
+        "description": "Überwache deine API-Nutzung und Performance",
+        "backToPortal": "Zurück zum Developer Portal",
+        "filters": {
+          "allKeys": "Alle API Keys",
+          "lastHour": "Letzte Stunde",
+          "last24Hours": "Letzte 24 Stunden",
+          "last7Days": "Letzte 7 Tage",
+          "last30Days": "Letzte 30 Tage"
+        },
+        "metrics": {
+          "requestsToday": "Requests heute",
+          "errorRate": "Fehlerrate",
+          "errorRateLow": "Niedrig",
+          "avgLatency": "Avg. Latenz",
+          "quotaUsage": "Quota Verbrauch"
+        },
+        "charts": {
+          "requestTimeline": "Request Timeline",
+          "requests": "Requests",
+          "errors": "Errors",
+          "statusCodeDistribution": "Status Code Distribution",
+          "topEndpoints": "Top Endpoints",
+          "dailyUsage": "Daily Usage",
+          "uniqueIPs": "Unique IPs"
+        },
+        "statusCodes": {
+          "success": "2xx Success",
+          "clientError": "4xx Client Error",
+          "serverError": "5xx Server Error"
+        },
+        "rateLimit": {
+          "title": "Rate Limit Details",
+          "hourly": "Stündliches Limit",
+          "daily": "Tägliches Limit",
+          "monthly": "Monatliches Limit",
+          "used": "Verbraucht",
+          "resetIn": "Reset in {minutes} Minuten",
+          "resetAtMidnight": "Reset um Mitternacht",
+          "resetFirstOfMonth": "Reset am 1. des Monats"
+        },
+        "table": {
+          "title": "API Key Performance",
+          "headers": {
+            "apiKey": "API Key",
+            "requests": "Requests",
+            "errorRate": "Fehlerrate",
+            "avgLatency": "Avg. Latenz",
+            "lastRequest": "Letzter Request",
+            "status": "Status"
+          },
+          "neverUsed": "Nie verwendet",
+          "active": "Aktiv"
+        }
+      },
+      "examples": {
+        "title": "Code Examples",
+        "description": "Integration-Beispiele für populäre Plattformen",
+        "backToDeveloperPortal": "Zurück zum Developer Portal",
+        "sidebar": {
+          "integrationsTitle": "Integrationen",
+          "resourcesTitle": "Weitere Ressourcen",
+          "resources": {
+            "postman": "Postman Collection",
+            "github": "GitHub Repository",
+            "videos": "Video Tutorials",
+            "forum": "Community Forum"
+          }
+        },
+        "mainContent": {
+          "integrationTitle": "{name} Integration"
+        },
+        "codeSection": {
+          "title": "Beispiel Code",
+          "copyButton": "Code kopieren",
+          "copied": "Kopiert!"
+        },
+        "quickStart": {
+          "title": "Quick Start Guide",
+          "steps": {
+            "createKey": {
+              "title": "API Key erstellen",
+              "description": "Erstelle einen API Key mit den benötigten Berechtigungen im Admin Dashboard"
+            },
+            "installSdk": {
+              "title": "SDK installieren",
+              "description": "Installiere das CeleroPress SDK für deine Programmiersprache"
+            },
+            "configure": {
+              "title": "Integration konfigurieren",
+              "description": "Kopiere den Beispielcode und passe ihn an deine Anforderungen an"
+            },
+            "webhooks": {
+              "title": "Webhooks aktivieren",
+              "description": "Registriere Webhooks für Real-time Updates (optional)"
+            }
+          }
+        }
+      }
+    }
+  },
   "domains": {
     "dnsStatus": {
       "title": "DNS-Status Überprüfung",
@@ -3163,173 +3330,6 @@
       "support": {
         "needHelp": "Benötigen Sie weitere Hilfe?",
         "openArticle": "{providerName} Support-Artikel öffnen"
-      }
-    }
-  },
-  "developer": {
-    "sdks": {
-      "backToDeveloperPortal": "Zurück zum Developer Portal",
-      "title": "SDKs & Libraries",
-      "subtitle": "Vorgefertigte Client-Libraries für verschiedene Programmiersprachen",
-      "availableSDKs": "Verfügbare SDKs",
-      "soon": "Soon",
-      "installation": "Installation",
-      "packageManager": "Package Manager",
-      "packageInfo": "Package Info",
-      "package": "Package",
-      "version": "Version",
-      "license": "License",
-      "npmPackage": "NPM Package",
-      "githubRepository": "GitHub Repository",
-      "sdkInDevelopment": "SDK in Entwicklung",
-      "sdkInDevelopmentDesc": "Dieses SDK ist noch in Entwicklung. Verwende vorerst die direkten API-Calls im Code-Beispiel.",
-      "quickStart": "Quick Start",
-      "comingSoon": "Coming Soon",
-      "features": {
-        "title": "SDK Features",
-        "apiCoverage": {
-          "title": "Vollständige API-Abdeckung",
-          "desc": "Alle REST, GraphQL und WebSocket Endpoints sind implementiert"
-        },
-        "typeSafety": {
-          "title": "Type Safety",
-          "desc": "Vollständige Typisierung für TypeScript und statisch typisierte Sprachen"
-        },
-        "autoRetry": {
-          "title": "Auto-Retry",
-          "desc": "Automatische Wiederholungen bei Netzwerkfehlern mit exponential backoff"
-        },
-        "rateLimiting": {
-          "title": "Rate Limiting",
-          "desc": "Eingebaute Rate-Limit-Behandlung mit automatischer Warteschlange"
-        },
-        "pagination": {
-          "title": "Pagination",
-          "desc": "Einfache Pagination mit Cursor-basiertem und Offset-basiertem Support"
-        },
-        "errorHandling": {
-          "title": "Error Handling",
-          "desc": "Strukturierte Fehlerbehandlung mit detaillierten Fehlermeldungen"
-        }
-      },
-      "documentation": {
-        "title": "Dokumentation & Ressourcen",
-        "apiReference": {
-          "title": "API Referenz",
-          "desc": "Vollständige API-Dokumentation mit allen Endpoints"
-        },
-        "codeExamples": {
-          "title": "Code Examples",
-          "desc": "Beispiele für Salesforce, HubSpot und Zapier Integration"
-        },
-        "githubExamples": {
-          "title": "GitHub Examples",
-          "desc": "Vollständige Beispielprojekte auf GitHub"
-        },
-        "communitySupport": {
-          "title": "Community Support",
-          "desc": "Hilfe und Diskussionen in unserer Discord Community"
-        }
-      },
-      "analytics": {
-        "title": "API Analytics",
-        "description": "Überwache deine API-Nutzung und Performance",
-        "backToPortal": "Zurück zum Developer Portal",
-        "filters": {
-          "allKeys": "Alle API Keys",
-          "lastHour": "Letzte Stunde",
-          "last24Hours": "Letzte 24 Stunden",
-          "last7Days": "Letzte 7 Tage",
-          "last30Days": "Letzte 30 Tage"
-        },
-        "metrics": {
-          "requestsToday": "Requests heute",
-          "errorRate": "Fehlerrate",
-          "errorRateLow": "Niedrig",
-          "avgLatency": "Avg. Latenz",
-          "quotaUsage": "Quota Verbrauch"
-        },
-        "charts": {
-          "requestTimeline": "Request Timeline",
-          "requests": "Requests",
-          "errors": "Errors",
-          "statusCodeDistribution": "Status Code Distribution",
-          "topEndpoints": "Top Endpoints",
-          "dailyUsage": "Daily Usage",
-          "uniqueIPs": "Unique IPs"
-        },
-        "statusCodes": {
-          "success": "2xx Success",
-          "clientError": "4xx Client Error",
-          "serverError": "5xx Server Error"
-        },
-        "rateLimit": {
-          "title": "Rate Limit Details",
-          "hourly": "Stündliches Limit",
-          "daily": "Tägliches Limit",
-          "monthly": "Monatliches Limit",
-          "used": "Verbraucht",
-          "resetIn": "Reset in {minutes} Minuten",
-          "resetAtMidnight": "Reset um Mitternacht",
-          "resetFirstOfMonth": "Reset am 1. des Monats"
-        },
-        "table": {
-          "title": "API Key Performance",
-          "headers": {
-            "apiKey": "API Key",
-            "requests": "Requests",
-            "errorRate": "Fehlerrate",
-            "avgLatency": "Avg. Latenz",
-            "lastRequest": "Letzter Request",
-            "status": "Status"
-          },
-          "neverUsed": "Nie verwendet",
-          "active": "Aktiv"
-        }
-      },
-      "examples": {
-        "title": "Code Examples",
-        "description": "Integration-Beispiele für populäre Plattformen",
-        "backToDeveloperPortal": "Zurück zum Developer Portal",
-        "sidebar": {
-          "integrationsTitle": "Integrationen",
-          "resourcesTitle": "Weitere Ressourcen",
-          "resources": {
-            "postman": "Postman Collection",
-            "github": "GitHub Repository",
-            "videos": "Video Tutorials",
-            "forum": "Community Forum"
-          }
-        },
-        "mainContent": {
-          "integrationTitle": "{name} Integration"
-        },
-        "codeSection": {
-          "title": "Beispiel Code",
-          "copyButton": "Code kopieren",
-          "copied": "Kopiert!"
-        },
-        "quickStart": {
-          "title": "Quick Start Guide",
-          "steps": {
-            "createKey": {
-              "title": "API Key erstellen",
-              "description": "Erstelle einen API Key mit den benötigten Berechtigungen im Admin Dashboard"
-            },
-            "installSdk": {
-              "title": "SDK installieren",
-              "description": "Installiere das CeleroPress SDK für deine Programmiersprache"
-            },
-            "configure": {
-              "title": "Integration konfigurieren",
-              "description": "Kopiere den Beispielcode und passe ihn an deine Anforderungen an"
-            },
-            "webhooks": {
-              "title": "Webhooks aktivieren",
-              "description": "Registriere Webhooks für Real-time Updates (optional)"
-            }
-          }
-        }
       }
     }
   },
@@ -3874,6 +3874,238 @@
     "validationError": "Validierungsfehler",
     "unknownError": "Unbekannter Fehler",
     "tryAgain": "Bitte versuche es erneut"
+  },
+  "freigabe": {
+    "status": {
+      "pendingCustomer": {
+        "label": "Zur Kundenfreigabe",
+        "description": "PDF wartet auf Kundenfreigabe"
+      },
+      "approved": {
+        "label": "Vom Kunden freigegeben",
+        "description": "PDF wurde vom Kunden freigegeben"
+      },
+      "rejected": {
+        "label": "Änderungen erbeten",
+        "description": "Kunde hat Änderungen angefordert"
+      },
+      "version": "Version {version}",
+      "approvedAt": "Freigegeben am {date}",
+      "rejectedAt": "Änderungen erbeten am {date}",
+      "changeRequest": "Änderungswunsch:",
+      "workflowHint": {
+        "pending": "1-stufiger Workflow: Direkt zur Kundenfreigabe",
+        "approved": "Freigabe abgeschlossen - PDF kann verwendet werden",
+        "rejected": "Neue Version wird nach Überarbeitung erstellt"
+      }
+    },
+    "approval": {
+      "title": "Ihre Entscheidung",
+      "description": "Bitte prüfen Sie das PDF-Dokument sorgfältig. Sie können entweder die Freigabe erteilen oder spezifische Änderungen anfordern.",
+      "completed": {
+        "title": "Freigabe erfolgreich erteilt",
+        "description": "Sie haben die PDF-Version {version} freigegeben. Das Dokument kann nun von der Agentur verwendet werden.",
+        "approvedAt": "Freigegeben am {date}"
+      },
+      "actions": {
+        "approve": "PDF freigeben",
+        "requestChanges": "Änderungen anfordern",
+        "processing": "Wird verarbeitet..."
+      },
+      "feedback": {
+        "label": "Welche Änderungen wünschen Sie an der PDF?",
+        "placeholder": "Bitte beschreiben Sie konkret, was an der PDF geändert werden soll...",
+        "hint": "Ihre Änderungswünsche werden direkt an die Agentur übermittelt.",
+        "submit": "Änderungen senden",
+        "sending": "Wird gesendet...",
+        "cancel": "Abbrechen"
+      },
+      "status": {
+        "pending": "Diese PDF wartet auf Ihre erste Prüfung",
+        "viewed": "Sie haben diese PDF bereits angesehen",
+        "commented": "Sie haben bereits Änderungen zu einer vorherigen Version angefordert"
+      },
+      "notice": {
+        "label": "Hinweis:",
+        "text": "Nach Ihrer Freigabe ist diese PDF-Version verbindlich und kann nicht mehr geändert werden. Bei Änderungswünschen wird eine neue Version erstellt."
+      },
+      "errors": {
+        "approveError": "Fehler bei der Freigabe:",
+        "feedbackError": "Fehler beim Senden des Feedbacks:"
+      }
+    },
+    "comments": {
+      "validation": {
+        "commentRequired": "Bitte geben Sie einen Kommentar ein oder fügen Sie Inline-Kommentare hinzu."
+      },
+      "previousFeedback": {
+        "title": "Bisherige Rückmeldungen ({count})",
+        "unknown": "Unbekannt",
+        "approved": "Freigabe erteilt",
+        "manuallyApproved": "Manuell freigegeben",
+        "changesRequested": "Änderungen erbeten",
+        "manuallyUnlocked": "Manuell entsperrt",
+        "inlineComments": "Inline-Kommentare:"
+      },
+      "inlineComment": {
+        "addButton": "Inline-Kommentar hinzufügen",
+        "selectTextHint": "Markieren Sie Text im PDF um einen Kommentar hinzuzufügen",
+        "yourComments": "Ihre Inline-Kommentare ({count})",
+        "dialog": {
+          "title": "Kommentar hinzufügen",
+          "placeholder": "Ihr Kommentar...",
+          "add": "Hinzufügen",
+          "cancel": "Abbrechen"
+        }
+      },
+      "generalComment": {
+        "label": "Allgemeine Rückmeldung",
+        "placeholder": "Ihre Rückmeldung zu dieser Kampagne..."
+      },
+      "actions": {
+        "approve": "Freigeben",
+        "withComment": " (mit Kommentar)",
+        "requestChanges": "Änderungen anfordern"
+      }
+    },
+    "chat": {
+      "timeAgo": {
+        "unknown": "unbekannt",
+        "justNow": "gerade eben",
+        "minutesAgo": "vor {minutes} Min.",
+        "hoursAgo": "vor {hours} Std.",
+        "daysAgo": "vor {days} Tag(en)"
+      },
+      "types": {
+        "feedback": "Feedback",
+        "comment": "Kommentar",
+        "approvalRequest": "Freigabe-Anfrage",
+        "question": "Frage",
+        "message": "Nachricht"
+      },
+      "empty": {
+        "title": "Noch keine Kommunikation vorhanden",
+        "description": "Hier erscheinen Nachrichten und Rueckmeldungen"
+      },
+      "latest": {
+        "title": "Neueste Nachricht",
+        "from": "Von:"
+      },
+      "badges": {
+        "approvalGranted": "Freigabe erteilt",
+        "manuallyApproved": "Manuell freigegeben",
+        "changesRequested": "Aenderungen erbeten",
+        "manuallyUnlocked": "Manuell entsperrt"
+      },
+      "history": {
+        "title": "Vollstaendige Kommunikationshistorie"
+      }
+    },
+    "feedback": {
+      "title": "Änderungen anfordern",
+      "subtitle": "Beschreiben Sie konkret, welche Änderungen Sie wünschen",
+      "types": {
+        "changes": "Konkrete Änderungen",
+        "general": "Allgemeines Feedback"
+      },
+      "templatesShow": "Vorlagen anzeigen",
+      "templatesHide": "Vorlagen ausblenden",
+      "templates": {
+        "content-changes": {
+          "title": "Inhaltliche Änderungen",
+          "template": "Bitte ändern Sie folgende Inhalte:\n\n- \n- \n- \n\nVielen Dank!"
+        },
+        "formatting": {
+          "title": "Layout/Formatierung",
+          "template": "Bitte passen Sie das Layout an:\n\n- \n- \n\nDanke für die Überarbeitung!"
+        },
+        "corrections": {
+          "title": "Korrekturen",
+          "template": "Bitte korrigieren Sie:\n\n- \n- \n\nMit freundlichen Grüßen"
+        },
+        "additions": {
+          "title": "Ergänzungen",
+          "template": "Bitte ergänzen Sie:\n\n- \n- \n\nVielen Dank für die Bearbeitung!"
+        }
+      },
+      "labels": {
+        "desiredChanges": "Gewünschte Änderungen",
+        "yourFeedback": "Ihr Feedback"
+      },
+      "placeholders": {
+        "changes": "Bitte beschreiben Sie konkret, was geändert werden soll:\n\n- Punkt 1\n- Punkt 2\n- Punkt 3\n\nJe präziser Ihre Angaben, desto besser kann die Agentur Ihre Wünsche umsetzen.",
+        "general": "Teilen Sie Ihr allgemeines Feedback zur PDF mit..."
+      },
+      "characterCount": "{count} Zeichen (mindestens 10 erforderlich)",
+      "tooShort": "Zu kurz für aussagekräftiges Feedback",
+      "tip": {
+        "title": "💡 Tipp für besseres Feedback",
+        "description": "Je konkreter Sie Ihre Änderungswünsche formulieren, desto schneller und präziser kann die Agentur diese umsetzen. Verwenden Sie gerne Aufzählungen und Zeilennummern als Orientierung."
+      },
+      "sending": "Wird gesendet...",
+      "buttons": {
+        "sendChanges": "Änderungen senden",
+        "sendFeedback": "Feedback senden",
+        "cancel": "Abbrechen"
+      },
+      "notice": {
+        "title": "Wichtig:",
+        "description": "Nach dem Senden Ihres Feedbacks wird die Agentur benachrichtigt und erstellt eine überarbeitete Version. Sie erhalten eine neue Freigabe-Anfrage, sobald die Änderungen umgesetzt wurden."
+      },
+      "errorSending": "Das Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "pdf": {
+      "header": {
+        "title": "PDF-Dokument zur Freigabe",
+        "immutable": "Unveränderlich"
+      },
+      "versionInfo": {
+        "createdAt": "Erstellt am"
+      },
+      "metadata": {
+        "pages": "Seiten",
+        "words": "Wörter"
+      },
+      "actions": {
+        "openAndReview": "PDF öffnen und prüfen",
+        "download": "Herunterladen",
+        "moreVersions": "Weitere Versionen ({count})"
+      },
+      "statusLabels": {
+        "pendingCustomer": "Wartet auf Ihre Freigabe",
+        "approved": "Von Ihnen freigegeben",
+        "rejected": "Änderungen erbeten",
+        "unknown": "Unbekannter Status"
+      },
+      "statusDescriptions": {
+        "pendingCustomer": "Diese PDF-Version wartet auf Ihre Prüfung und Freigabe.",
+        "approved": "Sie haben diese PDF-Version am {date} freigegeben.",
+        "rejected": "Sie haben für diese Version Änderungen angefordert.",
+        "unknown": "Status konnte nicht ermittelt werden."
+      },
+      "error": {
+        "notAvailable": "PDF nicht verfügbar",
+        "notAvailableDescription": "Das PDF-Dokument konnte nicht geladen werden. Bitte kontaktieren Sie den Support."
+      },
+      "infoBoxes": {
+        "pending": {
+          "title": "📋 Wartet auf Ihre Prüfung",
+          "description": "Diese PDF-Version wurde zur Freigabe vorgelegt. Bitte prüfen Sie das Dokument sorgfältig und entscheiden Sie, ob Sie es freigeben oder Änderungen wünschen."
+        },
+        "approved": {
+          "title": "✅ Von Ihnen freigegeben",
+          "description": "Sie haben diese PDF-Version am {date} freigegeben. Das Dokument kann jetzt von der Agentur verwendet werden."
+        },
+        "rejected": {
+          "title": "❌ Änderungen erbeten",
+          "description": "Sie haben für diese Version Änderungen angefordert. Die Agentur wurde benachrichtigt und wird eine überarbeitete Version erstellen."
+        },
+        "immutable": {
+          "title": "📄 Unveränderliche PDF-Version",
+          "description": "Diese PDF-Version wurde automatisch beim Anfordern der Freigabe erstellt und kann nicht mehr verändert werden. Sie bildet genau den Inhalt ab, der zur Freigabe vorgelegt wird. Nach Ihrer Freigabe dient sie als verbindliche Referenz für die Veröffentlichung."
+        }
+      }
+    }
   },
   "inbox": {
     "title": "Posteingang",

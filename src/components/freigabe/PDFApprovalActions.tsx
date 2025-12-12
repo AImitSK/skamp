@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useCallback, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
-import { 
+import {
   CheckIcon,
   PencilSquareIcon,
   ChatBubbleLeftRightIcon,
@@ -54,7 +55,7 @@ function ApprovalButton({ onClick, disabled, loading, children, variant }: Appro
   );
 }
 
-export default memo(function PDFApprovalActions({ 
+export default memo(function PDFApprovalActions({
   version,
   currentStatus,
   onApprove,
@@ -62,11 +63,12 @@ export default memo(function PDFApprovalActions({
   disabled = false,
   className = ""
 }: PDFApprovalActionsProps) {
-  
+  const t = useTranslations('freigabe.approval');
+
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Prüfe ob Aktionen verfügbar sind
   const isApproved = currentStatus === 'approved';
   const isCompleted = isApproved;
@@ -74,31 +76,31 @@ export default memo(function PDFApprovalActions({
   
   const handleApprove = useCallback(async () => {
     if (!canTakeAction || submitting) return;
-    
+
     try {
       setSubmitting(true);
       await onApprove();
     } catch (error) {
-      console.error('Fehler bei der Freigabe:', error);
+      console.error(t('errors.approveError'), error);
     } finally {
       setSubmitting(false);
     }
-  }, [canTakeAction, submitting, onApprove]);
+  }, [canTakeAction, submitting, onApprove, t]);
   
   const handleRequestChanges = useCallback(async () => {
     if (!canTakeAction || !feedbackText.trim() || submitting) return;
-    
+
     try {
       setSubmitting(true);
       await onRequestChanges(feedbackText.trim());
       setFeedbackText('');
       setShowFeedbackForm(false);
     } catch (error) {
-      console.error('Fehler beim Senden des Feedbacks:', error);
+      console.error(t('errors.feedbackError'), error);
     } finally {
       setSubmitting(false);
     }
-  }, [canTakeAction, feedbackText, submitting, onRequestChanges]);
+  }, [canTakeAction, feedbackText, submitting, onRequestChanges, t]);
   
   const resetFeedbackForm = useCallback(() => {
     setShowFeedbackForm(false);
@@ -116,15 +118,16 @@ export default memo(function PDFApprovalActions({
             </div>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Freigabe erfolgreich erteilt
+            {t('completed.title')}
           </h3>
           <p className="text-gray-600">
-            Sie haben die PDF-Version {version.version} freigegeben. 
-            Das Dokument kann nun von der Agentur verwendet werden.
+            {t('completed.description', { version: version.version })}
           </p>
           {version.customerApproval?.approvedAt && (
             <div className="mt-3 text-sm text-gray-500">
-              Freigegeben am {new Date(version.customerApproval.approvedAt.toDate()).toLocaleString('de-DE')}
+              {t('completed.approvedAt', {
+                date: new Date(version.customerApproval.approvedAt.toDate()).toLocaleString('de-DE')
+              })}
             </div>
           )}
         </div>
@@ -136,29 +139,29 @@ export default memo(function PDFApprovalActions({
     <div className={clsx("bg-white rounded-lg border border-gray-200 p-6", className)}>
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400" />
-        Ihre Entscheidung
+        {t('title')}
       </h3>
-      
+
       {showFeedbackForm ? (
         /* Feedback-Formular */
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Welche Änderungen wünschen Sie an der PDF?
+              {t('feedback.label')}
             </label>
             <Textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               rows={4}
-              placeholder="Bitte beschreiben Sie konkret, was an der PDF geändert werden soll..."
+              placeholder={t('feedback.placeholder')}
               className="w-full resize-none"
               autoFocus
             />
             <div className="mt-1 text-xs text-gray-500">
-              Ihre Änderungswünsche werden direkt an die Agentur übermittelt.
+              {t('feedback.hint')}
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <Button
               onClick={handleRequestChanges}
@@ -169,12 +172,12 @@ export default memo(function PDFApprovalActions({
               {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Wird gesendet...
+                  {t('feedback.sending')}
                 </>
               ) : (
                 <>
                   <ExclamationCircleIcon className="h-4 w-4 mr-2" />
-                  Änderungen senden
+                  {t('feedback.submit')}
                 </>
               )}
             </Button>
@@ -184,7 +187,7 @@ export default memo(function PDFApprovalActions({
               plain
               className="px-4"
             >
-              Abbrechen
+              {t('feedback.cancel')}
             </Button>
           </div>
         </div>
@@ -192,10 +195,9 @@ export default memo(function PDFApprovalActions({
         /* Haupt-Aktionen */
         <div className="space-y-4">
           <p className="text-gray-600">
-            Bitte prüfen Sie das PDF-Dokument sorgfältig. Sie können entweder die Freigabe 
-            erteilen oder spezifische Änderungen anfordern.
+            {t('description')}
           </p>
-          
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <ApprovalButton
@@ -205,38 +207,38 @@ export default memo(function PDFApprovalActions({
               variant="approve"
             >
               <CheckIcon className="h-5 w-5" />
-              {submitting ? 'Wird verarbeitet...' : 'PDF freigeben'}
+              {submitting ? t('actions.processing') : t('actions.approve')}
             </ApprovalButton>
-            
+
             <ApprovalButton
               onClick={() => setShowFeedbackForm(true)}
               disabled={!canTakeAction}
               variant="changes"
             >
               <PencilSquareIcon className="h-5 w-5" />
-              Änderungen anfordern
+              {t('actions.requestChanges')}
             </ApprovalButton>
           </div>
-          
+
           {/* Status-Info */}
           {currentStatus === 'pending' && (
             <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-50 px-3 py-2 rounded">
               <ClockIcon className="h-4 w-4" />
-              Diese PDF wartet auf Ihre erste Prüfung
+              {t('status.pending')}
             </div>
           )}
-          
+
           {currentStatus === 'viewed' && (
             <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded">
               <CheckIcon className="h-4 w-4" />
-              Sie haben diese PDF bereits angesehen
+              {t('status.viewed')}
             </div>
           )}
-          
+
           {currentStatus === 'commented' && (
             <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded">
               <ExclamationCircleIcon className="h-4 w-4" />
-              Sie haben bereits Änderungen zu einer vorherigen Version angefordert
+              {t('status.commented')}
             </div>
           )}
         </div>
@@ -245,8 +247,7 @@ export default memo(function PDFApprovalActions({
       {/* Hinweis */}
       <div className="mt-6 p-3 bg-gray-50 rounded-lg">
         <p className="text-xs text-gray-600">
-          <strong>Hinweis:</strong> Nach Ihrer Freigabe ist diese PDF-Version verbindlich und 
-          kann nicht mehr geändert werden. Bei Änderungswünschen wird eine neue Version erstellt.
+          <strong>{t('notice.label')}</strong> {t('notice.text')}
         </p>
       </div>
     </div>

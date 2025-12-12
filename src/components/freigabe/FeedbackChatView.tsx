@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { ChatBubbleLeftRightIcon, UserCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { CommunicationItem } from '@/types/customer-review';
 
 /**
@@ -19,24 +20,25 @@ export function FeedbackChatView({
   latestMessage,
   className = '',
 }: FeedbackChatViewProps) {
+  const t = useTranslations('freigabe.chat');
 
   const formatTimeAgo = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     // Validierung: Prüfe ob Datum gültig ist
     if (!dateObj || isNaN(dateObj.getTime())) {
-      return 'unbekannt';
+      return t('timeAgo.unknown');
     }
-    
+
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));
-    
+
     // Zusätzliche Validierung für negative Zeiten
-    if (diffInMinutes < 0) return 'gerade eben';
-    if (diffInMinutes < 1) return 'gerade eben';
-    if (diffInMinutes < 60) return `vor ${diffInMinutes} Min.`;
-    if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)} Std.`;
-    return `vor ${Math.floor(diffInMinutes / 1440)} Tag(en)`;
+    if (diffInMinutes < 0) return t('timeAgo.justNow');
+    if (diffInMinutes < 1) return t('timeAgo.justNow');
+    if (diffInMinutes < 60) return t('timeAgo.minutesAgo', { minutes: diffInMinutes });
+    if (diffInMinutes < 1440) return t('timeAgo.hoursAgo', { hours: Math.floor(diffInMinutes / 60) });
+    return t('timeAgo.daysAgo', { days: Math.floor(diffInMinutes / 1440) });
   };
 
   const getTypeIcon = (type: CommunicationItem['type']) => {
@@ -57,15 +59,15 @@ export function FeedbackChatView({
   const getTypeLabel = (type: CommunicationItem['type']) => {
     switch (type) {
       case 'feedback':
-        return 'Feedback';
+        return t('types.feedback');
       case 'comment':
-        return 'Kommentar';
+        return t('types.comment');
       case 'approval_request':
-        return 'Freigabe-Anfrage';
+        return t('types.approvalRequest');
       case 'question':
-        return 'Frage';
+        return t('types.question');
       default:
-        return 'Nachricht';
+        return t('types.message');
     }
   };
 
@@ -79,9 +81,9 @@ export function FeedbackChatView({
     return (
       <div className={`text-center py-8 ${className}`}>
         <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Noch keine Kommunikation vorhanden</p>
+        <p className="text-gray-500">{t('empty.title')}</p>
         <p className="text-sm text-gray-400 mt-1">
-          Hier erscheinen Nachrichten und Rückmeldungen
+          {t('empty.description')}
         </p>
       </div>
     );
@@ -108,7 +110,7 @@ export function FeedbackChatView({
             <div className="flex-grow min-w-0">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="font-medium text-green-900">
-                  Neueste Nachricht
+                  {t('latest.title')}
                 </span>
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   {getTypeLabel(latestMessage.type)}
@@ -116,22 +118,22 @@ export function FeedbackChatView({
                 {latestMessage.manualApproval && (
                   <>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                      Freigabe erteilt
+                      {t('badges.approvalGranted')}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                      Manuell freigegeben
+                      {t('badges.manuallyApproved')}
                     </span>
                   </>
                 )}
                 {latestMessage.manualChangesRequested && (
                   <>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                      Änderungen erbeten
+                      {t('badges.changesRequested')}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                      Manuell entsperrt
+                      {t('badges.manuallyUnlocked')}
                     </span>
                   </>
                 )}
@@ -140,7 +142,7 @@ export function FeedbackChatView({
                 </span>
               </div>
               <div className="text-sm text-green-800 mb-2">
-                <strong>Von:</strong> {latestMessage.senderName || latestMessage.sender?.name}
+                <strong>{t('latest.from')}</strong> {latestMessage.senderName || latestMessage.sender?.name}
               </div>
               <div className="text-sm text-green-900 whitespace-pre-wrap">
                 {latestMessage.message || latestMessage.content}
@@ -153,7 +155,7 @@ export function FeedbackChatView({
       {/* Kommunikations-Historie */}
       <div>
         <h4 className="font-medium text-gray-900 mb-3">
-          Vollständige Kommunikationshistorie
+          {t('history.title')}
         </h4>
         
         <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -198,22 +200,22 @@ export function FeedbackChatView({
                       {communication.manualApproval && (
                         <>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Freigabe erteilt
+                            {t('badges.approvalGranted')}
                           </span>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                            Manuell freigegeben
+                            {t('badges.manuallyApproved')}
                           </span>
                         </>
                       )}
                       {communication.manualChangesRequested && (
                         <>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                            Änderungen erbeten
+                            {t('badges.changesRequested')}
                           </span>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                            Manuell entsperrt
+                            {t('badges.manuallyUnlocked')}
                           </span>
                         </>
                       )}

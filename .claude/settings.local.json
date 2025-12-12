@@ -75,7 +75,8 @@
       "Bash(python -c:*)",
       "Bash(node:*)",
       "Bash(node temp-update-en.js:*)",
-      "Bash(del temp-update-de.js temp-update-en.js)"
+      "Bash(del temp-update-de.js temp-update-en.js)",
+      "Bash(del update-pdf-translations.js)"
     ]
   },
   "enableAllProjectMcpServers": true,

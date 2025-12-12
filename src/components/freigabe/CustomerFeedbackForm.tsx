@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import { 
+import {
   ChatBubbleLeftRightIcon,
   ExclamationCircleIcon,
   InformationCircleIcon,
@@ -10,6 +10,7 @@ import {
   XMarkIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import clsx from 'clsx';
@@ -22,56 +23,48 @@ interface CustomerFeedbackFormProps {
   className?: string;
 }
 
-// Vordefinierte Feedback-Templates für bessere UX
-const FEEDBACK_TEMPLATES = [
-  {
-    id: 'content-changes',
-    title: 'Inhaltliche Änderungen',
-    template: 'Bitte ändern Sie folgende Inhalte:\n\n- \n- \n- \n\nVielen Dank!'
-  },
-  {
-    id: 'formatting',
-    title: 'Layout/Formatierung',
-    template: 'Bitte passen Sie das Layout an:\n\n- \n- \n\nDanke für die Überarbeitung!'
-  },
-  {
-    id: 'corrections',
-    title: 'Korrekturen',
-    template: 'Bitte korrigieren Sie:\n\n- \n- \n\nMit freundlichen Grüßen'
-  },
-  {
-    id: 'additions',
-    title: 'Ergänzungen',
-    template: 'Bitte ergänzen Sie:\n\n- \n- \n\nVielen Dank für die Bearbeitung!'
-  }
-];
+// Template IDs für i18n
+const TEMPLATE_IDS = [
+  'content-changes',
+  'formatting',
+  'corrections',
+  'additions'
+] as const;
 
-export default function CustomerFeedbackForm({ 
+export default function CustomerFeedbackForm({
   onSubmit,
   onCancel,
   initialValue = '',
   disabled = false,
   className = ""
 }: CustomerFeedbackFormProps) {
-  
+  const t = useTranslations('freigabe.feedback');
+
   const [feedbackText, setFeedbackText] = useState(initialValue);
   const [submitting, setSubmitting] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'changes' | 'general'>('changes');
   const [showTemplates, setShowTemplates] = useState(false);
+
+  // Build templates from translations
+  const feedbackTemplates = TEMPLATE_IDS.map(id => ({
+    id,
+    title: t(`templates.${id}.title`),
+    template: t(`templates.${id}.template`)
+  }));
   
   const handleSubmit = useCallback(async () => {
     if (!feedbackText.trim() || submitting || disabled) return;
-    
+
     try {
       setSubmitting(true);
       await onSubmit(feedbackText.trim(), feedbackType);
     } catch (error) {
-      console.error('Fehler beim Senden des Feedbacks:', error);
-      alert('Das Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
+      console.error('Error sending feedback:', error);
+      alert(t('errorSending'));
     } finally {
       setSubmitting(false);
     }
-  }, [feedbackText, feedbackType, onSubmit, submitting, disabled]);
+  }, [feedbackText, feedbackType, onSubmit, submitting, disabled, t]);
   
   const handleCancel = useCallback(() => {
     if (submitting) return;
@@ -93,10 +86,10 @@ export default function CustomerFeedbackForm({
         <div>
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400" />
-            Änderungen anfordern
+            {t('title')}
           </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Beschreiben Sie konkret, welche Änderungen Sie wünschen
+            {t('subtitle')}
           </p>
         </div>
         <Button
@@ -117,24 +110,24 @@ export default function CustomerFeedbackForm({
             disabled={submitting}
             className={clsx(
               "px-3 py-2 text-sm rounded-md border transition-colors",
-              feedbackType === 'changes' 
-                ? "bg-[#005fab] text-white border-[#005fab]" 
+              feedbackType === 'changes'
+                ? "bg-[#005fab] text-white border-[#005fab]"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
             )}
           >
-            Konkrete Änderungen
+            {t('types.changes')}
           </button>
           <button
             onClick={() => setFeedbackType('general')}
             disabled={submitting}
             className={clsx(
               "px-3 py-2 text-sm rounded-md border transition-colors",
-              feedbackType === 'general' 
-                ? "bg-[#005fab] text-white border-[#005fab]" 
+              feedbackType === 'general'
+                ? "bg-[#005fab] text-white border-[#005fab]"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
             )}
           >
-            Allgemeines Feedback
+            {t('types.general')}
           </button>
         </div>
       </div>
@@ -148,12 +141,12 @@ export default function CustomerFeedbackForm({
           disabled={submitting}
         >
           <SparklesIcon className="h-4 w-4 mr-1" />
-          {showTemplates ? 'Vorlagen ausblenden' : 'Vorlagen anzeigen'}
+          {showTemplates ? t('templatesHide') : t('templatesShow')}
         </Button>
-        
+
         {showTemplates && (
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {FEEDBACK_TEMPLATES.map((template) => (
+            {feedbackTemplates.map((template) => (
               <button
                 key={template.id}
                 onClick={() => insertTemplate(template.template)}
@@ -173,7 +166,7 @@ export default function CustomerFeedbackForm({
       {/* Feedback-Eingabe */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          {feedbackType === 'changes' ? 'Gewünschte Änderungen' : 'Ihr Feedback'}
+          {feedbackType === 'changes' ? t('labels.desiredChanges') : t('labels.yourFeedback')}
           <span className="text-red-500 ml-1">*</span>
         </label>
         <Textarea
@@ -182,22 +175,22 @@ export default function CustomerFeedbackForm({
           rows={6}
           placeholder={
             feedbackType === 'changes'
-              ? 'Bitte beschreiben Sie konkret, was geändert werden soll:\n\n- Punkt 1\n- Punkt 2\n- Punkt 3\n\nJe präziser Ihre Angaben, desto besser kann die Agentur Ihre Wünsche umsetzen.'
-              : 'Teilen Sie Ihr allgemeines Feedback zur PDF mit...'
+              ? t('placeholders.changes')
+              : t('placeholders.general')
           }
           className="w-full resize-none font-mono text-sm"
           disabled={submitting}
           autoFocus
         />
-        
+
         {/* Zeichenzähler */}
         <div className="flex justify-between items-center mt-2">
           <div className="text-xs text-gray-500">
-            {feedbackText.length} Zeichen (mindestens 10 erforderlich)
+            {t('characterCount', { count: feedbackText.length })}
           </div>
           {!isValid && feedbackText.length > 0 && (
             <div className="text-xs text-red-500">
-              Zu kurz für aussagekräftiges Feedback
+              {t('tooShort')}
             </div>
           )}
         </div>
@@ -208,11 +201,9 @@ export default function CustomerFeedbackForm({
         <div className="flex">
           <InformationCircleIcon className="h-5 w-5 text-orange-400 mr-2 flex-shrink-0" />
           <div className="text-sm text-orange-800">
-            <p className="font-medium mb-1">💡 Tipp für besseres Feedback</p>
+            <p className="font-medium mb-1">{t('tip.title')}</p>
             <p>
-              Je konkreter Sie Ihre Änderungswünsche formulieren, desto schneller und 
-              präziser kann die Agentur diese umsetzen. Verwenden Sie gerne Aufzählungen 
-              und Zeilennummern als Orientierung.
+              {t('tip.description')}
             </p>
           </div>
         </div>
@@ -228,32 +219,30 @@ export default function CustomerFeedbackForm({
           {submitting ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Wird gesendet...
+              {t('sending')}
             </>
           ) : (
             <>
               <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-              {feedbackType === 'changes' ? 'Änderungen senden' : 'Feedback senden'}
+              {feedbackType === 'changes' ? t('buttons.sendChanges') : t('buttons.sendFeedback')}
             </>
           )}
         </Button>
-        
+
         <Button
           onClick={handleCancel}
           disabled={submitting}
           plain
           className="px-6"
         >
-          Abbrechen
+          {t('buttons.cancel')}
         </Button>
       </div>
       
       {/* Wichtiger Hinweis */}
       <div className="mt-4 p-3 bg-gray-50 rounded-lg">
         <p className="text-xs text-gray-600">
-          <strong>Wichtig:</strong> Nach dem Senden Ihres Feedbacks wird die Agentur 
-          benachrichtigt und erstellt eine überarbeitete Version. Sie erhalten eine 
-          neue Freigabe-Anfrage, sobald die Änderungen umgesetzt wurden.
+          <strong>{t('notice.title')}</strong> {t('notice.description')}
         </p>
       </div>
     </div>
