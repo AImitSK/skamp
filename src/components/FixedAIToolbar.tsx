@@ -11,6 +11,7 @@ import {
   SpeakerWaveIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
@@ -216,17 +217,18 @@ export type AIAction =
 
 interface ToneOption {
   value: string;
-  label: string;
+  labelKey: string;
 }
 
-const toneOptions: ToneOption[] = [
-  { value: 'formal', label: 'Formal' },
-  { value: 'modern', label: 'Modern' },
-  { value: 'technical', label: 'Technisch' },
-  { value: 'startup', label: 'Startup' }
+const TONE_OPTIONS: ToneOption[] = [
+  { value: 'formal', labelKey: 'tones.formal' },
+  { value: 'modern', labelKey: 'tones.modern' },
+  { value: 'technical', labelKey: 'tones.technical' },
+  { value: 'startup', labelKey: 'tones.startup' }
 ];
 
 export const FixedAIToolbar = ({ editor, onAIAction }: FixedAIToolbarProps) => {
+  const t = useTranslations('common.aiToolbar');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [customInstruction, setCustomInstruction] = useState('');
@@ -554,10 +556,10 @@ Antworte NUR mit dem erweiterten Text.`;
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow'
           )}
-          title="Umformulieren"
+          title={t('actions.rephrase')}
         >
           <SparklesIcon className="h-4 w-4" />
-          <span>Umformulieren</span>
+          <span>{t('actions.rephrase')}</span>
         </button>
 
         {/* Kürzen */}
@@ -571,10 +573,10 @@ Antworte NUR mit dem erweiterten Text.`;
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow'
           )}
-          title="Kürzen"
+          title={t('actions.shorten')}
         >
           <ArrowsPointingInIcon className="h-4 w-4" />
-          <span>Kürzen</span>
+          <span>{t('actions.shorten')}</span>
         </button>
 
         {/* Erweitern */}
@@ -588,10 +590,10 @@ Antworte NUR mit dem erweiterten Text.`;
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow'
           )}
-          title="Erweitern"
+          title={t('actions.expand')}
         >
           <ArrowsPointingOutIcon className="h-4 w-4" />
-          <span>Erweitern</span>
+          <span>{t('actions.expand')}</span>
         </button>
 
         {/* Ausformulieren */}
@@ -605,10 +607,10 @@ Antworte NUR mit dem erweiterten Text.`;
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow'
           )}
-          title="Ausformulieren (Rohentwurf → strukturierte PR)"
+          title={t('actions.formalizeTooltip')}
         >
           <DocumentTextIcon className="h-4 w-4" />
-          <span>Ausformulieren</span>
+          <span>{t('actions.formalize')}</span>
         </button>
 
         {/* Ton ändern Dropdown */}
@@ -624,10 +626,10 @@ Antworte NUR mit dem erweiterten Text.`;
               'disabled:opacity-50 disabled:cursor-not-allowed',
               'shadow-sm hover:shadow'
             )}
-            title="Ton ändern"
+            title={t('actions.changeTone')}
           >
             <SpeakerWaveIcon className="h-4 w-4" />
-            <span>Ton ändern</span>
+            <span>{t('actions.changeTone')}</span>
             <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -644,13 +646,13 @@ Antworte NUR mit dem erweiterten Text.`;
                 zIndex: 9999
               }}
             >
-              {toneOptions.map((tone) => (
+              {TONE_OPTIONS.map((tone) => (
                 <button
                   key={tone.value}
                   onClick={() => handleToneChange(tone.value)}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  {tone.label}
+                  {t(tone.labelKey)}
                 </button>
               ))}
             </div>
@@ -662,7 +664,7 @@ Antworte NUR mit dem erweiterten Text.`;
       <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-            Anweisung:
+            {t('customInstruction.label')}
           </label>
           <input
             type="text"
@@ -674,7 +676,7 @@ Antworte NUR mit dem erweiterten Text.`;
                 handleCustomInstruction();
               }
             }}
-            placeholder="z.B. Das ist mir zu langweilig. Schreib das werblicher."
+            placeholder={t('customInstruction.placeholder')}
             className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-[#005fab] placeholder-gray-400"
             disabled={isProcessing}
           />
@@ -682,7 +684,7 @@ Antworte NUR mit dem erweiterten Text.`;
             onClick={handleCustomInstruction}
             disabled={isProcessing || !customInstruction.trim()}
             className="px-4 py-2 text-sm font-medium rounded-md transition-colors bg-[#005fab] hover:bg-[#004a8c] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-            title="Anweisung ausführen"
+            title={t('customInstruction.execute')}
           >
             →
           </button>
@@ -694,7 +696,7 @@ Antworte NUR mit dem erweiterten Text.`;
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#005fab] border-t-transparent"></div>
-            <span className="text-sm text-gray-600 font-medium">KI bearbeitet...</span>
+            <span className="text-sm text-gray-600 font-medium">{t('processing')}</span>
           </div>
         </div>
       )}

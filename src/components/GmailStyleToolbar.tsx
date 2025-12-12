@@ -4,6 +4,7 @@
 import { type Editor } from '@tiptap/react';
 import { useState } from 'react';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 import {
   BoldIcon,
   ItalicIcon,
@@ -31,6 +32,7 @@ type GmailStyleToolbarProps = {
 };
 
 export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggleAIToolbar }: GmailStyleToolbarProps) => {
+  const t = useTranslations('common.editor');
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
@@ -42,88 +44,88 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
 
   // Gmail-Style Actions (erweitert)
   const toolbarActions = [
-    { 
-      command: 'toggleBold', 
-      icon: BoldIcon, 
-      label: 'Fett', 
+    {
+      command: 'toggleBold',
+      icon: BoldIcon,
+      label: t('formatting.bold'),
       activeName: 'bold',
-      shortcut: 'Strg+B'
+      shortcut: t('shortcuts.bold')
     },
-    { 
-      command: 'toggleItalic', 
-      icon: ItalicIcon, 
-      label: 'Kursiv', 
+    {
+      command: 'toggleItalic',
+      icon: ItalicIcon,
+      label: t('formatting.italic'),
       activeName: 'italic',
-      shortcut: 'Strg+I'
+      shortcut: t('shortcuts.italic')
     },
-    { 
-      command: 'toggleUnderline', 
-      icon: () => <span className="font-bold underline text-sm">U</span>, 
-      label: 'Unterstreichen', 
+    {
+      command: 'toggleUnderline',
+      icon: () => <span className="font-bold underline text-sm">U</span>,
+      label: t('formatting.underline'),
       activeName: 'underline',
-      shortcut: 'Strg+U'
+      shortcut: t('shortcuts.underline')
     },
-    { 
-      command: () => editor.chain().focus().toggleBulletList().run(), 
-      icon: ListBulletIcon, 
-      label: 'Aufzählung', 
+    {
+      command: () => editor.chain().focus().toggleBulletList().run(),
+      icon: ListBulletIcon,
+      label: t('formatting.bulletList'),
       activeName: 'bulletList',
-      shortcut: 'Strg+Shift+8',
+      shortcut: t('shortcuts.bulletList'),
       isActive: () => editor.isActive('bulletList')
     },
-    { 
-      command: () => editor.chain().focus().toggleOrderedList().run(), 
-      icon: () => <span className="font-bold text-sm">1.</span>, 
-      label: 'Nummerierte Liste', 
+    {
+      command: () => editor.chain().focus().toggleOrderedList().run(),
+      icon: () => <span className="font-bold text-sm">1.</span>,
+      label: t('formatting.orderedList'),
       activeName: 'orderedList',
-      shortcut: 'Strg+Shift+7',
+      shortcut: t('shortcuts.orderedList'),
       isActive: () => editor.isActive('orderedList')
     },
-    { 
-      command: 'toggleBlockquote', 
-      icon: ChatBubbleLeftRightIcon, 
-      label: 'Zitat', 
+    {
+      command: 'toggleBlockquote',
+      icon: ChatBubbleLeftRightIcon,
+      label: t('formatting.quote'),
       activeName: 'blockquote',
-      shortcut: 'Strg+Shift+Q'
+      shortcut: t('shortcuts.quote')
     },
-    { 
-      command: () => editor.chain().focus().toggleCTA().run(), 
-      icon: MegaphoneIcon, 
-      label: 'Call-to-Action', 
+    {
+      command: () => editor.chain().focus().toggleCTA().run(),
+      icon: MegaphoneIcon,
+      label: t('formatting.cta'),
       activeName: 'ctaText',
-      shortcut: 'Strg+Shift+C',
+      shortcut: t('shortcuts.cta'),
       isActive: () => editor.isActive('ctaText')
     },
-    { 
-      command: 'toggleHashtag', 
-      icon: () => <span className="font-bold">#</span>, 
-      label: 'Hashtag', 
+    {
+      command: 'toggleHashtag',
+      icon: () => <span className="font-bold">#</span>,
+      label: t('formatting.hashtag'),
       activeName: 'hashtag',
-      shortcut: 'Strg+Shift+H'
+      shortcut: t('shortcuts.hashtag')
     },
   ];
 
   const alignmentActions = [
-    { 
-      command: () => (editor.chain().focus() as any).setTextAlign('left').run(), 
-      icon: Bars3BottomLeftIcon, 
-      label: 'Linksbündig', 
+    {
+      command: () => (editor.chain().focus() as any).setTextAlign('left').run(),
+      icon: Bars3BottomLeftIcon,
+      label: t('alignment.left'),
       activeName: 'left',
-      shortcut: 'Strg+Shift+L'
+      shortcut: t('shortcuts.alignLeft')
     },
-    { 
-      command: () => (editor.chain().focus() as any).setTextAlign('center').run(), 
-      icon: Bars3Icon, 
-      label: 'Zentriert', 
+    {
+      command: () => (editor.chain().focus() as any).setTextAlign('center').run(),
+      icon: Bars3Icon,
+      label: t('alignment.center'),
       activeName: 'center',
-      shortcut: 'Strg+Shift+E'
+      shortcut: t('shortcuts.alignCenter')
     },
-    { 
-      command: () => (editor.chain().focus() as any).setTextAlign('right').run(), 
-      icon: Bars3BottomRightIcon, 
-      label: 'Rechtsbündig', 
+    {
+      command: () => (editor.chain().focus() as any).setTextAlign('right').run(),
+      icon: Bars3BottomRightIcon,
+      label: t('alignment.right'),
       activeName: 'right',
-      shortcut: 'Strg+Shift+R'
+      shortcut: t('shortcuts.alignRight')
     },
   ];
 
@@ -154,31 +156,31 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
   // Elegante Farben-Organisation wie in deinem Screenshot
   const colorRows = [
     [
-      { name: 'Schwarz', value: '#000000' },
-      { name: 'Dunkelgrau', value: '#374151' },
-      { name: 'Grau', value: '#6B7280' },
-      { name: 'Hellgrau', value: '#9CA3AF' },
+      { name: t('colors.black'), value: '#000000' },
+      { name: t('colors.darkGray'), value: '#374151' },
+      { name: t('colors.gray'), value: '#6B7280' },
+      { name: t('colors.lightGray'), value: '#9CA3AF' },
     ],
     [
-      { name: 'Primary', value: '#005fab' },
-      { name: 'Blau', value: '#3B82F6' },
-      { name: 'Indigo', value: '#4F46E5' },
-      { name: 'Lila', value: '#7C3AED' },
+      { name: t('colors.primary'), value: '#005fab' },
+      { name: t('colors.blue'), value: '#3B82F6' },
+      { name: t('colors.indigo'), value: '#4F46E5' },
+      { name: t('colors.purple'), value: '#7C3AED' },
     ],
     [
-      { name: 'Rot', value: '#EF4444' },
-      { name: 'Orange', value: '#F97316' },
-      { name: 'Gelb', value: '#EAB308' },
-      { name: 'Grün', value: '#10B981' },
+      { name: t('colors.red'), value: '#EF4444' },
+      { name: t('colors.orange'), value: '#F97316' },
+      { name: t('colors.yellow'), value: '#EAB308' },
+      { name: t('colors.green'), value: '#10B981' },
     ],
   ];
 
   // Schriftgrößen wie in deinem Screenshot
   const fontSizes = [
-    { name: 'Klein', value: '14px', class: 'text-sm' },
-    { name: 'Normal', value: '16px', class: 'text-base' },
-    { name: 'Groß', value: '20px', class: 'text-lg' },
-    { name: 'Riesig', value: '24px', class: 'text-xl' },
+    { name: t('fontSize.small'), value: '14px', class: 'text-sm' },
+    { name: t('fontSize.normal'), value: '16px', class: 'text-base' },
+    { name: t('fontSize.large'), value: '20px', class: 'text-lg' },
+    { name: t('fontSize.huge'), value: '24px', class: 'text-xl' },
   ];
 
   const handleFontSizeChange = (fontSize: string) => {
@@ -272,7 +274,7 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
                 'hover:bg-gray-100 text-gray-700': !editor.isActive('link'),
               }
             )}
-            title="Link einfügen (Strg+K)"
+            title={t('link.insertTitle')}
           >
             <LinkIcon className="h-4 w-4" />
           </button>
@@ -318,7 +320,7 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
               type="button"
               onClick={() => setShowFontSizeDropdown(!showFontSizeDropdown)}
               className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors min-w-[70px] text-left"
-              title="Schriftgröße"
+              title={t('fontSize.label')}
             >
               {getCurrentFontSize().name}
             </button>
@@ -371,10 +373,10 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
                   'hover:bg-gray-100 text-gray-700': !isAIToolbarExpanded,
                 }
               )}
-              title={isAIToolbarExpanded ? "KI-Assistent ausblenden" : "KI-Assistent einblenden"}
+              title={isAIToolbarExpanded ? t('aiAssistant.hide') : t('aiAssistant.show')}
             >
               <SparklesIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">KI-Assistent</span>
+              <span className="hidden sm:inline">{t('aiAssistant.label')}</span>
               <svg
                 className={clsx(
                   'h-3 w-3 ml-0.5 transition-transform',
@@ -397,7 +399,7 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
             type="button"
             onClick={handleClearFormatting}
             className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
-            title="Formatierung entfernen"
+            title={t('formatting.clearFormatting')}
           >
             <DocumentIcon className="h-4 w-4" />
           </button>
@@ -408,14 +410,14 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
               type="button"
               onClick={() => setShowColorDropdown(!showColorDropdown)}
               className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
-              title="Textfarbe"
+              title={t('colors.textColor')}
             >
               <div className="w-4 h-4 rounded border border-gray-300" style={{background: 'linear-gradient(45deg, #000 25%, #005fab 25%, #005fab 50%, #EF4444 50%, #EF4444 75%, #10B981 75%)'}} />
             </button>
-            
+
             {showColorDropdown && (
               <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-sm z-10 p-2">
-                <div className="text-xs font-medium text-gray-600 mb-2 px-1">Schriftfarbe</div>
+                <div className="text-xs font-medium text-gray-600 mb-2 px-1">{t('colors.textColor')}</div>
                 {colorRows.map((row, rowIndex) => (
                   <div key={rowIndex} className="flex gap-1 mb-1">
                     {row.map(color => (
@@ -438,25 +440,25 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
 
       {/* Link Dialog (CeleroPress Design Pattern konform) */}
       <Dialog open={showLinkDialog} onClose={() => setShowLinkDialog(false)}>
-        <DialogTitle>Link einfügen</DialogTitle>
+        <DialogTitle>{t('link.dialogTitle')}</DialogTitle>
         <DialogBody>
           <Field>
-            <Label>URL</Label>
+            <Label>{t('link.urlLabel')}</Label>
             <Input
               type="url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t('link.urlPlaceholder')}
               autoFocus
             />
           </Field>
         </DialogBody>
         <DialogActions>
-          <Button 
+          <Button
             className="bg-gray-50 hover:bg-gray-100 text-gray-900 border-0"
             onClick={() => setShowLinkDialog(false)}
           >
-            Abbrechen
+            {t('link.cancel')}
           </Button>
           {editor.isActive('link') && (
             <Button
@@ -466,14 +468,14 @@ export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggl
                 setShowLinkDialog(false);
               }}
             >
-              Link entfernen
+              {t('link.remove')}
             </Button>
           )}
           <Button
             onClick={handleLinkSubmit}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
-            {linkUrl ? 'Link setzen' : 'Link entfernen'}
+            {linkUrl ? t('link.set') : t('link.remove')}
           </Button>
         </DialogActions>
       </Dialog>

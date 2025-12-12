@@ -1567,6 +1567,106 @@
           "Research"
         ]
       }
+    },
+    "editor": {
+      "placeholder": "Write press release...",
+      "titlePlaceholder": "Title of the press release...",
+      "fullscreen": {
+        "title": "Focused Writing",
+        "exitHint": "ESC to exit",
+        "exitTooltip": "Exit fullscreen (ESC)",
+        "enterTooltip": "Fullscreen mode (focused writing)"
+      },
+      "formatting": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "underline": "Underline",
+        "bulletList": "Bullet List",
+        "orderedList": "Numbered List",
+        "quote": "Quote",
+        "cta": "Call-to-Action",
+        "hashtag": "Hashtag",
+        "clearFormatting": "Clear Formatting"
+      },
+      "alignment": {
+        "left": "Align Left",
+        "center": "Align Center",
+        "right": "Align Right"
+      },
+      "shortcuts": {
+        "bold": "Ctrl+B",
+        "italic": "Ctrl+I",
+        "underline": "Ctrl+U",
+        "bulletList": "Ctrl+Shift+8",
+        "orderedList": "Ctrl+Shift+7",
+        "quote": "Ctrl+Shift+Q",
+        "cta": "Ctrl+Shift+C",
+        "hashtag": "Ctrl+Shift+H",
+        "alignLeft": "Ctrl+Shift+L",
+        "alignCenter": "Ctrl+Shift+E",
+        "alignRight": "Ctrl+Shift+R"
+      },
+      "colors": {
+        "textColor": "Text Color",
+        "black": "Black",
+        "darkGray": "Dark Gray",
+        "gray": "Gray",
+        "lightGray": "Light Gray",
+        "primary": "Primary",
+        "blue": "Blue",
+        "indigo": "Indigo",
+        "purple": "Purple",
+        "red": "Red",
+        "orange": "Orange",
+        "yellow": "Yellow",
+        "green": "Green"
+      },
+      "fontSize": {
+        "label": "Font Size",
+        "small": "Small",
+        "normal": "Normal",
+        "large": "Large",
+        "huge": "Huge"
+      },
+      "link": {
+        "insertTitle": "Insert Link (Ctrl+K)",
+        "dialogTitle": "Insert Link",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://example.com",
+        "cancel": "Cancel",
+        "remove": "Remove Link",
+        "set": "Set Link"
+      },
+      "aiAssistant": {
+        "label": "AI Assistant",
+        "show": "Show AI Assistant",
+        "hide": "Hide AI Assistant"
+      }
+    },
+    "alert": {
+      "dismiss": "Close"
+    },
+    "aiToolbar": {
+      "actions": {
+        "rephrase": "Rephrase",
+        "shorten": "Shorten",
+        "expand": "Expand",
+        "formalize": "Formalize",
+        "formalizeTooltip": "Formalize (Draft → Structured PR)",
+        "changeTone": "Change Tone"
+      },
+      "tones": {
+        "formal": "Formal",
+        "modern": "Modern",
+        "technical": "Technical",
+        "startup": "Startup"
+      },
+      "customInstruction": {
+        "label": "Instruction:",
+        "placeholder": "e.g. This is too boring. Make it more compelling.",
+        "execute": "Execute instruction"
+      },
+      "processing": "AI processing..."
     }
   },
   "companies": {
@@ -4220,6 +4320,185 @@
         "cancel": "Cancel",
         "send": "Send",
         "sending": "Sending..."
+      }
+    },
+    "assetSelector": {
+      "title": "Select Attachments",
+      "project": {
+        "label": "Project",
+        "selectPlaceholder": "Please select a project...",
+        "loading": "Loading projects..."
+      },
+      "upload": "Upload",
+      "search": {
+        "placeholder": "Search..."
+      },
+      "fileType": {
+        "unknown": "Unknown Type"
+      },
+      "emptyStates": {
+        "noFilesOrFolders": "No files or folders found",
+        "selectProject": "Please select a project"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "{count, plural, =1 {Add 1 attachment} other {Add # attachments}}"
+      },
+      "loading": "Loading..."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "markAllRead": "Mark all as read",
+      "emptyState": "No notifications",
+      "viewAll": "View all notifications",
+      "timeAgo": {
+        "justNow": "just now",
+        "minutesAgo": "{minutes}m ago",
+        "hoursAgo": "{hours}h ago"
+      },
+      "priority": {
+        "urgent": "Urgent",
+        "high": "High"
+      }
+    },
+    "notes": {
+      "title": "Internal Notes",
+      "placeholder": "Add internal note... (@name for mention)",
+      "save": "Save note",
+      "emptyState": "No internal notes yet",
+      "justNow": "Just now",
+      "mentioned": "Mentioned",
+      "notification": {
+        "title": "{userName} mentioned you",
+        "message": "In an email note: \"{content}\""
+      },
+      "unknown": "Unknown"
+    },
+    "aiSuggestions": {
+      "collapsed": {
+        "title": "AI Responses",
+        "generate": "Generate AI Responses",
+        "suggestions": "{count} Suggestions",
+        "generating": "Generating...",
+        "showTooltip": "Show response suggestions",
+        "generateTooltip": "Generate AI responses"
+      },
+      "header": {
+        "title": "AI Response Suggestions",
+        "collapse": "Collapse"
+      },
+      "config": {
+        "title": "Configuration",
+        "responseTypeLabel": "Response Type",
+        "toneLabel": "Tone",
+        "generating": "Generating...",
+        "generateButton": "Generate new suggestions"
+      },
+      "responseTypes": {
+        "answer": "Answer",
+        "acknowledge": "Acknowledge",
+        "escalate": "Escalate",
+        "followUp": "Follow Up"
+      },
+      "tones": {
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "formal": "Formal",
+        "empathetic": "Empathetic"
+      },
+      "error": {
+        "generationFailed": "Response generation failed",
+        "retry": "Try again"
+      },
+      "loading": {
+        "generating": "Generating response suggestions..."
+      },
+      "suggestions": {
+        "tab": "Suggestion {number}",
+        "confidence": "{percent}% Confidence",
+        "copyTooltip": "Copy to clipboard",
+        "useButton": "Use",
+        "keyPoints": "Key Points:",
+        "suggestedActions": "Suggested Actions:"
+      },
+      "empty": {
+        "message": "AI response suggestions available",
+        "button": "Generate suggestions"
+      }
+    },
+    "aiInsights": {
+      "title": "AI Analysis",
+      "imageMarker": "Image",
+      "truncatedMarker": "truncated",
+      "errors": {
+        "noResults": "No analysis results received",
+        "analysisFailed": "Analysis failed"
+      },
+      "actions": {
+        "show": "Show AI analysis",
+        "auto": "Auto",
+        "toggleAuto": "Toggle auto-analysis",
+        "reanalyze": "Reanalyze",
+        "collapse": "Collapse",
+        "retry": "Retry",
+        "analyze": "Analyze"
+      },
+      "status": {
+        "analyzing": "Analyzing email with AI...",
+        "available": "AI analysis available"
+      },
+      "sections": {
+        "summary": "Summary",
+        "sentiment": "Sentiment",
+        "priority": "Priority",
+        "intent": "Intent",
+        "category": "Category",
+        "keyInsights": "Key Insights",
+        "suggestedActions": "Suggested Actions",
+        "customerInsights": "Customer Insights"
+      },
+      "sentiment": {
+        "positive": "Positive",
+        "negative": "Negative",
+        "urgent": "Urgent",
+        "neutral": "Neutral"
+      },
+      "priority": {
+        "urgent": "Urgent",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "sla": "SLA: {hours}h",
+      "intent": {
+        "question": "Question",
+        "complaint": "Complaint",
+        "request": "Request",
+        "information": "Information",
+        "compliment": "Compliment",
+        "other": "Other"
+      },
+      "actionRequired": "Action required",
+      "category": {
+        "sales": "Sales",
+        "support": "Support",
+        "billing": "Billing"
+      },
+      "customerInsights": {
+        "satisfaction": "Satisfaction",
+        "relationship": "Relationship",
+        "nextAction": "Next action",
+        "satisfactionLevel": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        },
+        "relationshipStatus": {
+          "new": "New",
+          "established": "Established",
+          "at_risk": "At risk",
+          "loyal": "Loyal"
+        }
       }
     }
   },

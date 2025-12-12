@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
@@ -66,6 +67,7 @@ export function InternalNotes({
   teamMembers = []
 }: InternalNotesProps) {
   const { user } = useAuth();
+  const t = useTranslations('inbox.notes');
   const searchParams = useSearchParams();
   const [notes, setNotes] = useState<InternalNote[]>([]);
   const [newNote, setNewNote] = useState('');
@@ -292,7 +294,7 @@ export function InternalNotes({
         emailId,
         content: newNote,
         userId: user.uid,
-        userName: user.displayName || user.email || 'Unbekannt',
+        userName: user.displayName || user.email || t('unknown'),
         userEmail: user.email || '',
         mentions,
         createdAt: serverTimestamp() as Timestamp,
@@ -308,7 +310,7 @@ export function InternalNotes({
       
       // Send notifications for mentions
       if (mentions.length > 0) {
-        const userName = user.displayName || user.email || 'Unbekannt';
+        const userName = user.displayName || user.email || t('unknown');
 
         for (const mentionedUserId of mentions) {
           try {
@@ -316,8 +318,10 @@ export function InternalNotes({
               userId: mentionedUserId,
               organizationId,
               type: 'TEAM_CHAT_MENTION',
-              title: `${userName} hat Sie erwähnt`,
-              message: `In einer Email-Notiz: "${newNote.substring(0, 100)}${newNote.length > 100 ? '...' : ''}"`,
+              title: t('notification.title', { userName }),
+              message: t('notification.message', {
+                content: newNote.substring(0, 100) + (newNote.length > 100 ? '...' : '')
+              }),
               linkUrl: `/dashboard/communication/inbox?threadId=${threadId}`,
               linkType: 'project',
               linkId: threadId,
@@ -433,7 +437,7 @@ export function InternalNotes({
               value={newNote}
               onChange={handleNoteChange}
               onKeyDown={handleKeyDown}
-              placeholder="Interne Notiz hinzufügen... (@Name für Erwähnung)"
+              placeholder={t('placeholder')}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent resize-none"
               rows={3}
             />
@@ -457,7 +461,7 @@ export function InternalNotes({
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white text-sm"
               >
                 <PaperAirplaneIcon className="h-4 w-4 mr-1.5" />
-                Notiz speichern
+                {t('save')}
               </Button>
             </div>
           </div>
@@ -470,7 +474,7 @@ export function InternalNotes({
               </div>
             ) : notes.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                Noch keine internen Notizen vorhanden
+                {t('emptyState')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -494,7 +498,7 @@ export function InternalNotes({
                       <span className="text-xs text-gray-500">
                         {note.createdAt?.toDate?.()
                           ? format(note.createdAt.toDate(), 'dd.MM.yyyy HH:mm')
-                          : 'Gerade eben'
+                          : t('justNow')
                         }
                       </span>
                     </div>
@@ -504,9 +508,9 @@ export function InternalNotes({
                     {note.mentions.length > 0 && (
                       <div className="mt-2 ml-8">
                         <span className="text-xs text-gray-500">
-                          Erwähnt: {note.mentions.map((userId) => {
+                          {t('mentioned')}: {note.mentions.map((userId) => {
                             const member = membersForMentions.find(m => m.userId === userId);
-                            return member?.displayName || 'Unbekannt';
+                            return member?.displayName || t('unknown');
                           }).join(', ')}
                         </span>
                       </div>
@@ -527,7 +531,7 @@ export function InternalNotes({
         <div className="flex items-center gap-2">
           <ChatBubbleLeftIcon className="h-5 w-5 text-gray-600" />
           <span className="font-medium text-sm text-gray-900">
-            Interne Notizen
+            {t('title')}
           </span>
           {noteCount > 0 && (
             <Badge color="zinc" className="text-xs whitespace-nowrap">

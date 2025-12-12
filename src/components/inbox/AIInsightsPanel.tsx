@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { firebaseAIService } from '@/lib/ai/firebase-ai-service';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ export function AIInsightsPanel({
   onPriorityChange,
   collapsed = false
 }: AIInsightsPanelProps) {
+  const t = useTranslations('inbox.aiInsights');
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export function AIInsightsPanel({
       // Entferne HTML-Tags, eingebettete Bilder und CSS wenn HTML-Content
       if (!email.textContent && email.htmlContent) {
         content = email.htmlContent
-          .replace(/<img[^>]*>/gi, '[Bild]') // Ersetze Bilder
+          .replace(/<img[^>]*>/gi, `[${t('imageMarker')}]`) // Ersetze Bilder
           .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Entferne CSS
           .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Entferne Scripts
           .replace(/<[^>]+>/g, ' ') // Entferne alle HTML-Tags
@@ -75,7 +77,7 @@ export function AIInsightsPanel({
 
       // Kürze auf maximal 18000 Zeichen (Puffer für Context)
       if (content.length > 18000) {
-        content = content.substring(0, 18000) + '... [gekürzt]';
+        content = content.substring(0, 18000) + `... [${t('truncatedMarker')}]`;
       }
 
       const result = await firebaseAIService.fullEmailAnalysis(
@@ -87,7 +89,7 @@ export function AIInsightsPanel({
 
       // Null-Check für result
       if (!result) {
-        throw new Error('Keine Analyse-Ergebnisse erhalten');
+        throw new Error(t('errors.noResults'));
       }
 
       setAnalysis(result);
@@ -98,7 +100,7 @@ export function AIInsightsPanel({
       }
 
     } catch (err: any) {
-      setError(err.message || 'Analyse fehlgeschlagen');
+      setError(err.message || t('errors.analysisFailed'));
     } finally {
       setLoading(false);
     }
@@ -137,14 +139,14 @@ export function AIInsightsPanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-purple-600" />
-            <span className="text-sm font-medium text-purple-700">KI-Analyse</span>
+            <span className="text-sm font-medium text-purple-700">{t('title')}</span>
             {analysis?.sentiment && analysis?.priority && (
               <div className="flex items-center gap-1">
                 <Badge color="green" className="text-xs">
                   {Math.round(analysis.sentiment.confidence * 100)}%
                 </Badge>
                 <Badge className={clsx("text-xs", getPriorityColor(analysis.priority.priority))}>
-                  {analysis.priority.priority}
+                  {t(`priority.${analysis.priority.priority}`)}
                 </Badge>
               </div>
             )}
@@ -153,7 +155,7 @@ export function AIInsightsPanel({
             plain
             onClick={() => setIsCollapsed(false)}
             className="p-1"
-            title="KI-Analyse anzeigen"
+            title={t('actions.show')}
           >
             <EyeIcon className="h-4 w-4 text-purple-600" />
           </Button>
@@ -168,7 +170,7 @@ export function AIInsightsPanel({
       <div className="flex items-center justify-between p-4 border-b border-purple-200">
         <div className="flex items-center gap-2">
           <SparklesIcon className="h-5 w-5 text-purple-600" />
-          <h3 className="text-sm font-medium text-purple-700">KI-Analyse</h3>
+          <h3 className="text-sm font-medium text-purple-700">{t('title')}</h3>
           {loading && (
             <ArrowPathIcon className="h-4 w-4 animate-spin text-purple-600" />
           )}
@@ -181,16 +183,16 @@ export function AIInsightsPanel({
               "text-xs px-2 py-1",
               autoAnalyzeEnabled ? "text-purple-700 bg-purple-100" : "text-gray-500"
             )}
-            title="Auto-Analyse umschalten"
+            title={t('actions.toggleAuto')}
           >
-            Auto
+            {t('actions.auto')}
           </Button>
           <Button
             plain
             onClick={performAnalysis}
             disabled={loading}
             className="p-1"
-            title="Neu analysieren"
+            title={t('actions.reanalyze')}
           >
             <ArrowPathIcon className={clsx("h-4 w-4", loading && "animate-spin")} />
           </Button>
@@ -198,7 +200,7 @@ export function AIInsightsPanel({
             plain
             onClick={() => setIsCollapsed(true)}
             className="p-1"
-            title="Einklappen"
+            title={t('actions.collapse')}
           >
             <EyeSlashIcon className="h-4 w-4 text-gray-500" />
           </Button>
@@ -215,7 +217,7 @@ export function AIInsightsPanel({
               className="mt-2 text-xs bg-red-100 text-red-700 hover:bg-red-200"
               plain
             >
-              Erneut versuchen
+              {t('actions.retry')}
             </Button>
           </div>
         )}
@@ -224,7 +226,7 @@ export function AIInsightsPanel({
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <ArrowPathIcon className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-2" />
-              <p className="text-sm text-purple-600">Analysiere Email mit KI...</p>
+              <p className="text-sm text-purple-600">{t('status.analyzing')}</p>
             </div>
           </div>
         )}
@@ -235,7 +237,7 @@ export function AIInsightsPanel({
             <div className="bg-white rounded-lg p-3 border">
               <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <LightBulbIcon className="h-4 w-4" />
-                Zusammenfassung
+                {t('sections.summary')}
               </h4>
               <p className="text-sm text-gray-600">{analysis.summary}</p>
             </div>
@@ -245,7 +247,7 @@ export function AIInsightsPanel({
               {/* Sentiment */}
               <div className="bg-white rounded-lg p-3 border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-600">Stimmung</span>
+                  <span className="text-xs font-medium text-gray-600">{t('sections.sentiment')}</span>
                   <Badge className={clsx("text-xs", getSentimentColor(analysis.sentiment.sentiment))}>
                     {Math.round(analysis.sentiment.confidence * 100)}%
                   </Badge>
@@ -256,9 +258,7 @@ export function AIInsightsPanel({
                     return <Icon className="h-4 w-4 text-gray-600" />;
                   })()}
                   <span className="text-sm font-medium text-gray-900">
-                    {analysis.sentiment.sentiment === 'positive' ? 'Positiv' :
-                     analysis.sentiment.sentiment === 'negative' ? 'Negativ' :
-                     analysis.sentiment.sentiment === 'urgent' ? 'Dringend' : 'Neutral'}
+                    {t(`sentiment.${analysis.sentiment.sentiment}`)}
                   </span>
                 </div>
                 <div className="mt-1">
@@ -271,7 +271,7 @@ export function AIInsightsPanel({
               {/* Priority */}
               <div className="bg-white rounded-lg p-3 border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-600">Priorität</span>
+                  <span className="text-xs font-medium text-gray-600">{t('sections.priority')}</span>
                   <Badge className={clsx("text-xs border", getPriorityColor(analysis.priority.priority))}>
                     {Math.round(analysis.priority.confidence * 100)}%
                   </Badge>
@@ -279,14 +279,12 @@ export function AIInsightsPanel({
                 <div className="flex items-center gap-2">
                   <ClockIcon className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-900">
-                    {analysis.priority.priority === 'urgent' ? 'Dringend' :
-                     analysis.priority.priority === 'high' ? 'Hoch' :
-                     analysis.priority.priority === 'normal' ? 'Normal' : 'Niedrig'}
+                    {t(`priority.${analysis.priority.priority}`)}
                   </span>
                 </div>
                 <div className="mt-1">
                   <span className="text-xs text-gray-500">
-                    SLA: {analysis.priority.slaRecommendation}h
+                    {t('sla', { hours: analysis.priority.slaRecommendation })}
                   </span>
                 </div>
               </div>
@@ -296,28 +294,24 @@ export function AIInsightsPanel({
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-lg p-3 border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-600">Absicht</span>
+                  <span className="text-xs font-medium text-gray-600">{t('sections.intent')}</span>
                   <Badge color="blue" className="text-xs">
                     {Math.round(analysis.intent.confidence * 100)}%
                   </Badge>
                 </div>
                 <div className="text-sm font-medium text-gray-900">
-                  {analysis.intent.intent === 'question' ? 'Frage' :
-                   analysis.intent.intent === 'complaint' ? 'Beschwerde' :
-                   analysis.intent.intent === 'request' ? 'Anfrage' :
-                   analysis.intent.intent === 'information' ? 'Information' :
-                   analysis.intent.intent === 'compliment' ? 'Lob' : 'Andere'}
+                  {t(`intent.${analysis.intent.intent}`)}
                 </div>
                 {analysis.intent.actionRequired && (
                   <Badge color="orange" className="text-xs mt-1">
-                    Aktion erforderlich
+                    {t('actionRequired')}
                   </Badge>
                 )}
               </div>
 
               <div className="bg-white rounded-lg p-3 border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-600">Kategorie</span>
+                  <span className="text-xs font-medium text-gray-600">{t('sections.category')}</span>
                   <Badge color="green" className="text-xs">
                     {Math.round(analysis.category.confidence * 100)}%
                   </Badge>
@@ -325,10 +319,7 @@ export function AIInsightsPanel({
                 <div className="flex items-center gap-2">
                   <TagIcon className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-900">
-                    {analysis.category.category === 'sales' ? 'Vertrieb' :
-                     analysis.category.category === 'support' ? 'Support' :
-                     analysis.category.category === 'billing' ? 'Abrechnung' :
-                     analysis.category.category}
+                    {t(`category.${analysis.category.category}`)}
                   </span>
                 </div>
                 {analysis.category.suggestedAssignee && (
@@ -344,7 +335,7 @@ export function AIInsightsPanel({
             {/* Key Insights */}
             {analysis.keyInsights?.length > 0 && (
               <div className="bg-white rounded-lg p-3 border">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Key Insights</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('sections.keyInsights')}</h4>
                 <ul className="space-y-1">
                   {analysis.keyInsights.map((insight: string, index: number) => (
                     <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
@@ -359,7 +350,7 @@ export function AIInsightsPanel({
             {/* Suggested Actions */}
             {analysis.intent.suggestedActions?.length > 0 && (
               <div className="bg-white rounded-lg p-3 border">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Empfohlene Aktionen</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('sections.suggestedActions')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.intent.suggestedActions.map((action: string, index: number) => (
                     <Badge key={index} color="blue" className="text-xs">
@@ -373,26 +364,23 @@ export function AIInsightsPanel({
             {/* Customer Insights */}
             {analysis.customerInsights && (
               <div className="bg-white rounded-lg p-3 border">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Kunden-Insights</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('sections.customerInsights')}</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-500">Zufriedenheit:</span>
+                    <span className="text-gray-500">{t('customerInsights.satisfaction')}:</span>
                     <span className="ml-2 font-medium">
-                      {analysis.customerInsights.satisfactionLevel === 'high' ? 'Hoch' :
-                       analysis.customerInsights.satisfactionLevel === 'medium' ? 'Mittel' : 'Niedrig'}
+                      {t(`customerInsights.satisfactionLevel.${analysis.customerInsights.satisfactionLevel}`)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Beziehung:</span>
+                    <span className="text-gray-500">{t('customerInsights.relationship')}:</span>
                     <span className="ml-2 font-medium">
-                      {analysis.customerInsights.relationshipStatus === 'new' ? 'Neu' :
-                       analysis.customerInsights.relationshipStatus === 'established' ? 'Etabliert' :
-                       analysis.customerInsights.relationshipStatus === 'at_risk' ? 'Gefährdet' : 'Loyal'}
+                      {t(`customerInsights.relationshipStatus.${analysis.customerInsights.relationshipStatus}`)}
                     </span>
                   </div>
                 </div>
                 <div className="mt-2">
-                  <span className="text-gray-500 text-sm">Nächste Aktion:</span>
+                  <span className="text-gray-500 text-sm">{t('customerInsights.nextAction')}:</span>
                   <p className="text-sm font-medium mt-1">{analysis.customerInsights.nextBestAction}</p>
                 </div>
               </div>
@@ -403,13 +391,13 @@ export function AIInsightsPanel({
         {!analysis && !loading && (
           <div className="text-center py-6">
             <SparklesIcon className="h-8 w-8 text-purple-300 mx-auto mb-2" />
-            <p className="text-sm text-purple-600 mb-3">KI-Analyse verfügbar</p>
+            <p className="text-sm text-purple-600 mb-3">{t('status.available')}</p>
             <Button
               onClick={performAnalysis}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               <SparklesIcon className="h-4 w-4 mr-2" />
-              Analysieren
+              {t('actions.analyze')}
             </Button>
           </div>
         )}

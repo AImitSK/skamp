@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -30,6 +31,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({ onNotificationClick }: NotificationBellProps) {
   const router = useRouter();
+  const t = useTranslations('inbox.notifications');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
@@ -163,18 +165,18 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
 
   const formatNotificationTime = (timestamp: any): string => {
     if (!timestamp) return '';
-    
+
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
       const diffMins = Math.floor(diffMs / (1000 * 60));
       const diffHours = Math.floor(diffMins / 60);
-      
-      if (diffMins < 1) return 'gerade eben';
-      if (diffMins < 60) return `vor ${diffMins}m`;
-      if (diffHours < 24) return `vor ${diffHours}h`;
-      
+
+      if (diffMins < 1) return t('timeAgo.justNow');
+      if (diffMins < 60) return t('timeAgo.minutesAgo', { minutes: diffMins });
+      if (diffHours < 24) return t('timeAgo.hoursAgo', { hours: diffHours });
+
       return format(date, 'dd.MM. HH:mm');
     } catch (error) {
       return '';
@@ -211,7 +213,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
         <div className="px-4 py-3 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900">
-              Benachrichtigungen
+              {t('title')}
             </h3>
             {unreadCount > 0 && (
               <Button
@@ -219,7 +221,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
                 className="text-xs text-[#005fab] hover:text-[#004a8c]"
                 plain
               >
-                Alle als gelesen markieren
+                {t('markAllRead')}
               </Button>
             )}
           </div>
@@ -231,7 +233,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
             <div className="px-4 py-8 text-center">
               <BellIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
               <p className="text-sm text-gray-500">
-                Keine Benachrichtigungen
+                {t('emptyState')}
               </p>
             </div>
           ) : (
@@ -280,18 +282,18 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
                           <span className="text-xs text-gray-500">
                             {formatNotificationTime(notification.createdAt)}
                           </span>
-                          
+
                           {notification.priority === 'urgent' && (
                             <Badge color="red" className="text-xs">
                               <FireIcon className="h-3 w-3 mr-1" />
-                              Dringend
+                              {t('priority.urgent')}
                             </Badge>
                           )}
-                          
+
                           {notification.priority === 'high' && (
                             <Badge color="orange" className="text-xs">
                               <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                              Hoch
+                              {t('priority.high')}
                             </Badge>
                           )}
                         </div>
@@ -312,7 +314,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
               className="w-full text-center text-sm text-[#005fab] hover:text-[#004a8c]"
               plain
             >
-              Alle Benachrichtigungen anzeigen
+              {t('viewAll')}
             </Button>
           </div>
         )}

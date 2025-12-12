@@ -1567,6 +1567,106 @@
           "Forschung"
         ]
       }
+    },
+    "editor": {
+      "placeholder": "Pressemitteilung schreiben...",
+      "titlePlaceholder": "Titel der Pressemitteilung...",
+      "fullscreen": {
+        "title": "Fokussiertes Schreiben",
+        "exitHint": "ESC zum Beenden",
+        "exitTooltip": "Fullscreen beenden (ESC)",
+        "enterTooltip": "Vollbild-Modus (fokussiertes Schreiben)"
+      },
+      "formatting": {
+        "bold": "Fett",
+        "italic": "Kursiv",
+        "underline": "Unterstreichen",
+        "bulletList": "Aufzählung",
+        "orderedList": "Nummerierte Liste",
+        "quote": "Zitat",
+        "cta": "Call-to-Action",
+        "hashtag": "Hashtag",
+        "clearFormatting": "Formatierung entfernen"
+      },
+      "alignment": {
+        "left": "Linksbündig",
+        "center": "Zentriert",
+        "right": "Rechtsbündig"
+      },
+      "shortcuts": {
+        "bold": "Strg+B",
+        "italic": "Strg+I",
+        "underline": "Strg+U",
+        "bulletList": "Strg+Shift+8",
+        "orderedList": "Strg+Shift+7",
+        "quote": "Strg+Shift+Q",
+        "cta": "Strg+Shift+C",
+        "hashtag": "Strg+Shift+H",
+        "alignLeft": "Strg+Shift+L",
+        "alignCenter": "Strg+Shift+E",
+        "alignRight": "Strg+Shift+R"
+      },
+      "colors": {
+        "textColor": "Schriftfarbe",
+        "black": "Schwarz",
+        "darkGray": "Dunkelgrau",
+        "gray": "Grau",
+        "lightGray": "Hellgrau",
+        "primary": "Primary",
+        "blue": "Blau",
+        "indigo": "Indigo",
+        "purple": "Lila",
+        "red": "Rot",
+        "orange": "Orange",
+        "yellow": "Gelb",
+        "green": "Grün"
+      },
+      "fontSize": {
+        "label": "Schriftgröße",
+        "small": "Klein",
+        "normal": "Normal",
+        "large": "Groß",
+        "huge": "Riesig"
+      },
+      "link": {
+        "insertTitle": "Link einfügen (Strg+K)",
+        "dialogTitle": "Link einfügen",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://example.com",
+        "cancel": "Abbrechen",
+        "remove": "Link entfernen",
+        "set": "Link setzen"
+      },
+      "aiAssistant": {
+        "label": "KI-Assistent",
+        "show": "KI-Assistent einblenden",
+        "hide": "KI-Assistent ausblenden"
+      }
+    },
+    "alert": {
+      "dismiss": "Schließen"
+    },
+    "aiToolbar": {
+      "actions": {
+        "rephrase": "Umformulieren",
+        "shorten": "Kürzen",
+        "expand": "Erweitern",
+        "formalize": "Ausformulieren",
+        "formalizeTooltip": "Ausformulieren (Rohentwurf → strukturierte PR)",
+        "changeTone": "Ton ändern"
+      },
+      "tones": {
+        "formal": "Formal",
+        "modern": "Modern",
+        "technical": "Technisch",
+        "startup": "Startup"
+      },
+      "customInstruction": {
+        "label": "Anweisung:",
+        "placeholder": "z.B. Das ist mir zu langweilig. Schreib das werblicher.",
+        "execute": "Anweisung ausführen"
+      },
+      "processing": "KI bearbeitet..."
     }
   },
   "companies": {
@@ -4220,6 +4320,185 @@
         "cancel": "Abbrechen",
         "send": "Senden",
         "sending": "Wird gesendet..."
+      }
+    },
+    "assetSelector": {
+      "title": "Anhänge auswählen",
+      "project": {
+        "label": "Projekt",
+        "selectPlaceholder": "Bitte Projekt auswählen...",
+        "loading": "Lade Projekte..."
+      },
+      "upload": "Hochladen",
+      "search": {
+        "placeholder": "Suchen..."
+      },
+      "fileType": {
+        "unknown": "Unbekannter Typ"
+      },
+      "emptyStates": {
+        "noFilesOrFolders": "Keine Dateien oder Ordner gefunden",
+        "selectProject": "Bitte wählen Sie ein Projekt aus"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "confirm": "{count, plural, =1 {1 Anhang übernehmen} other {# Anhänge übernehmen}}"
+      },
+      "loading": "Wird geladen..."
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "markAllRead": "Alle als gelesen markieren",
+      "emptyState": "Keine Benachrichtigungen",
+      "viewAll": "Alle Benachrichtigungen anzeigen",
+      "timeAgo": {
+        "justNow": "gerade eben",
+        "minutesAgo": "vor {minutes}m",
+        "hoursAgo": "vor {hours}h"
+      },
+      "priority": {
+        "urgent": "Dringend",
+        "high": "Hoch"
+      }
+    },
+    "notes": {
+      "title": "Interne Notizen",
+      "placeholder": "Interne Notiz hinzufügen... (@Name für Erwähnung)",
+      "save": "Notiz speichern",
+      "emptyState": "Noch keine internen Notizen vorhanden",
+      "justNow": "Gerade eben",
+      "mentioned": "Erwähnt",
+      "notification": {
+        "title": "{userName} hat Sie erwähnt",
+        "message": "In einer Email-Notiz: \"{content}\""
+      },
+      "unknown": "Unbekannt"
+    },
+    "aiSuggestions": {
+      "collapsed": {
+        "title": "KI-Antworten",
+        "generate": "KI-Antworten generieren",
+        "suggestions": "{count} Vorschläge",
+        "generating": "Wird generiert...",
+        "showTooltip": "Antwort-Vorschläge anzeigen",
+        "generateTooltip": "KI-Antworten generieren"
+      },
+      "header": {
+        "title": "KI-Antwort-Vorschläge",
+        "collapse": "Einklappen"
+      },
+      "config": {
+        "title": "Konfiguration",
+        "responseTypeLabel": "Antwort-Typ",
+        "toneLabel": "Tonalität",
+        "generating": "Generiere...",
+        "generateButton": "Neue Vorschläge generieren"
+      },
+      "responseTypes": {
+        "answer": "Antworten",
+        "acknowledge": "Bestätigen",
+        "escalate": "Eskalieren",
+        "followUp": "Nachfassen"
+      },
+      "tones": {
+        "professional": "Professionell",
+        "friendly": "Freundlich",
+        "formal": "Förmlich",
+        "empathetic": "Empathisch"
+      },
+      "error": {
+        "generationFailed": "Response-Generierung fehlgeschlagen",
+        "retry": "Erneut versuchen"
+      },
+      "loading": {
+        "generating": "Generiere Antwort-Vorschläge..."
+      },
+      "suggestions": {
+        "tab": "Vorschlag {number}",
+        "confidence": "{percent}% Konfidenz",
+        "copyTooltip": "In Zwischenablage kopieren",
+        "useButton": "Verwenden",
+        "keyPoints": "Wichtige Punkte:",
+        "suggestedActions": "Empfohlene Aktionen:"
+      },
+      "empty": {
+        "message": "KI-Antwort-Vorschläge verfügbar",
+        "button": "Vorschläge generieren"
+      }
+    },
+    "aiInsights": {
+      "title": "KI-Analyse",
+      "imageMarker": "Bild",
+      "truncatedMarker": "gekürzt",
+      "errors": {
+        "noResults": "Keine Analyse-Ergebnisse erhalten",
+        "analysisFailed": "Analyse fehlgeschlagen"
+      },
+      "actions": {
+        "show": "KI-Analyse anzeigen",
+        "auto": "Auto",
+        "toggleAuto": "Auto-Analyse umschalten",
+        "reanalyze": "Neu analysieren",
+        "collapse": "Einklappen",
+        "retry": "Erneut versuchen",
+        "analyze": "Analysieren"
+      },
+      "status": {
+        "analyzing": "Analysiere Email mit KI...",
+        "available": "KI-Analyse verfügbar"
+      },
+      "sections": {
+        "summary": "Zusammenfassung",
+        "sentiment": "Stimmung",
+        "priority": "Priorität",
+        "intent": "Absicht",
+        "category": "Kategorie",
+        "keyInsights": "Key Insights",
+        "suggestedActions": "Empfohlene Aktionen",
+        "customerInsights": "Kunden-Insights"
+      },
+      "sentiment": {
+        "positive": "Positiv",
+        "negative": "Negativ",
+        "urgent": "Dringend",
+        "neutral": "Neutral"
+      },
+      "priority": {
+        "urgent": "Dringend",
+        "high": "Hoch",
+        "normal": "Normal",
+        "low": "Niedrig"
+      },
+      "sla": "SLA: {hours}h",
+      "intent": {
+        "question": "Frage",
+        "complaint": "Beschwerde",
+        "request": "Anfrage",
+        "information": "Information",
+        "compliment": "Lob",
+        "other": "Andere"
+      },
+      "actionRequired": "Aktion erforderlich",
+      "category": {
+        "sales": "Vertrieb",
+        "support": "Support",
+        "billing": "Abrechnung"
+      },
+      "customerInsights": {
+        "satisfaction": "Zufriedenheit",
+        "relationship": "Beziehung",
+        "nextAction": "Nächste Aktion",
+        "satisfactionLevel": {
+          "high": "Hoch",
+          "medium": "Mittel",
+          "low": "Niedrig"
+        },
+        "relationshipStatus": {
+          "new": "Neu",
+          "established": "Etabliert",
+          "at_risk": "Gefährdet",
+          "loyal": "Loyal"
+        }
       }
     }
   },

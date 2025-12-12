@@ -2,7 +2,8 @@
 "use client";
 
 import { Text } from "@/components/ui/text";
-import { 
+import { useTranslations } from 'next-intl';
+import {
   InformationCircleIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -67,6 +68,7 @@ export function Alert({
   onDismiss,
   className = ""
 }: AlertProps) {
+  const t = useTranslations('common.alert');
   const styles = alertStyles[type];
   const Icon = icons[type];
 
@@ -111,7 +113,7 @@ export function Alert({
               className={`inline-flex rounded-md p-1.5 ${styles.title} hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2`}
               onClick={onDismiss}
             >
-              <span className="sr-only">Schließen</span>
+              <span className="sr-only">{t('dismiss')}</span>
               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>

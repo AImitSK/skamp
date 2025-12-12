@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,8 @@ export function InboxAssetSelectorModal({
   userId,
   onAssetsSelected
 }: InboxAssetSelectorModalProps) {
+  const t = useTranslations('inbox.assetSelector');
+
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -245,22 +248,22 @@ export function InboxAssetSelectorModal({
     <>
       <Dialog open={isOpen} onClose={onClose} size="5xl">
         <DialogTitle className="px-6 py-4 border-b">
-          <span>Anhänge auswählen</span>
+          <span>{t('title')}</span>
         </DialogTitle>
 
         <DialogBody className="px-6 py-4">
           {/* Projekt-Auswahl */}
           <div className="mb-4">
             <Field>
-              <Label>Projekt</Label>
+              <Label>{t('project.label')}</Label>
               <Select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
                 disabled={loadingProjects}
               >
-                <option value="">Bitte Projekt auswählen...</option>
+                <option value="">{t('project.selectPlaceholder')}</option>
                 {loadingProjects ? (
-                  <option>Lade Projekte...</option>
+                  <option>{t('project.loading')}</option>
                 ) : (
                   projects.map(project => (
                     <option key={project.id} value={project.id}>
@@ -296,7 +299,7 @@ export function InboxAssetSelectorModal({
                   className="bg-[#005fab] hover:bg-[#004a8c] text-white px-3 py-1.5 text-sm"
                 >
                   <CloudArrowUpIcon className="h-4 w-4 mr-1.5" />
-                  Hochladen
+                  {t('upload')}
                 </Button>
               )}
             </div>
@@ -310,7 +313,7 @@ export function InboxAssetSelectorModal({
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="Suchen..."
+                    placeholder={t('search.placeholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -366,7 +369,7 @@ export function InboxAssetSelectorModal({
                       <div className="flex-1 min-w-0">
                         <Text className="font-medium truncate">{asset.fileName}</Text>
                         <Text className="text-sm text-gray-500">
-                          {asset.fileType || 'Unbekannter Typ'}
+                          {asset.fileType || t('fileType.unknown')}
                         </Text>
                       </div>
                     </div>
@@ -375,7 +378,7 @@ export function InboxAssetSelectorModal({
                   {filteredAssets.length === 0 && filteredFolders.length === 0 && !loading && (
                     <div className="text-center py-12">
                       <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <Text>Keine Dateien oder Ordner gefunden</Text>
+                      <Text>{t('emptyStates.noFilesOrFolders')}</Text>
                     </div>
                   )}
                 </div>
@@ -384,21 +387,21 @@ export function InboxAssetSelectorModal({
           ) : (
             <div className="text-center py-12">
               <FolderIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <Text>Bitte wählen Sie ein Projekt aus</Text>
+              <Text>{t('emptyStates.selectProject')}</Text>
             </div>
           )}
         </DialogBody>
 
         <DialogActions>
           <Button plain onClick={onClose}>
-            Abbrechen
+            {t('actions.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={selectedAssets.size === 0}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
-            {selectedAssets.size} {selectedAssets.size === 1 ? 'Anhang' : 'Anhänge'} übernehmen
+            {t('actions.confirm', { count: selectedAssets.size })}
           </Button>
         </DialogActions>
       </Dialog>

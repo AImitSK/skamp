@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -18,9 +19,9 @@ import { QuoteExtension } from './editor/QuoteExtension';
 import { CTAExtension } from './editor/CTAExtension';
 import { HashtagExtension } from './editor/HashtagExtension';
 import { FixedAIToolbar } from './FixedAIToolbar';
-import { 
-  ArrowsPointingOutIcon, 
-  ArrowsPointingInIcon 
+import {
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
 
 // Custom Extensions für TipTap v2 Kompatibilität
@@ -180,10 +181,10 @@ interface GmailStyleEditorProps {
   // Keywords entfernt - SEO-Optimierung nicht mehr benötigt
 }
 
-export const GmailStyleEditor = ({ 
-  content, 
-  onChange, 
-  placeholder = 'Pressemitteilung schreiben...',
+export const GmailStyleEditor = ({
+  content,
+  onChange,
+  placeholder,
   autoSave = true,
   autoSaveDelay = 10000, // 10 Sekunden wie im Masterplan
   onAutoSave,
@@ -192,7 +193,8 @@ export const GmailStyleEditor = ({
   onTitleChange
   // Keywords entfernt
 }: GmailStyleEditorProps) => {
-  
+  const t = useTranslations('common.editor');
+
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -294,7 +296,7 @@ export const GmailStyleEditor = ({
     editorProps: {
       attributes: {
         class: `gmail-editor-content focus:outline-none ${className || ''}`,
-        'data-placeholder': placeholder,
+        'data-placeholder': placeholder || t('placeholder'),
         style: 'min-height: 350px; padding: 1.5rem; font-size: 18px !important; line-height: 1.8 !important;',
       },
     },
@@ -346,9 +348,9 @@ export const GmailStyleEditor = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-gray-900">
-              Fokussiertes Schreiben
+              {t('fullscreen.title')}
             </h2>
-            <span className="text-sm text-gray-500">ESC zum Beenden</span>
+            <span className="text-sm text-gray-500">{t('fullscreen.exitHint')}</span>
           </div>
           <button
             onClick={(e) => {
@@ -358,7 +360,7 @@ export const GmailStyleEditor = ({
             }}
             onMouseDown={(e) => e.preventDefault()}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Fullscreen beenden (ESC)"
+            title={t('fullscreen.exitTooltip')}
             type="button"
           >
             <ArrowsPointingInIcon className="h-5 w-5" />
@@ -375,7 +377,7 @@ export const GmailStyleEditor = ({
             type="text"
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Titel der Pressemitteilung..."
+            placeholder={t('titlePlaceholder')}
             className="w-full px-6 py-4 text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none placeholder-gray-400"
           />
         </div>
@@ -410,7 +412,7 @@ export const GmailStyleEditor = ({
             }}
             onMouseDown={(e) => e.preventDefault()}
             className="absolute right-4 top-3 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Vollbild-Modus (fokussiertes Schreiben)"
+            title={t('fullscreen.enterTooltip')}
             type="button"
           >
             <ArrowsPointingOutIcon className="h-4 w-4" />

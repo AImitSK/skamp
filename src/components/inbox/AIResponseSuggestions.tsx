@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { firebaseAIService } from '@/lib/ai/firebase-ai-service';
 import { EmailResponseSuggestion } from '@/types/ai';
@@ -32,13 +33,14 @@ interface AIResponseSuggestionsProps {
   collapsed?: boolean;
 }
 
-export function AIResponseSuggestions({ 
-  email, 
+export function AIResponseSuggestions({
+  email,
   thread,
   onUseSuggestion,
   context,
   collapsed = false
 }: AIResponseSuggestionsProps) {
+  const t = useTranslations('inbox.aiSuggestions');
   const [suggestions, setSuggestions] = useState<EmailResponseSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +74,7 @@ export function AIResponseSuggestions({
       
     } catch (err: any) {
       console.error('AI Response generation failed:', err);
-      setError(err.message || 'Response-Generierung fehlgeschlagen');
+      setError(err.message || t('error.generationFailed'));
     } finally {
       setLoading(false);
     }
@@ -104,10 +106,10 @@ export function AIResponseSuggestions({
 
   const getResponseTypeLabel = (type: string) => {
     switch (type) {
-      case 'answer': return 'Antworten';
-      case 'acknowledge': return 'Bestätigen';
-      case 'escalate': return 'Eskalieren';
-      case 'follow_up': return 'Nachfassen';
+      case 'answer': return t('responseTypes.answer');
+      case 'acknowledge': return t('responseTypes.acknowledge');
+      case 'escalate': return t('responseTypes.escalate');
+      case 'follow_up': return t('responseTypes.followUp');
       default: return type;
     }
   };
@@ -119,16 +121,16 @@ export function AIResponseSuggestions({
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-green-600" />
             <span className="text-sm font-medium text-green-700">
-              {suggestions.length > 0 ? 'KI-Antworten' : 'KI-Antworten generieren'}
+              {suggestions.length > 0 ? t('collapsed.title') : t('collapsed.generate')}
             </span>
             {suggestions.length > 0 && (
               <Badge color="green" className="text-xs">
-                {suggestions.length} Vorschläge
+                {t('collapsed.suggestions', { count: suggestions.length })}
               </Badge>
             )}
             {loading && (
               <Badge color="amber" className="text-xs">
-                Wird generiert...
+                {t('collapsed.generating')}
               </Badge>
             )}
           </div>
@@ -142,7 +144,7 @@ export function AIResponseSuggestions({
               }
             }}
             className="p-1"
-            title={suggestions.length > 0 ? "Antwort-Vorschläge anzeigen" : "KI-Antworten generieren"}
+            title={suggestions.length > 0 ? t('collapsed.showTooltip') : t('collapsed.generateTooltip')}
             disabled={loading}
           >
             {loading ? (
@@ -162,7 +164,7 @@ export function AIResponseSuggestions({
       <div className="flex items-center justify-between p-4 border-b border-green-200">
         <div className="flex items-center gap-2">
           <SparklesIcon className="h-5 w-5 text-green-600" />
-          <h3 className="text-sm font-medium text-green-700">KI-Antwort-Vorschläge</h3>
+          <h3 className="text-sm font-medium text-green-700">{t('header.title')}</h3>
           {loading && (
             <ArrowPathIcon className="h-4 w-4 animate-spin text-green-600" />
           )}
@@ -172,7 +174,7 @@ export function AIResponseSuggestions({
             plain
             onClick={() => setIsCollapsed(true)}
             className="p-1"
-            title="Einklappen"
+            title={t('header.collapse')}
           >
             <EyeSlashIcon className="h-4 w-4 text-gray-500" />
           </Button>
@@ -183,37 +185,37 @@ export function AIResponseSuggestions({
       <div className="p-4 border-b border-green-200 bg-white bg-opacity-50">
         <div className="flex items-center gap-4 mb-3">
           <AdjustmentsHorizontalIcon className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Konfiguration</span>
+          <span className="text-sm font-medium text-gray-700">{t('config.title')}</span>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           {/* Response Type */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Antwort-Typ</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.responseTypeLabel')}</label>
             <select
               value={responseType}
               onChange={(e) => setResponseType(e.target.value as any)}
               className="w-full text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="answer">Antworten</option>
-              <option value="acknowledge">Bestätigen</option>
-              <option value="escalate">Eskalieren</option>
-              <option value="follow_up">Nachfassen</option>
+              <option value="answer">{t('responseTypes.answer')}</option>
+              <option value="acknowledge">{t('responseTypes.acknowledge')}</option>
+              <option value="escalate">{t('responseTypes.escalate')}</option>
+              <option value="follow_up">{t('responseTypes.followUp')}</option>
             </select>
           </div>
 
           {/* Tone */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Tonalität</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.toneLabel')}</label>
             <select
               value={selectedTone}
               onChange={(e) => setSelectedTone(e.target.value as any)}
               className="w-full text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="professional">Professionell</option>
-              <option value="friendly">Freundlich</option>
-              <option value="formal">Förmlich</option>
-              <option value="empathetic">Empathisch</option>
+              <option value="professional">{t('tones.professional')}</option>
+              <option value="friendly">{t('tones.friendly')}</option>
+              <option value="formal">{t('tones.formal')}</option>
+              <option value="empathetic">{t('tones.empathetic')}</option>
             </select>
           </div>
         </div>
@@ -224,7 +226,7 @@ export function AIResponseSuggestions({
           className="mt-3 bg-green-600 hover:bg-green-700 text-white text-sm"
         >
           <SparklesIcon className="h-4 w-4 mr-2" />
-          {loading ? 'Generiere...' : 'Neue Vorschläge generieren'}
+          {loading ? t('config.generating') : t('config.generateButton')}
         </Button>
       </div>
 
@@ -238,7 +240,7 @@ export function AIResponseSuggestions({
               className="mt-2 text-xs bg-red-100 text-red-700 hover:bg-red-200"
               plain
             >
-              Erneut versuchen
+              {t('error.retry')}
             </Button>
           </div>
         )}
@@ -247,7 +249,7 @@ export function AIResponseSuggestions({
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <ArrowPathIcon className="h-8 w-8 animate-spin text-green-600 mx-auto mb-2" />
-              <p className="text-sm text-green-600">Generiere Antwort-Vorschläge...</p>
+              <p className="text-sm text-green-600">{t('loading.generating')}</p>
             </div>
           </div>
         )}
@@ -267,7 +269,7 @@ export function AIResponseSuggestions({
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   )}
                 >
-                  Vorschlag {index + 1}
+                  {t('suggestions.tab', { number: index + 1 })}
                 </button>
               ))}
             </div>
@@ -281,7 +283,7 @@ export function AIResponseSuggestions({
                       {suggestions[selectedSuggestion].tone}
                     </Badge>
                     <Badge color="blue" className="text-xs">
-                      {Math.round(suggestions[selectedSuggestion].confidence * 100)}% Konfidenz
+                      {t('suggestions.confidence', { percent: Math.round(suggestions[selectedSuggestion].confidence * 100) })}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
@@ -289,7 +291,7 @@ export function AIResponseSuggestions({
                       plain
                       onClick={() => copyToClipboard(suggestions[selectedSuggestion].responseText)}
                       className="p-1"
-                      title="In Zwischenablage kopieren"
+                      title={t('suggestions.copyTooltip')}
                     >
                       <DocumentDuplicateIcon className="h-4 w-4 text-gray-500" />
                     </Button>
@@ -298,7 +300,7 @@ export function AIResponseSuggestions({
                       className="bg-green-600 hover:bg-green-700 text-white text-sm"
                     >
                       <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                      Verwenden
+                      {t('suggestions.useButton')}
                     </Button>
                   </div>
                 </div>
@@ -313,7 +315,7 @@ export function AIResponseSuggestions({
                 {/* Key Points */}
                 {suggestions[selectedSuggestion].keyPoints?.length > 0 && (
                   <div className="mb-3">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Wichtige Punkte:</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t('suggestions.keyPoints')}</h4>
                     <ul className="space-y-1">
                       {suggestions[selectedSuggestion].keyPoints.map((point: string, index: number) => (
                         <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
@@ -328,7 +330,7 @@ export function AIResponseSuggestions({
                 {/* Suggested Actions */}
                 {suggestions[selectedSuggestion].suggestedActions?.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Empfohlene Aktionen:</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t('suggestions.suggestedActions')}</h4>
                     <div className="flex flex-wrap gap-2">
                       {suggestions[selectedSuggestion].suggestedActions.map((action: string, index: number) => (
                         <Badge key={index} color="blue" className="text-xs">
@@ -346,13 +348,13 @@ export function AIResponseSuggestions({
         {!suggestions.length && !loading && !error && (
           <div className="text-center py-6">
             <SparklesIcon className="h-8 w-8 text-green-300 mx-auto mb-2" />
-            <p className="text-sm text-green-600 mb-3">KI-Antwort-Vorschläge verfügbar</p>
+            <p className="text-sm text-green-600 mb-3">{t('empty.message')}</p>
             <Button
               onClick={generateSuggestions}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <SparklesIcon className="h-4 w-4 mr-2" />
-              Vorschläge generieren
+              {t('empty.button')}
             </Button>
           </div>
         )}
