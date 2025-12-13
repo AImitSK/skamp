@@ -8,6 +8,25 @@ import { useStructuredGeneration } from '../useStructuredGeneration';
 import { apiClient } from '@/lib/api/api-client';
 import * as validation from '../../utils/validation';
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const translations: Record<string, string> = {
+      'validation.promptRequired': 'Bitte beschreibe das Thema der Pressemitteilung.',
+      'validation.toneAndAudienceRequired': 'Bitte wähle Tonalität und Zielgruppe aus.',
+      'validation.documentsRequired': 'Bitte füge mindestens 1 Planungsdokument hinzu.',
+      'validation.validationFailed': 'Validierung fehlgeschlagen',
+      'validation.incompleteResponse': 'Unvollständige Antwort vom Server',
+      'validation.generationFailed': 'Generierung fehlgeschlagen',
+      'success.generated': 'Pressemitteilung erfolgreich generiert',
+      'success.contentApplied': 'Text erfolgreich übernommen',
+      'errors.applyFailed': 'Fehler beim Übernehmen des Textes',
+      'defaultPrompt': 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.',
+    };
+    return translations[key] || key;
+  }
+}));
+
 // Mock apiClient
 jest.mock('@/lib/api/api-client', () => ({
   apiClient: {
@@ -207,7 +226,7 @@ describe('useStructuredGeneration', () => {
     it('sollte Fehler setzen wenn Validierung fehlschlägt', async () => {
       mockValidation.validateInput.mockReturnValue({
         isValid: false,
-        error: 'Validierungsfehler'
+        errorKey: 'pr.ai.structuredGeneration.validation.promptRequired'
       });
 
       const { result } = renderHook(() => useStructuredGeneration());
@@ -223,7 +242,7 @@ describe('useStructuredGeneration', () => {
         });
       });
 
-      expect(result.current.error).toBe('Validierungsfehler');
+      expect(result.current.error).toBe('Bitte beschreibe das Thema der Pressemitteilung.');
       expect(result.current.result).toBeNull();
       expect(response).toBeNull();
       expect(mockApiClient.post).not.toHaveBeenCalled();

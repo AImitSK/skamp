@@ -6,9 +6,12 @@
  * Subtitle und Close-Button an.
  */
 
+'use client';
+
 import React from 'react';
 import { DialogTitle } from '@headlessui/react';
 import { XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 /**
  * Props für ModalHeader Component
@@ -41,6 +44,8 @@ export interface ModalHeaderProps {
  * ```
  */
 function ModalHeader({ onClose }: ModalHeaderProps) {
+  const t = useTranslations('pr.ai.structuredGeneration.header');
+
   return (
     <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
       <div className="flex items-center gap-3">
@@ -49,10 +54,10 @@ function ModalHeader({ onClose }: ModalHeaderProps) {
         </div>
         <div>
           <DialogTitle className="text-lg font-semibold">
-            KI-Pressemitteilung erstellen
+            {t('title')}
           </DialogTitle>
           <p className="text-sm text-gray-600 mt-0.5">
-            Strukturierte Generierung mit Google Gemini
+            {t('subtitle')}
           </p>
         </div>
       </div>

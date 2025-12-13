@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from "@/components/ui/text";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export const ProjectSelector = ({
   organizationId,
   clientId
 }: ProjectSelectorProps) => {
+  const t = useTranslations('projects.selector');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSelectedId, setCurrentSelectedId] = useState(selectedProjectId);
@@ -62,7 +64,7 @@ export const ProjectSelector = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <LinkIcon className="h-4 w-4 text-gray-500" />
-        <Text className="font-medium">Projekt-Verknüpfung (optional)</Text>
+        <Text className="font-medium">{t('label')}</Text>
       </div>
       
       {loading ? (
@@ -88,7 +90,7 @@ export const ProjectSelector = ({
           }}
           className="block w-full rounded-lg border border-zinc-950/10 bg-white py-2 px-3 text-base/6 text-zinc-950 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">Kein Projekt zuordnen</option>
+          <option value="">{t('noProject')}</option>
           {projects.map(project => (
             <option key={project.id} value={project.id!}>
               {project.title} {project.customer?.name && `(${project.customer.name})`}
@@ -102,18 +104,18 @@ export const ProjectSelector = ({
           <div className="flex items-start gap-2">
             <LinkIcon className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-700">
-              <p className="font-medium">✅ Projekt-Integration aktiviert</p>
+              <p className="font-medium">{t('integrationActive')}</p>
               <p className="mt-1">
-                Diese Kampagne wird dem ausgewählten Projekt zugeordnet und automatisch 
-                in der Pipeline-Phase &ldquo;Erstellung&rdquo; verwaltet.
+                {t('integrationDescription')}
               </p>
               <p className="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-800">
-                <strong>Interne PDFs aktiviert:</strong> Bei Speicherung werden automatisch 
-                interne PDF-Versionen im Projekt-Ordner generiert.
+                {t.rich('pdfInfo', {
+                  strong: (chunks) => <strong>{chunks}</strong>
+                })}
               </p>
               {projects.find(p => p.id === selectedProjectId)?.customer?.name && (
                 <p className="mt-1 text-blue-600">
-                  Kunde: {projects.find(p => p.id === selectedProjectId)?.customer?.name}
+                  {t('customer', { name: projects.find(p => p.id === selectedProjectId)?.customer?.name || '' })}
                 </p>
               )}
             </div>
@@ -123,7 +125,7 @@ export const ProjectSelector = ({
       
       {!loading && projects.length === 0 && (
         <div className="text-sm text-gray-500 text-center py-4">
-          {clientId ? 'Keine aktiven Projekte für diesen Kunden gefunden.' : 'Keine aktiven Projekte gefunden.'}
+          {clientId ? t('emptyStates.noProjectsForClient') : t('emptyStates.noProjects')}
         </div>
       )}
     </div>

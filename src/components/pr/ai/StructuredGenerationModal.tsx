@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
   SparklesIcon,
@@ -50,6 +51,7 @@ import ReviewStep from './structured-generation/steps/ReviewStep';
 
 export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: StructuredGenerationModalProps) {
   const { user } = useAuth();
+  const t = useTranslations('pr.ai.structuredGeneration');
 
   // Workflow State
   const [currentStep, setCurrentStep] = useState<GenerationStep>('context');
@@ -129,12 +131,12 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
     try {
       onGenerate(result);
-      toastService.success('Text erfolgreich übernommen');
+      toastService.success(t('success.contentApplied'));
       // Modal wird automatisch durch parent component geschlossen
     } catch (error) {
-      toastService.error('Fehler beim Übernehmen des Textes');
+      toastService.error(t('errors.applyFailed'));
     }
-  }, [generatedResult, context, onGenerate]);
+  }, [generatedResult, context, onGenerate, t]);
 
   // Handler für Template-Auswahl
   const handleTemplateSelect = useCallback((template: AITemplate) => {
@@ -152,11 +154,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
   // Steps-Array mit useMemo
   const steps = useMemo(() => [
-    { id: 'context', name: 'Kontext', icon: CogIcon },
-    { id: 'content', name: 'Inhalt', icon: DocumentTextIcon },
-    { id: 'generating', name: 'KI', icon: SparklesIcon },
-    { id: 'review', name: 'Review', icon: EyeIcon }
-  ], []);
+    { id: 'context', name: t('steps.context'), icon: CogIcon },
+    { id: 'content', name: t('steps.content'), icon: DocumentTextIcon },
+    { id: 'generating', name: t('steps.generating'), icon: SparklesIcon },
+    { id: 'review', name: t('steps.review'), icon: EyeIcon }
+  ], [t]);
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
 
@@ -169,12 +171,12 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
           <DialogPanel className="mx-auto max-w-md bg-white rounded-lg shadow-xl p-6">
             <div className="text-center">
               <ExclamationTriangleIcon className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Anmeldung erforderlich</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('auth.title')}</h3>
               <p className="text-gray-600 mb-6">
-                Du musst angemeldet sein, um den KI-Assistenten zu nutzen.
+                {t('auth.message')}
               </p>
               <Button onClick={onClose} className="w-full">
-                Verstanden
+                {t('auth.button')}
               </Button>
             </div>
           </DialogPanel>

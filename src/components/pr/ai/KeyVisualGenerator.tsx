@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   SparklesIcon,
@@ -73,6 +74,7 @@ export function KeyVisualGenerator({
   onImageGenerated,
   disabled = false
 }: KeyVisualGeneratorProps) {
+  const t = useTranslations('pr.ai.keyVisualGenerator');
   const [state, setState] = useState<GeneratorState>('idle');
   const [suggestions, setSuggestions] = useState<ImagePromptSuggestion[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<ImagePromptSuggestion | null>(null);
@@ -205,14 +207,14 @@ export function KeyVisualGenerator({
         ) : (
           <SparklesIcon className="h-4 w-4 mr-2" />
         )}
-        {state === 'generating-prompts' ? 'Generiert Bildideen...' : 'KI Bildideen'}
+        {state === 'generating-prompts' ? t('generatingIdeas') : t('aiImageIdeas')}
       </Button>
 
       {/* Bildvorschläge zur Auswahl - Breites 1-spaltiges Layout */}
       {state === 'selecting' && suggestions.length > 0 && (
         <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-5 w-[800px] max-w-[90vw]">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-semibold text-gray-900">Wählen Sie einen Bildstil</h4>
+            <h4 className="text-sm font-semibold text-gray-900">{t('selectImageStyle')}</h4>
             <button
               onClick={closeSuggestions}
               className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -267,7 +269,7 @@ export function KeyVisualGenerator({
 
           <div className="mt-4 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-500 text-center">
-              Das ausgewählte Bild wird automatisch im Projekt-Ordner &quot;KI-Bilder&quot; gespeichert
+              {t('autoSaveInfo')}
             </p>
           </div>
         </div>
@@ -286,11 +288,11 @@ export function KeyVisualGenerator({
               </div>
 
               <h3 className="font-semibold text-gray-900 mb-2">
-                Bild wird generiert...
+                {t('generatingImage')}
               </h3>
 
               <p className="text-sm text-gray-500 mb-4">
-                Die KI erstellt Ihr Bild. Dies kann bis zu 30 Sekunden dauern.
+                {t('generatingImageDescription')}
               </p>
 
               {/* Ausgewählter Stil anzeigen */}

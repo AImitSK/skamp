@@ -6,6 +6,7 @@
  * Kategorisierung, Icons und Click-Outside-Handling.
  */
 
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronDownIcon,
@@ -22,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { AITemplate } from '@/types/ai';
 import clsx from 'clsx';
 import { type TemplateDropdownProps } from '../types';
+import { useTranslations } from 'next-intl';
 
 /**
  * Icon-Mapping für Template-Kategorien
@@ -61,6 +63,7 @@ const TemplateDropdown = React.memo(function TemplateDropdown({
   loading,
   selectedTemplate
 }: TemplateDropdownProps) {
+  const t = useTranslations('pr.ai.templateDropdown');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -105,12 +108,12 @@ const TemplateDropdown = React.memo(function TemplateDropdown({
                     })()}
                     {selectedTemplate.title}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Template ausgewählt</div>
+                  <div className="text-xs text-gray-500 mt-1">{t('selected')}</div>
                 </>
               ) : (
                 <>
-                  <div className="font-medium text-gray-700">Template verwenden (optional)</div>
-                  <div className="text-xs text-gray-500 mt-1">Wähle aus bewährten Vorlagen</div>
+                  <div className="font-medium text-gray-700">{t('useTemplate')}</div>
+                  <div className="text-xs text-gray-500 mt-1">{t('chooseFromTemplates')}</div>
                 </>
               )}
             </div>
@@ -133,12 +136,12 @@ const TemplateDropdown = React.memo(function TemplateDropdown({
               {loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto mb-2"></div>
-                  <p className="text-sm text-gray-500">Templates werden geladen...</p>
+                  <p className="text-sm text-gray-500">{t('loading')}</p>
                 </div>
               ) : templates.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <BookOpenIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">Keine Templates gefunden</p>
+                  <p className="text-sm">{t('noTemplates')}</p>
                 </div>
               ) : (
                 <div className="py-2">
@@ -167,7 +170,7 @@ const TemplateDropdown = React.memo(function TemplateDropdown({
                               {template.category}
                             </Badge>
                             <span className="text-xs text-gray-500">
-                              Klicken zum Verwenden
+                              {t('clickToUse')}
                             </span>
                           </div>
                         </div>
@@ -181,7 +184,7 @@ const TemplateDropdown = React.memo(function TemplateDropdown({
             {/* Footer */}
             <div className="p-3 border-t bg-gray-50 text-center">
               <p className="text-xs text-gray-500">
-                {templates.length} Templates verfügbar
+                {t('availableCount', { count: templates.length })}
               </p>
             </div>
           </div>

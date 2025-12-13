@@ -5621,6 +5621,18 @@
     "noOrganization": "Keine Organisation ausgewählt",
     "loading": "Projekte werden geladen...",
     "loadError": "Fehler beim Laden",
+    "selector": {
+      "label": "Projekt-Verknüpfung (optional)",
+      "noProject": "Kein Projekt zuordnen",
+      "integrationActive": "✅ Projekt-Integration aktiviert",
+      "integrationDescription": "Diese Kampagne wird dem ausgewählten Projekt zugeordnet und automatisch in der Pipeline-Phase \"Erstellung\" verwaltet.",
+      "pdfInfo": "<strong>Interne PDFs aktiviert:</strong> Bei Speicherung werden automatisch interne PDF-Versionen im Projekt-Ordner generiert.",
+      "customer": "Kunde: {name}",
+      "emptyStates": {
+        "noProjects": "Keine aktiven Projekte gefunden.",
+        "noProjectsForClient": "Keine aktiven Projekte für diesen Kunden gefunden."
+      }
+    },
     "creation": {
       "stepActions": {
         "back": "Zurück",
@@ -7354,6 +7366,21 @@
         "cancel": "Abbrechen",
         "save": "Speichern",
         "create": "Erstellen",
+        "saving": "Speichert..."
+      }
+    },
+    "spreadsheetEditor": {
+      "defaultTitle": "Tabelle",
+      "editTitle": "Tabelle bearbeiten",
+      "newTitle": "Neue Tabelle - {date}",
+      "namePlaceholder": "Tabellenname eingeben...",
+      "fullscreen": {
+        "enter": "Vollbild",
+        "exit": "Vollbild verlassen"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
         "saving": "Speichert..."
       }
     }
@@ -9431,6 +9458,225 @@
           "passwordRequired": "Erforderlich"
         },
         "doneButton": "Fertig"
+      }
+    }
+  },
+  "pr": {
+    "ai": {
+      "modalFooter": {
+        "generateWithAi": "Mit KI generieren",
+        "regenerate": "Neu generieren",
+        "useText": "Text übernehmen"
+      },
+      "structuredGeneration": {
+        "validation": {
+          "promptRequired": "Bitte beschreibe das Thema der Pressemitteilung.",
+          "toneAndAudienceRequired": "Bitte wähle Tonalität und Zielgruppe aus.",
+          "documentsRequired": "Bitte füge mindestens 1 Planungsdokument hinzu.",
+          "validationFailed": "Validierung fehlgeschlagen",
+          "incompleteResponse": "Unvollständige Antwort vom Server",
+          "generationFailed": "Generierung fehlgeschlagen"
+        },
+        "success": {
+          "generated": "Pressemitteilung erfolgreich generiert",
+          "contentApplied": "Text erfolgreich übernommen"
+        },
+        "errors": {
+          "applyFailed": "Fehler beim Übernehmen des Textes"
+        },
+        "auth": {
+          "title": "Anmeldung erforderlich",
+          "message": "Du musst angemeldet sein, um den KI-Assistenten zu nutzen.",
+          "button": "Verstanden"
+        },
+        "defaultPrompt": "Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.",
+        "steps": {
+          "context": "Kontext",
+          "content": "Inhalt",
+          "generating": "KI",
+          "review": "Review"
+        },
+        "header": {
+          "title": "KI-Pressemitteilung erstellen",
+          "subtitle": "Strukturierte Generierung mit Google Gemini"
+        },
+        "footer": {
+          "cancel": "Abbrechen",
+          "back": "Zurück",
+          "next": "Weiter",
+          "generate": "Mit KI generieren",
+          "regenerate": "Neu generieren",
+          "useResult": "Text übernehmen"
+        },
+        "contextStep": {
+          "modeLabel": "KI-Modus *",
+          "modeStandard": "Standard",
+          "modeExpert": "Experte",
+          "industryLabel": "Branche *",
+          "industryPlaceholder": "Branche auswählen...",
+          "companyNameLabel": "Unternehmensname *",
+          "companyNamePlaceholder": "Ihre Firma GmbH",
+          "toneLabel": "Tonalität *",
+          "audienceLabel": "Zielgruppe *",
+          "activeBadge": "Aktiv",
+          "documentsHeading": "Planungsdokumente",
+          "documentsDescription": "Fügen Sie Ihre Strategiedokumente hinzu (Kernbotschaft, Zielgruppenanalyse, Unternehmensprofil, etc.)",
+          "documentsSelected": "{count} Dokument{plural} ausgewählt",
+          "documentsSelectedPlural": "e",
+          "wordCount": "{count} Wörter",
+          "changeButton": "Ändern",
+          "selectDocumentsButton": "Planungsdokumente auswählen",
+          "removeDocumentTitle": "Dokument entfernen"
+        },
+        "industries": {
+          "technology": "Technologie & Software",
+          "finance": "Finanzdienstleistungen",
+          "healthcare": "Gesundheitswesen",
+          "automotive": "Automobil",
+          "retail": "Handel & E-Commerce",
+          "media": "Medien & Entertainment",
+          "energy": "Energie & Umwelt",
+          "education": "Bildung",
+          "nonprofit": "Non-Profit",
+          "realestate": "Immobilien",
+          "tourism": "Tourismus & Gastgewerbe",
+          "other": "Sonstiges"
+        },
+        "tones": {
+          "formal": {
+            "label": "Formal",
+            "description": "Seriös, traditionell, konservativ"
+          },
+          "modern": {
+            "label": "Modern",
+            "description": "Zeitgemäß, innovativ, zugänglich"
+          },
+          "technical": {
+            "label": "Technisch",
+            "description": "Fachspezifisch, präzise, detailliert"
+          },
+          "startup": {
+            "label": "Startup",
+            "description": "Dynamisch, visionär, disruptiv"
+          }
+        },
+        "audiences": {
+          "b2b": {
+            "label": "B2B",
+            "description": "Unternehmen und Experten"
+          },
+          "consumer": {
+            "label": "Verbraucher",
+            "description": "Endkunden und Publikum"
+          },
+          "media": {
+            "label": "Medien",
+            "description": "Journalisten und Redaktionen"
+          }
+        },
+        "contentStep": {
+          "promptLabelExpert": "Weitere Anweisungen oder spezifische Schwerpunkte (optional)",
+          "promptLabelStandard": "Beschreibe deine Pressemitteilung *",
+          "charactersLabel": "{count} Zeichen",
+          "placeholderExpert": "Optionale Anweisungen für die KI...\n\nBeispiele:\n- \"Fokussiere auf die technischen Innovationen\"\n- \"Zielgruppe sind Investoren und Finanzmedien\"\n- \"Betone die Nachhaltigkeitsaspekte besonders\"\n- Leer lassen für automatische Generierung basierend auf den Planungsdokumenten",
+          "placeholderStandard": "Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter deine Beschreibung, desto besser wird das Ergebnis.\n\nBeispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unternehmensdaten 10x schneller analysiert als herkömmliche Tools. Die Plattform nutzt maschinelles Lernen und kann...",
+          "tipsHeading": "Tipps für bessere Ergebnisse:",
+          "tip1": "Nenne konkrete Zahlen und Fakten (z.B. 50% Wachstum, 10.000 Nutzer)",
+          "tip2": "Beschreibe das Alleinstellungsmerkmal klar und deutlich",
+          "tip3": "Erwähne die Zielgruppe und welchen Nutzen sie hat",
+          "tip4": "Gib Kontext zur aktuellen Marktsituation",
+          "tip5": "Füge relevante Personen mit Namen und Position hinzu",
+          "expertModeTitle": "Kontext-basierte Generierung aktiviert",
+          "expertModeDescription": "Die KI nutzt die {count} ausgewählten Planungsdokumente als Kontext. Gib optional weitere Anweisungen oder lasse das Feld leer für eine automatische Generierung.",
+          "documentsAttached": "{count} Planungsdokument{plural} angehängt",
+          "documentsAttachedPlural": "e"
+        },
+        "generationStep": {
+          "creatingHeading": "✨ Deine Pressemitteilung wird erstellt...",
+          "doneHeading": "Fertig!",
+          "creatingDescription": "Die KI analysiert gerade deine Angaben und schreibt einen professionellen Text.",
+          "doneDescription": "Die Pressemitteilung wurde erfolgreich erstellt.",
+          "progressLabel": "{progress}% abgeschlossen",
+          "step1": "Thema und Kontext werden analysiert",
+          "step2": "Struktur und Aufbau werden erstellt",
+          "step3": "Inhalte werden formuliert und optimiert",
+          "step4": "Finaler Text wird zusammengestellt"
+        },
+        "reviewStep": {
+          "successTitle": "Pressemitteilung erfolgreich erstellt!",
+          "successDescription": "Die Inhalte werden automatisch in die entsprechenden Felder übernommen.",
+          "metricsHeadline": "Headline",
+          "metricsLead": "Lead",
+          "metricsParagraphs": "Absätze",
+          "metricsCta": "CTA",
+          "metricsSocial": "Social",
+          "metricsIdeal": "Ideal: {value}",
+          "metricsCharacters": "{count} Zeichen",
+          "metricsWords": "{count} Wörter",
+          "tabPreview": "Vorschau",
+          "tabStructured": "Strukturiert",
+          "sectionHeadline": "Headline",
+          "sectionLead": "Lead-Absatz",
+          "sectionBody": "Haupttext",
+          "sectionQuote": "Zitat",
+          "sectionCta": "Call-to-Action",
+          "sectionHashtags": "Social Media Hashtags",
+          "ctaOptimizationHint": "Wird als CTA-Element für bessere SEO-Scores formatiert",
+          "socialOptimized": "Optimiert für Twitter/LinkedIn Sharing",
+          "socialSuitable": "Geeignet für Social Media"
+        }
+      },
+      "headlineGenerator": {
+        "buttonLabel": "KI Headlines",
+        "generating": "Generiert Headlines...",
+        "title": "KI-generierte Headlines",
+        "activeVerb": "✓ Aktiv",
+        "characters": "{count} Zeichen",
+        "seo": "SEO: {score}%",
+        "keywords": "Keywords: {density}%",
+        "hint": "Klicken Sie auf eine Headline, um sie zu übernehmen"
+      },
+      "templateDropdown": {
+        "selected": "Template ausgewählt",
+        "useTemplate": "Template verwenden (optional)",
+        "chooseFromTemplates": "Wähle aus bewährten Vorlagen",
+        "loading": "Templates werden geladen...",
+        "noTemplates": "Keine Templates gefunden",
+        "clickToUse": "Klicken zum Verwenden",
+        "availableCount": "{count} Templates verfügbar"
+      },
+      "keyVisualGenerator": {
+        "aiImageIdeas": "KI Bildideen",
+        "generatingIdeas": "Generiert Bildideen...",
+        "selectImageStyle": "Wählen Sie einen Bildstil",
+        "autoSaveInfo": "Das ausgewählte Bild wird automatisch im Projekt-Ordner \"KI-Bilder\" gespeichert",
+        "generatingImage": "Bild wird generiert...",
+        "generatingImageDescription": "Die KI erstellt Ihr Bild. Dies kann bis zu 30 Sekunden dauern."
+      },
+      "documentPicker": {
+        "title": "Planungsdokumente auswählen",
+        "subtitle": "Wähle bis zu {max} Dokumente als Kontext für die KI-Generierung",
+        "searchPlaceholder": "Dokumente durchsuchen...",
+        "loading": "Dokumente werden geladen...",
+        "loadError": "Fehler beim Laden der Dokumente",
+        "retry": "Erneut versuchen",
+        "noDocuments": "Keine Dokumente gefunden",
+        "tryDifferentSearch": "Versuche eine andere Suche",
+        "wordCount": "{count} Wörter",
+        "maxSelectionAlert": "Maximal {max} Dokumente erlaubt",
+        "preview": {
+          "title": "Vorschau: {fileName}",
+          "words": "Wörter",
+          "characters": "Zeichen",
+          "multipleSelected": "{count} Dokumente ausgewählt",
+          "selectSingleHint": "Wähle ein einzelnes Dokument für die Vorschau",
+          "selectDocumentHint": "Wähle ein Dokument für die Vorschau"
+        },
+        "footer": {
+          "selectionCount": "{selected} von {max} Dokument{selected, plural, =1 {} other {en}} ausgewählt",
+          "cancel": "Abbrechen",
+          "useDocuments": "Dokumente verwenden"
+        }
       }
     }
   }

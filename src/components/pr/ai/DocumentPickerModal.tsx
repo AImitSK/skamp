@@ -8,6 +8,7 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ export default function DocumentPickerModal({
   dokumenteFolderId,
   maxSelection = 3
 }: DocumentPickerModalProps) {
+  const t = useTranslations('pr.ai.documentPicker');
   const [documents, setDocuments] = useState<DocumentContext[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +56,7 @@ export default function DocumentPickerModal({
       );
       setDocuments(docs);
     } catch (err: any) {
-      setError(err.message || 'Fehler beim Laden der Dokumente');
+      setError(err.message || t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export default function DocumentPickerModal({
       newSelection.delete(docId);
     } else {
       if (newSelection.size >= maxSelection) {
-        alert(`Maximal ${maxSelection} Dokumente erlaubt`);
+        alert(t('maxSelectionAlert', { max: maxSelection }));
         return;
       }
       newSelection.add(docId);
@@ -112,10 +114,10 @@ export default function DocumentPickerModal({
           <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-white">
             <div>
               <DialogTitle className="text-lg font-semibold text-blue-900">
-                Planungsdokumente auswählen
+                {t('title')}
               </DialogTitle>
               <p className="text-sm text-blue-700 mt-1">
-                Wähle bis zu {maxSelection} Dokumente als Kontext für die KI-Generierung
+                {t('subtitle', { max: maxSelection })}
               </p>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -131,7 +133,7 @@ export default function DocumentPickerModal({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Dokumente durchsuchen..."
+                placeholder={t('searchPlaceholder')}
                 className="pl-10"
               />
             </div>
@@ -144,21 +146,21 @@ export default function DocumentPickerModal({
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto mb-2"></div>
-                  <p className="text-gray-600">Dokumente werden geladen...</p>
+                  <p className="text-gray-600">{t('loading')}</p>
                 </div>
               ) : error ? (
                 <div className="text-center py-8 text-red-600">
                   <p>{error}</p>
                   <Button onClick={loadDocuments} className="mt-4">
-                    Erneut versuchen
+                    {t('retry')}
                   </Button>
                 </div>
               ) : filteredDocs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>Keine Dokumente gefunden</p>
+                  <p>{t('noDocuments')}</p>
                   {searchTerm && (
-                    <p className="text-sm mt-2">Versuche eine andere Suche</p>
+                    <p className="text-sm mt-2">{t('tryDifferentSearch')}</p>
                   )}
                 </div>
               ) : (
@@ -197,7 +199,7 @@ export default function DocumentPickerModal({
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                               <span className={`text-xs px-2 py-0.5 rounded ${isSelected ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                                {doc.wordCount} Wörter
+                                {t('wordCount', { count: doc.wordCount })}
                               </span>
                               <span className={`text-xs ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
                                 {doc.createdAt.toLocaleDateString('de-DE')}
@@ -217,28 +219,28 @@ export default function DocumentPickerModal({
               {previewDoc ? (
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    Vorschau: {previewDoc.fileName.replace('.celero-doc', '')}
+                    {t('preview.title', { fileName: previewDoc.fileName.replace('.celero-doc', '') })}
                   </h3>
                   <div className="bg-white border rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap">
                     {previewDoc.plainText.substring(0, 1000)}
                     {previewDoc.plainText.length > 1000 && '...'}
                   </div>
                   <div className="mt-4 text-sm text-gray-600">
-                    <p><strong>Wörter:</strong> {previewDoc.wordCount}</p>
-                    <p><strong>Zeichen:</strong> {previewDoc.plainText.length}</p>
+                    <p><strong>{t('preview.words')}:</strong> {previewDoc.wordCount}</p>
+                    <p><strong>{t('preview.characters')}:</strong> {previewDoc.plainText.length}</p>
                   </div>
                 </div>
               ) : selectedIds.size > 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <p>{selectedIds.size} Dokumente ausgewählt</p>
+                  <p>{t('preview.multipleSelected', { count: selectedIds.size })}</p>
                   <p className="text-xs mt-2">
-                    Wähle ein einzelnes Dokument für die Vorschau
+                    {t('preview.selectSingleHint')}
                   </p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>Wähle ein Dokument für die Vorschau</p>
+                  <p>{t('preview.selectDocumentHint')}</p>
                 </div>
               )}
             </div>
@@ -251,19 +253,19 @@ export default function DocumentPickerModal({
                 <CheckCircleIcon className="h-5 w-5 text-blue-600" />
               )}
               <span className={`text-sm font-medium ${selectedIds.size > 0 ? 'text-blue-900' : 'text-gray-600'}`}>
-                {selectedIds.size} von {maxSelection} Dokument{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
+                {t('footer.selectionCount', { selected: selectedIds.size, max: maxSelection })}
               </span>
             </div>
             <div className="flex gap-2">
               <Button plain onClick={onClose}>
-                Abbrechen
+                {t('footer.cancel')}
               </Button>
               <Button
                 onClick={handleUseDocuments}
                 disabled={selectedIds.size === 0}
                 className="bg-[#005fab] hover:bg-[#004a8f] text-white disabled:bg-gray-300"
               >
-                Dokumente verwenden
+                {t('footer.useDocuments')}
               </Button>
             </div>
           </div>

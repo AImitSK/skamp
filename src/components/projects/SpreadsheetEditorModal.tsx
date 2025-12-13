@@ -13,6 +13,7 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface SpreadsheetEditorModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export default function SpreadsheetEditorModal({
   templateInfo
 }: SpreadsheetEditorModalProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.spreadsheetEditor');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData | null>(null);
@@ -75,7 +77,7 @@ export default function SpreadsheetEditorModal({
 
       if (docContent) {
         // Bereinige Dateinamen (entferne Endungen)
-        const cleanTitle = (document.fileName || 'Tabelle')
+        const cleanTitle = (document.fileName || t('defaultTitle'))
           .replace('.celero-sheet.celero-doc', '')
           .replace('.celero-sheet', '')
           .replace('.celero-doc', '')
@@ -159,9 +161,9 @@ export default function SpreadsheetEditorModal({
             setIsFullscreen(!isFullscreen);
           }}
           className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+          title={isFullscreen ? t('fullscreen.exit') : t('fullscreen.enter')}
         >
-          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          <span className="sr-only">{isFullscreen ? t('fullscreen.exit') : t('fullscreen.enter')}</span>
           {isFullscreen ? (
             <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
           ) : (
@@ -174,7 +176,7 @@ export default function SpreadsheetEditorModal({
         <div className="flex items-center space-x-2 mb-3">
           <TableCellsIcon className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-zinc-700">
-            {document ? 'Tabelle bearbeiten' : `Neue Tabelle - ${new Date().toLocaleDateString('de-DE')}`}
+            {document ? t('editTitle') : t('newTitle', { date: new Date().toLocaleDateString('de-DE') })}
           </span>
         </div>
 
@@ -182,7 +184,7 @@ export default function SpreadsheetEditorModal({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Tabellenname eingeben..."
+          placeholder={t('namePlaceholder')}
           className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
         />
       </DialogTitle>
@@ -224,13 +226,13 @@ export default function SpreadsheetEditorModal({
 
       <DialogActions>
         <Button plain onClick={handleClose}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button
           onClick={handleSave}
           disabled={saving || !title.trim() || !spreadsheetData}
         >
-          {saving ? 'Speichert...' : 'Speichern'}
+          {saving ? t('actions.saving') : t('actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

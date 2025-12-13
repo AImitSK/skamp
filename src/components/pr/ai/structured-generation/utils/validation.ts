@@ -14,8 +14,8 @@ import { GenerationContext, DocumentContext } from '@/types/ai';
 export interface ValidationResult {
   /** Ob die Validierung erfolgreich war */
   isValid: boolean;
-  /** Fehlermeldung, falls Validierung fehlgeschlagen */
-  error?: string;
+  /** i18n-Key für Fehlermeldung, falls Validierung fehlgeschlagen */
+  errorKey?: string;
 }
 
 /**
@@ -45,14 +45,14 @@ export function validateStandardMode(
   if (!prompt.trim()) {
     return {
       isValid: false,
-      error: 'Bitte beschreibe das Thema der Pressemitteilung.'
+      errorKey: 'pr.ai.structuredGeneration.validation.promptRequired'
     };
   }
 
   if (!context.tone || !context.audience) {
     return {
       isValid: false,
-      error: 'Bitte wähle Tonalität und Zielgruppe aus.'
+      errorKey: 'pr.ai.structuredGeneration.validation.toneAndAudienceRequired'
     };
   }
 
@@ -83,7 +83,7 @@ export function validateExpertMode(
   if (selectedDocuments.length === 0) {
     return {
       isValid: false,
-      error: 'Bitte füge mindestens 1 Planungsdokument hinzu.'
+      errorKey: 'pr.ai.structuredGeneration.validation.documentsRequired'
     };
   }
 

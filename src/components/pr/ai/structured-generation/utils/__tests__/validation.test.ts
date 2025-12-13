@@ -24,7 +24,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('Produktlaunch', context);
 
       expect(result.isValid).toBe(true);
-      expect(result.error).toBeUndefined();
+      expect(result.errorKey).toBeUndefined();
     });
 
     it('sollte valid sein mit minimal erforderlichen Feldern', () => {
@@ -60,7 +60,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('', context);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte beschreibe das Thema der Pressemitteilung.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.promptRequired');
     });
 
     it('sollte invalid sein wenn Prompt nur Whitespace enthält', () => {
@@ -72,7 +72,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('   ', context);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte beschreibe das Thema der Pressemitteilung.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.promptRequired');
     });
   });
 
@@ -85,7 +85,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('Produktlaunch', context);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte wähle Tonalität und Zielgruppe aus.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.toneAndAudienceRequired');
     });
 
     it('sollte invalid sein wenn audience fehlt', () => {
@@ -96,7 +96,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('Produktlaunch', context);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte wähle Tonalität und Zielgruppe aus.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.toneAndAudienceRequired');
     });
 
     it('sollte invalid sein wenn beide fehlen', () => {
@@ -105,7 +105,7 @@ describe('validateStandardMode', () => {
       const result = validateStandardMode('Produktlaunch', context);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte wähle Tonalität und Zielgruppe aus.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.toneAndAudienceRequired');
     });
   });
 });
@@ -127,7 +127,7 @@ describe('validateExpertMode', () => {
       const result = validateExpertMode(docs);
 
       expect(result.isValid).toBe(true);
-      expect(result.error).toBeUndefined();
+      expect(result.errorKey).toBeUndefined();
     });
 
     it('sollte valid sein mit mehreren Dokumenten', () => {
@@ -169,7 +169,7 @@ describe('validateExpertMode', () => {
       const result = validateExpertMode([]);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte füge mindestens 1 Planungsdokument hinzu.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.documentsRequired');
     });
   });
 });
@@ -193,7 +193,7 @@ describe('validateInput', () => {
       const result = validateInput('standard', '', context, []);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte beschreibe das Thema der Pressemitteilung.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.promptRequired');
     });
   });
 
@@ -219,7 +219,7 @@ describe('validateInput', () => {
       const result = validateInput('expert', 'Test', {}, []);
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Bitte füge mindestens 1 Planungsdokument hinzu.');
+      expect(result.errorKey).toBe('pr.ai.structuredGeneration.validation.documentsRequired');
     });
 
     it('sollte Prompt ignorieren im Expert-Modus', () => {

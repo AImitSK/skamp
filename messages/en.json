@@ -5617,6 +5617,18 @@
     "noOrganization": "No organization selected",
     "loading": "Loading projects...",
     "loadError": "Error loading",
+    "selector": {
+      "label": "Project Link (optional)",
+      "noProject": "No project assignment",
+      "integrationActive": "✅ Project integration activated",
+      "integrationDescription": "This campaign will be assigned to the selected project and automatically managed in the \"Creation\" pipeline phase.",
+      "pdfInfo": "<strong>Internal PDFs activated:</strong> Internal PDF versions will be automatically generated in the project folder upon saving.",
+      "customer": "Customer: {name}",
+      "emptyStates": {
+        "noProjects": "No active projects found.",
+        "noProjectsForClient": "No active projects found for this customer."
+      }
+    },
     "creation": {
       "stepActions": {
         "back": "Back",
@@ -7330,6 +7342,21 @@
         "cancel": "Cancel",
         "save": "Save",
         "create": "Create",
+        "saving": "Saving..."
+      }
+    },
+    "spreadsheetEditor": {
+      "defaultTitle": "Table",
+      "editTitle": "Edit Table",
+      "newTitle": "New Table - {date}",
+      "namePlaceholder": "Enter table name...",
+      "fullscreen": {
+        "enter": "Fullscreen",
+        "exit": "Exit Fullscreen"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
         "saving": "Saving..."
       }
     }
@@ -9407,6 +9434,225 @@
           "passwordRequired": "Required"
         },
         "doneButton": "Done"
+      }
+    }
+  },
+  "pr": {
+    "ai": {
+      "modalFooter": {
+        "generateWithAi": "Generate with AI",
+        "regenerate": "Regenerate",
+        "useText": "Use text"
+      },
+      "structuredGeneration": {
+        "validation": {
+          "promptRequired": "Please describe the topic of the press release.",
+          "toneAndAudienceRequired": "Please select tone and audience.",
+          "documentsRequired": "Please add at least 1 planning document.",
+          "validationFailed": "Validation failed",
+          "incompleteResponse": "Incomplete response from server",
+          "generationFailed": "Generation failed"
+        },
+        "success": {
+          "generated": "Press release successfully generated",
+          "contentApplied": "Content successfully applied"
+        },
+        "errors": {
+          "applyFailed": "Error applying content"
+        },
+        "auth": {
+          "title": "Login Required",
+          "message": "You must be logged in to use the AI assistant.",
+          "button": "Got it"
+        },
+        "defaultPrompt": "Create a professional press release based on the provided strategy documents.",
+        "steps": {
+          "context": "Context",
+          "content": "Content",
+          "generating": "AI",
+          "review": "Review"
+        },
+        "header": {
+          "title": "Create AI Press Release",
+          "subtitle": "Structured Generation with Google Gemini"
+        },
+        "footer": {
+          "cancel": "Cancel",
+          "back": "Back",
+          "next": "Next",
+          "generate": "Generate with AI",
+          "regenerate": "Regenerate",
+          "useResult": "Use Text"
+        },
+        "contextStep": {
+          "modeLabel": "AI Mode *",
+          "modeStandard": "Standard",
+          "modeExpert": "Expert",
+          "industryLabel": "Industry *",
+          "industryPlaceholder": "Select industry...",
+          "companyNameLabel": "Company Name *",
+          "companyNamePlaceholder": "Your Company Ltd.",
+          "toneLabel": "Tone *",
+          "audienceLabel": "Audience *",
+          "activeBadge": "Active",
+          "documentsHeading": "Planning Documents",
+          "documentsDescription": "Add your strategy documents (core message, audience analysis, company profile, etc.)",
+          "documentsSelected": "{count} document{plural} selected",
+          "documentsSelectedPlural": "s",
+          "wordCount": "{count} words",
+          "changeButton": "Change",
+          "selectDocumentsButton": "Select planning documents",
+          "removeDocumentTitle": "Remove document"
+        },
+        "industries": {
+          "technology": "Technology & Software",
+          "finance": "Financial Services",
+          "healthcare": "Healthcare",
+          "automotive": "Automotive",
+          "retail": "Retail & E-Commerce",
+          "media": "Media & Entertainment",
+          "energy": "Energy & Environment",
+          "education": "Education",
+          "nonprofit": "Non-Profit",
+          "realestate": "Real Estate",
+          "tourism": "Tourism & Hospitality",
+          "other": "Other"
+        },
+        "tones": {
+          "formal": {
+            "label": "Formal",
+            "description": "Professional, traditional, conservative"
+          },
+          "modern": {
+            "label": "Modern",
+            "description": "Contemporary, innovative, accessible"
+          },
+          "technical": {
+            "label": "Technical",
+            "description": "Specialized, precise, detailed"
+          },
+          "startup": {
+            "label": "Startup",
+            "description": "Dynamic, visionary, disruptive"
+          }
+        },
+        "audiences": {
+          "b2b": {
+            "label": "B2B",
+            "description": "Companies and experts"
+          },
+          "consumer": {
+            "label": "Consumer",
+            "description": "End customers and public"
+          },
+          "media": {
+            "label": "Media",
+            "description": "Journalists and editorial offices"
+          }
+        },
+        "contentStep": {
+          "promptLabelExpert": "Additional instructions or specific focus (optional)",
+          "promptLabelStandard": "Describe your press release *",
+          "charactersLabel": "{count} characters",
+          "placeholderExpert": "Optional instructions for the AI...\n\nExamples:\n- \"Focus on technical innovations\"\n- \"Target audience is investors and financial media\"\n- \"Emphasize sustainability aspects\"\n- Leave empty for automatic generation based on planning documents",
+          "placeholderStandard": "Describe your company, product, announcement or event. The more detailed your description, the better the result.\n\nExample: Our startup DataCorp has developed a new AI platform that analyzes company data 10x faster than traditional tools. The platform uses machine learning and can...",
+          "tipsHeading": "Tips for better results:",
+          "tip1": "Mention specific numbers and facts (e.g. 50% growth, 10,000 users)",
+          "tip2": "Describe the unique selling proposition clearly",
+          "tip3": "Mention the target audience and their benefits",
+          "tip4": "Provide context about the current market situation",
+          "tip5": "Add relevant people with names and positions",
+          "expertModeTitle": "Context-based generation activated",
+          "expertModeDescription": "The AI uses the {count} selected planning documents as context. Optionally provide additional instructions or leave empty for automatic generation.",
+          "documentsAttached": "{count} planning document{plural} attached",
+          "documentsAttachedPlural": "s"
+        },
+        "generationStep": {
+          "creatingHeading": "✨ Your press release is being created...",
+          "doneHeading": "Done!",
+          "creatingDescription": "The AI is analyzing your input and writing a professional text.",
+          "doneDescription": "The press release was successfully created.",
+          "progressLabel": "{progress}% complete",
+          "step1": "Topic and context are being analyzed",
+          "step2": "Structure and outline are being created",
+          "step3": "Content is being formulated and optimized",
+          "step4": "Final text is being compiled"
+        },
+        "reviewStep": {
+          "successTitle": "Press release successfully created!",
+          "successDescription": "The content will be automatically transferred to the respective fields.",
+          "metricsHeadline": "Headline",
+          "metricsLead": "Lead",
+          "metricsParagraphs": "Paragraphs",
+          "metricsCta": "CTA",
+          "metricsSocial": "Social",
+          "metricsIdeal": "Ideal: {value}",
+          "metricsCharacters": "{count} characters",
+          "metricsWords": "{count} words",
+          "tabPreview": "Preview",
+          "tabStructured": "Structured",
+          "sectionHeadline": "Headline",
+          "sectionLead": "Lead Paragraph",
+          "sectionBody": "Body Text",
+          "sectionQuote": "Quote",
+          "sectionCta": "Call-to-Action",
+          "sectionHashtags": "Social Media Hashtags",
+          "ctaOptimizationHint": "Will be formatted as CTA element for better SEO scores",
+          "socialOptimized": "Optimized for Twitter/LinkedIn sharing",
+          "socialSuitable": "Suitable for social media"
+        }
+      },
+      "headlineGenerator": {
+        "buttonLabel": "AI Headlines",
+        "generating": "Generating Headlines...",
+        "title": "AI-Generated Headlines",
+        "activeVerb": "✓ Active",
+        "characters": "{count} characters",
+        "seo": "SEO: {score}%",
+        "keywords": "Keywords: {density}%",
+        "hint": "Click on a headline to select it"
+      },
+      "templateDropdown": {
+        "selected": "Template selected",
+        "useTemplate": "Use Template (optional)",
+        "chooseFromTemplates": "Choose from proven templates",
+        "loading": "Loading templates...",
+        "noTemplates": "No templates found",
+        "clickToUse": "Click to use",
+        "availableCount": "{count} templates available"
+      },
+      "keyVisualGenerator": {
+        "aiImageIdeas": "AI Image Ideas",
+        "generatingIdeas": "Generating Ideas...",
+        "selectImageStyle": "Select an Image Style",
+        "autoSaveInfo": "The selected image will be automatically saved in the project folder \"AI Images\"",
+        "generatingImage": "Generating Image...",
+        "generatingImageDescription": "AI is creating your image. This may take up to 30 seconds."
+      },
+      "documentPicker": {
+        "title": "Select Planning Documents",
+        "subtitle": "Choose up to {max} documents as context for AI generation",
+        "searchPlaceholder": "Search documents...",
+        "loading": "Loading documents...",
+        "loadError": "Error loading documents",
+        "retry": "Try again",
+        "noDocuments": "No documents found",
+        "tryDifferentSearch": "Try a different search",
+        "wordCount": "{count} words",
+        "maxSelectionAlert": "Maximum {max} documents allowed",
+        "preview": {
+          "title": "Preview: {fileName}",
+          "words": "Words",
+          "characters": "Characters",
+          "multipleSelected": "{count} documents selected",
+          "selectSingleHint": "Select a single document for preview",
+          "selectDocumentHint": "Select a document for preview"
+        },
+        "footer": {
+          "selectionCount": "{selected} of {max} document{selected, plural, =1 {} other {s}} selected",
+          "cancel": "Cancel",
+          "useDocuments": "Use Documents"
+        }
       }
     }
   }

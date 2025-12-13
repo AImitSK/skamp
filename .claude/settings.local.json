@@ -81,7 +81,8 @@
       "Bash(awk:*)",
       "Bash(rm:*)",
       "Bash(python:*)",
-      "Bash(del add_workflow_translations.py)"
+      "Bash(del add_workflow_translations.py)",
+      "Bash(powershell -Command:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

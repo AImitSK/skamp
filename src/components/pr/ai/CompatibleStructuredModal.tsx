@@ -2,21 +2,24 @@
 "use client";
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { AIServiceAdapter, LegacyGenerationResult } from '@/lib/ai/interface-adapters';
 import { GenerationResult as EnhancedGenerationResult } from '@/types/ai';
 
 // Temporärer Placeholder für StructuredGenerationModal
 const StructuredGenerationModalPlaceholder = ({ onClose, onGenerate }: any) => {
+  const t = useTranslations('pr.ai.compatibleModal');
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">KI-Assistent (Placeholder)</h3>
-        <p className="mb-4">StructuredGenerationModal wird später implementiert</p>
+        <h3 className="text-lg font-semibold mb-4">{t('title')}</h3>
+        <p className="mb-4">{t('description')}</p>
         <div className="flex gap-2">
           <button onClick={onClose} className="px-4 py-2 bg-gray-500 text-white rounded">
-            Schließen
+            {t('close')}
           </button>
-          <button 
+          <button
             onClick={() => {
               // Test-Result für Development
               const testResult: EnhancedGenerationResult = {
@@ -45,7 +48,7 @@ const StructuredGenerationModalPlaceholder = ({ onClose, onGenerate }: any) => {
             }}
             className="px-4 py-2 bg-blue-500 text-white rounded"
           >
-            Test Generierung
+            {t('testGeneration')}
           </button>
         </div>
       </div>

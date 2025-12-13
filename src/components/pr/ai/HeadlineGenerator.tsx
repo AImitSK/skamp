@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { SparklesIcon, CheckIcon } from '@heroicons/react/20/solid';
 import { apiClient } from '@/lib/api/api-client';
@@ -28,6 +29,7 @@ export function HeadlineGenerator({
   content,
   onTitleSelect
 }: HeadlineGeneratorProps) {
+  const t = useTranslations('pr.ai.headlineGenerator');
   const [headlines, setHeadlines] = useState<HeadlineOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -104,14 +106,14 @@ export function HeadlineGenerator({
         ) : (
           <SparklesIcon className="h-4 w-4 mr-1" />
         )}
-        {loading ? 'Generiert Headlines...' : 'KI Headlines'}
+        {loading ? t('generating') : t('buttonLabel')}
       </Button>
 
       {/* Headlines Suggestions */}
       {showSuggestions && headlines.length > 0 && (
         <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 min-w-[500px] max-w-[600px]">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold text-gray-900">KI-generierte Headlines</h4>
+            <h4 className="text-sm font-semibold text-gray-900">{t('title')}</h4>
             <button
               onClick={closeSuggestions}
               className="text-gray-400 hover:text-gray-600"
@@ -134,18 +136,18 @@ export function HeadlineGenerator({
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium text-gray-500">{headline.style}</span>
                       {headline.hasActiveVerb && (
-                        <span className="text-xs text-green-600 font-medium">✓ Aktiv</span>
+                        <span className="text-xs text-green-600 font-medium">{t('activeVerb')}</span>
                       )}
                     </div>
                     <p className="text-sm text-gray-900 leading-relaxed break-words">
                       {headline.title}
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                      <span>{headline.length} Zeichen</span>
+                      <span>{t('characters', { count: headline.length })}</span>
                       <span>•</span>
-                      <span>SEO: {headline.seoScore}%</span>
+                      <span>{t('seo', { score: headline.seoScore })}</span>
                       <span>•</span>
-                      <span>Keywords: {headline.keywordDensity}%</span>
+                      <span>{t('keywords', { density: headline.keywordDensity })}</span>
                     </div>
                   </div>
                   <CheckIcon className="h-4 w-4 text-gray-400 group-hover:text-[#005fab] flex-shrink-0 mt-0.5" />
@@ -153,10 +155,10 @@ export function HeadlineGenerator({
               </button>
             ))}
           </div>
-          
+
           <div className="mt-3 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-500">
-              Klicken Sie auf eine Headline, um sie zu übernehmen
+              {t('hint')}
             </p>
           </div>
         </div>

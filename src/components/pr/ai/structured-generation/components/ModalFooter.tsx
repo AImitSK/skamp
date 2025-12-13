@@ -6,8 +6,11 @@
  * Generierungs-Modals an.
  */
 
+'use client';
+
 import React from 'react';
 import { ArrowRightIcon, SparklesIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { type GenerationStep } from '../types';
 
@@ -76,6 +79,9 @@ function ModalFooter({
   canGenerate,
   isGenerating
 }: ModalFooterProps) {
+  const tCommon = useTranslations('common');
+  const t = useTranslations('pr.ai.modalFooter');
+
   return (
     <div className="border-t p-6 flex justify-between items-center bg-gray-50">
       {/* Left Side: Back/Cancel Button */}
@@ -84,7 +90,7 @@ function ModalFooter({
           plain
           onClick={currentStep === 'context' ? onClose : onBack}
         >
-          {currentStep === 'context' ? 'Abbrechen' : 'Zurück'}
+          {currentStep === 'context' ? tCommon('cancel') : tCommon('back')}
         </Button>
       </div>
 
@@ -95,7 +101,7 @@ function ModalFooter({
             onClick={onNext}
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
           >
-            Weiter <ArrowRightIcon className="h-4 w-4 ml-1" />
+            {tCommon('next')} <ArrowRightIcon className="h-4 w-4 ml-1" />
           </Button>
         )}
 
@@ -106,21 +112,21 @@ function ModalFooter({
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
           >
             <SparklesIcon className="h-4 w-4 mr-2" />
-            Mit KI generieren
+            {t('generateWithAi')}
           </Button>
         )}
 
         {currentStep === 'review' && (
           <>
             <Button plain onClick={onBack}>
-              Neu generieren
+              {t('regenerate')}
             </Button>
             <Button
               onClick={onUseResult}
               className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
             >
               <CheckCircleIcon className="h-4 w-4 mr-2" />
-              Text übernehmen
+              {t('useText')}
             </Button>
           </>
         )}

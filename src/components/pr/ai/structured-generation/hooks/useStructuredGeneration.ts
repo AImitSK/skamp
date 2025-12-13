@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/api-client';
 import {
   GenerationContext,
@@ -58,6 +59,7 @@ export interface GenerateParams {
  * ```
  */
 export function useStructuredGeneration() {
+  const t = useTranslations('pr.ai.structuredGeneration');
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<StructuredGenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,10 @@ export function useStructuredGeneration() {
     // Validierung
     const validation = validateInput(mode, prompt, context, selectedDocuments);
     if (!validation.isValid) {
-      setError(validation.error || 'Validierung fehlgeschlagen');
+      const errorMessage = validation.errorKey
+        ? t(validation.errorKey as any)
+        : t('validation.validationFailed');
+      setError(errorMessage);
       return null;
     }
 
@@ -104,7 +109,7 @@ export function useStructuredGeneration() {
         if (prompt.trim()) {
           requestBody.prompt = prompt.trim();
         } else {
-          requestBody.prompt = 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.';
+          requestBody.prompt = t('defaultPrompt');
         }
 
         requestBody.documentContext = {
@@ -120,22 +125,22 @@ export function useStructuredGeneration() {
 
       // Response-Validierung
       if (!apiResult.success || !apiResult.structured) {
-        throw new Error('Unvollständige Antwort vom Server');
+        throw new Error(t('validation.incompleteResponse'));
       }
 
       setResult(apiResult);
-      toastService.success('Pressemitteilung erfolgreich generiert');
+      toastService.success(t('success.generated'));
       return apiResult;
 
     } catch (err: any) {
-      const errorMessage = err.message || 'Generierung fehlgeschlagen';
+      const errorMessage = err.message || t('validation.generationFailed');
       setError(errorMessage);
       toastService.error(errorMessage);
       return null;
     } finally {
       setIsGenerating(false);
     }
-  }, []);
+  }, [t]);
 
   /**
    * Setzt den Hook-State zurück
