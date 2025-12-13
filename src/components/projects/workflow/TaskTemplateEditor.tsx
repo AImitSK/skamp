@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { PipelineStage } from '@/types/project';
 import { TaskPriority } from '@/types/tasks';
-import { 
+import {
   DocumentDuplicateIcon,
   PlusIcon,
   TrashIcon,
@@ -44,6 +45,7 @@ export default function TaskTemplateEditor({
   templates,
   onTemplatesUpdate
 }: TaskTemplateEditorProps) {
+  const t = useTranslations('projects.workflow.templateEditor');
   const [localTemplates, setLocalTemplates] = useState<TaskTemplate[]>(templates);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TaskTemplate | null>(null);
@@ -51,12 +53,12 @@ export default function TaskTemplateEditor({
   const [isSaving, setIsSaving] = useState(false);
 
   const stageLabels: Record<PipelineStage, string> = {
-    'ideas_planning': 'Ideen & Planung',
-    'creation': 'Erstellung',
-    'approval': 'Freigabe',
-    'distribution': 'Verteilung',
-    'monitoring': 'Monitoring',
-    'completed': 'Abgeschlossen'
+    'ideas_planning': t('stages.ideas_planning'),
+    'creation': t('stages.creation'),
+    'approval': t('stages.approval'),
+    'distribution': t('stages.distribution'),
+    'monitoring': t('stages.monitoring'),
+    'completed': t('stages.completed')
   };
 
   const stageOptions: PipelineStage[] = [
@@ -68,10 +70,10 @@ export default function TaskTemplateEditor({
   ];
 
   const priorityLabels: Record<TaskPriority, string> = {
-    'low': 'Niedrig',
-    'medium': 'Mittel',
-    'high': 'Hoch',
-    'urgent': 'Dringend'
+    'low': t('priorities.low'),
+    'medium': t('priorities.medium'),
+    'high': t('priorities.high'),
+    'urgent': t('priorities.urgent')
   };
 
   const categories = [
@@ -86,19 +88,19 @@ export default function TaskTemplateEditor({
   ];
 
   const categoryLabels: Record<string, string> = {
-    'content_creation': 'Content-Erstellung',
-    'review': 'Review & Qualitätssicherung',
-    'approval': 'Freigabe & Genehmigung',
-    'documentation': 'Dokumentation',
-    'communication': 'Kommunikation',
-    'technical': 'Technische Umsetzung',
-    'creative': 'Kreative Arbeit',
-    'administrative': 'Administrative Tasks'
+    'content_creation': t('categories.content_creation'),
+    'review': t('categories.review'),
+    'approval': t('categories.approval'),
+    'documentation': t('categories.documentation'),
+    'communication': t('categories.communication'),
+    'technical': t('categories.technical'),
+    'creative': t('categories.creative'),
+    'administrative': t('categories.administrative')
   };
 
   const createNewTemplate = (): TaskTemplate => ({
     id: `template_${Date.now()}`,
-    title: 'Neue Task-Vorlage',
+    title: t('defaults.newTemplateTitle'),
     category: 'content_creation',
     stage: 'creation',
     priority: 'medium',
@@ -168,10 +170,10 @@ export default function TaskTemplateEditor({
 
   const addChecklistItem = () => {
     if (!selectedTemplate) return;
-    
+
     const newItem = {
       id: `checklist_${Date.now()}`,
-      text: 'Neue Checklisten-Aufgabe',
+      text: t('defaults.newChecklistItem'),
       required: false
     };
 
@@ -205,7 +207,7 @@ export default function TaskTemplateEditor({
           <div className="flex items-center space-x-2">
             <DocumentDuplicateIcon className="w-5 h-5 text-gray-500" />
             <h3 className="text-lg font-medium text-gray-900">
-              Task-Templates verwalten
+              {t('title')}
             </h3>
           </div>
 
@@ -214,7 +216,7 @@ export default function TaskTemplateEditor({
               onClick={() => setIsEditing(true)}
               className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
-              Bearbeiten
+              {t('actions.edit')}
             </button>
           ) : (
             <div className="flex space-x-2">
@@ -223,14 +225,14 @@ export default function TaskTemplateEditor({
                 disabled={isSaving}
                 className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSaving ? 'Speichern...' : 'Speichern'}
+                {isSaving ? t('actions.saving') : t('actions.save')}
               </button>
               <button
                 onClick={handleCancel}
                 disabled={isSaving}
                 className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 disabled:opacity-50"
               >
-                Abbrechen
+                {t('actions.cancel')}
               </button>
             </div>
           )}
@@ -245,7 +247,7 @@ export default function TaskTemplateEditor({
           return (
             <div key={stage} className="mb-8">
               <h4 className="text-sm font-medium text-gray-900 mb-4">
-                {stageLabels[stage]} ({stageTemplates.length} Templates)
+                {stageLabels[stage]} ({t('templateCount', { count: stageTemplates.length })})
               </h4>
 
               <div className="space-y-3">
@@ -277,7 +279,7 @@ export default function TaskTemplateEditor({
 
                           {template.requiredForStageCompletion && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                              Kritisch
+                              {t('badges.critical')}
                             </span>
                           )}
                         </div>
@@ -285,12 +287,12 @@ export default function TaskTemplateEditor({
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             <ClockIcon className="w-4 h-4" />
-                            <span>{template.daysAfterStageEntry} Tage nach Stage-Eintritt</span>
+                            <span>{t('daysAfterStageEntry', { days: template.daysAfterStageEntry })}</span>
                           </div>
 
                           {template.estimatedDuration && (
                             <div className="flex items-center space-x-1">
-                              <span>~{template.estimatedDuration}h geschätzt</span>
+                              <span>{t('estimatedDuration', { hours: template.estimatedDuration })}</span>
                             </div>
                           )}
 
@@ -298,9 +300,9 @@ export default function TaskTemplateEditor({
                             <div className="flex items-center space-x-1">
                               <UserGroupIcon className="w-4 h-4" />
                               <span>
-                                {template.assignmentRules.assignTo === 'project_lead' ? 'Projektleitung' :
-                                 template.assignmentRules.assignTo === 'team_member' ? 'Team-Mitglied' :
-                                 `Rolle: ${template.assignmentRules.role}`}
+                                {template.assignmentRules.assignTo === 'project_lead' ? t('assignmentRules.project_lead') :
+                                 template.assignmentRules.assignTo === 'team_member' ? t('assignmentRules.team_member') :
+                                 t('assignmentRules.role', { role: template.assignmentRules.role || '' })}
                               </span>
                             </div>
                           )}
@@ -319,7 +321,7 @@ export default function TaskTemplateEditor({
                             onClick={() => handleEditTemplate(template)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded"
                           >
-                            Bearbeiten
+                            {t('actions.editTemplate')}
                           </button>
                           <button
                             onClick={() => handleDeleteTemplate(template.id)}
@@ -336,7 +338,7 @@ export default function TaskTemplateEditor({
                 {stageTemplates.length === 0 && (
                   <div className="p-8 text-center text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
                     <DocumentDuplicateIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p>Keine Templates für diese Stage</p>
+                    <p>{t('emptyState')}</p>
                   </div>
                 )}
               </div>
@@ -352,7 +354,7 @@ export default function TaskTemplateEditor({
               className="flex items-center space-x-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-600"
             >
               <PlusIcon className="w-5 h-5" />
-              <span>Neues Template hinzufügen</span>
+              <span>{t('actions.addTemplate')}</span>
             </button>
           </div>
         )}
@@ -364,7 +366,7 @@ export default function TaskTemplateEditor({
           <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
             <div className="p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-6">
-                {localTemplates.find(t => t.id === selectedTemplate.id) ? 'Template bearbeiten' : 'Neues Template'}
+                {localTemplates.find(t => t.id === selectedTemplate.id) ? t('editor.titleEdit') : t('editor.titleNew')}
               </h3>
 
               <div className="space-y-6">
@@ -372,7 +374,7 @@ export default function TaskTemplateEditor({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Titel
+                      {t('editor.fields.title')}
                     </label>
                     <input
                       type="text"
@@ -384,7 +386,7 @@ export default function TaskTemplateEditor({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kategorie
+                      {t('editor.fields.category')}
                     </label>
                     <select
                       value={selectedTemplate.category}
@@ -401,7 +403,7 @@ export default function TaskTemplateEditor({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Stage
+                      {t('editor.fields.stage')}
                     </label>
                     <select
                       value={selectedTemplate.stage}
@@ -418,7 +420,7 @@ export default function TaskTemplateEditor({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Priorität
+                      {t('editor.fields.priority')}
                     </label>
                     <select
                       value={selectedTemplate.priority}
@@ -435,7 +437,7 @@ export default function TaskTemplateEditor({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tage nach Stage-Eintritt
+                      {t('editor.fields.daysAfterStageEntry')}
                     </label>
                     <input
                       type="number"
@@ -448,7 +450,7 @@ export default function TaskTemplateEditor({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Geschätzte Dauer (Stunden)
+                      {t('editor.fields.estimatedDuration')}
                     </label>
                     <input
                       type="number"
@@ -464,7 +466,7 @@ export default function TaskTemplateEditor({
                 {/* Beschreibung */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Beschreibung
+                    {t('editor.fields.description')}
                   </label>
                   <textarea
                     value={selectedTemplate.description || ''}
@@ -484,7 +486,7 @@ export default function TaskTemplateEditor({
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">
-                      Kritisch für Stage-Completion
+                      {t('editor.fields.requiredForStageCompletion')}
                     </span>
                   </label>
                 </div>
@@ -493,14 +495,14 @@ export default function TaskTemplateEditor({
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-medium text-gray-700">
-                      Checkliste
+                      {t('editor.checklist.title')}
                     </label>
                     <button
                       onClick={addChecklistItem}
                       className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      <span>Hinzufügen</span>
+                      <span>{t('editor.checklist.add')}</span>
                     </button>
                   </div>
 
@@ -520,7 +522,7 @@ export default function TaskTemplateEditor({
                             onChange={(e) => updateChecklistItem(index, { required: e.target.checked })}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-xs text-gray-600">Pflicht</span>
+                          <span className="text-xs text-gray-600">{t('editor.checklist.required')}</span>
                         </label>
                         <button
                           onClick={() => removeChecklistItem(index)}
@@ -539,13 +541,13 @@ export default function TaskTemplateEditor({
                   onClick={() => setShowEditor(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-700"
                 >
-                  Abbrechen
+                  {t('editor.actions.cancel')}
                 </button>
                 <button
                   onClick={handleSaveTemplate}
                   className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  Template speichern
+                  {t('editor.actions.saveTemplate')}
                 </button>
               </div>
             </div>

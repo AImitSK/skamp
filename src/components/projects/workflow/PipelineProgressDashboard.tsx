@@ -13,10 +13,13 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { useProject } from '@/app/dashboard/projects/[projectId]/context/ProjectContext';
+import { useTranslations } from 'next-intl';
 
 interface PipelineProgressDashboardProps {}
 
 function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
+  const t = useTranslations('projects.workflow.pipeline');
+
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
   const currentStage = project?.currentStage || 'creation';
@@ -34,13 +37,13 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
 
   // useMemo für konstante Objekte (verhindert Re-Creation bei jedem Render)
   const stageLabels = useMemo<Record<PipelineStage, string>>(() => ({
-    'ideas_planning': 'Ideen & Planung',
-    'creation': 'Content und Materialien',
-    'approval': 'Freigabe',
-    'distribution': 'Verteilung',
-    'monitoring': 'Monitoring',
-    'completed': 'Abgeschlossen'
-  }), []);
+    'ideas_planning': t('stages.ideasPlanning'),
+    'creation': t('stages.creation'),
+    'approval': t('stages.approval'),
+    'distribution': t('stages.distribution'),
+    'monitoring': t('stages.monitoring'),
+    'completed': t('stages.completed')
+  }), [t]);
 
   const stageOrder = useMemo<PipelineStage[]>(() => [
     'ideas_planning',
@@ -106,7 +109,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
       <div className="bg-primary rounded-lg p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold">
-            Pipeline-Fortschritt
+            {t('title')}
           </h3>
           <ChartBarIcon className="w-6 h-6" />
         </div>
@@ -114,7 +117,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Gesamt-Fortschritt */}
           <div>
-            <p className="text-blue-100 text-sm mb-2">Gesamt-Fortschritt</p>
+            <p className="text-blue-100 text-sm mb-2">{t('overallProgress')}</p>
             <div className="flex items-center space-x-3">
               <div className="text-3xl font-bold">
                 {Math.round(pipelinePercent)}%
@@ -130,7 +133,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
 
           {/* Task-Completion */}
           <div>
-            <p className="text-blue-100 text-sm mb-2">Task-Completion</p>
+            <p className="text-blue-100 text-sm mb-2">{t('taskCompletion')}</p>
             <div className="flex items-center space-x-3">
               <div className="text-3xl font-bold">
                 {Math.round(progress.taskCompletion)}%
@@ -147,27 +150,27 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
                 onClick={handleNavigateToTasks}
                 className="text-xs text-blue-100 hover:text-white mt-1 underline"
               >
-                Tasks erstellen
+                {t('createTasks')}
               </button>
             )}
           </div>
 
           {/* Kritische Tasks */}
           <div>
-            <p className="text-blue-100 text-sm mb-2">Kritische Tasks</p>
+            <p className="text-blue-100 text-sm mb-2">{t('criticalTasks')}</p>
             <div className="flex items-center space-x-2">
               {progress.criticalTasksRemaining > 0 ? (
                 <>
                   <ExclamationTriangleIcon className="w-6 h-6 text-yellow-300" />
                   <span className="text-xl font-bold">
-                    {progress.criticalTasksRemaining} offen
+                    {t('open', { count: progress.criticalTasksRemaining })}
                   </span>
                 </>
               ) : (
                 <>
                   <CheckCircleIcon className="w-6 h-6 text-green-300" />
                   <span className="text-xl font-bold">
-                    Alle erledigt
+                    {t('allCompleted')}
                   </span>
                 </>
               )}
@@ -176,7 +179,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
         </div>
 
         <div className="mt-4 text-xs text-blue-100">
-          Letztes Update: {new Date().toLocaleString('de-DE')}
+          {t('lastUpdate')}: {new Date().toLocaleString('de-DE')}
         </div>
       </div>
 
@@ -188,12 +191,11 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
           <div className="flex items-center space-x-2">
             <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
             <h4 className="font-medium text-amber-800">
-              Warnung: Kritische Tasks ausstehend
+              {t('warning.title')}
             </h4>
           </div>
           <p className="mt-2 text-sm text-amber-700">
-            Es sind noch {progress.criticalTasksRemaining} kritische Tasks offen,
-            die für den nächsten Stage-Übergang erforderlich sind.
+            {t('warning.message', { count: progress.criticalTasksRemaining })}
           </p>
         </div>
       )}

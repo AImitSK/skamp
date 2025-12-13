@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -32,10 +33,14 @@ export function TaskCreateModal({
   projectManagerId,
   teamMembers
 }: TaskCreateModalProps) {
+  const t = useTranslations('projects.tasks.createModal');
+  const tCommon = useTranslations('common');
+  const tPriority = useTranslations('projects.priority');
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignedUserId: projectManagerId || (teamMembers.length > 0 ? teamMembers[0].userId : ''), // Default: Projekt-Manager oder erstes Teammitglied
+    assignedUserId: projectManagerId || (teamMembers.length > 0 ? teamMembers[0].userId : ''),
     dueDate: '',
     priority: 'medium' as TaskPriority,
     progress: 0
@@ -47,12 +52,12 @@ export function TaskCreateModal({
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      setError('Titel ist erforderlich');
+      setError(t('validation.titleRequired'));
       return;
     }
 
     if (!formData.assignedUserId) {
-      setError('Zuständige Person ist erforderlich');
+      setError(t('validation.assigneeRequired'));
       return;
     }
 
@@ -89,7 +94,7 @@ export function TaskCreateModal({
       onSuccess();
       onClose();
     } catch (error: any) {
-      setError(error.message || 'Fehler beim Erstellen der Task');
+      setError(error.message || t('errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +119,7 @@ export function TaskCreateModal({
     <Dialog open={isOpen} onClose={handleClose} size="xl">
       <form onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
-          Neue Task erstellen
+          {t('title')}
         </DialogTitle>
 
         <DialogBody className="p-6">
@@ -126,68 +131,68 @@ export function TaskCreateModal({
 
           <FieldGroup>
             <Field>
-              <Label>Titel *</Label>
+              <Label>{t('fields.title')}</Label>
               <Input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                placeholder="z.B. Konzept erstellen, Review durchführen..."
+                placeholder={t('fields.titlePlaceholder')}
                 disabled={loading}
               />
             </Field>
 
             <Field>
-              <Label>Beschreibung</Label>
+              <Label>{t('fields.description')}</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                placeholder="Weitere Details zur Task..."
+                placeholder={t('fields.descriptionPlaceholder')}
                 disabled={loading}
               />
             </Field>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
-                <Label>Zuständige Person</Label>
+                <Label>{t('fields.assignee')}</Label>
                 <Select
                   value={formData.assignedUserId}
                   onChange={(e) => setFormData({ ...formData, assignedUserId: e.target.value })}
                   disabled={loading}
                 >
                   {teamMembers
-                    .filter(member => member.userId) // Nur Mitglieder mit gültiger userId
+                    .filter(member => member.userId)
                     .map(member => (
                     <option key={member.id} value={member.userId}>
                       {member.displayName}
-                      {member.userId === projectManagerId && ' (Projekt-Manager)'}
+                      {member.userId === projectManagerId && t('fields.projectManagerSuffix')}
                     </option>
                   ))}
                   {teamMembers.length === 0 && (
-                    <option value="">Keine Teammitglieder verfügbar</option>
+                    <option value="">{t('fields.noTeamMembers')}</option>
                   )}
                 </Select>
               </Field>
 
               <Field>
-                <Label>Priorität</Label>
+                <Label>{t('fields.priority')}</Label>
                 <Select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
                   disabled={loading}
                 >
-                  <option value="low">Niedrig</option>
-                  <option value="medium">Mittel</option>
-                  <option value="high">Hoch</option>
-                  <option value="urgent">Dringend</option>
+                  <option value="low">{tPriority('low')}</option>
+                  <option value="medium">{tPriority('medium')}</option>
+                  <option value="high">{tPriority('high')}</option>
+                  <option value="urgent">{tPriority('urgent')}</option>
                 </Select>
               </Field>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
-                <Label>Fälligkeitsdatum</Label>
+                <Label>{t('fields.dueDate')}</Label>
                 <Input
                   type="date"
                   value={formData.dueDate}
@@ -197,7 +202,7 @@ export function TaskCreateModal({
               </Field>
 
               <Field>
-                <Label>Fortschritt</Label>
+                <Label>{t('fields.progress')}</Label>
                 <div className="space-y-2">
                   <Input
                     type="range"
@@ -222,14 +227,14 @@ export function TaskCreateModal({
 
         <DialogActions className="px-6 py-4">
           <Button plain onClick={handleClose} disabled={loading}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button
             type="submit"
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             disabled={loading}
           >
-            {loading ? 'Wird erstellt...' : 'Task erstellen'}
+            {loading ? t('actions.creating') : t('actions.create')}
           </Button>
         </DialogActions>
       </form>

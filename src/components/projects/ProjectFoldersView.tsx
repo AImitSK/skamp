@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import {
   FolderIcon,
   CloudArrowUpIcon,
@@ -105,6 +106,7 @@ export default function ProjectFoldersView({
   title = 'Strategiedokumente'
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.foldersView');
 
   // Custom Hooks für Business Logic
   const {
@@ -445,9 +447,9 @@ export default function ProjectFoldersView({
     return (
       <div className="text-center py-8">
         <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-        <Text className="text-gray-500 mb-2">Keine Projektordner verfügbar</Text>
+        <Text className="text-gray-500 mb-2">{t('noProjectFolders.title')}</Text>
         <Text className="text-sm text-gray-400">
-          Nur neue Projekte haben automatische Ordnerstrukturen
+          {t('noProjectFolders.description')}
         </Text>
       </div>
     );
@@ -463,7 +465,7 @@ export default function ProjectFoldersView({
               plain
               onClick={() => setShowCreateFolderModal(true)}
               disabled={loading}
-              title="Ordner erstellen"
+              title={t('actions.createFolder')}
               className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
             >
               <FolderIcon className="w-5 h-5" />
@@ -476,7 +478,7 @@ export default function ProjectFoldersView({
                 plain
                 onClick={handleCreateDocument}
                 disabled={loading}
-                title="Text erstellen"
+                title={t('actions.createDocument')}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
               >
                 <DocumentPlusIcon className="w-5 h-5" />
@@ -485,7 +487,7 @@ export default function ProjectFoldersView({
                 plain
                 onClick={() => handleCreateSpreadsheet()}
                 disabled={loading}
-                title="Tabelle erstellen"
+                title={t('actions.createSpreadsheet')}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
               >
                 <TableCellsIcon className="w-5 h-5" />
@@ -498,7 +500,7 @@ export default function ProjectFoldersView({
             disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
           >
             <CloudArrowUpIcon className="w-4 h-4 mr-2" />
-            Hochladen
+            {t('actions.upload')}
           </Button>
 
           {/* Bibliothek Import Button - nur im Dokumente-Ordner */}
@@ -508,7 +510,7 @@ export default function ProjectFoldersView({
               disabled={loading}
             >
               <BookmarkIcon className="w-4 h-4 mr-2" />
-              Bibliothek
+              {t('actions.library')}
             </Button>
           )}
         </div>
@@ -521,7 +523,7 @@ export default function ProjectFoldersView({
             onClick={handleGoToRoot}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
-            {filterByFolder === 'Dokumente' ? 'Dokumente' : 'Projekt-Ordner'}
+            {filterByFolder === 'Dokumente' ? t('breadcrumbs.documents') : t('breadcrumbs.projectFolders')}
           </button>
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
@@ -584,7 +586,7 @@ export default function ProjectFoldersView({
                     </Text>
                     {isDragOver && (
                       <Text className="text-xs text-gray-600 mt-1">
-                        Drop files here to upload
+                        {t('dragDrop.dropHere')}
                       </Text>
                     )}
                   </div>
@@ -606,13 +608,13 @@ export default function ProjectFoldersView({
             <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center">
                 <div className="w-[50%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  {t('table.name')}
                 </div>
                 <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Typ
+                  {t('table.type')}
                 </div>
                 <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Erstellt
+                  {t('table.created')}
                 </div>
                 <div className="w-[10%]"></div>
               </div>
@@ -641,7 +643,7 @@ export default function ProjectFoldersView({
                     {/* Typ */}
                     <div className="w-[20%]">
                       <Text className="text-sm text-gray-600">
-                        {asset.fileType === 'celero-doc' ? 'Dokument' : asset.fileType || 'Datei'}
+                        {asset.fileType === 'celero-doc' ? t('fileTypes.document') : asset.fileType || t('fileTypes.file')}
                       </Text>
                     </div>
 
@@ -662,30 +664,30 @@ export default function ProjectFoldersView({
                           {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') ? (
                             <>
                               <DropdownItem onClick={() => handleEditDocument(asset)}>
-                                Ansehen / Bearbeiten
+                                {t('dropdown.viewEdit')}
                               </DropdownItem>
                             </>
                           ) : (
                             <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
-                              Ansehen
+                              {t('dropdown.view')}
                             </DropdownItem>
                           )}
                           <DropdownItem onClick={() => handleDownloadDocument(asset)}>
-                            Download
+                            {t('dropdown.download')}
                           </DropdownItem>
                           {filterByFolder !== 'Dokumente' && (
                             <DropdownItem onClick={() => handleMoveAsset(asset)}>
-                              Verschieben
+                              {t('dropdown.move')}
                             </DropdownItem>
                           )}
                           {filterByFolder === 'Dokumente' && (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) && (
                             <DropdownItem onClick={() => handleSaveAsBoilerplate(asset)}>
-                              Als Boilerplate speichern
+                              {t('dropdown.saveAsBoilerplate')}
                             </DropdownItem>
                           )}
                           <DropdownDivider />
                           <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
-                            <span className="text-red-600">Löschen</span>
+                            <span className="text-red-600">{t('dropdown.delete')}</span>
                           </DropdownItem>
                         </DropdownMenu>
                       </Dropdown>
@@ -702,11 +704,11 @@ export default function ProjectFoldersView({
           <div className="text-center py-8">
             <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <Text className="text-gray-500 mb-2">
-              {selectedFolderId ? 'Dieser Ordner ist leer' : 'Keine Ordner verfügbar'}
+              {selectedFolderId ? t('emptyState.folderEmpty') : t('emptyState.noFolders')}
             </Text>
             <Button onClick={() => setShowUploadModal(true)} className="mt-2">
               <CloudArrowUpIcon className="w-4 h-4 mr-2" />
-              Erste Datei hochladen
+              {t('emptyState.uploadFirst')}
             </Button>
           </div>
         )}
@@ -756,30 +758,30 @@ export default function ProjectFoldersView({
       {/* Save as Boilerplate Dialog - INLINE */}
       {assetToSaveAsBoilerplate && (
         <Dialog open={showSaveAsBoilerplateModal} onClose={() => setShowSaveAsBoilerplateModal(false)} size="2xl">
-          <DialogTitle>Als Boilerplate speichern</DialogTitle>
+          <DialogTitle>{t('boilerplateDialog.title')}</DialogTitle>
           <DialogBody className="space-y-4">
             <Field>
-              <Label>Name *</Label>
-              <Input type="text" value={boilerplateName} onChange={(e) => setBoilerplateName(e.target.value)} placeholder="z.B. Unternehmensprofil Standard" required />
+              <Label>{t('boilerplateDialog.nameLabel')}</Label>
+              <Input type="text" value={boilerplateName} onChange={(e) => setBoilerplateName(e.target.value)} placeholder={t('boilerplateDialog.namePlaceholder')} required />
             </Field>
             <Field>
-              <Label>Beschreibung (optional)</Label>
-              <Input type="text" value={boilerplateDescription} onChange={(e) => setBoilerplateDescription(e.target.value)} placeholder="Kurze Beschreibung..." />
+              <Label>{t('boilerplateDialog.descriptionLabel')}</Label>
+              <Input type="text" value={boilerplateDescription} onChange={(e) => setBoilerplateDescription(e.target.value)} placeholder={t('boilerplateDialog.descriptionPlaceholder')} />
             </Field>
             <Field>
-              <Label>Kategorie *</Label>
+              <Label>{t('boilerplateDialog.categoryLabel')}</Label>
               <Select value={boilerplateCategory} onChange={(e) => setBoilerplateCategory(e.target.value as any)}>
-                <option value="company">Unternehmensbeschreibung</option>
-                <option value="contact">Kontaktinformationen</option>
-                <option value="legal">Rechtliche Hinweise</option>
-                <option value="product">Produktbeschreibung</option>
-                <option value="custom">Sonstige</option>
+                <option value="company">{t('boilerplateDialog.categories.company')}</option>
+                <option value="contact">{t('boilerplateDialog.categories.contact')}</option>
+                <option value="legal">{t('boilerplateDialog.categories.legal')}</option>
+                <option value="product">{t('boilerplateDialog.categories.product')}</option>
+                <option value="custom">{t('boilerplateDialog.categories.custom')}</option>
               </Select>
             </Field>
           </DialogBody>
           <DialogActions>
-            <Button color="secondary" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>Abbrechen</Button>
-            <Button color="primary" onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? 'Speichert...' : 'Speichern'}</Button>
+            <Button color="secondary" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>{t('boilerplateDialog.cancel')}</Button>
+            <Button color="primary" onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? t('boilerplateDialog.saving') : t('boilerplateDialog.save')}</Button>
           </DialogActions>
         </Dialog>
       )}

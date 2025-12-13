@@ -14,55 +14,57 @@
 
 import { Button } from '@/components/ui/button';
 import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { taskService } from '@/lib/firebase/task-service';
 import { toastService } from '@/lib/utils/toast';
 import { ProjectTask, TaskPriority } from '@/types/tasks';
 
 // Task-Vorlagen für Standard-PR-Workflow
-const TASK_TEMPLATES = [
+// Keys werden zur Laufzeit übersetzt
+const TASK_TEMPLATE_KEYS = [
   {
-    title: 'Strategie-Dokumente erstellen',
-    description: '- Unternehmensprofil & Senderanalyse\n- Situationsanalyse\n- Zielgruppenanalyse\n- Kernbotschaften & Kommunikationsziele',
+    titleKey: 'strategy.title',
+    descriptionKey: 'strategy.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Medien Assets zusammenstellen',
-    description: '- Bilder hochladen\n- Videos hochladen\n- Key Visual festlegen',
+    titleKey: 'mediaAssets.title',
+    descriptionKey: 'mediaAssets.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Pressemeldungsentwurf',
-    description: '- KI Assistent instruieren\n- Pressemeldung verfeinern',
+    titleKey: 'pressDraft.title',
+    descriptionKey: 'pressDraft.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Interne Freigabe',
-    description: '- Text entwurf im Chat diskutieren\n- Key Visual im Chat besprechen',
+    titleKey: 'internalApproval.title',
+    descriptionKey: 'internalApproval.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Kundenfreigabe einholen',
-    description: '- Korrekturphasen\n- Kundenfreigabe der Pressemeldung\n- Asset Auswahl Freigabe',
+    titleKey: 'customerApproval.title',
+    descriptionKey: 'customerApproval.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Verteilerliste zusammenstellen',
-    description: '- Journalisten importieren\n- Verteilerliste zusammenstellen\n- Monitoring Parameter festlegen (RSS Feeds)',
+    titleKey: 'distributionList.title',
+    descriptionKey: 'distributionList.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Anschreiben erstellen',
-    description: '- Begleitschreiben formulieren\n- Testversand',
+    titleKey: 'coverLetter.title',
+    descriptionKey: 'coverLetter.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Versand',
-    description: '- Termin festlegen\n- Versand planen\n- Versand überwachen',
+    titleKey: 'dispatch.title',
+    descriptionKey: 'dispatch.description',
     priority: 'medium' as TaskPriority
   },
   {
-    title: 'Monitoring',
-    description: '- Email Performance überwachen\n- Veröffentlichungen überwachen\n- Veröffentlichungen manuell einpflegen',
+    titleKey: 'monitoring.title',
+    descriptionKey: 'monitoring.description',
     priority: 'medium' as TaskPriority
   }
 ];
@@ -82,6 +84,8 @@ export function TaskTemplateButton({
   disabled = false,
   onSuccess
 }: TaskTemplateButtonProps) {
+  const t = useTranslations('projects.tasks.templateButton');
+
   const handleCreateTemplateTasks = async () => {
     if (!userId) {
       toastService.error('Benutzer nicht gefunden');
@@ -91,16 +95,16 @@ export function TaskTemplateButton({
     try {
       // Erstelle alle Vorlagen-Tasks nacheinander
       // für korrekte Reihenfolge basierend auf Timestamps
-      for (let i = 0; i < TASK_TEMPLATES.length; i++) {
-        const template = TASK_TEMPLATES[i];
+      for (let i = 0; i < TASK_TEMPLATE_KEYS.length; i++) {
+        const template = TASK_TEMPLATE_KEYS[i];
 
         const taskData: Omit<ProjectTask, 'id' | 'createdAt' | 'updatedAt' | 'isOverdue' | 'daysUntilDue' | 'overdueBy'> = {
           userId,
           organizationId,
           projectId,
           assignedUserId: userId,
-          title: template.title,
-          description: template.description,
+          title: t(`templates.${template.titleKey}`),
+          description: t(`templates.${template.descriptionKey}`),
           status: 'pending',
           priority: template.priority,
           progress: 0,
@@ -115,7 +119,7 @@ export function TaskTemplateButton({
       onSuccess();
 
       // Erfolgs-Toast
-      toastService.success(`${TASK_TEMPLATES.length} Standard-Tasks erfolgreich erstellt`);
+      toastService.success(`${TASK_TEMPLATE_KEYS.length} Standard-Tasks erfolgreich erstellt`);
     } catch (error) {
       console.error('Error creating template tasks:', error);
       toastService.error('Fehler beim Erstellen der Vorlagen-Tasks');
@@ -129,7 +133,7 @@ export function TaskTemplateButton({
       disabled={disabled}
     >
       <DocumentDuplicateIcon className="w-4 h-4" />
-      Task Vorlage verwenden
+      {t('buttonLabel')}
     </Button>
   );
 }

@@ -9,6 +9,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 // @ts-ignore - lodash wird als JS-Library verwendet
 import { debounce } from 'lodash';
+import { useTranslations } from 'next-intl';
 
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function DocumentEditorModal({
   templateInfo
 }: DocumentEditorModalProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.documentEditor');
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -134,7 +136,7 @@ export default function DocumentEditorModal({
       // Neues Dokument - Template oder leer
       if (initialContent && templateInfo) {
         // Template verwenden
-        const templateTitle = `${templateInfo.name} - ${new Date().toLocaleDateString()}`;
+        const templateTitle = `${templateInfo.name} - ${new Date().toLocaleDateString('de-DE')}`;
         setTitle(templateTitle);
         editor.commands.setContent(initialContent);
       } else {
@@ -336,9 +338,9 @@ export default function DocumentEditorModal({
             setIsFullscreen(!isFullscreen);
           }}
           className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+          title={isFullscreen ? t('fullscreen.exit') : t('fullscreen.enter')}
         >
-          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          <span className="sr-only">{isFullscreen ? t('fullscreen.exit') : t('fullscreen.enter')}</span>
           {isFullscreen ? (
             <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
           ) : (
@@ -351,7 +353,7 @@ export default function DocumentEditorModal({
         <div className="flex items-center space-x-2 mb-3">
           <DocumentTextIcon className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-zinc-700">
-            {document ? 'Dokument bearbeiten' : `Neues Dokument - ${new Date().toLocaleDateString('de-DE')}`}
+            {document ? t('title.edit') : t('title.new', { date: new Date().toLocaleDateString('de-DE') })}
           </span>
         </div>
 
@@ -359,7 +361,7 @@ export default function DocumentEditorModal({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Dokumenttitel eingeben..."
+          placeholder={t('titlePlaceholder')}
           className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
         />
       </DialogTitle>
@@ -372,31 +374,31 @@ export default function DocumentEditorModal({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
               active={editor.isActive('bold')}
-              title="Fett (Strg+B)"
+              title={t('toolbar.bold')}
             >
               <BoldIcon className="w-4 h-4" />
             </ToolbarButton>
-            
+
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleItalic().run()}
               active={editor.isActive('italic')}
-              title="Kursiv (Strg+I)"
+              title={t('toolbar.italic')}
             >
               <ItalicIcon className="w-4 h-4" />
             </ToolbarButton>
-            
+
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               active={editor.isActive('underline')}
-              title="Unterstrichen (Strg+U)"
+              title={t('toolbar.underline')}
             >
               <UnderlineIcon className="w-4 h-4" />
             </ToolbarButton>
-            
+
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleStrike().run()}
               active={editor.isActive('strike')}
-              title="Durchgestrichen"
+              title={t('toolbar.strikethrough')}
             >
               <StrikethroughIcon className="w-4 h-4" />
             </ToolbarButton>
@@ -420,10 +422,10 @@ export default function DocumentEditorModal({
                 editor.isActive('heading', { level: 3 }) ? 3 : 0
               }
             >
-              <option value={0}>Normal</option>
-              <option value={1}>Überschrift 1</option>
-              <option value={2}>Überschrift 2</option>
-              <option value={3}>Überschrift 3</option>
+              <option value={0}>{t('toolbar.headings.normal')}</option>
+              <option value={1}>{t('toolbar.headings.h1')}</option>
+              <option value={2}>{t('toolbar.headings.h2')}</option>
+              <option value={3}>{t('toolbar.headings.h3')}</option>
             </select>
           </div>
           
@@ -432,45 +434,45 @@ export default function DocumentEditorModal({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               active={editor.isActive('bulletList')}
-              title="Aufzählungsliste"
+              title={t('toolbar.bulletList')}
             >
               <ListBulletIcon className="w-4 h-4" />
             </ToolbarButton>
-            
+
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               active={editor.isActive('orderedList')}
-              title="Nummerierte Liste"
+              title={t('toolbar.orderedList')}
             >
               <ListOrderedIcon className="w-4 h-4" />
             </ToolbarButton>
           </div>
-          
+
           {/* Code */}
           <div className="flex items-center space-x-1 px-2 border-r">
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleCodeBlock().run()}
               active={editor.isActive('codeBlock')}
-              title="Code-Block"
+              title={t('toolbar.codeBlock')}
             >
               <CodeBracketIcon className="w-4 h-4" />
             </ToolbarButton>
           </div>
-          
+
           {/* Undo/Redo */}
           <div className="flex items-center space-x-1 px-2">
             <ToolbarButton
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
-              title="Rückgängig (Strg+Z)"
+              title={t('toolbar.undo')}
             >
               <ArrowUturnLeftIcon className="w-4 h-4" />
             </ToolbarButton>
-            
+
             <ToolbarButton
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
-              title="Wiederholen (Strg+Y)"
+              title={t('toolbar.redo')}
             >
               <ArrowUturnRightIcon className="w-4 h-4" />
             </ToolbarButton>
@@ -577,21 +579,21 @@ export default function DocumentEditorModal({
         {document && !isLocked && (
           <div className="bg-yellow-50 border-t border-yellow-200 px-4 py-2">
             <Text className="text-sm text-yellow-800">
-              ⚠️ Dokument wird möglicherweise von einem anderen Benutzer bearbeitet
+              {t('lockWarning')}
             </Text>
           </div>
         )}
       </DialogBody>
-      
+
       <DialogActions>
         <Button plain onClick={handleClose}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button
           onClick={handleSave}
           disabled={saving || !title.trim() || loading}
         >
-          {saving ? 'Speichert...' : (document ? 'Speichern' : 'Erstellen')}
+          {saving ? t('actions.saving') : (document ? t('actions.save') : t('actions.create'))}
         </Button>
       </DialogActions>
     </Dialog>

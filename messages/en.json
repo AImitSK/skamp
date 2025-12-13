@@ -6950,6 +6950,388 @@
           "start": "Start Monitoring"
         }
       }
+    },
+    "tasks": {
+      "templateButton": {
+        "buttonLabel": "Use Task Template",
+        "templates": {
+          "strategy": {
+            "title": "Create Strategy Documents",
+            "description": "- Company profile & sender analysis\n- Situation analysis\n- Target audience analysis\n- Key messages & communication objectives"
+          },
+          "mediaAssets": {
+            "title": "Compile Media Assets",
+            "description": "- Upload images\n- Upload videos\n- Define key visual"
+          },
+          "pressDraft": {
+            "title": "Press Release Draft",
+            "description": "- Instruct AI assistant\n- Refine press release"
+          },
+          "internalApproval": {
+            "title": "Internal Approval",
+            "description": "- Discuss text draft in chat\n- Discuss key visual in chat"
+          },
+          "customerApproval": {
+            "title": "Obtain Customer Approval",
+            "description": "- Correction phases\n- Customer approval of press release\n- Asset selection approval"
+          },
+          "distributionList": {
+            "title": "Compile Distribution List",
+            "description": "- Import journalists\n- Compile distribution list\n- Define monitoring parameters (RSS feeds)"
+          },
+          "coverLetter": {
+            "title": "Create Cover Letter",
+            "description": "- Formulate cover letter\n- Test dispatch"
+          },
+          "dispatch": {
+            "title": "Dispatch",
+            "description": "- Set date\n- Schedule dispatch\n- Monitor dispatch"
+          },
+          "monitoring": {
+            "title": "Monitoring",
+            "description": "- Monitor email performance\n- Monitor publications\n- Manually add publications"
+          }
+        }
+      },
+      "editModal": {
+        "title": "Edit Task",
+        "fields": {
+          "title": "Title *",
+          "description": "Description",
+          "assignedPerson": "Assigned Person",
+          "status": "Status",
+          "priority": "Priority",
+          "dueDate": "Due Date",
+          "progress": "Progress"
+        },
+        "placeholders": {
+          "title": "e.g. Create concept, Conduct review...",
+          "description": "Additional task details..."
+        },
+        "statusOptions": {
+          "pending": "Pending",
+          "inProgress": "In Progress",
+          "completed": "Completed",
+          "cancelled": "Cancelled",
+          "blocked": "Blocked"
+        },
+        "priorityOptions": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "urgent": "Urgent"
+        },
+        "progressAutoComplete": "Progress is automatically set to 100% for completed tasks.",
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "saveChanges": "Save Changes"
+        },
+        "errors": {
+          "titleRequired": "Title is required",
+          "updateFailed": "Failed to update task"
+        }
+      },
+      "createModal": {
+        "title": "Create New Task",
+        "fields": {
+          "title": "Title *",
+          "titlePlaceholder": "e.g., Create concept, Conduct review...",
+          "description": "Description",
+          "descriptionPlaceholder": "Additional details about the task...",
+          "assignee": "Assignee",
+          "projectManagerSuffix": " (Project Manager)",
+          "noTeamMembers": "No team members available",
+          "priority": "Priority",
+          "dueDate": "Due Date",
+          "progress": "Progress"
+        },
+        "validation": {
+          "titleRequired": "Title is required",
+          "assigneeRequired": "Assignee is required"
+        },
+        "errors": {
+          "createFailed": "Failed to create task"
+        },
+        "actions": {
+          "create": "Create Task",
+          "creating": "Creating..."
+        }
+      },
+      "listItem": {
+        "progressBar": {
+          "completed": "Completed",
+          "clickToChange": "Click to change progress (10% increments)"
+        },
+        "actions": {
+          "edit": "Edit",
+          "complete": "Mark as complete",
+          "reopen": "Reopen",
+          "delete": "Delete"
+        }
+      }
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "foldersView": {
+      "actions": {
+        "createFolder": "Create Folder",
+        "createDocument": "Create Document",
+        "createSpreadsheet": "Create Spreadsheet",
+        "upload": "Upload",
+        "library": "Library"
+      },
+      "breadcrumbs": {
+        "documents": "Documents",
+        "projectFolders": "Project Folders"
+      },
+      "dragDrop": {
+        "dropHere": "Drop files here to upload"
+      },
+      "table": {
+        "name": "Name",
+        "type": "Type",
+        "created": "Created"
+      },
+      "fileTypes": {
+        "document": "Document",
+        "file": "File"
+      },
+      "dropdown": {
+        "viewEdit": "View / Edit",
+        "view": "View",
+        "download": "Download",
+        "move": "Move",
+        "saveAsBoilerplate": "Save as Boilerplate",
+        "delete": "Delete"
+      },
+      "emptyState": {
+        "folderEmpty": "This folder is empty",
+        "noFolders": "No folders available",
+        "uploadFirst": "Upload first file"
+      },
+      "noProjectFolders": {
+        "title": "No project folders available",
+        "description": "Only new projects have automatic folder structures"
+      },
+      "boilerplateDialog": {
+        "title": "Save as Boilerplate",
+        "nameLabel": "Name *",
+        "namePlaceholder": "e.g. Company Profile Standard",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Short description...",
+        "categoryLabel": "Category *",
+        "categories": {
+          "company": "Company Description",
+          "contact": "Contact Information",
+          "legal": "Legal Notices",
+          "product": "Product Description",
+          "custom": "Other"
+        },
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving..."
+      }
+    },
+    "workflow": {
+      "automation": {
+        "title": "Workflow Automation",
+        "actions": {
+          "configure": "Configure",
+          "save": "Save",
+          "saving": "Saving...",
+          "cancel": "Cancel"
+        },
+        "stageLabels": {
+          "ideasPlanning": "Ideas & Planning",
+          "creation": "Creation",
+          "approval": "Approval",
+          "distribution": "Distribution",
+          "monitoring": "Monitoring",
+          "completed": "Completed"
+        },
+        "basicSettings": {
+          "title": "Basic Settings",
+          "autoStageTransition": {
+            "label": "Automatic Stage Transitions",
+            "description": "Automatically transitions to the next stage when all conditions are met"
+          },
+          "requireAllCriticalTasks": {
+            "label": "All Critical Tasks Required",
+            "description": "Blocks stage transitions until all critical tasks are completed"
+          },
+          "enableTaskDependencies": {
+            "label": "Enable Task Dependencies",
+            "description": "Allows defining dependencies between tasks"
+          },
+          "notifyOnStageTransition": {
+            "label": "Notifications on Stage Transitions",
+            "description": "Sends notifications to project stakeholders on stage changes"
+          }
+        },
+        "customRules": {
+          "title": "Custom Transition Rules",
+          "addRule": "Add Rule",
+          "empty": "No custom rules configured",
+          "fromStage": "From Stage:",
+          "toStage": "To Stage:",
+          "requiresApproval": "Approval Required",
+          "approvers": "Approvers:",
+          "removeRule": "Remove Rule"
+        },
+        "templateRules": {
+          "title": "Task Template Rules",
+          "comingSoon": "Template assignment rules will be implemented in a future version.",
+          "description": "Here you can define which task templates should be automatically created on stage transitions."
+        },
+        "errorHandling": {
+          "title": "Error Handling",
+          "enabled": "Enabled",
+          "autoRetry": {
+            "label": "Automatic Retry on Errors",
+            "description": "Automatically retries failed workflow actions"
+          },
+          "rollback": {
+            "label": "Rollback on Critical Errors",
+            "description": "Automatically rolls back changes on critical workflow errors"
+          }
+        }
+      },
+      "pipeline": {
+        "title": "Pipeline Progress",
+        "overallProgress": "Overall Progress",
+        "taskCompletion": "Task Completion",
+        "createTasks": "Create Tasks",
+        "criticalTasks": "Critical Tasks",
+        "open": "{count} open",
+        "allCompleted": "All completed",
+        "lastUpdate": "Last Update",
+        "stages": {
+          "ideasPlanning": "Ideas & Planning",
+          "creation": "Content & Materials",
+          "approval": "Approval",
+          "distribution": "Distribution",
+          "monitoring": "Monitoring",
+          "completed": "Completed"
+        },
+        "warning": {
+          "title": "Warning: Critical Tasks Pending",
+          "message": "There are still {count} critical tasks open that are required for the next stage transition."
+        }
+      },
+      "templateEditor": {
+        "title": "Manage Task Templates",
+        "templateCount": "{count} Templates",
+        "emptyState": "No templates for this stage",
+        "actions": {
+          "edit": "Edit",
+          "save": "Save",
+          "saving": "Saving...",
+          "cancel": "Cancel",
+          "addTemplate": "Add New Template",
+          "editTemplate": "Edit"
+        },
+        "stages": {
+          "ideas_planning": "Ideas & Planning",
+          "creation": "Creation",
+          "approval": "Approval",
+          "distribution": "Distribution",
+          "monitoring": "Monitoring",
+          "completed": "Completed"
+        },
+        "priorities": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "urgent": "Urgent"
+        },
+        "categories": {
+          "content_creation": "Content Creation",
+          "review": "Review & Quality Assurance",
+          "approval": "Approval & Authorization",
+          "documentation": "Documentation",
+          "communication": "Communication",
+          "technical": "Technical Implementation",
+          "creative": "Creative Work",
+          "administrative": "Administrative Tasks"
+        },
+        "badges": {
+          "critical": "Critical"
+        },
+        "daysAfterStageEntry": "{days} days after stage entry",
+        "estimatedDuration": "~{hours}h estimated",
+        "assignmentRules": {
+          "project_lead": "Project Lead",
+          "team_member": "Team Member",
+          "role": "Role: {role}"
+        },
+        "defaults": {
+          "newTemplateTitle": "New Task Template",
+          "newChecklistItem": "New Checklist Item"
+        },
+        "editor": {
+          "titleEdit": "Edit Template",
+          "titleNew": "New Template",
+          "fields": {
+            "title": "Title",
+            "category": "Category",
+            "stage": "Stage",
+            "priority": "Priority",
+            "daysAfterStageEntry": "Days After Stage Entry",
+            "estimatedDuration": "Estimated Duration (Hours)",
+            "description": "Description",
+            "requiredForStageCompletion": "Critical for Stage Completion"
+          },
+          "checklist": {
+            "title": "Checklist",
+            "add": "Add",
+            "required": "Required"
+          },
+          "actions": {
+            "cancel": "Cancel",
+            "saveTemplate": "Save Template"
+          }
+        }
+      }
+    },
+    "documentEditor": {
+      "title": {
+        "edit": "Edit Document",
+        "new": "New Document - {date}"
+      },
+      "titlePlaceholder": "Enter document title...",
+      "fullscreen": {
+        "enter": "Fullscreen",
+        "exit": "Exit Fullscreen"
+      },
+      "toolbar": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "bulletList": "Bullet List",
+        "orderedList": "Numbered List",
+        "codeBlock": "Code Block",
+        "undo": "Undo (Ctrl+Z)",
+        "redo": "Redo (Ctrl+Y)",
+        "headings": {
+          "normal": "Normal",
+          "h1": "Heading 1",
+          "h2": "Heading 2",
+          "h3": "Heading 3"
+        }
+      },
+      "lockWarning": "⚠️ Document may be edited by another user",
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "saving": "Saving..."
+      }
     }
   },
   "publications": {

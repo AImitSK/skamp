@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ export function TaskEditModal({
   task,
   teamMembers
 }: TaskEditModalProps) {
+  const t = useTranslations('projects.tasks.editModal');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -60,7 +62,7 @@ export function TaskEditModal({
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      setError('Titel ist erforderlich');
+      setError(t('errors.titleRequired'));
       return;
     }
 
@@ -88,7 +90,7 @@ export function TaskEditModal({
       onSuccess();
       onClose();
     } catch (error: any) {
-      setError(error.message || 'Fehler beim Aktualisieren der Task');
+      setError(error.message || t('errors.updateFailed'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +116,7 @@ export function TaskEditModal({
     <Dialog open={isOpen} onClose={handleClose} size="xl">
       <form onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
-          Task bearbeiten
+          {t('title')}
         </DialogTitle>
 
         <DialogBody className="p-6">
@@ -126,31 +128,31 @@ export function TaskEditModal({
 
           <FieldGroup>
             <Field>
-              <Label>Titel *</Label>
+              <Label>{t('fields.title')}</Label>
               <Input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                placeholder="z.B. Konzept erstellen, Review durchführen..."
+                placeholder={t('placeholders.title')}
                 disabled={loading}
               />
             </Field>
 
             <Field>
-              <Label>Beschreibung</Label>
+              <Label>{t('fields.description')}</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                placeholder="Weitere Details zur Task..."
+                placeholder={t('placeholders.description')}
                 disabled={loading}
               />
             </Field>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
-                <Label>Zuständige Person</Label>
+                <Label>{t('fields.assignedPerson')}</Label>
                 <Select
                   value={formData.assignedUserId}
                   onChange={(e) => setFormData({ ...formData, assignedUserId: e.target.value })}
@@ -167,38 +169,38 @@ export function TaskEditModal({
               </Field>
 
               <Field>
-                <Label>Status</Label>
+                <Label>{t('fields.status')}</Label>
                 <Select
                   value={formData.status}
                   onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
                   disabled={loading}
                 >
-                  <option value="pending">Ausstehend</option>
-                  <option value="in_progress">In Bearbeitung</option>
-                  <option value="completed">Erledigt</option>
-                  <option value="cancelled">Abgebrochen</option>
-                  <option value="blocked">Blockiert</option>
+                  <option value="pending">{t('statusOptions.pending')}</option>
+                  <option value="in_progress">{t('statusOptions.inProgress')}</option>
+                  <option value="completed">{t('statusOptions.completed')}</option>
+                  <option value="cancelled">{t('statusOptions.cancelled')}</option>
+                  <option value="blocked">{t('statusOptions.blocked')}</option>
                 </Select>
               </Field>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
-                <Label>Priorität</Label>
+                <Label>{t('fields.priority')}</Label>
                 <Select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
                   disabled={loading}
                 >
-                  <option value="low">Niedrig</option>
-                  <option value="medium">Mittel</option>
-                  <option value="high">Hoch</option>
-                  <option value="urgent">Dringend</option>
+                  <option value="low">{t('priorityOptions.low')}</option>
+                  <option value="medium">{t('priorityOptions.medium')}</option>
+                  <option value="high">{t('priorityOptions.high')}</option>
+                  <option value="urgent">{t('priorityOptions.urgent')}</option>
                 </Select>
               </Field>
 
               <Field>
-                <Label>Fälligkeitsdatum</Label>
+                <Label>{t('fields.dueDate')}</Label>
                 <Input
                   type="date"
                   value={formData.dueDate}
@@ -209,7 +211,7 @@ export function TaskEditModal({
             </div>
 
             <Field>
-              <Label>Fortschritt</Label>
+              <Label>{t('fields.progress')}</Label>
               <div className="space-y-2">
                 <Input
                   type="range"
@@ -228,7 +230,7 @@ export function TaskEditModal({
                 </div>
                 {formData.status === 'completed' && (
                   <p className="text-sm text-gray-500">
-                    Fortschritt wird automatisch auf 100% gesetzt bei erledigten Tasks.
+                    {t('progressAutoComplete')}
                   </p>
                 )}
               </div>
@@ -238,14 +240,14 @@ export function TaskEditModal({
 
         <DialogActions className="px-6 py-4">
           <Button plain onClick={handleClose} disabled={loading}>
-            Abbrechen
+            {t('actions.cancel')}
           </Button>
           <Button
             type="submit"
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             disabled={loading}
           >
-            {loading ? 'Wird gespeichert...' : 'Änderungen speichern'}
+            {loading ? t('actions.saving') : t('actions.saveChanges')}
           </Button>
         </DialogActions>
       </form>

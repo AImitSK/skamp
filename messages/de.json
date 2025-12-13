@@ -6974,6 +6974,388 @@
           "start": "Monitoring starten"
         }
       }
+    },
+    "tasks": {
+      "templateButton": {
+        "buttonLabel": "Task Vorlage verwenden",
+        "templates": {
+          "strategy": {
+            "title": "Strategie-Dokumente erstellen",
+            "description": "- Unternehmensprofil & Senderanalyse\n- Situationsanalyse\n- Zielgruppenanalyse\n- Kernbotschaften & Kommunikationsziele"
+          },
+          "mediaAssets": {
+            "title": "Medien Assets zusammenstellen",
+            "description": "- Bilder hochladen\n- Videos hochladen\n- Key Visual festlegen"
+          },
+          "pressDraft": {
+            "title": "Pressemeldungsentwurf",
+            "description": "- KI Assistent instruieren\n- Pressemeldung verfeinern"
+          },
+          "internalApproval": {
+            "title": "Interne Freigabe",
+            "description": "- Text entwurf im Chat diskutieren\n- Key Visual im Chat besprechen"
+          },
+          "customerApproval": {
+            "title": "Kundenfreigabe einholen",
+            "description": "- Korrekturphasen\n- Kundenfreigabe der Pressemeldung\n- Asset Auswahl Freigabe"
+          },
+          "distributionList": {
+            "title": "Verteilerliste zusammenstellen",
+            "description": "- Journalisten importieren\n- Verteilerliste zusammenstellen\n- Monitoring Parameter festlegen (RSS Feeds)"
+          },
+          "coverLetter": {
+            "title": "Anschreiben erstellen",
+            "description": "- Begleitschreiben formulieren\n- Testversand"
+          },
+          "dispatch": {
+            "title": "Versand",
+            "description": "- Termin festlegen\n- Versand planen\n- Versand überwachen"
+          },
+          "monitoring": {
+            "title": "Monitoring",
+            "description": "- Email Performance überwachen\n- Veröffentlichungen überwachen\n- Veröffentlichungen manuell einpflegen"
+          }
+        }
+      },
+      "editModal": {
+        "title": "Task bearbeiten",
+        "fields": {
+          "title": "Titel *",
+          "description": "Beschreibung",
+          "assignedPerson": "Zuständige Person",
+          "status": "Status",
+          "priority": "Priorität",
+          "dueDate": "Fälligkeitsdatum",
+          "progress": "Fortschritt"
+        },
+        "placeholders": {
+          "title": "z.B. Konzept erstellen, Review durchführen...",
+          "description": "Weitere Details zur Task..."
+        },
+        "statusOptions": {
+          "pending": "Ausstehend",
+          "inProgress": "In Bearbeitung",
+          "completed": "Erledigt",
+          "cancelled": "Abgebrochen",
+          "blocked": "Blockiert"
+        },
+        "priorityOptions": {
+          "low": "Niedrig",
+          "medium": "Mittel",
+          "high": "Hoch",
+          "urgent": "Dringend"
+        },
+        "progressAutoComplete": "Fortschritt wird automatisch auf 100% gesetzt bei erledigten Tasks.",
+        "actions": {
+          "cancel": "Abbrechen",
+          "saving": "Wird gespeichert...",
+          "saveChanges": "Änderungen speichern"
+        },
+        "errors": {
+          "titleRequired": "Titel ist erforderlich",
+          "updateFailed": "Fehler beim Aktualisieren der Task"
+        }
+      },
+      "createModal": {
+        "title": "Neue Task erstellen",
+        "fields": {
+          "title": "Titel *",
+          "titlePlaceholder": "z.B. Konzept erstellen, Review durchführen...",
+          "description": "Beschreibung",
+          "descriptionPlaceholder": "Weitere Details zur Task...",
+          "assignee": "Zuständige Person",
+          "projectManagerSuffix": " (Projekt-Manager)",
+          "noTeamMembers": "Keine Teammitglieder verfügbar",
+          "priority": "Priorität",
+          "dueDate": "Fälligkeitsdatum",
+          "progress": "Fortschritt"
+        },
+        "validation": {
+          "titleRequired": "Titel ist erforderlich",
+          "assigneeRequired": "Zuständige Person ist erforderlich"
+        },
+        "errors": {
+          "createFailed": "Fehler beim Erstellen der Task"
+        },
+        "actions": {
+          "create": "Task erstellen",
+          "creating": "Wird erstellt..."
+        }
+      },
+      "listItem": {
+        "progressBar": {
+          "completed": "Erledigt",
+          "clickToChange": "Klicken um Fortschritt zu ändern (10%-Schritte)"
+        },
+        "actions": {
+          "edit": "Bearbeiten",
+          "complete": "Als erledigt markieren",
+          "reopen": "Wieder öffnen",
+          "delete": "Löschen"
+        }
+      }
+    },
+    "priority": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "urgent": "Dringend"
+    },
+    "foldersView": {
+      "actions": {
+        "createFolder": "Ordner erstellen",
+        "createDocument": "Text erstellen",
+        "createSpreadsheet": "Tabelle erstellen",
+        "upload": "Hochladen",
+        "library": "Bibliothek"
+      },
+      "breadcrumbs": {
+        "documents": "Dokumente",
+        "projectFolders": "Projekt-Ordner"
+      },
+      "dragDrop": {
+        "dropHere": "Drop files here to upload"
+      },
+      "table": {
+        "name": "Name",
+        "type": "Typ",
+        "created": "Erstellt"
+      },
+      "fileTypes": {
+        "document": "Dokument",
+        "file": "Datei"
+      },
+      "dropdown": {
+        "viewEdit": "Ansehen / Bearbeiten",
+        "view": "Ansehen",
+        "download": "Download",
+        "move": "Verschieben",
+        "saveAsBoilerplate": "Als Boilerplate speichern",
+        "delete": "Löschen"
+      },
+      "emptyState": {
+        "folderEmpty": "Dieser Ordner ist leer",
+        "noFolders": "Keine Ordner verfügbar",
+        "uploadFirst": "Erste Datei hochladen"
+      },
+      "noProjectFolders": {
+        "title": "Keine Projektordner verfügbar",
+        "description": "Nur neue Projekte haben automatische Ordnerstrukturen"
+      },
+      "boilerplateDialog": {
+        "title": "Als Boilerplate speichern",
+        "nameLabel": "Name *",
+        "namePlaceholder": "z.B. Unternehmensprofil Standard",
+        "descriptionLabel": "Beschreibung (optional)",
+        "descriptionPlaceholder": "Kurze Beschreibung...",
+        "categoryLabel": "Kategorie *",
+        "categories": {
+          "company": "Unternehmensbeschreibung",
+          "contact": "Kontaktinformationen",
+          "legal": "Rechtliche Hinweise",
+          "product": "Produktbeschreibung",
+          "custom": "Sonstige"
+        },
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "saving": "Speichert..."
+      }
+    },
+    "workflow": {
+      "automation": {
+        "title": "Workflow-Automatisierung",
+        "actions": {
+          "configure": "Konfigurieren",
+          "save": "Speichern",
+          "saving": "Speichern...",
+          "cancel": "Abbrechen"
+        },
+        "stageLabels": {
+          "ideasPlanning": "Ideen & Planung",
+          "creation": "Erstellung",
+          "approval": "Freigabe",
+          "distribution": "Verteilung",
+          "monitoring": "Monitoring",
+          "completed": "Abgeschlossen"
+        },
+        "basicSettings": {
+          "title": "Basis-Einstellungen",
+          "autoStageTransition": {
+            "label": "Automatische Stage-Übergänge",
+            "description": "Wechselt automatisch zur nächsten Stage, wenn alle Bedingungen erfüllt sind"
+          },
+          "requireAllCriticalTasks": {
+            "label": "Alle kritischen Tasks erforderlich",
+            "description": "Blockiert Stage-Übergänge bis alle kritischen Tasks abgeschlossen sind"
+          },
+          "enableTaskDependencies": {
+            "label": "Task-Abhängigkeiten aktivieren",
+            "description": "Ermöglicht die Definition von Abhängigkeiten zwischen Tasks"
+          },
+          "notifyOnStageTransition": {
+            "label": "Benachrichtigungen bei Stage-Übergängen",
+            "description": "Sendet Benachrichtigungen an Projektbeteiligte bei Stage-Wechseln"
+          }
+        },
+        "customRules": {
+          "title": "Benutzerdefinierte Übergangsregeln",
+          "addRule": "Regel hinzufügen",
+          "empty": "Keine benutzerdefinierten Regeln konfiguriert",
+          "fromStage": "Von Stage:",
+          "toStage": "Zu Stage:",
+          "requiresApproval": "Freigabe erforderlich",
+          "approvers": "Genehmigende Personen:",
+          "removeRule": "Regel entfernen"
+        },
+        "templateRules": {
+          "title": "Task-Template-Regeln",
+          "comingSoon": "Template-Assignment-Regeln werden in einer zukünftigen Version implementiert.",
+          "description": "Hier können Sie definieren, welche Task-Templates automatisch bei Stage-Übergängen erstellt werden sollen."
+        },
+        "errorHandling": {
+          "title": "Fehlerbehandlung",
+          "enabled": "Aktiviert",
+          "autoRetry": {
+            "label": "Automatische Wiederholung bei Fehlern",
+            "description": "Wiederholt fehlgeschlagene Workflow-Aktionen automatisch"
+          },
+          "rollback": {
+            "label": "Rollback bei kritischen Fehlern",
+            "description": "Rollt Änderungen bei kritischen Workflow-Fehlern automatisch zurück"
+          }
+        }
+      },
+      "pipeline": {
+        "title": "Pipeline-Fortschritt",
+        "overallProgress": "Gesamt-Fortschritt",
+        "taskCompletion": "Task-Completion",
+        "createTasks": "Tasks erstellen",
+        "criticalTasks": "Kritische Tasks",
+        "open": "{count} offen",
+        "allCompleted": "Alle erledigt",
+        "lastUpdate": "Letztes Update",
+        "stages": {
+          "ideasPlanning": "Ideen & Planung",
+          "creation": "Content und Materialien",
+          "approval": "Freigabe",
+          "distribution": "Verteilung",
+          "monitoring": "Monitoring",
+          "completed": "Abgeschlossen"
+        },
+        "warning": {
+          "title": "Warnung: Kritische Tasks ausstehend",
+          "message": "Es sind noch {count} kritische Tasks offen, die für den nächsten Stage-Übergang erforderlich sind."
+        }
+      },
+      "templateEditor": {
+        "title": "Task-Templates verwalten",
+        "templateCount": "{count} Templates",
+        "emptyState": "Keine Templates für diese Stage",
+        "actions": {
+          "edit": "Bearbeiten",
+          "save": "Speichern",
+          "saving": "Speichern...",
+          "cancel": "Abbrechen",
+          "addTemplate": "Neues Template hinzufügen",
+          "editTemplate": "Bearbeiten"
+        },
+        "stages": {
+          "ideas_planning": "Ideen & Planung",
+          "creation": "Erstellung",
+          "approval": "Freigabe",
+          "distribution": "Verteilung",
+          "monitoring": "Monitoring",
+          "completed": "Abgeschlossen"
+        },
+        "priorities": {
+          "low": "Niedrig",
+          "medium": "Mittel",
+          "high": "Hoch",
+          "urgent": "Dringend"
+        },
+        "categories": {
+          "content_creation": "Content-Erstellung",
+          "review": "Review & Qualitätssicherung",
+          "approval": "Freigabe & Genehmigung",
+          "documentation": "Dokumentation",
+          "communication": "Kommunikation",
+          "technical": "Technische Umsetzung",
+          "creative": "Kreative Arbeit",
+          "administrative": "Administrative Tasks"
+        },
+        "badges": {
+          "critical": "Kritisch"
+        },
+        "daysAfterStageEntry": "{days} Tage nach Stage-Eintritt",
+        "estimatedDuration": "~{hours}h geschätzt",
+        "assignmentRules": {
+          "project_lead": "Projektleitung",
+          "team_member": "Team-Mitglied",
+          "role": "Rolle: {role}"
+        },
+        "defaults": {
+          "newTemplateTitle": "Neue Task-Vorlage",
+          "newChecklistItem": "Neue Checklisten-Aufgabe"
+        },
+        "editor": {
+          "titleEdit": "Template bearbeiten",
+          "titleNew": "Neues Template",
+          "fields": {
+            "title": "Titel",
+            "category": "Kategorie",
+            "stage": "Stage",
+            "priority": "Priorität",
+            "daysAfterStageEntry": "Tage nach Stage-Eintritt",
+            "estimatedDuration": "Geschätzte Dauer (Stunden)",
+            "description": "Beschreibung",
+            "requiredForStageCompletion": "Kritisch für Stage-Completion"
+          },
+          "checklist": {
+            "title": "Checkliste",
+            "add": "Hinzufügen",
+            "required": "Pflicht"
+          },
+          "actions": {
+            "cancel": "Abbrechen",
+            "saveTemplate": "Template speichern"
+          }
+        }
+      }
+    },
+    "documentEditor": {
+      "title": {
+        "edit": "Dokument bearbeiten",
+        "new": "Neues Dokument - {date}"
+      },
+      "titlePlaceholder": "Dokumenttitel eingeben...",
+      "fullscreen": {
+        "enter": "Vollbild",
+        "exit": "Vollbild verlassen"
+      },
+      "toolbar": {
+        "bold": "Fett (Strg+B)",
+        "italic": "Kursiv (Strg+I)",
+        "underline": "Unterstrichen (Strg+U)",
+        "strikethrough": "Durchgestrichen",
+        "bulletList": "Aufzählungsliste",
+        "orderedList": "Nummerierte Liste",
+        "codeBlock": "Code-Block",
+        "undo": "Rückgängig (Strg+Z)",
+        "redo": "Wiederholen (Strg+Y)",
+        "headings": {
+          "normal": "Normal",
+          "h1": "Überschrift 1",
+          "h2": "Überschrift 2",
+          "h3": "Überschrift 3"
+        }
+      },
+      "lockWarning": "⚠️ Dokument wird möglicherweise von einem anderen Benutzer bearbeitet",
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "create": "Erstellen",
+        "saving": "Speichert..."
+      }
     }
   },
   "publications": {

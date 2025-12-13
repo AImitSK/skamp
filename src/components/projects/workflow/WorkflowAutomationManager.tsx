@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { PipelineStage } from '@/types/project';
-import { 
+import {
   CogIcon,
   BellIcon,
   CheckIcon,
@@ -38,17 +39,18 @@ export default function WorkflowAutomationManager({
   availableUsers,
   onConfigUpdate
 }: WorkflowAutomationManagerProps) {
+  const t = useTranslations('projects.workflow.automation');
   const [config, setConfig] = useState<WorkflowConfig>(currentConfig);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const stageLabels: Record<PipelineStage, string> = {
-    'ideas_planning': 'Ideen & Planung',
-    'creation': 'Erstellung',
-    'approval': 'Freigabe',
-    'distribution': 'Verteilung',
-    'monitoring': 'Monitoring',
-    'completed': 'Abgeschlossen'
+    'ideas_planning': t('stageLabels.ideasPlanning'),
+    'creation': t('stageLabels.creation'),
+    'approval': t('stageLabels.approval'),
+    'distribution': t('stageLabels.distribution'),
+    'monitoring': t('stageLabels.monitoring'),
+    'completed': t('stageLabels.completed')
   };
 
   const stageOptions: PipelineStage[] = [
@@ -101,7 +103,7 @@ export default function WorkflowAutomationManager({
       await onConfigUpdate(config);
       setIsEditing(false);
     } catch (error) {
-      console.error('Fehler beim Speichern der Workflow-Konfiguration:', error);
+      // Error handling delegated to parent component
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +121,7 @@ export default function WorkflowAutomationManager({
           <div className="flex items-center space-x-2">
             <CogIcon className="w-5 h-5 text-gray-500" />
             <h3 className="text-lg font-medium text-gray-900">
-              Workflow-Automatisierung
+              {t('title')}
             </h3>
           </div>
 
@@ -128,7 +130,7 @@ export default function WorkflowAutomationManager({
               onClick={() => setIsEditing(true)}
               className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
-              Konfigurieren
+              {t('actions.configure')}
             </button>
           ) : (
             <div className="flex space-x-2">
@@ -137,14 +139,14 @@ export default function WorkflowAutomationManager({
                 disabled={isSaving}
                 className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSaving ? 'Speichern...' : 'Speichern'}
+                {isSaving ? t('actions.saving') : t('actions.save')}
               </button>
               <button
                 onClick={handleCancel}
                 disabled={isSaving}
                 className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 disabled:opacity-50"
               >
-                Abbrechen
+                {t('actions.cancel')}
               </button>
             </div>
           )}
@@ -155,9 +157,9 @@ export default function WorkflowAutomationManager({
         {/* Basis-Konfiguration */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-4">
-            Basis-Einstellungen
+            {t('basicSettings.title')}
           </h4>
-          
+
           <div className="space-y-4">
             <label className="flex items-center space-x-3">
               <input
@@ -169,10 +171,10 @@ export default function WorkflowAutomationManager({
               />
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  Automatische Stage-Übergänge
+                  {t('basicSettings.autoStageTransition.label')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Wechselt automatisch zur nächsten Stage, wenn alle Bedingungen erfüllt sind
+                  {t('basicSettings.autoStageTransition.description')}
                 </p>
               </div>
             </label>
@@ -187,10 +189,10 @@ export default function WorkflowAutomationManager({
               />
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  Alle kritischen Tasks erforderlich
+                  {t('basicSettings.requireAllCriticalTasks.label')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Blockiert Stage-Übergänge bis alle kritischen Tasks abgeschlossen sind
+                  {t('basicSettings.requireAllCriticalTasks.description')}
                 </p>
               </div>
             </label>
@@ -205,10 +207,10 @@ export default function WorkflowAutomationManager({
               />
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  Task-Abhängigkeiten aktivieren
+                  {t('basicSettings.enableTaskDependencies.label')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Ermöglicht die Definition von Abhängigkeiten zwischen Tasks
+                  {t('basicSettings.enableTaskDependencies.description')}
                 </p>
               </div>
             </label>
@@ -225,10 +227,10 @@ export default function WorkflowAutomationManager({
                 <BellIcon className="w-4 h-4 text-gray-400" />
                 <div>
                   <p className="text-sm font-medium text-gray-700">
-                    Benachrichtigungen bei Stage-Übergängen
+                    {t('basicSettings.notifyOnStageTransition.label')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Sendet Benachrichtigungen an Projektbeteiligte bei Stage-Wechseln
+                    {t('basicSettings.notifyOnStageTransition.description')}
                   </p>
                 </div>
               </div>
@@ -240,23 +242,23 @@ export default function WorkflowAutomationManager({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-medium text-gray-900">
-              Benutzerdefinierte Übergangsregeln
+              {t('customRules.title')}
             </h4>
-            
+
             {isEditing && (
               <button
                 onClick={addCustomRule}
                 className="flex items-center space-x-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
               >
                 <PlusIcon className="w-4 h-4" />
-                <span>Regel hinzufügen</span>
+                <span>{t('customRules.addRule')}</span>
               </button>
             )}
           </div>
 
           {config.customTransitionRules.length === 0 ? (
             <p className="text-sm text-gray-500 italic">
-              Keine benutzerdefinierten Regeln konfiguriert
+              {t('customRules.empty')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -266,7 +268,7 @@ export default function WorkflowAutomationManager({
                     {/* From Stage */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Von Stage:
+                        {t('customRules.fromStage')}
                       </label>
                       <select
                         value={rule.fromStage}
@@ -285,7 +287,7 @@ export default function WorkflowAutomationManager({
                     {/* To Stage */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Zu Stage:
+                        {t('customRules.toStage')}
                       </label>
                       <select
                         value={rule.toStage}
@@ -313,7 +315,7 @@ export default function WorkflowAutomationManager({
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-sm font-medium text-gray-700">
-                        Freigabe erforderlich
+                        {t('customRules.requiresApproval')}
                       </span>
                     </label>
                   </div>
@@ -322,7 +324,7 @@ export default function WorkflowAutomationManager({
                   {rule.requiresApproval && (
                     <div className="mt-4">
                       <label className="block text-xs font-medium text-gray-700 mb-2">
-                        Genehmigende Personen:
+                        {t('customRules.approvers')}
                       </label>
                       <div className="space-y-2">
                         {availableUsers.map(user => (
@@ -356,7 +358,7 @@ export default function WorkflowAutomationManager({
                         className="flex items-center space-x-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
                       >
                         <TrashIcon className="w-4 h-4" />
-                        <span>Regel entfernen</span>
+                        <span>{t('customRules.removeRule')}</span>
                       </button>
                     </div>
                   )}
@@ -369,18 +371,18 @@ export default function WorkflowAutomationManager({
         {/* Template Assignment Rules */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-4">
-            Task-Template-Regeln
+            {t('templateRules.title')}
           </h4>
-          
+
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center space-x-2 text-gray-600">
               <CogIcon className="w-5 h-5" />
               <p className="text-sm">
-                Template-Assignment-Regeln werden in einer zukünftigen Version implementiert.
+                {t('templateRules.comingSoon')}
               </p>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Hier können Sie definieren, welche Task-Templates automatisch bei Stage-Übergängen erstellt werden sollen.
+              {t('templateRules.description')}
             </p>
           </div>
         </div>
@@ -388,35 +390,35 @@ export default function WorkflowAutomationManager({
         {/* Error Handling & Recovery */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-4">
-            Fehlerbehandlung
+            {t('errorHandling.title')}
           </h4>
-          
+
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-md">
               <div>
                 <p className="text-sm font-medium text-amber-800">
-                  Automatische Wiederholung bei Fehlern
+                  {t('errorHandling.autoRetry.label')}
                 </p>
                 <p className="text-xs text-amber-600">
-                  Wiederholt fehlgeschlagene Workflow-Aktionen automatisch
+                  {t('errorHandling.autoRetry.description')}
                 </p>
               </div>
               <div className="text-sm text-amber-600">
-                Aktiviert
+                {t('errorHandling.enabled')}
               </div>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
               <div>
                 <p className="text-sm font-medium text-blue-800">
-                  Rollback bei kritischen Fehlern
+                  {t('errorHandling.rollback.label')}
                 </p>
                 <p className="text-xs text-blue-600">
-                  Rollt Änderungen bei kritischen Workflow-Fehlern automatisch zurück
+                  {t('errorHandling.rollback.description')}
                 </p>
               </div>
               <div className="text-sm text-blue-600">
-                Aktiviert
+                {t('errorHandling.enabled')}
               </div>
             </div>
           </div>

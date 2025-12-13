@@ -16,6 +16,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
@@ -57,6 +58,8 @@ export const TaskListItem = React.memo(function TaskListItem({
   onProgressClick,
   formatDate
 }: TaskListItemProps) {
+  const t = useTranslations('projects.tasks.listItem');
+
   // Erledigte Tasks zeigen immer 100% Fortschritt
   const progress = task.status === 'completed' ? 100 : (task.progress || 0);
 
@@ -129,7 +132,7 @@ export const TaskListItem = React.memo(function TaskListItem({
               <div
                 className={`bg-gray-200 rounded-full h-3 ${task.status === 'completed' ? 'cursor-default' : 'cursor-pointer'}`}
                 onClick={(e) => task.status !== 'completed' && onProgressClick(task, e)}
-                title={task.status === 'completed' ? 'Erledigt' : 'Klicken um Fortschritt zu ändern (10%-Schritte)'}
+                title={task.status === 'completed' ? t('progressBar.completed') : t('progressBar.clickToChange')}
               >
                 <div
                   className={`${progressColor} rounded-full h-3 transition-all duration-500`}
@@ -166,19 +169,19 @@ export const TaskListItem = React.memo(function TaskListItem({
               {/* Edit */}
               <DropdownItem onClick={() => onEdit(task)}>
                 <PencilIcon className="h-4 w-4" />
-                Bearbeiten
+                {t('actions.edit')}
               </DropdownItem>
 
               {/* Complete oder Reopen je nach Status */}
               {task.status !== 'completed' ? (
                 <DropdownItem onClick={() => onComplete(task.id!, task.title)}>
                   <CheckCircleIcon className="h-4 w-4" />
-                  Als erledigt markieren
+                  {t('actions.complete')}
                 </DropdownItem>
               ) : (
                 <DropdownItem onClick={() => onReopen(task.id!, task.title)}>
                   <ArrowPathIcon className="h-4 w-4" />
-                  Wieder öffnen
+                  {t('actions.reopen')}
                 </DropdownItem>
               )}
 
@@ -187,7 +190,7 @@ export const TaskListItem = React.memo(function TaskListItem({
               {/* Delete */}
               <DropdownItem onClick={() => onDelete(task.id!, task.title)}>
                 <TrashIcon className="h-4 w-4" />
-                <span className="text-red-600">Löschen</span>
+                <span className="text-red-600">{t('actions.delete')}</span>
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
