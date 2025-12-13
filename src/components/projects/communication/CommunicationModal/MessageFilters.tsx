@@ -7,6 +7,7 @@ import {
   EnvelopeIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface MessageFiltersProps {
   searchTerm: string;
@@ -35,6 +36,8 @@ export const MessageFilters = React.memo<MessageFiltersProps>(function MessageFi
   onFilterChange,
   onViewChange
 }) {
+  const t = useTranslations('projects.communication.modal.filters');
+
   return (
     <>
       {/* Search and Filter */}
@@ -47,7 +50,7 @@ export const MessageFilters = React.memo<MessageFiltersProps>(function MessageFi
             </div>
             <input
               type="text"
-              placeholder="Kommunikation durchsuchen..."
+              placeholder={t('searchPlaceholder')}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -62,11 +65,11 @@ export const MessageFilters = React.memo<MessageFiltersProps>(function MessageFi
               onChange={(e) => onFilterChange(e.target.value as any)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">Alle</option>
-              <option value="email">E-Mails</option>
-              <option value="call">Anrufe</option>
-              <option value="meeting">Meetings</option>
-              <option value="note">Notizen</option>
+              <option value="all">{t('types.all')}</option>
+              <option value="email">{t('types.email')}</option>
+              <option value="call">{t('types.call')}</option>
+              <option value="meeting">{t('types.meeting')}</option>
+              <option value="note">{t('types.note')}</option>
             </select>
           </div>
         </div>
@@ -84,7 +87,7 @@ export const MessageFilters = React.memo<MessageFiltersProps>(function MessageFi
             }`}
           >
             <EnvelopeIcon className="w-4 h-4 mr-2 inline" />
-            Externe Kommunikation
+            {t('tabs.external')}
           </button>
           <button
             onClick={() => onViewChange('team')}
@@ -95,7 +98,7 @@ export const MessageFilters = React.memo<MessageFiltersProps>(function MessageFi
             }`}
           >
             <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2 inline" />
-            Team-Chat
+            {t('tabs.team')}
           </button>
         </div>
       </div>

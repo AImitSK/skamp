@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useFloatingChatState } from '@/lib/hooks/useFloatingChatState';
 import { useProject } from '@/app/dashboard/projects/[projectId]/context/ProjectContext';
+import { useTranslations } from 'next-intl';
 
 interface FloatingChatProps {
   userId: string;
@@ -29,9 +30,11 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   userId,
   userDisplayName
 }) => {
+  const t = useTranslations('projects.communication.floatingChat');
+
   // Context verwenden statt Props
   const { project, projectId, organizationId } = useProject();
-  const projectTitle = project?.title || 'Unbekanntes Projekt';
+  const projectTitle = project?.title || t('unknownProject');
   // Chat-Zustand mit Custom Hook (LocalStorage-Logik ausgelagert)
   const { isOpen, setIsOpen } = useFloatingChatState(projectId);
 
@@ -78,7 +81,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           setAssignedMembers(assigned);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Team-Daten:', error);
+        console.error(t('errors.loadingTeamData'), error);
       }
     };
 
@@ -173,8 +176,8 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       // Optional: Seite neu laden oder State zurücksetzen
       window.location.reload();
     } catch (error) {
-      console.error('Fehler beim Löschen des Chat-Verlaufs:', error);
-      alert('Fehler beim Löschen des Chat-Verlaufs');
+      console.error(t('errors.clearingChatHistory'), error);
+      alert(t('errors.clearingChatHistory'));
     }
   };
 
@@ -186,14 +189,14 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           <button
             onClick={toggleChat}
             className="bg-primary hover:bg-primary-hover text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200 group relative"
-            title="Team-Chat öffnen"
+            title={t('openTeamChat')}
           >
             <ChatBubbleLeftRightIcon className="h-6 w-6" />
 
             {/* Badge für ungelesene Nachrichten */}
             {unreadCount > 0 && (
               <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {unreadCount > 9 ? t('unreadBadge.moreThanNine') : unreadCount}
               </div>
             )}
 
@@ -204,7 +207,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
             {/* Hover Tooltip */}
             <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Team-Chat öffnen
+              {t('openTeamChat')}
             </div>
           </button>
         )}
@@ -241,7 +244,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                   {assignedMembers.length > 5 && (
                     <div
                       className="size-7 rounded-full bg-primary-500 flex items-center justify-center text-xs font-medium ring-2 ring-primary"
-                      title={`${assignedMembers.length - 5} weitere Mitglieder`}
+                      title={t('moreMembers', { count: assignedMembers.length - 5 })}
                     >
                       +{assignedMembers.length - 5}
                     </div>
@@ -249,7 +252,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 </div>
 
                 {/* Nur "Projekt-Chat" Text */}
-                <h3 className="font-medium">Projekt-Chat</h3>
+                <h3 className="font-medium">{t('projectChat')}</h3>
               </div>
 
               {/* Minimieren und Mehr-Optionen Buttons */}
@@ -257,7 +260,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 <button
                   onClick={toggleChat}
                   className="hover:bg-primary-hover p-1 rounded transition-colors"
-                  title="Minimieren"
+                  title={t('minimize')}
                 >
                   <ChevronDownIcon className="h-5 w-5" />
                 </button>
@@ -265,7 +268,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 <button
                   onClick={handleClearChat}
                   className="hover:bg-primary-hover p-1 rounded transition-colors"
-                  title="Mehr Optionen"
+                  title={t('moreOptions')}
                 >
                   <EllipsisVerticalIcon className="h-5 w-5" />
                 </button>
@@ -306,7 +309,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       `}</style>
       {/* Clear Chat Dialog */}
       <Dialog open={showClearChatDialog} onClose={() => setShowClearChatDialog(false)}>
-        <DialogTitle>Chat-Verlauf löschen</DialogTitle>
+        <DialogTitle>{t('clearChatDialog.title')}</DialogTitle>
         <DialogBody>
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -314,20 +317,20 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
             </div>
             <div>
               <Text className="text-gray-900">
-                Möchten Sie den gesamten Chat-Verlauf wirklich löschen?
+                {t('clearChatDialog.message')}
               </Text>
               <Text className="text-gray-500 mt-2">
-                Diese Aktion kann nicht rückgängig gemacht werden. Alle Nachrichten werden permanent gelöscht.
+                {t('clearChatDialog.warning')}
               </Text>
             </div>
           </div>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setShowClearChatDialog(false)}>
-            Abbrechen
+            {t('clearChatDialog.cancel')}
           </Button>
           <Button onClick={confirmClearChat} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
-            Chat-Verlauf löschen
+            {t('clearChatDialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

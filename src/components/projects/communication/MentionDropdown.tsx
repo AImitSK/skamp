@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/ui/avatar';
 import { TeamMember } from '@/types/international';
 
@@ -23,6 +24,7 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
   onSelect,
   onClose
 }) => {
+  const t = useTranslations('projects.communication.mentions');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Filter team members basierend auf Suchterm
@@ -82,7 +84,7 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
     >
       <div className="p-2">
         <div className="text-xs text-gray-500 px-2 py-1 font-medium">
-          Team-Mitglieder
+          {t('title')}
         </div>
         {filteredMembers.map((member, index) => (
           <div
@@ -106,12 +108,12 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
                 </span>
                 {member.role === 'owner' && (
                   <span className="px-1.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded">
-                    Owner
+                    {t('roles.owner')}
                   </span>
                 )}
                 {member.role === 'admin' && (
                   <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                    Admin
+                    {t('roles.admin')}
                   </span>
                 )}
               </div>
@@ -121,7 +123,7 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
             </div>
             {index === selectedIndex && (
               <div className="text-xs text-blue-600 font-medium">
-                ↵ Enter
+                {t('enterHint')}
               </div>
             )}
           </div>
@@ -130,12 +132,12 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
 
       {filteredMembers.length === 0 && searchTerm && (
         <div className="p-4 text-center text-gray-500 text-sm">
-          Keine Team-Mitglieder gefunden für &quot;{searchTerm}&quot;
+          {t('noResults', { searchTerm })}
         </div>
       )}
 
       <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-400">
-        ↑↓ Navigation • Enter Auswählen • Esc Schließen
+        {t('keyboardHints')}
       </div>
     </div>
   );

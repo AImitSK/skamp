@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Text } from '@/components/ui/text';
+import { useTranslations } from 'next-intl';
 import { teamChatService } from '@/lib/firebase/team-chat-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
@@ -30,6 +31,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   userDisplayName,
   lastReadTimestamp
 }) => {
+  const t = useTranslations('projects.communication.teamChat');
+
   // React Query Hooks für Messages (ersetzt useState + useEffect)
   const { data: messages = [], isLoading: loading } = useTeamMessages(projectId);
   const sendMessageMutation = useSendMessage();
@@ -441,7 +444,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           <div className="flex items-center">
             <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
             <Text className="text-sm text-yellow-800">
-              Sie sind kein Mitglied dieses Projekt-Teams. Sie können die Nachrichten lesen, aber nicht schreiben.
+              {t('notTeamMember')}
             </Text>
           </div>
         </div>
@@ -500,7 +503,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Emoji auswählen</h3>
+              <h3 className="text-lg font-medium">{t('emojiPicker.title')}</h3>
               <button
                 onClick={() => setShowEmojiPicker(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -530,7 +533,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-gray-500">
-                Oder verwende Text-Emojis wie :) :( :D :P &lt;3
+                {t('emojiPicker.textEmojisHint')}
               </p>
             </div>
           </div>

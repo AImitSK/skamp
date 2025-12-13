@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   PhotoIcon,
   FolderIcon,
   ShareIcon,
@@ -12,6 +12,7 @@ import {
   EllipsisVerticalIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Project } from '@/types/project';
 import { CampaignAssetAttachment, ResolvedAsset } from '@/types/pr';
 import { useAuth } from '@/context/AuthContext';
@@ -47,6 +48,7 @@ export default function ProjectAssetGallery({
   onAssetSelect,
   onAssetsChange
 }: ProjectAssetGalleryProps) {
+  const t = useTranslations('projects.assets.gallery');
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [resolvedAssets, setResolvedAssets] = useState<ResolvedAsset[]>([]);
@@ -241,9 +243,9 @@ export default function ProjectAssetGallery({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Projekt Assets</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('title')}</h3>
           <p className="text-sm text-gray-500">
-            {filteredAssets.length} von {resolvedAssets.length} Assets
+            {t('assetsCount', { filtered: filteredAssets.length, total: resolvedAssets.length })}
           </p>
         </div>
         
@@ -252,13 +254,13 @@ export default function ProjectAssetGallery({
           {selectedAssets.length > 0 && (
             <div className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-lg">
               <span className="text-sm text-blue-700">
-                {selectedAssets.length} ausgewählt
+                {t('bulkActions.selected', { count: selectedAssets.length })}
               </span>
               <button
                 onClick={handleBulkShare}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
-                Teilen
+                {t('bulkActions.share')}
               </button>
             </div>
           )}
@@ -304,7 +306,7 @@ export default function ProjectAssetGallery({
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Asset suchen..."
+                placeholder={t('filters.searchPlaceholder')}
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -317,11 +319,11 @@ export default function ProjectAssetGallery({
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as FilterMode }))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Alle Typen</option>
-              <option value="images">Bilder</option>
-              <option value="documents">Dokumente</option>
-              <option value="videos">Videos</option>
-              <option value="shared">Geteilt</option>
+              <option value="all">{t('filters.type.all')}</option>
+              <option value="images">{t('filters.type.images')}</option>
+              <option value="documents">{t('filters.type.documents')}</option>
+              <option value="videos">{t('filters.type.videos')}</option>
+              <option value="shared">{t('filters.type.shared')}</option>
             </select>
             
             {/* Phasen-Filter */}
@@ -330,11 +332,11 @@ export default function ProjectAssetGallery({
               onChange={(e) => setFilters(prev => ({ ...prev, phase: e.target.value as PhaseFilter }))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Alle Phasen</option>
-              <option value="creation">Erstellung</option>
-              <option value="approval">Freigabe</option>
-              <option value="distribution">Distribution</option>
-              <option value="monitoring">Monitoring</option>
+              <option value="all">{t('filters.phase.all')}</option>
+              <option value="creation">{t('filters.phase.creation')}</option>
+              <option value="approval">{t('filters.phase.approval')}</option>
+              <option value="distribution">{t('filters.phase.distribution')}</option>
+              <option value="monitoring">{t('filters.phase.monitoring')}</option>
             </select>
             
             {/* Status-Filter */}
@@ -343,10 +345,10 @@ export default function ProjectAssetGallery({
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Alle Status</option>
-              <option value="valid">Gültig</option>
-              <option value="needs_refresh">Update nötig</option>
-              <option value="missing">Fehlend</option>
+              <option value="all">{t('filters.status.all')}</option>
+              <option value="valid">{t('filters.status.valid')}</option>
+              <option value="needs_refresh">{t('filters.status.needsRefresh')}</option>
+              <option value="missing">{t('filters.status.missing')}</option>
             </select>
           </div>
         </div>
@@ -356,9 +358,9 @@ export default function ProjectAssetGallery({
       {filteredAssets.length === 0 ? (
         <div className="text-center py-12">
           <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Assets gefunden</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('empty.title')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Fügen Sie Assets zu diesem Projekt hinzu oder passen Sie die Filter an.
+            {t('empty.description')}
           </p>
           <div className="mt-6">
             <button
@@ -366,13 +368,13 @@ export default function ProjectAssetGallery({
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
             >
               <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-              Asset hinzufügen
+              {t('empty.action')}
             </button>
           </div>
         </div>
       ) : (
-        <div className={viewMode === 'grid' 
-          ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4' 
+        <div className={viewMode === 'grid'
+          ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4'
           : 'space-y-2'
         }>
           {filteredAssets.map((resolved) => (
@@ -389,6 +391,7 @@ export default function ProjectAssetGallery({
                 }
               }}
               onClick={() => onAssetSelect?.(resolved.attachment)}
+              t={t}
             />
           ))}
         </div>
@@ -404,9 +407,10 @@ interface AssetCardProps {
   selected: boolean;
   onSelect: (selected: boolean) => void;
   onClick: () => void;
+  t: any;
 }
 
-function AssetCard({ resolved, viewMode, selected, onSelect, onClick }: AssetCardProps) {
+function AssetCard({ resolved, viewMode, selected, onSelect, onClick, t }: AssetCardProps) {
   const { attachment, isAvailable, hasChanged, needsRefresh, error } = resolved;
   const { metadata } = attachment;
 
@@ -464,7 +468,7 @@ function AssetCard({ resolved, viewMode, selected, onSelect, onClick }: AssetCar
               <>
                 <span>•</span>
                 <ShareIcon className="h-3 w-3" />
-                <span>Geteilt</span>
+                <span>{t('card.shared')}</span>
               </>
             )}
             {metadata.attachedInPhase && (
@@ -475,11 +479,11 @@ function AssetCard({ resolved, viewMode, selected, onSelect, onClick }: AssetCar
             )}
           </div>
         </div>
-        
+
         <div className={`flex items-center px-2 py-1 rounded-full text-xs ${getStatusColor()}`}>
           {getStatusIcon()}
           <span className="ml-1">
-            {!isAvailable ? 'Fehlend' : needsRefresh ? 'Update' : 'OK'}
+            {!isAvailable ? t('card.status.missing') : needsRefresh ? t('card.status.update') : t('card.status.ok')}
           </span>
         </div>
       </div>

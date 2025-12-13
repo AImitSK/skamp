@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowPathIcon,
@@ -11,6 +11,7 @@ import {
   EyeIcon,
   DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Project } from '@/types/project';
 import { AssetValidationResult, ResolvedAsset } from '@/types/pr';
 import { useAuth } from '@/context/AuthContext';
@@ -43,10 +44,11 @@ interface AssetHealthMetrics {
   criticalIssues: string[];
 }
 
-export default function AssetPipelineStatus({ 
-  project, 
-  onValidationUpdate 
+export default function AssetPipelineStatus({
+  project,
+  onValidationUpdate
 }: AssetPipelineStatusProps) {
+  const t = useTranslations('projects.assets.pipeline');
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(false);
@@ -94,21 +96,14 @@ export default function AssetPipelineStatus({
 
   const calculatePhaseStatus = (validation: any): PipelinePhaseStatus[] => {
     const phaseMap = new Map<string, PipelinePhaseStatus>();
-    
+
     // Initialisiere alle Phasen
     const phases = ['creation', 'internal_approval', 'customer_approval', 'distribution', 'monitoring'];
-    const phaseNames = {
-      'creation': 'Erstellung',
-      'internal_approval': 'Interne Freigabe',
-      'customer_approval': 'Kunden-Freigabe', 
-      'distribution': 'Distribution',
-      'monitoring': 'Monitoring'
-    };
-    
+
     phases.forEach(phase => {
       phaseMap.set(phase, {
         phase,
-        phaseName: phaseNames[phase as keyof typeof phaseNames] || phase,
+        phaseName: t(`phases.${phase}`),
         assetCount: 0,
         validAssets: 0,
         missingAssets: 0,
@@ -153,10 +148,10 @@ export default function AssetPipelineStatus({
     
     const criticalIssues: string[] = [];
     if (missingAssets > 0) {
-      criticalIssues.push(`${missingAssets} fehlende Assets`);
+      criticalIssues.push(t('criticalIssues.missingAssets', { count: missingAssets }));
     }
     if (outdatedAssets > 5) {
-      criticalIssues.push(`${outdatedAssets} veraltete Assets`);
+      criticalIssues.push(t('criticalIssues.outdatedAssets', { count: outdatedAssets }));
     }
     
     return {
@@ -213,14 +208,14 @@ export default function AssetPipelineStatus({
       {healthMetrics && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Asset Health Status</h3>
+            <h3 className="text-lg font-medium text-gray-900">{t('healthStatus.title')}</h3>
             <button
               onClick={runFullValidation}
               disabled={validating}
               className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
               <ArrowPathIcon className={`-ml-1 mr-2 h-4 w-4 ${validating ? 'animate-spin' : ''}`} />
-              {validating ? 'Validiere...' : 'Neu validieren'}
+              {validating ? t('healthStatus.validating') : t('healthStatus.revalidate')}
             </button>
           </div>
           
@@ -230,40 +225,40 @@ export default function AssetPipelineStatus({
               <div className="flex items-center">
                 {getHealthIcon(healthMetrics.healthScore)}
                 <div className="ml-3">
-                  <p className="text-sm font-medium">Health Score</p>
+                  <p className="text-sm font-medium">{t('metrics.healthScore')}</p>
                   <p className="text-2xl font-bold">{Math.round(healthMetrics.healthScore)}%</p>
                 </div>
               </div>
             </div>
-            
+
             {/* Total Assets */}
             <div className="p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center">
                 <DocumentDuplicateIcon className="h-5 w-5 text-blue-600" />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-700">Assets Total</p>
+                  <p className="text-sm font-medium text-blue-700">{t('metrics.assetsTotal')}</p>
                   <p className="text-2xl font-bold text-blue-900">{healthMetrics.totalAssets}</p>
                 </div>
               </div>
             </div>
-            
+
             {/* Valid Assets */}
             <div className="p-4 bg-green-50 rounded-lg">
               <div className="flex items-center">
                 <CheckCircleIcon className="h-5 w-5 text-green-600" />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-700">Gültig</p>
+                  <p className="text-sm font-medium text-green-700">{t('metrics.valid')}</p>
                   <p className="text-2xl font-bold text-green-900">{healthMetrics.validAssets}</p>
                 </div>
               </div>
             </div>
-            
+
             {/* Issues */}
             <div className="p-4 bg-red-50 rounded-lg">
               <div className="flex items-center">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-red-700">Probleme</p>
+                  <p className="text-sm font-medium text-red-700">{t('metrics.issues')}</p>
                   <p className="text-2xl font-bold text-red-900">
                     {healthMetrics.missingAssets + healthMetrics.outdatedAssets}
                   </p>
@@ -275,7 +270,7 @@ export default function AssetPipelineStatus({
           {/* Critical Issues */}
           {healthMetrics.criticalIssues.length > 0 && (
             <div className="mt-4 p-4 bg-red-50 rounded-lg">
-              <h4 className="text-sm font-medium text-red-800 mb-2">Kritische Probleme</h4>
+              <h4 className="text-sm font-medium text-red-800 mb-2">{t('criticalIssues.title')}</h4>
               <ul className="space-y-1">
                 {healthMetrics.criticalIssues.map((issue, index) => (
                   <li key={index} className="text-sm text-red-700 flex items-center">
@@ -292,13 +287,13 @@ export default function AssetPipelineStatus({
       {/* Pipeline Phase Status */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-medium text-gray-900">Pipeline Asset Status</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('pipelineStatus.title')}</h3>
           <button
             onClick={() => setShowTimeline(!showTimeline)}
             className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
           >
             <ClockIcon className="h-4 w-4 mr-1" />
-            {showTimeline ? 'Timeline ausblenden' : 'Timeline anzeigen'}
+            {showTimeline ? t('pipelineStatus.hideTimeline') : t('pipelineStatus.showTimeline')}
           </button>
         </div>
 
@@ -323,10 +318,10 @@ export default function AssetPipelineStatus({
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Assets:</span>
+                  <span className="text-gray-600">{t('phaseCard.assets')}:</span>
                   <span className="font-medium">{phase.assetCount}</span>
                 </div>
-                
+
                 {phase.assetCount > 0 && (
                   <>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -337,11 +332,11 @@ export default function AssetPipelineStatus({
                         }}
                       />
                     </div>
-                    
+
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>{phase.validAssets} gültig</span>
+                      <span>{t('phaseCard.valid', { count: phase.validAssets })}</span>
                       <span>
-                        {phase.missingAssets + phase.outdatedAssets} Probleme
+                        {t('phaseCard.issues', { count: phase.missingAssets + phase.outdatedAssets })}
                       </span>
                     </div>
                   </>
@@ -363,33 +358,33 @@ export default function AssetPipelineStatus({
           <div className="border-t pt-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-4">
-                Details: {phaseStatus.find(p => p.phase === selectedPhase)?.phaseName}
+                {t('phaseDetails.title')}: {phaseStatus.find(p => p.phase === selectedPhase)?.phaseName}
               </h4>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-blue-600">
                     {phaseStatus.find(p => p.phase === selectedPhase)?.assetCount || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Assets gesamt</p>
+                  <p className="text-sm text-gray-600">{t('phaseDetails.assetsTotal')}</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-green-600">
                     {phaseStatus.find(p => p.phase === selectedPhase)?.validAssets || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Gültige Assets</p>
+                  <p className="text-sm text-gray-600">{t('phaseDetails.validAssets')}</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-yellow-600">
                     {phaseStatus.find(p => p.phase === selectedPhase)?.outdatedAssets || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Veraltet</p>
+                  <p className="text-sm text-gray-600">{t('phaseDetails.outdated')}</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-red-600">
                     {phaseStatus.find(p => p.phase === selectedPhase)?.missingAssets || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Fehlend</p>
+                  <p className="text-sm text-gray-600">{t('phaseDetails.missing')}</p>
                 </div>
               </div>
             </div>
@@ -400,8 +395,8 @@ export default function AssetPipelineStatus({
       {/* Asset Timeline */}
       {showTimeline && assetHistory.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Asset Activity Timeline</h3>
-          
+          <h3 className="text-lg font-medium text-gray-900 mb-4">{t('timeline.title')}</h3>
+
           <div className="space-y-4">
             {assetHistory.map((activity, index) => (
               <div key={index} className="flex items-start space-x-3">
@@ -413,9 +408,9 @@ export default function AssetPipelineStatus({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900">
                     <span className="font-medium">{activity.fileName}</span>
-                    {' '}wurde {activity.action === 'added' ? 'hinzugefügt' : 
-                     activity.action === 'removed' ? 'entfernt' : 
-                     activity.action === 'modified' ? 'geändert' : 'geteilt'}
+                    {' '}{t('timeline.wasAction')} {activity.action === 'added' ? t('timeline.actions.added') :
+                     activity.action === 'removed' ? t('timeline.actions.removed') :
+                     activity.action === 'modified' ? t('timeline.actions.modified') : t('timeline.actions.shared')}
                   </p>
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
                     <span>{activity.phase}</span>
@@ -441,16 +436,16 @@ export default function AssetPipelineStatus({
           className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
         >
           <EyeIcon className="-ml-1 mr-2 h-4 w-4" />
-          Assets anzeigen
+          {t('quickActions.showAssets')}
         </button>
-        
+
         <button
           onClick={runFullValidation}
           disabled={validating}
           className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
         >
           <ArrowPathIcon className={`-ml-1 mr-2 h-4 w-4 ${validating ? 'animate-spin' : ''}`} />
-          {validating ? 'Validiere...' : 'Assets validieren'}
+          {validating ? t('quickActions.validating') : t('quickActions.validateAssets')}
         </button>
       </div>
     </div>

@@ -134,13 +134,21 @@ Task(..., run_in_background=true)
 TaskOutput(task_id="...", block=true)  // Füllt Kontext unnötig!
 ```
 
-### Ablauf pro Runde
+### Ablauf pro Runde (STRIKT EINHALTEN!)
 
-1. **Starten:** 10-15 Task-Aufrufe parallel (OHNE background)
+1. **Starten:** EXAKT 10 Agenten parallel (OHNE background) - NICHT MEHR!
 2. **Warten:** Ergebnisse kommen automatisch zurück
 3. **Prüfen:** `npm run type-check`
 4. **Committen:** `git add . && git commit -m "i18n: Runde X..."`
 5. **Pushen:** `git push`
+6. **Bericht ausgeben:** Zusammenfassung der Runde (Dateien, Keys, Status)
+7. **STOPP & WARTEN:** Auf Benutzer-Erlaubnis warten für nächste Runde!
+
+⚠️ **WICHTIG:**
+- NIEMALS mehr als 10 Agenten gleichzeitig starten
+- NIEMALS automatisch die nächste Runde starten
+- IMMER Bericht ausgeben und auf Erlaubnis warten
+- Limits im Auge behalten!
 
 ---
 

@@ -5799,6 +5799,39 @@
       },
       "chat": {
         "unknownUser": "Unknown User"
+      },
+      "communication": {
+        "mentions": {
+          "title": "Team Members",
+          "roles": {
+            "owner": "Owner",
+            "admin": "Admin"
+          },
+          "enterHint": "↵ Enter",
+          "noResults": "No team members found for \"{searchTerm}\"",
+          "keyboardHints": "↑↓ Navigate • Enter Select • Esc Close"
+        },
+        "assetPreview": {
+          "loading": "Loading asset...",
+          "notAvailable": "not available",
+          "folder": {
+            "tooltip": "Open folder in Data tab"
+          },
+          "fileTypes": {
+            "file": "File",
+            "image": "Image",
+            "video": "Video",
+            "pdf": "PDF",
+            "document": "Document"
+          },
+          "actions": {
+            "open": "Open",
+            "download": "Download"
+          },
+          "errors": {
+            "loadFailed": "Could not load asset"
+          }
+        }
       }
     },
     "table": {
@@ -5842,6 +5875,308 @@
         "title": "Manage project data",
         "description": "Organize all project files and documents centrally",
         "folderViewTitle": "Project Data"
+      }
+    },
+    "communication": {
+      "assetPicker": {
+        "title": "Select Asset",
+        "breadcrumb": {
+          "projectFolder": "Project Folder"
+        },
+        "loading": "Loading assets...",
+        "sections": {
+          "folders": "Folders",
+          "files": "Files"
+        },
+        "labels": {
+          "folder": "Folder"
+        },
+        "actions": {
+          "select": "Select",
+          "cancel": "Cancel"
+        },
+        "empty": "No assets found in this folder",
+        "errors": {
+          "loadFailed": "Error loading folder structure"
+        }
+      },
+      "teamChat": {
+        "notTeamMember": "You are not a member of this project team. You can read messages but cannot write.",
+        "emojiPicker": {
+          "title": "Select Emoji",
+          "textEmojisHint": "Or use text emojis like :) :( :D :P <3"
+        }
+      },
+      "floatingChat": {
+        "unknownProject": "Unknown Project",
+        "openTeamChat": "Open Team Chat",
+        "projectChat": "Project Chat",
+        "minimize": "Minimize",
+        "moreOptions": "More Options",
+        "moreMembers": "{count} more members",
+        "unreadBadge": {
+          "moreThanNine": "9+"
+        },
+        "clearChatDialog": {
+          "title": "Clear Chat History",
+          "message": "Do you really want to delete the entire chat history?",
+          "warning": "This action cannot be undone. All messages will be permanently deleted.",
+          "cancel": "Cancel",
+          "confirm": "Clear Chat History"
+        },
+        "errors": {
+          "loadingTeamData": "Error loading team data:",
+          "clearingChatHistory": "Error clearing chat history"
+        }
+      },
+      "messageItem": {
+        "editButton": "Edit",
+        "deleteButton": "Delete",
+        "cancelButton": "Cancel",
+        "saveButton": "Save",
+        "saveButtonLoading": "Saving...",
+        "edited": "(edited)",
+        "editedWithCount": "(edited - {count}x)",
+        "editHistory": "Edit History",
+        "timestampUnknown": "Unknown",
+        "assetWrongProject": "Asset does not belong to this project",
+        "assetOpenError": "Error opening asset:",
+        "deleteDialog": {
+          "title": "Delete Message",
+          "message": "Do you really want to delete this message?",
+          "warning": "This action cannot be undone.",
+          "deleteButton": "Delete Message",
+          "deleteButtonLoading": "Deleting..."
+        }
+      },
+      "modal": {
+        "header": {
+          "title": "Project Communication",
+          "subtitle": "{projectTitle} - All project-related communication"
+        },
+        "filters": {
+          "searchPlaceholder": "Search communication...",
+          "types": {
+            "all": "All",
+            "email": "Emails",
+            "call": "Calls",
+            "meeting": "Meetings",
+            "note": "Notes"
+          },
+          "tabs": {
+            "external": "External Communication",
+            "team": "Team Chat"
+          }
+        },
+        "feed": {
+          "external": {
+            "unread": "{count} unread",
+            "empty": {
+              "title": "No external communication",
+              "description": "Emails and external messages will be automatically displayed here."
+            }
+          },
+          "team": {
+            "badge": {
+              "planning": "Planning"
+            },
+            "mentioned": "Mentioned: {names}",
+            "empty": {
+              "title": "No team messages yet",
+              "description": "Write the first message for the team."
+            }
+          }
+        },
+        "composer": {
+          "messageTypes": {
+            "general": "General",
+            "planning": "Planning",
+            "feedback": "Feedback"
+          },
+          "planningContextPlaceholder": "Select planning context...",
+          "planningContexts": {
+            "strategy": "Strategy",
+            "briefing": "Briefing",
+            "inspiration": "Inspiration",
+            "research": "Research"
+          },
+          "messagePlaceholder": "Write a message to the team..."
+        },
+        "footer": {
+          "externalEntries": "{filtered} of {total} external entries",
+          "loadingExternal": "Loading external communication...",
+          "teamMessages": "{filtered} of {total} team messages",
+          "linkEmail": "Link email",
+          "close": "Close"
+        }
+      }
+    },
+    "assets": {
+      "gallery": {
+        "title": "Project Assets",
+        "assetsCount": "{filtered} of {total} assets",
+        "bulkActions": {
+          "selected": "{count} selected",
+          "share": "Share"
+        },
+        "filters": {
+          "searchPlaceholder": "Search assets...",
+          "type": {
+            "all": "All Types",
+            "images": "Images",
+            "documents": "Documents",
+            "videos": "Videos",
+            "shared": "Shared"
+          },
+          "phase": {
+            "all": "All Phases",
+            "creation": "Creation",
+            "approval": "Approval",
+            "distribution": "Distribution",
+            "monitoring": "Monitoring"
+          },
+          "status": {
+            "all": "All Statuses",
+            "valid": "Valid",
+            "needsRefresh": "Needs Update",
+            "missing": "Missing"
+          }
+        },
+        "empty": {
+          "title": "No Assets Found",
+          "description": "Add assets to this project or adjust your filters.",
+          "action": "Add Asset"
+        },
+        "card": {
+          "shared": "Shared",
+          "status": {
+            "ok": "OK",
+            "update": "Update",
+            "missing": "Missing"
+          }
+        }
+      },
+      "pipeline": {
+        "phases": {
+          "creation": "Creation",
+          "internal_approval": "Internal Approval",
+          "customer_approval": "Customer Approval",
+          "distribution": "Distribution",
+          "monitoring": "Monitoring"
+        },
+        "healthStatus": {
+          "title": "Asset Health Status",
+          "revalidate": "Revalidate",
+          "validating": "Validating..."
+        },
+        "metrics": {
+          "healthScore": "Health Score",
+          "assetsTotal": "Assets Total",
+          "valid": "Valid",
+          "issues": "Issues"
+        },
+        "criticalIssues": {
+          "title": "Critical Issues",
+          "missingAssets": "{count} missing assets",
+          "outdatedAssets": "{count} outdated assets"
+        },
+        "pipelineStatus": {
+          "title": "Pipeline Asset Status",
+          "showTimeline": "Show timeline",
+          "hideTimeline": "Hide timeline"
+        },
+        "phaseCard": {
+          "assets": "Assets",
+          "valid": "{count} valid",
+          "issues": "{count} issues"
+        },
+        "phaseDetails": {
+          "title": "Details",
+          "assetsTotal": "Assets total",
+          "validAssets": "Valid assets",
+          "outdated": "Outdated",
+          "missing": "Missing"
+        },
+        "timeline": {
+          "title": "Asset Activity Timeline",
+          "wasAction": "was",
+          "actions": {
+            "added": "added",
+            "removed": "removed",
+            "modified": "modified",
+            "shared": "shared"
+          }
+        },
+        "quickActions": {
+          "showAssets": "Show assets",
+          "validateAssets": "Validate assets",
+          "validating": "Validating..."
+        }
+      },
+      "selector": {
+        "header": {
+          "title": "Smart Asset Selection",
+          "forProject": "For project: {title}",
+          "phase": "Phase: {phase}"
+        },
+        "filters": {
+          "searchPlaceholder": "Search assets...",
+          "source": {
+            "all": "All Assets",
+            "suggested": "Suggestions",
+            "project": "Project Assets",
+            "shared": "Shared",
+            "recent": "Recent"
+          },
+          "type": {
+            "all": "All Types",
+            "image": "Images",
+            "pdf": "PDF",
+            "video": "Videos",
+            "doc": "Documents"
+          }
+        },
+        "advancedFilters": {
+          "timeRange": {
+            "label": "Time Range",
+            "all": "All Time",
+            "week": "Last Week",
+            "month": "Last Month",
+            "quarter": "Last Quarter"
+          },
+          "phase": {
+            "label": "Phase",
+            "all": "All Phases",
+            "creation": "Creation",
+            "approval": "Approval",
+            "distribution": "Distribution"
+          }
+        },
+        "suggestions": {
+          "title": "Smart Suggestions",
+          "badges": {
+            "veryRelevant": "Very Relevant",
+            "relevant": "Relevant",
+            "interesting": "Interesting"
+          },
+          "reasons": {
+            "projectShared": "Shared project-wide",
+            "frequentlyUsed": "Frequently used",
+            "relevantForPhase": "Relevant for {phase}",
+            "recentlyUsed": "Recently used",
+            "relevantTags": "Relevant tags"
+          }
+        },
+        "assetGrid": {
+          "title": "Assets ({count})",
+          "selected": "{count} selected"
+        },
+        "actions": {
+          "selectedCount": "{count, plural, =0 {No asset} one {# asset} other {# assets}} selected",
+          "cancel": "Cancel",
+          "addAssets": "{count, plural, one {Add # asset} other {Add # assets}}",
+          "selectAssets": "Select assets"
+        }
       }
     }
   },

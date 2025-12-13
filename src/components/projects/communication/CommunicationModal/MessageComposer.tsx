@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 
 interface MessageComposerProps {
@@ -36,6 +37,8 @@ export const MessageComposer = React.memo<MessageComposerProps>(function Message
   onPlanningContextChange,
   onSendMessage
 }) {
+  const t = useTranslations('projects.communication.modal.composer');
+
   return (
     <div className="border-t border-gray-200 px-6 py-4">
       <div className="space-y-3">
@@ -45,9 +48,9 @@ export const MessageComposer = React.memo<MessageComposerProps>(function Message
             onChange={(e) => onMessageTypeChange(e.target.value as any)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="general">Allgemein</option>
-            <option value="planning">Planung</option>
-            <option value="feedback">Feedback</option>
+            <option value="general">{t('messageTypes.general')}</option>
+            <option value="planning">{t('messageTypes.planning')}</option>
+            <option value="feedback">{t('messageTypes.feedback')}</option>
           </select>
 
           {messageType === 'planning' && (
@@ -56,11 +59,11 @@ export const MessageComposer = React.memo<MessageComposerProps>(function Message
               onChange={(e) => onPlanningContextChange(e.target.value as any)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Planungskontext wählen...</option>
-              <option value="strategy">Strategie</option>
-              <option value="briefing">Briefing</option>
-              <option value="inspiration">Inspiration</option>
-              <option value="research">Recherche</option>
+              <option value="">{t('planningContextPlaceholder')}</option>
+              <option value="strategy">{t('planningContexts.strategy')}</option>
+              <option value="briefing">{t('planningContexts.briefing')}</option>
+              <option value="inspiration">{t('planningContexts.inspiration')}</option>
+              <option value="research">{t('planningContexts.research')}</option>
             </select>
           )}
         </div>
@@ -70,7 +73,7 @@ export const MessageComposer = React.memo<MessageComposerProps>(function Message
             <textarea
               value={newMessage}
               onChange={(e) => onNewMessageChange(e.target.value)}
-              placeholder="Nachricht an das Team schreiben..."
+              placeholder={t('messagePlaceholder')}
               rows={3}
               className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
             />

@@ -7,6 +7,7 @@ import {
   ChatBubbleLeftRightIcon,
   LinkIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { projectCommunicationService } from '@/lib/firebase/project-communication-service';
@@ -28,6 +29,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
   projectId,
   projectTitle
 }) => {
+  const t = useTranslations('projects.communication.modal');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'email' | 'call' | 'meeting' | 'note'>('all');
   const [projectMessages, setProjectMessages] = useState<ProjectMessage[]>([]);
@@ -185,7 +187,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             <div className="flex items-center space-x-2">
               <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">
-                Projekt-Kommunikation
+                {t('header.title')}
               </h3>
             </div>
             <button
@@ -196,7 +198,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             </button>
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            {projectTitle} - Alle projekt-bezogenen Kommunikation
+            {t('header.subtitle', { projectTitle })}
           </p>
         </div>
 
@@ -237,10 +239,16 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             <div className="text-sm text-gray-500">
               {activeView === 'external' ? (
                 communicationFeed ?
-                  `${filteredCommunicationEntries.length} von ${communicationFeed.entries.length} externen Einträgen` :
-                  'Lade externe Kommunikation...'
+                  t('footer.externalEntries', {
+                    filtered: filteredCommunicationEntries.length,
+                    total: communicationFeed.entries.length
+                  }) :
+                  t('footer.loadingExternal')
               ) : (
-                `${filteredProjectMessages.length} von ${projectMessages.length} Team-Nachrichten`
+                t('footer.teamMessages', {
+                  filtered: filteredProjectMessages.length,
+                  total: projectMessages.length
+                })
               )}
             </div>
             <div className="flex space-x-3">
@@ -252,11 +260,11 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                   }}
                 >
                   <LinkIcon className="w-4 h-4 mr-2" />
-                  E-Mail verknüpfen
+                  {t('footer.linkEmail')}
                 </Button>
               )}
               <Button onClick={onClose}>
-                Schließen
+                {t('footer.close')}
               </Button>
             </div>
           </div>

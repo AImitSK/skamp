@@ -5803,6 +5803,39 @@
       },
       "chat": {
         "unknownUser": "Unbekannter Benutzer"
+      },
+      "communication": {
+        "mentions": {
+          "title": "Team-Mitglieder",
+          "roles": {
+            "owner": "Owner",
+            "admin": "Admin"
+          },
+          "enterHint": "↵ Enter",
+          "noResults": "Keine Team-Mitglieder gefunden für \"{searchTerm}\"",
+          "keyboardHints": "↑↓ Navigation • Enter Auswählen • Esc Schließen"
+        },
+        "assetPreview": {
+          "loading": "Lade Asset...",
+          "notAvailable": "nicht verfügbar",
+          "folder": {
+            "tooltip": "Ordner im Daten-Tab öffnen"
+          },
+          "fileTypes": {
+            "file": "Datei",
+            "image": "Bild",
+            "video": "Video",
+            "pdf": "PDF",
+            "document": "Dokument"
+          },
+          "actions": {
+            "open": "Öffnen",
+            "download": "Download"
+          },
+          "errors": {
+            "loadFailed": "Asset konnte nicht geladen werden"
+          }
+        }
       }
     },
     "table": {
@@ -5846,6 +5879,308 @@
         "title": "Projektdaten verwalten",
         "description": "Organisieren Sie alle Projektdateien und Dokumente zentral",
         "folderViewTitle": "Projektdaten"
+      }
+    },
+    "communication": {
+      "teamChat": {
+        "notTeamMember": "Sie sind kein Mitglied dieses Projekt-Teams. Sie können die Nachrichten lesen, aber nicht schreiben.",
+        "emojiPicker": {
+          "title": "Emoji auswählen",
+          "textEmojisHint": "Oder verwende Text-Emojis wie :) :( :D :P <3"
+        }
+      },
+      "assetPicker": {
+        "title": "Asset auswählen",
+        "breadcrumb": {
+          "projectFolder": "Projekt-Ordner"
+        },
+        "loading": "Lade Assets...",
+        "sections": {
+          "folders": "Ordner",
+          "files": "Dateien"
+        },
+        "labels": {
+          "folder": "Ordner"
+        },
+        "actions": {
+          "select": "Auswählen",
+          "cancel": "Abbrechen"
+        },
+        "empty": "Keine Assets in diesem Ordner gefunden",
+        "errors": {
+          "loadFailed": "Fehler beim Laden der Ordner-Struktur"
+        }
+      },
+      "floatingChat": {
+        "unknownProject": "Unbekanntes Projekt",
+        "openTeamChat": "Team-Chat öffnen",
+        "projectChat": "Projekt-Chat",
+        "minimize": "Minimieren",
+        "moreOptions": "Mehr Optionen",
+        "moreMembers": "{count} weitere Mitglieder",
+        "unreadBadge": {
+          "moreThanNine": "9+"
+        },
+        "clearChatDialog": {
+          "title": "Chat-Verlauf löschen",
+          "message": "Möchten Sie den gesamten Chat-Verlauf wirklich löschen?",
+          "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Nachrichten werden permanent gelöscht.",
+          "cancel": "Abbrechen",
+          "confirm": "Chat-Verlauf löschen"
+        },
+        "errors": {
+          "loadingTeamData": "Fehler beim Laden der Team-Daten:",
+          "clearingChatHistory": "Fehler beim Löschen des Chat-Verlaufs"
+        }
+      },
+      "messageItem": {
+        "editButton": "Bearbeiten",
+        "deleteButton": "Löschen",
+        "cancelButton": "Abbrechen",
+        "saveButton": "Speichern",
+        "saveButtonLoading": "Speichern...",
+        "edited": "(bearbeitet)",
+        "editedWithCount": "(bearbeitet - {count}x)",
+        "editHistory": "Bearbeitungsverlauf",
+        "timestampUnknown": "Unbekannt",
+        "assetWrongProject": "Asset gehört nicht zu diesem Projekt",
+        "assetOpenError": "Fehler beim Öffnen des Assets:",
+        "deleteDialog": {
+          "title": "Nachricht löschen",
+          "message": "Möchten Sie diese Nachricht wirklich löschen?",
+          "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+          "deleteButton": "Nachricht löschen",
+          "deleteButtonLoading": "Löschen..."
+        }
+      },
+      "modal": {
+        "header": {
+          "title": "Projekt-Kommunikation",
+          "subtitle": "{projectTitle} - Alle projekt-bezogenen Kommunikation"
+        },
+        "filters": {
+          "searchPlaceholder": "Kommunikation durchsuchen...",
+          "types": {
+            "all": "Alle",
+            "email": "E-Mails",
+            "call": "Anrufe",
+            "meeting": "Meetings",
+            "note": "Notizen"
+          },
+          "tabs": {
+            "external": "Externe Kommunikation",
+            "team": "Team-Chat"
+          }
+        },
+        "feed": {
+          "external": {
+            "unread": "{count} ungelesen",
+            "empty": {
+              "title": "Keine externe Kommunikation",
+              "description": "E-Mails und externe Nachrichten werden automatisch hier angezeigt."
+            }
+          },
+          "team": {
+            "badge": {
+              "planning": "Planung"
+            },
+            "mentioned": "Erwähnt: {names}",
+            "empty": {
+              "title": "Noch keine Team-Nachrichten",
+              "description": "Schreiben Sie die erste Nachricht für das Team."
+            }
+          }
+        },
+        "composer": {
+          "messageTypes": {
+            "general": "Allgemein",
+            "planning": "Planung",
+            "feedback": "Feedback"
+          },
+          "planningContextPlaceholder": "Planungskontext wählen...",
+          "planningContexts": {
+            "strategy": "Strategie",
+            "briefing": "Briefing",
+            "inspiration": "Inspiration",
+            "research": "Recherche"
+          },
+          "messagePlaceholder": "Nachricht an das Team schreiben..."
+        },
+        "footer": {
+          "externalEntries": "{filtered} von {total} externen Einträgen",
+          "loadingExternal": "Lade externe Kommunikation...",
+          "teamMessages": "{filtered} von {total} Team-Nachrichten",
+          "linkEmail": "E-Mail verknüpfen",
+          "close": "Schließen"
+        }
+      }
+    },
+    "assets": {
+      "gallery": {
+        "title": "Projekt Assets",
+        "assetsCount": "{filtered} von {total} Assets",
+        "bulkActions": {
+          "selected": "{count} ausgewählt",
+          "share": "Teilen"
+        },
+        "filters": {
+          "searchPlaceholder": "Asset suchen...",
+          "type": {
+            "all": "Alle Typen",
+            "images": "Bilder",
+            "documents": "Dokumente",
+            "videos": "Videos",
+            "shared": "Geteilt"
+          },
+          "phase": {
+            "all": "Alle Phasen",
+            "creation": "Erstellung",
+            "approval": "Freigabe",
+            "distribution": "Distribution",
+            "monitoring": "Monitoring"
+          },
+          "status": {
+            "all": "Alle Status",
+            "valid": "Gültig",
+            "needsRefresh": "Update nötig",
+            "missing": "Fehlend"
+          }
+        },
+        "empty": {
+          "title": "Keine Assets gefunden",
+          "description": "Fügen Sie Assets zu diesem Projekt hinzu oder passen Sie die Filter an.",
+          "action": "Asset hinzufügen"
+        },
+        "card": {
+          "shared": "Geteilt",
+          "status": {
+            "ok": "OK",
+            "update": "Update",
+            "missing": "Fehlend"
+          }
+        }
+      },
+      "pipeline": {
+        "phases": {
+          "creation": "Erstellung",
+          "internal_approval": "Interne Freigabe",
+          "customer_approval": "Kunden-Freigabe",
+          "distribution": "Distribution",
+          "monitoring": "Monitoring"
+        },
+        "healthStatus": {
+          "title": "Asset Health Status",
+          "revalidate": "Neu validieren",
+          "validating": "Validiere..."
+        },
+        "metrics": {
+          "healthScore": "Health Score",
+          "assetsTotal": "Assets Total",
+          "valid": "Gültig",
+          "issues": "Probleme"
+        },
+        "criticalIssues": {
+          "title": "Kritische Probleme",
+          "missingAssets": "{count} fehlende Assets",
+          "outdatedAssets": "{count} veraltete Assets"
+        },
+        "pipelineStatus": {
+          "title": "Pipeline Asset Status",
+          "showTimeline": "Timeline anzeigen",
+          "hideTimeline": "Timeline ausblenden"
+        },
+        "phaseCard": {
+          "assets": "Assets",
+          "valid": "{count} gültig",
+          "issues": "{count} Probleme"
+        },
+        "phaseDetails": {
+          "title": "Details",
+          "assetsTotal": "Assets gesamt",
+          "validAssets": "Gültige Assets",
+          "outdated": "Veraltet",
+          "missing": "Fehlend"
+        },
+        "timeline": {
+          "title": "Asset Activity Timeline",
+          "wasAction": "wurde",
+          "actions": {
+            "added": "hinzugefügt",
+            "removed": "entfernt",
+            "modified": "geändert",
+            "shared": "geteilt"
+          }
+        },
+        "quickActions": {
+          "showAssets": "Assets anzeigen",
+          "validateAssets": "Assets validieren",
+          "validating": "Validiere..."
+        }
+      },
+      "selector": {
+        "header": {
+          "title": "Smart Asset Auswahl",
+          "forProject": "Für Projekt: {title}",
+          "phase": "Phase: {phase}"
+        },
+        "filters": {
+          "searchPlaceholder": "Assets durchsuchen...",
+          "source": {
+            "all": "Alle Assets",
+            "suggested": "Vorschläge",
+            "project": "Projekt-Assets",
+            "shared": "Geteilt",
+            "recent": "Kürzlich"
+          },
+          "type": {
+            "all": "Alle Typen",
+            "image": "Bilder",
+            "pdf": "PDF",
+            "video": "Videos",
+            "doc": "Dokumente"
+          }
+        },
+        "advancedFilters": {
+          "timeRange": {
+            "label": "Zeitraum",
+            "all": "Alle Zeit",
+            "week": "Letzte Woche",
+            "month": "Letzter Monat",
+            "quarter": "Letztes Quartal"
+          },
+          "phase": {
+            "label": "Phase",
+            "all": "Alle Phasen",
+            "creation": "Erstellung",
+            "approval": "Freigabe",
+            "distribution": "Distribution"
+          }
+        },
+        "suggestions": {
+          "title": "Smart Vorschläge",
+          "badges": {
+            "veryRelevant": "Sehr relevant",
+            "relevant": "Relevant",
+            "interesting": "Interessant"
+          },
+          "reasons": {
+            "projectShared": "Projekt-weit geteilt",
+            "frequentlyUsed": "Häufig verwendet",
+            "relevantForPhase": "Relevant für {phase}",
+            "recentlyUsed": "Kürzlich verwendet",
+            "relevantTags": "Relevante Tags"
+          }
+        },
+        "assetGrid": {
+          "title": "Assets ({count})",
+          "selected": "{count} ausgewählt"
+        },
+        "actions": {
+          "selectedCount": "{count, plural, =0 {Kein Asset} one {# Asset} other {# Assets}} ausgewählt",
+          "cancel": "Abbrechen",
+          "addAssets": "{count, plural, one {# Asset hinzufügen} other {# Assets hinzufügen}}",
+          "selectAssets": "Assets auswählen"
+        }
       }
     }
   },

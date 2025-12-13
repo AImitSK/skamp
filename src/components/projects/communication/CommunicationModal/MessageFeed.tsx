@@ -8,6 +8,7 @@ import {
   UserIcon,
   AtSymbolIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { ProjectMessage } from './types';
 
@@ -32,6 +33,8 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
   communicationFeed,
   projectMessages
 }) {
+  const t = useTranslations('projects.communication.modal.feed');
+
   return (
     <div className="max-h-[50vh] overflow-y-auto">
       {activeView === 'external' ? (
@@ -76,7 +79,7 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
                           </span>
                           {entry.emailData.unreadCount > 0 && (
                             <span className="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-medium rounded-full">
-                              {entry.emailData.unreadCount} ungelesen
+                              {t('external.unread', { count: entry.emailData.unreadCount })}
                             </span>
                           )}
                         </div>
@@ -90,10 +93,10 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
             <div className="px-6 py-12 text-center">
               <EnvelopeIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-sm font-medium text-gray-900 mb-2">
-                Keine externe Kommunikation
+                {t('external.empty.title')}
               </h3>
               <p className="text-sm text-gray-500">
-                E-Mails und externe Nachrichten werden automatisch hier angezeigt.
+                {t('external.empty.description')}
               </p>
             </div>
           )}
@@ -126,7 +129,7 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
                         </span>
                         {message.messageType === 'planning' && (
                           <span className="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-medium rounded-full">
-                            Planung
+                            {t('team.badge.planning')}
                           </span>
                         )}
                       </div>
@@ -137,7 +140,7 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
                         <div className="flex items-center mt-2 space-x-1">
                           <AtSymbolIcon className="h-3 w-3 text-gray-400" />
                           <span className="text-xs text-gray-500">
-                            Erwähnt: {message.mentions.join(', ')}
+                            {t('team.mentioned', { names: message.mentions.join(', ') })}
                           </span>
                         </div>
                       )}
@@ -150,10 +153,10 @@ export const MessageFeed = React.memo<MessageFeedProps>(function MessageFeed({
             <div className="px-6 py-12 text-center">
               <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-sm font-medium text-gray-900 mb-2">
-                Noch keine Team-Nachrichten
+                {t('team.empty.title')}
               </h3>
               <p className="text-sm text-gray-500">
-                Schreiben Sie die erste Nachricht für das Team.
+                {t('team.empty.description')}
               </p>
             </div>
           )}

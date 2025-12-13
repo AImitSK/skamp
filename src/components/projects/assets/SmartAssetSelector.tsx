@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   MagnifyingGlassIcon,
   PhotoIcon,
   FolderIcon,
@@ -13,6 +13,7 @@ import {
   AdjustmentsHorizontalIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { MediaAsset, MediaFolder } from '@/types/media';
 import { Project } from '@/types/project';
 import { CampaignAssetAttachment } from '@/types/pr';
@@ -67,6 +68,7 @@ export default function SmartAssetSelector({
   multiSelect = true,
   filterTypes = []
 }: SmartAssetSelectorProps) {
+  const t = useTranslations('projects.assets.selector');
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -168,40 +170,40 @@ export default function SmartAssetSelector({
         );
         if (isProjectShared) {
           score += 30;
-          reasons.push('Projekt-weit geteilt');
+          reasons.push(t('suggestions.reasons.projectShared'));
         }
-        
+
         // Ist häufig verwendet?
         const isPopular = projectSummary.topAssets?.some(
           (top: any) => top.assetId === asset.id
         );
         if (isPopular) {
           score += 25;
-          reasons.push('Häufig verwendet');
+          reasons.push(t('suggestions.reasons.frequentlyUsed'));
         }
-        
+
         // Passt zur aktuellen Phase?
         const isPhaseRelevant = phaseAssets.includes(asset);
         if (isPhaseRelevant) {
           score += 20;
-          reasons.push(`Relevant für ${currentPhase}`);
+          reasons.push(t('suggestions.reasons.relevantForPhase', { phase: currentPhase || '' }));
         }
-        
+
         // Ist kürzlich verwendet?
         const isRecent = recentAssets.includes(asset);
         if (isRecent) {
           score += 15;
-          reasons.push('Kürzlich verwendet');
+          reasons.push(t('suggestions.reasons.recentlyUsed'));
         }
-        
+
         // Hat relevante Tags?
-        const hasRelevantTags = asset.tags?.some(tag => 
-          currentPhase?.includes(tag.toLowerCase()) || 
+        const hasRelevantTags = asset.tags?.some(tag =>
+          currentPhase?.includes(tag.toLowerCase()) ||
           project.title.toLowerCase().includes(tag.toLowerCase())
         );
         if (hasRelevantTags) {
           score += 10;
-          reasons.push('Relevante Tags');
+          reasons.push(t('suggestions.reasons.relevantTags'));
         }
         
         // Bereits in Verwendung?
@@ -322,9 +324,9 @@ export default function SmartAssetSelector({
   };
 
   const getSuggestionBadge = (suggestion: AssetSuggestion) => {
-    if (suggestion.score >= 50) return { color: 'bg-green-100 text-green-800', label: 'Sehr relevant' };
-    if (suggestion.score >= 30) return { color: 'bg-blue-100 text-blue-800', label: 'Relevant' };
-    return { color: 'bg-yellow-100 text-yellow-800', label: 'Interessant' };
+    if (suggestion.score >= 50) return { color: 'bg-green-100 text-green-800', label: t('suggestions.badges.veryRelevant') };
+    if (suggestion.score >= 30) return { color: 'bg-blue-100 text-blue-800', label: t('suggestions.badges.relevant') };
+    return { color: 'bg-yellow-100 text-yellow-800', label: t('suggestions.badges.interesting') };
   };
 
   if (!isOpen) return null;
@@ -339,12 +341,12 @@ export default function SmartAssetSelector({
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-medium text-gray-900">
-                Smart Asset Auswahl
+                {t('header.title')}
               </h3>
               {project && (
                 <p className="text-sm text-gray-500">
-                  Für Projekt: {project.title}
-                  {currentPhase && ` • Phase: ${currentPhase}`}
+                  {t('header.forProject', { title: project.title })}
+                  {currentPhase && ` • ${t('header.phase', { phase: currentPhase })}`}
                 </p>
               )}
             </div>
@@ -360,37 +362,37 @@ export default function SmartAssetSelector({
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Assets durchsuchen..."
+                placeholder={t('filters.searchPlaceholder')}
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
+
             {/* Source Filter */}
             <select
               value={filters.source}
               onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as any }))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">Alle Assets</option>
-              <option value="suggested">Vorschläge</option>
-              <option value="project">Projekt-Assets</option>
-              <option value="shared">Geteilt</option>
-              <option value="recent">Kürzlich</option>
+              <option value="all">{t('filters.source.all')}</option>
+              <option value="suggested">{t('filters.source.suggested')}</option>
+              <option value="project">{t('filters.source.project')}</option>
+              <option value="shared">{t('filters.source.shared')}</option>
+              <option value="recent">{t('filters.source.recent')}</option>
             </select>
-            
+
             {/* Type Filter */}
             <select
               value={filters.type}
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">Alle Typen</option>
-              <option value="image">Bilder</option>
-              <option value="pdf">PDF</option>
-              <option value="video">Videos</option>
-              <option value="doc">Dokumente</option>
+              <option value="all">{t('filters.type.all')}</option>
+              <option value="image">{t('filters.type.image')}</option>
+              <option value="pdf">{t('filters.type.pdf')}</option>
+              <option value="video">{t('filters.type.video')}</option>
+              <option value="doc">{t('filters.type.doc')}</option>
             </select>
             
             <button
@@ -407,32 +409,32 @@ export default function SmartAssetSelector({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zeitraum
+                    {t('advancedFilters.timeRange.label')}
                   </label>
                   <select
                     value={filters.dateRange}
                     onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as any }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="all">Alle Zeit</option>
-                    <option value="week">Letzte Woche</option>
-                    <option value="month">Letzter Monat</option>
-                    <option value="quarter">Letztes Quartal</option>
+                    <option value="all">{t('advancedFilters.timeRange.all')}</option>
+                    <option value="week">{t('advancedFilters.timeRange.week')}</option>
+                    <option value="month">{t('advancedFilters.timeRange.month')}</option>
+                    <option value="quarter">{t('advancedFilters.timeRange.quarter')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phase
+                    {t('advancedFilters.phase.label')}
                   </label>
                   <select
                     value={filters.phase}
                     onChange={(e) => setFilters(prev => ({ ...prev, phase: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="all">Alle Phasen</option>
-                    <option value="creation">Erstellung</option>
-                    <option value="approval">Freigabe</option>
-                    <option value="distribution">Distribution</option>
+                    <option value="all">{t('advancedFilters.phase.all')}</option>
+                    <option value="creation">{t('advancedFilters.phase.creation')}</option>
+                    <option value="approval">{t('advancedFilters.phase.approval')}</option>
+                    <option value="distribution">{t('advancedFilters.phase.distribution')}</option>
                   </select>
                 </div>
               </div>
@@ -444,7 +446,7 @@ export default function SmartAssetSelector({
             <div className="mb-6">
               <div className="flex items-center mb-3">
                 <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
-                <h4 className="font-medium text-gray-900">Smart Vorschläge</h4>
+                <h4 className="font-medium text-gray-900">{t('suggestions.title')}</h4>
                 <span className="ml-2 text-xs text-gray-500">({suggestions.length})</span>
               </div>
               
@@ -519,11 +521,11 @@ export default function SmartAssetSelector({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-gray-900">
-                Assets ({filteredAssets.length})
+                {t('assetGrid.title', { count: filteredAssets.length })}
               </h4>
               {selectedAssets.length > 0 && (
                 <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                  {selectedAssets.length} ausgewählt
+                  {t('assetGrid.selected', { count: selectedAssets.length })}
                 </span>
               )}
             </div>
@@ -591,24 +593,24 @@ export default function SmartAssetSelector({
           {/* Actions */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-gray-500">
-              {selectedAssets.length} Asset{selectedAssets.length !== 1 ? 's' : ''} ausgewählt
+              {t('actions.selectedCount', { count: selectedAssets.length })}
             </div>
-            
+
             <div className="flex space-x-3">
               <button
                 onClick={onCancel}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Abbrechen
+                {t('actions.cancel')}
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={selectedAssets.length === 0}
                 className="px-4 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {selectedAssets.length > 0 
-                  ? `${selectedAssets.length} Asset${selectedAssets.length !== 1 ? 's' : ''} hinzufügen`
-                  : 'Assets auswählen'
+                {selectedAssets.length > 0
+                  ? t('actions.addAssets', { count: selectedAssets.length })
+                  : t('actions.selectAssets')
                 }
               </button>
             </div>

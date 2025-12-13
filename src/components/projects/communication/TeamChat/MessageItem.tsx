@@ -13,6 +13,7 @@ import { toastService } from '@/lib/utils/toast';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useTranslations } from 'next-intl';
 
 interface MessageItemProps {
   message: TeamMessage;
@@ -52,6 +53,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   onReaction,
   onShowTooltip
 }) {
+  const t = useTranslations('projects.communication.messageItem');
   const isOwnMessage = message.authorId === userId;
 
   // Edit/Delete States
@@ -172,7 +174,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
 
     const handleAssetLinkClick = async (type: string, projectIdFromLink: string, assetId: string) => {
       if (projectIdFromLink !== projectId) {
-        console.warn('Asset gehört nicht zu diesem Projekt');
+        console.warn(t('assetWrongProject'));
         return;
       }
 
@@ -184,7 +186,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           }
         }
       } catch (error) {
-        console.error('Fehler beim Öffnen des Assets:', error);
+        console.error(t('assetOpenError'), error);
       }
     };
 
@@ -325,14 +327,14 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
             <button
               onClick={handleStartEdit}
               className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-50 border border-gray-200"
-              title="Bearbeiten"
+              title={t('editButton')}
             >
               <PencilIcon className="h-3.5 w-3.5 text-gray-600" />
             </button>
             <button
               onClick={handleDelete}
               className="p-1.5 bg-white rounded-full shadow-md hover:bg-red-50 border border-gray-200"
-              title="Löschen"
+              title={t('deleteButton')}
               disabled={deleteMessageMutation.isPending}
             >
               <TrashIcon className="h-3.5 w-3.5 text-red-600" />
@@ -357,7 +359,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
                 disabled={editMessageMutation.isPending}
               >
                 <XMarkIcon className="h-4 w-4 inline mr-1" />
-                Abbrechen
+                {t('cancelButton')}
               </button>
               <button
                 onClick={handleSaveEdit}
@@ -365,7 +367,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
                 disabled={editMessageMutation.isPending}
               >
                 <CheckIcon className="h-4 w-4 inline mr-1" />
-                {editMessageMutation.isPending ? 'Speichern...' : 'Speichern'}
+                {editMessageMutation.isPending ? t('saveButtonLoading') : t('saveButton')}
               </button>
             </div>
           </div>
@@ -404,14 +406,14 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
               } underline`}
             >
               {message.editHistory && message.editHistory.length > 0
-                ? `(bearbeitet - ${message.editHistory.length}x)`
-                : '(bearbeitet)'}
+                ? t('editedWithCount', { count: message.editHistory.length })
+                : t('edited')}
             </button>
 
             {/* Edit-History Dropdown */}
             {showEditHistory && message.editHistory && message.editHistory.length > 0 && (
               <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h4 className="text-xs font-semibold text-gray-700 mb-2">Bearbeitungsverlauf</h4>
+                <h4 className="text-xs font-semibold text-gray-700 mb-2">{t('editHistory')}</h4>
                 <div className="space-y-2">
                   {message.editHistory.map((entry, index) => {
                     const editDate = entry.editedAt instanceof Timestamp
@@ -458,7 +460,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           <span className={`text-xs ${
             isOwnMessage ? 'text-gray-600' : 'text-gray-500'
           } ml-2 flex-shrink-0`}>
-            {message.timestamp ? formatTimestamp(message.timestamp) : 'Unbekannt'}
+            {message.timestamp ? formatTimestamp(message.timestamp) : t('timestampUnknown')}
           </span>
         </div>
       </div>
@@ -474,7 +476,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>Nachricht löschen</DialogTitle>
+        <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
         <DialogBody>
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -482,20 +484,20 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
             </div>
             <div>
               <Text className="text-gray-900">
-                Möchten Sie diese Nachricht wirklich löschen?
+                {t('deleteDialog.message')}
               </Text>
               <Text className="text-gray-500 mt-2">
-                Diese Aktion kann nicht rückgängig gemacht werden.
+                {t('deleteDialog.warning')}
               </Text>
             </div>
           </div>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setShowDeleteDialog(false)}>
-            Abbrechen
+            {t('cancelButton')}
           </Button>
           <Button color="primary" onClick={confirmDelete} disabled={deleteMessageMutation.isPending} className="bg-red-600 hover:bg-red-700">
-            {deleteMessageMutation.isPending ? 'Löschen...' : 'Nachricht löschen'}
+            {deleteMessageMutation.isPending ? t('deleteDialog.deleteButtonLoading') : t('deleteDialog.deleteButton')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -10,6 +10,7 @@ import {
   ArrowDownTrayIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { MediaAsset } from '@/types/media';
@@ -34,6 +35,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   isOwnMessage,
   onAssetClick
 }) => {
+  const t = useTranslations('projects.communication.assetPreview');
   const [asset, setAsset] = useState<MediaAsset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       setAsset(assetData);
     } catch (error) {
       console.error('Fehler beim Laden des Assets:', error);
-      setError('Asset konnte nicht geladen werden');
+      setError(t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -70,13 +72,13 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   };
 
   const getFileTypeLabel = (fileType?: string): string => {
-    if (!fileType) return 'Datei';
+    if (!fileType) return t('fileTypes.file');
 
-    if (fileType.startsWith('image/')) return 'Bild';
-    if (fileType.startsWith('video/')) return 'Video';
-    if (fileType.includes('pdf')) return 'PDF';
-    if (fileType.includes('document')) return 'Dokument';
-    return 'Datei';
+    if (fileType.startsWith('image/')) return t('fileTypes.image');
+    if (fileType.startsWith('video/')) return t('fileTypes.video');
+    if (fileType.includes('pdf')) return t('fileTypes.pdf');
+    if (fileType.includes('document')) return t('fileTypes.document');
+    return t('fileTypes.file');
   };
 
   const formatFileSize = (bytes?: number): string => {
@@ -115,7 +117,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
             : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
         }`}
         onClick={onAssetClick}
-        title="Ordner im Daten-Tab öffnen"
+        title={t('folder.tooltip')}
       >
         <FolderIcon className="h-4 w-4" />
         <Text className={`text-sm font-medium ${isOwnMessage ? 'text-white' : 'text-gray-900'}`}>
@@ -137,7 +139,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       >
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
         <Text className={`text-sm ${isOwnMessage ? 'text-white' : 'text-gray-900'}`}>
-          Lade Asset...
+          {t('loading')}
         </Text>
       </div>
     );
@@ -155,7 +157,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       >
         <DocumentIcon className="h-4 w-4" />
         <Text className={`text-sm ${isOwnMessage ? 'text-white' : 'text-red-900'}`}>
-          {linkText} (nicht verfügbar)
+          {linkText} ({t('notAvailable')})
         </Text>
       </div>
     );
@@ -241,11 +243,11 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                 <div className="flex gap-2 justify-center">
                   <Button onClick={handleView} className="flex items-center gap-2">
                     <EyeIcon className="h-4 w-4" />
-                    Öffnen
+                    {t('actions.open')}
                   </Button>
                   <Button onClick={handleDownload} plain className="flex items-center gap-2">
                     <ArrowDownTrayIcon className="h-4 w-4" />
-                    Download
+                    {t('actions.download')}
                   </Button>
                 </div>
               </div>

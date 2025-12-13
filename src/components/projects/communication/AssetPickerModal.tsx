@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -53,6 +54,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
   projectId,
   organizationId
 }) => {
+  const t = useTranslations('projects.communication.assetPicker');
   const [loading, setLoading] = useState(false);
   // Exakt wie im funktionierenden ProjectFoldersView
   const [projectFolders, setProjectFolders] = useState<FolderStructure | null>(null);
@@ -85,7 +87,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
       setNavigationStack([]);
     } catch (error) {
       console.error('Fehler beim Laden der Projekt-Ordner:', error);
-      setError('Fehler beim Laden der Ordner-Struktur');
+      setError(t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -178,7 +180,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
       <DialogTitle>
-        Asset auswählen
+        {t('title')}
       </DialogTitle>
 
       <DialogBody className="space-y-4">
@@ -192,7 +194,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
               <ArrowLeftIcon className="size-4" />
             </button>
             <div className="flex items-center space-x-1">
-              <span>Projekt-Ordner</span>
+              <span>{t('breadcrumb.projectFolder')}</span>
               {breadcrumbs.map((folder, index) => (
                 <React.Fragment key={folder.id}>
                   <ChevronRightIcon className="size-4 text-gray-400" />
@@ -208,7 +210,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <Text className="ml-3 text-gray-600">Lade Assets...</Text>
+            <Text className="ml-3 text-gray-600">{t('loading')}</Text>
           </div>
         ) : error ? (
           <div className="text-center py-8">
@@ -219,7 +221,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
             {/* Unterordner */}
             {currentFolders.length > 0 && (
               <div>
-                <Subheading className="mb-2">Ordner</Subheading>
+                <Subheading className="mb-2">{t('sections.folders')}</Subheading>
                 <div className="grid grid-cols-1 gap-2">
                   {currentFolders.map((folder) => (
                     <div
@@ -232,7 +234,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
                         <div>
                           <Text className="font-medium">{folder.name}</Text>
                           <Text className="text-sm text-gray-500">
-                            Ordner
+                            {t('labels.folder')}
                           </Text>
                         </div>
                       </div>
@@ -248,7 +250,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
             {/* Assets */}
             {currentAssets.length > 0 ? (
               <div>
-                <Subheading className="mb-2">Dateien</Subheading>
+                <Subheading className="mb-2">{t('sections.files')}</Subheading>
                 <div className="grid grid-cols-1 gap-2">
                   {currentAssets.map((asset) => {
                     const FileIcon = getFileIcon(asset.fileType);
@@ -271,7 +273,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
                         <button
                           className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
                         >
-                          Auswählen
+                          {t('actions.select')}
                         </button>
                       </div>
                     );
@@ -280,7 +282,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
               </div>
             ) : !loading && currentFolders.length === 0 && currentAssets.length === 0 && (
               <div className="text-center py-8">
-                <Text className="text-gray-500">Keine Assets in diesem Ordner gefunden</Text>
+                <Text className="text-gray-500">{t('empty')}</Text>
               </div>
             )}
           </div>
@@ -292,7 +294,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
           onClick={onClose}
           className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
         >
-          Abbrechen
+          {t('actions.cancel')}
         </button>
       </DialogActions>
     </Dialog>
