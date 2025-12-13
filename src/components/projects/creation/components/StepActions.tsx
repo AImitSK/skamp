@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { WizardStep } from '../steps/types';
 import clsx from 'clsx';
@@ -28,11 +29,15 @@ export function StepActions({
   onNext,
   onCancel,
   onSubmit,
-  submitLabel = 'Projekt erstellen',
+  submitLabel,
   showSubmitOnAllSteps = false
 }: StepActionsProps) {
+  const t = useTranslations('projects.creation.stepActions');
   const isLastStep = currentStep === totalSteps;
   const showSubmitButton = showSubmitOnAllSteps || isLastStep;
+
+  // Use provided submitLabel or default to translation
+  const finalSubmitLabel = submitLabel || t('defaultSubmit');
 
   return (
     <div className="flex justify-between px-6 py-4 border-t border-gray-200">
@@ -44,7 +49,7 @@ export function StepActions({
           onClick={onPrevious}
           disabled={isLoading}
         >
-          Zurück
+          {t('back')}
         </Button>
       )}
 
@@ -56,7 +61,7 @@ export function StepActions({
           onClick={onCancel}
           disabled={isLoading}
         >
-          Abbrechen
+          {t('cancel')}
         </Button>
 
         {/* Edit-Modus: Zeige beides (Weiter + Speichern) wenn nicht letzter Step */}
@@ -67,14 +72,14 @@ export function StepActions({
               onClick={onNext}
               disabled={!isStepValid || isLoading}
             >
-              Weiter
+              {t('next')}
             </Button>
             <Button
               type="button"
               onClick={onSubmit}
               disabled={isLoading}
             >
-              {isLoading ? `${submitLabel}...` : submitLabel}
+              {isLoading ? t('loading', { label: finalSubmitLabel }) : finalSubmitLabel}
             </Button>
           </>
         )}
@@ -88,7 +93,7 @@ export function StepActions({
                 onClick={onNext}
                 disabled={!isStepValid || isLoading}
               >
-                Weiter
+                {t('next')}
               </Button>
             ) : (
               <Button
@@ -96,7 +101,7 @@ export function StepActions({
                 onClick={onSubmit}
                 disabled={isLoading}
               >
-                {isLoading ? `${submitLabel}...` : submitLabel}
+                {isLoading ? t('loading', { label: finalSubmitLabel }) : finalSubmitLabel}
               </Button>
             )}
           </>
@@ -109,7 +114,7 @@ export function StepActions({
             onClick={onSubmit}
             disabled={isLoading}
           >
-            {isLoading ? `${submitLabel}...` : submitLabel}
+            {isLoading ? t('loading', { label: finalSubmitLabel }) : finalSubmitLabel}
           </Button>
         )}
       </div>

@@ -5617,6 +5617,110 @@
     "noOrganization": "No organization selected",
     "loading": "Loading projects...",
     "loadError": "Error loading",
+    "creation": {
+      "stepActions": {
+        "back": "Back",
+        "cancel": "Cancel",
+        "next": "Next",
+        "defaultSubmit": "Create Project",
+        "loading": "{label}..."
+      },
+      "wizard": {
+        "alert": {
+          "close": "Close"
+        },
+        "header": {
+          "title": "Create New Project"
+        },
+        "errors": {
+          "organizationNotFound": "Organization not found",
+          "projectCreationFailed": "Project could not be created: {details}",
+          "unknownError": "Unknown error",
+          "unexpectedError": "An unexpected error occurred. Please try again."
+        }
+      },
+      "templates": {
+        "categoryFilter": {
+          "label": "Category:",
+          "all": "All",
+          "categories": {
+            "standard": "Standard",
+            "custom": "Custom",
+            "industry": "Industry"
+          }
+        },
+        "noTemplate": {
+          "title": "Start without template",
+          "description": "Create an empty project without predefined tasks"
+        },
+        "stats": {
+          "tasks": "{count} tasks",
+          "teamMembers": "{count} team members",
+          "usageCount": "used {count}x"
+        },
+        "actions": {
+          "showDetails": "Show details",
+          "close": "Close"
+        },
+        "details": {
+          "phasesTitle": "Project Phases:",
+          "keyTasksTitle": "Key Tasks:",
+          "successRate": "Success Rate:",
+          "used": "Used:"
+        },
+        "empty": {
+          "title": "No templates available",
+          "descriptionAll": "Currently no templates are available.",
+          "descriptionCategory": "No templates found in category \"{category}\"."
+        },
+        "mockData": {
+          "prCampaign": {
+            "duration": "21 days",
+            "phases": {
+              "planning": "Planning",
+              "creation": "Creation",
+              "approval": "Approval",
+              "distribution": "Distribution"
+            },
+            "tasks": {
+              "briefing": "Create project briefing",
+              "strategy": "Write strategy document",
+              "content": "Create content",
+              "internalReview": "Internal review",
+              "customerApproval": "Customer approval",
+              "mediaDistribution": "Media distribution"
+            }
+          },
+          "productLaunch": {
+            "duration": "30 days",
+            "phases": {
+              "research": "Research",
+              "positioning": "Positioning",
+              "content": "Content",
+              "launch": "Launch"
+            },
+            "tasks": {
+              "marketAnalysis": "Market analysis",
+              "competitiveAnalysis": "Competitive analysis",
+              "productMessaging": "Product messaging",
+              "launchMaterials": "Launch materials",
+              "launchEvent": "Launch event",
+              "performanceTracking": "Performance tracking"
+            }
+          },
+          "default": {
+            "duration": "Variable",
+            "phases": {
+              "planning": "Planning",
+              "implementation": "Implementation"
+            },
+            "tasks": {
+              "basic": "Basic project tasks"
+            }
+          }
+        }
+      }
+    },
     "viewModes": {
       "board": "Board view",
       "list": "List view"
@@ -5834,6 +5938,34 @@
         }
       }
     },
+    "edit": {
+      "campaignsStep": {
+        "title": "Linked Campaigns",
+        "description": "Manage PR campaigns that are linked to this project.",
+        "loading": "Loading campaigns...",
+        "statusLabel": "Status",
+        "createdLabel": "Created",
+        "viewButton": "View",
+        "editButton": "Edit",
+        "emptyState": "No campaigns linked to this project.",
+        "status": {
+          "draft": "Draft",
+          "approved": "Approved",
+          "sent": "Sent"
+        },
+        "createNew": {
+          "label": "Create New PR Campaign",
+          "description": "Create a new campaign and automatically link it to this project.",
+          "titleLabel": "Campaign Title *",
+          "titlePlaceholder": "{projectTitle} - PR Campaign",
+          "creating": "Creating...",
+          "createButton": "Create Campaign"
+        },
+        "successMessage": "Campaign \"{title}\" was successfully created and linked.",
+        "errorMessage": "Error creating campaign: {message}",
+        "unknownError": "Unknown error"
+      }
+    },
     "table": {
       "headers": {
         "project": "Project",
@@ -5875,6 +6007,32 @@
         "title": "Manage project data",
         "description": "Organize all project files and documents centrally",
         "folderViewTitle": "Project Data"
+      }
+    },
+    "folders": {
+      "deleteConfirm": {
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "boilerplateImport": {
+        "title": "Import from Library",
+        "categoryLabel": "Category",
+        "searchLabel": "Search",
+        "searchPlaceholder": "Name or description...",
+        "categories": {
+          "all": "All Categories",
+          "company": "Company Description",
+          "contact": "Contact Information",
+          "legal": "Legal Notice",
+          "product": "Product Description",
+          "custom": "Other"
+        },
+        "emptyState": {
+          "noBoilerplates": "No boilerplates found",
+          "tryOtherSearch": "Try a different search"
+        },
+        "globalBadge": "Global",
+        "cancel": "Cancel"
       }
     },
     "communication": {
@@ -6176,6 +6334,96 @@
           "cancel": "Cancel",
           "addAssets": "{count, plural, one {Add # asset} other {Add # assets}}",
           "selectAssets": "Select assets"
+        }
+      }
+    },
+    "distribution": {
+      "lists": {
+        "title": "Project Distribution Lists",
+        "newList": "New List",
+        "searchPlaceholder": "Search...",
+        "loading": "Loading distribution lists...",
+        "itemLabel": "Lists",
+        "listCount": "{count, plural, =0 {No lists linked} one {# list linked} other {# lists linked}}",
+        "emptyState": {
+          "title": "No Lists Found",
+          "tryOtherSearch": "Try different search terms",
+          "linkOrCreate": "Link a master list or create a new one"
+        },
+        "table": {
+          "name": "Name",
+          "category": "Category",
+          "type": "Type",
+          "contacts": "Contacts",
+          "added": "Added"
+        }
+      },
+      "listRow": {
+        "unnamedList": "Unnamed List",
+        "dateUnknown": "Unknown",
+        "types": {
+          "linked": "Linked",
+          "project": "Project",
+          "combined": "Combined"
+        },
+        "listTypes": {
+          "dynamic": "Dynamic",
+          "static": "Static"
+        },
+        "actions": {
+          "edit": "Edit",
+          "export": "Export",
+          "removeLink": "Remove Link",
+          "delete": "Delete"
+        }
+      },
+      "listDetails": {
+        "unknown": "Unknown",
+        "category": "Category",
+        "type": "Type",
+        "dynamic": "Dynamic",
+        "static": "Static",
+        "contacts": "Contacts",
+        "contactFilters": "Contact Filters",
+        "publicationFilters": "Publication Filters",
+        "loading": "Loading...",
+        "contactsCount": "{count} contacts",
+        "loadingContacts": "Loading contacts...",
+        "noCompany": "No company",
+        "journalist": "Journalist",
+        "hasEmail": "Has email",
+        "hasPhone": "Has phone",
+        "languageLabel": "Language: {language}",
+        "emptyDynamic": "No contacts match the filters.",
+        "emptyStatic": "No contacts selected yet.",
+        "filters": {
+          "companyTypes": "Company Types",
+          "industries": "Industries",
+          "countries": "Countries",
+          "tagIds": "Tags",
+          "positions": "Positions",
+          "hasEmail": "With Email",
+          "hasPhone": "With Phone",
+          "beats": "Beats",
+          "publications": "Publications",
+          "publication": {
+            "publicationIds": "Specific Publications",
+            "types": "Publication Types",
+            "formats": "Formats",
+            "frequencies": "Frequency",
+            "countries": "Target Countries",
+            "geographicScopes": "Geographic Scope",
+            "languages": "Languages",
+            "focusAreas": "Focus Areas",
+            "targetIndustries": "Target Industries",
+            "minPrintCirculation": "Min. Print Circulation",
+            "maxPrintCirculation": "Max. Print Circulation",
+            "minOnlineVisitors": "Min. Online Visitors",
+            "maxOnlineVisitors": "Max. Online Visitors",
+            "onlyVerified": "Verification",
+            "status": "Status",
+            "publisherIds": "Publishers"
+          }
         }
       }
     }

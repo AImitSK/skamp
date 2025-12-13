@@ -19,6 +19,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Text } from '@/components/ui/text';
 import { CreationSuccessDashboard } from './CreationSuccessDashboard';
 import { Tag, TagColor } from '@/types/crm';
+import { useTranslations } from 'next-intl';
 
 // Step Components
 import { ProjectStep, ClientStep, TeamStep } from './steps';
@@ -40,6 +41,8 @@ function Alert({
   message: string;
   onDismiss?: () => void;
 }) {
+  const t = useTranslations('projects.creation.wizard');
+
   const styles = {
     error: 'bg-red-50 text-red-700',
     warning: 'bg-yellow-50 text-yellow-700',
@@ -71,7 +74,7 @@ function Alert({
               className={`inline-flex rounded-md p-1.5 ${styles[type].split(' ')[1]} hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50`}
               onClick={onDismiss}
             >
-              <span className="sr-only">Schließen</span>
+              <span className="sr-only">{t('alert.close')}</span>
               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -97,6 +100,7 @@ export function ProjectCreationWizard({
   organizationId
 }: ProjectCreationWizardProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.creation.wizard');
 
   // Multi-Step State
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
@@ -202,7 +206,7 @@ export function ProjectCreationWizard({
   };
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
-    if (!organizationId) throw new Error('Organisation nicht gefunden');
+    if (!organizationId) throw new Error(t('errors.organizationNotFound'));
 
     try {
       const tagId = await tagsService.create(
@@ -303,11 +307,11 @@ export function ProjectCreationWizard({
         setCreationResult(result);
         onSuccess(result);
       } else {
-        const errorDetails = result.error || (result as any).message || 'Unbekannter Fehler';
-        setError(`Projekt konnte nicht erstellt werden: ${errorDetails}`);
+        const errorDetails = result.error || (result as any).message || t('errors.unknownError');
+        setError(t('errors.projectCreationFailed', { details: errorDetails }));
       }
     } catch (error: any) {
-      const errorMessage = error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      const errorMessage = error.message || t('errors.unexpectedError');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -344,7 +348,7 @@ export function ProjectCreationWizard({
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
               <RocketLaunchIcon className="w-6 h-6 mr-2 text-primary" />
-              Neues Projekt erstellen
+              {t('header.title')}
             </h2>
             <button
               onClick={onClose}

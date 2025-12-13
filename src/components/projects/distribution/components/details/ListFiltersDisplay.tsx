@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/details/ListFiltersDisplay.tsx
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Tag } from '@/types/crm-enhanced';
 import { Publication } from '@/types/library';
@@ -24,6 +25,19 @@ export default function ListFiltersDisplay({
   tags,
   publications,
 }: ListFiltersDisplayProps) {
+  const t = useTranslations('projects.distribution.listDetails');
+  const tFilters = useTranslations('projects.distribution.listDetails.filters');
+
+  // Wrapper für getFilterLabel mit i18n
+  const getLocalizedFilterLabel = (key: string): string => {
+    return tFilters(key as any) || getFilterLabel(key);
+  };
+
+  // Wrapper für getPublicationFilterLabel mit i18n
+  const getLocalizedPublicationFilterLabel = (key: string): string => {
+    return tFilters(`publication.${key}` as any) || getPublicationFilterLabel(key);
+  };
+
   if (!filters || Object.keys(filters).length === 0) return null;
 
   // Prüfe ob überhaupt aktive Filter vorhanden sind
@@ -52,12 +66,12 @@ export default function ListFiltersDisplay({
       {baseFilters.length > 0 && (
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center mb-3">
-            <Text className="text-sm font-medium text-gray-900">Kontakt-Filter</Text>
+            <Text className="text-sm font-medium text-gray-900">{t('contactFilters')}</Text>
           </div>
           <div className="space-y-3">
             {baseFilters.map(([key, value]) => {
               const Icon = getFilterIcon(key);
-              const label = getFilterLabel(key);
+              const label = getLocalizedFilterLabel(key);
               const displayValue = renderFilterValue(key, value, tags);
 
               return (
@@ -82,14 +96,14 @@ export default function ListFiltersDisplay({
       {hasPublicationFilters && publicationFilters && (
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center mb-3">
-            <Text className="text-sm font-medium text-gray-900">Publikations-Filter</Text>
+            <Text className="text-sm font-medium text-gray-900">{t('publicationFilters')}</Text>
           </div>
           <div className="space-y-3">
             {Object.entries(publicationFilters)
               .filter(([_, value]) => value && (!Array.isArray(value) || (value as any[]).length > 0))
               .map(([key, value]) => {
                 const Icon = getPublicationFilterIcon(key);
-                const label = getPublicationFilterLabel(key);
+                const label = getLocalizedPublicationFilterLabel(key);
                 const displayValue = renderPublicationFilterValue(key, value, publications);
 
                 return (

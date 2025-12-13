@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { DistributionList } from '@/types/lists';
 import { ProjectDistributionList, projectListsService } from '@/lib/firebase/project-lists-service';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function ListDetailsModal({ open, onClose, list, type }: Props) {
+  const t = useTranslations('projects.distribution.listDetails');
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -89,7 +91,7 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
   const isMasterList = (l: any): l is DistributionList => 'name' in l && !('projectId' in l);
   const masterList = isMasterList(list) ? list : null;
 
-  const listName = masterList?.name || projectList?.name || 'Unbekannt';
+  const listName = masterList?.name || projectList?.name || t('unknown');
   const listDescription = masterList?.description || projectList?.description;
   const listCategory = masterList?.category || projectList?.category || 'custom';
   const listType = masterList?.type || projectList?.listType || 'static';

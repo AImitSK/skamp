@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/details/ListContactsPreview.tsx
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { ContactEnhanced } from '@/types/crm-enhanced';
@@ -16,18 +17,18 @@ interface ListContactsPreviewProps {
 /**
  * Formatiert den Namen eines Kontakts
  */
-function formatContactName(contact: any): string {
+function formatContactName(contact: any, unknownLabel: string): string {
   if ('name' in contact && typeof contact.name === 'object') {
     const parts = [];
     if (contact.name.title) parts.push(contact.name.title);
     if (contact.name.firstName) parts.push(contact.name.firstName);
     if (contact.name.lastName) parts.push(contact.name.lastName);
-    return parts.join(' ') || 'Unbekannt';
+    return parts.join(' ') || unknownLabel;
   }
   if (contact.firstName || contact.lastName) {
-    return `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unbekannt';
+    return `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || unknownLabel;
   }
-  return contact.name || 'Unbekannt';
+  return contact.name || unknownLabel;
 }
 
 export default function ListContactsPreview({
@@ -35,19 +36,21 @@ export default function ListContactsPreview({
   contactCount,
   loading,
 }: ListContactsPreviewProps) {
+  const t = useTranslations('projects.distribution.listDetails');
+
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">Kontakte</h3>
+        <h3 className="font-medium text-gray-900">{t('contacts')}</h3>
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-            <span>Lade...</span>
+            <span>{t('loading')}</span>
           </div>
         ) : (
           <Badge color="blue" className="whitespace-nowrap">
-            {contactCount.toLocaleString()} Kontakte
+            {t('contactsCount', { count: contactCount })}
           </Badge>
         )}
       </div>
@@ -56,7 +59,7 @@ export default function ListContactsPreview({
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-2 text-gray-500">Lade Kontakte...</Text>
+          <Text className="mt-2 text-gray-500">{t('loadingContacts')}</Text>
         </div>
       ) : (
         /* Contact List */
@@ -69,18 +72,18 @@ export default function ListContactsPreview({
               {/* Contact Info */}
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-sm text-gray-800">
-                  {formatContactName(contact)}
+                  {formatContactName(contact, t('unknown'))}
                 </div>
                 <div className="text-xs text-gray-500 truncate">
                   {contact.position && `${contact.position} • `}
-                  {contact.companyName || 'Keine Firma'}
+                  {contact.companyName || t('noCompany')}
                 </div>
 
                 {/* Journalist Badge */}
                 {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
                   <div className="text-xs text-blue-600 mt-0.5">
                     <NewspaperIcon className="h-3 w-3 inline mr-1" />
-                    Journalist
+                    {t('journalist')}
                     {(contact as any).mediaProfile.beats?.length ? ` • ${(contact as any).mediaProfile.beats.join(', ')}` : ''}
                   </div>
                 )}
@@ -91,20 +94,22 @@ export default function ListContactsPreview({
                 {/* Email Icon */}
                 {(('emails' in contact && contact.emails && contact.emails.length > 0) ||
                   ('email' in contact && contact.email)) && (
-                  <EnvelopeIcon className="h-3 w-3 text-primary" title="Hat E-Mail" />
+                  <EnvelopeIcon className="h-3 w-3 text-primary" title={t('hasEmail')} />
                 )}
 
                 {/* Phone Icon */}
                 {(('phones' in contact && contact.phones && contact.phones.length > 0) ||
                   ('phone' in contact && contact.phone)) && (
-                  <PhoneIcon className="h-3 w-3 text-green-600" title="Hat Telefon" />
+                  <PhoneIcon className="h-3 w-3 text-green-600" title={t('hasPhone')} />
                 )}
 
                 {/* Language Badge */}
                 {'communicationPreferences' in contact && (contact as any).communicationPreferences?.preferredLanguage && (
                   <span
                     className="text-xs text-gray-500 font-medium"
-                    title={`Sprache: ${LANGUAGE_NAMES[(contact as any).communicationPreferences.preferredLanguage] || (contact as any).communicationPreferences.preferredLanguage}`}
+                    title={t('languageLabel', {
+                      language: LANGUAGE_NAMES[(contact as any).communicationPreferences.preferredLanguage] || (contact as any).communicationPreferences.preferredLanguage
+                    })}
                   >
                     {(contact as any).communicationPreferences.preferredLanguage.toUpperCase()}
                   </span>

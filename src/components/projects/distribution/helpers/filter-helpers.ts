@@ -29,16 +29,13 @@ import {
 
 /**
  * Extended company type labels inkl. zusätzlicher Typen
+ * HINWEIS: Diese Labels sollten mittelfristig durch i18n ersetzt werden
+ * Für jetzt verwenden wir die deutschen Defaults aus companyTypeLabels
  */
 export const extendedCompanyTypeLabels: Record<string, string> = {
   ...companyTypeLabels,
-  'customer': 'Kunde',
-  'partner': 'Partner',
-  'supplier': 'Lieferant',
-  'competitor': 'Wettbewerber',
-  'media': 'Medien',
-  'investor': 'Investor',
-  'other': 'Andere'
+  // Fallback für legacy 'media' type -> verwende media_house
+  'media': 'Medien'
 };
 
 /**

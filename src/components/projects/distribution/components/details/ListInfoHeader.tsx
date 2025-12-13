@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/details/ListInfoHeader.tsx
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { LIST_CATEGORY_LABELS } from '@/types/lists';
@@ -20,6 +21,8 @@ export default function ListInfoHeader({
   contactCount,
   listDescription,
 }: ListInfoHeaderProps) {
+  const t = useTranslations('projects.distribution.listDetails');
+
   return (
     <div>
       {/* Liste Beschreibung (falls vorhanden) */}
@@ -32,22 +35,22 @@ export default function ListInfoHeader({
       {/* Listen-Informationen Header */}
       <div className="flex items-center gap-6 mb-6 pb-4 border-b border-gray-200">
         <div>
-          <Text className="text-xs text-gray-500 mb-1">Kategorie</Text>
+          <Text className="text-xs text-gray-500 mb-1">{t('category')}</Text>
           <Badge color="zinc" className="text-xs">
             {LIST_CATEGORY_LABELS[listCategory as keyof typeof LIST_CATEGORY_LABELS] || listCategory}
           </Badge>
         </div>
         <div>
-          <Text className="text-xs text-gray-500 mb-1">Typ</Text>
+          <Text className="text-xs text-gray-500 mb-1">{t('type')}</Text>
           <Badge
             color={listType === 'dynamic' ? 'green' : 'blue'}
             className="text-xs"
           >
-            {listType === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+            {listType === 'dynamic' ? t('dynamic') : t('static')}
           </Badge>
         </div>
         <div>
-          <Text className="text-xs text-gray-500 mb-1">Kontakte</Text>
+          <Text className="text-xs text-gray-500 mb-1">{t('contacts')}</Text>
           <Text className="text-sm font-semibold">{contactCount.toLocaleString()}</Text>
         </div>
       </div>

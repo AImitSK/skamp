@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  DocumentDuplicateIcon, 
+import { useTranslations } from 'next-intl';
+import {
+  DocumentDuplicateIcon,
   ClockIcon,
   CheckCircleIcon,
   InformationCircleIcon,
@@ -23,11 +24,12 @@ interface ProjectTemplateSelectorProps {
   onSelect: (templateId?: string) => void;
 }
 
-export function ProjectTemplateSelector({ 
-  templates, 
-  selectedTemplateId, 
-  onSelect 
+export function ProjectTemplateSelector({
+  templates,
+  selectedTemplateId,
+  onSelect
 }: ProjectTemplateSelectorProps) {
+  const t = useTranslations('projects.creation.templates');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showDetails, setShowDetails] = useState<string | null>(null);
 
@@ -43,31 +45,41 @@ export function ProjectTemplateSelector({
   const getTemplateDetails = (templateId: string) => {
     const mockDetails = {
       'pr-campaign-standard': {
-        estimatedDuration: '21 Tage',
+        estimatedDuration: t('mockData.prCampaign.duration'),
         recommendedTeamSize: 3,
-        phases: ['Planung', 'Erstellung', 'Freigabe', 'Verteilung'],
+        phases: [
+          t('mockData.prCampaign.phases.planning'),
+          t('mockData.prCampaign.phases.creation'),
+          t('mockData.prCampaign.phases.approval'),
+          t('mockData.prCampaign.phases.distribution')
+        ],
         keyTasks: [
-          'Projekt-Briefing erstellen',
-          'Strategie-Dokument verfassen',
-          'Content erstellen',
-          'Interne Review',
-          'Kundenfreigabe',
-          'Medienverteilung'
+          t('mockData.prCampaign.tasks.briefing'),
+          t('mockData.prCampaign.tasks.strategy'),
+          t('mockData.prCampaign.tasks.content'),
+          t('mockData.prCampaign.tasks.internalReview'),
+          t('mockData.prCampaign.tasks.customerApproval'),
+          t('mockData.prCampaign.tasks.mediaDistribution')
         ],
         successRate: 92,
         usageCount: 145
       },
       'product-launch': {
-        estimatedDuration: '30 Tage',
+        estimatedDuration: t('mockData.productLaunch.duration'),
         recommendedTeamSize: 4,
-        phases: ['Research', 'Positioning', 'Content', 'Launch'],
+        phases: [
+          t('mockData.productLaunch.phases.research'),
+          t('mockData.productLaunch.phases.positioning'),
+          t('mockData.productLaunch.phases.content'),
+          t('mockData.productLaunch.phases.launch')
+        ],
         keyTasks: [
-          'Marktanalyse',
-          'Competitive Analysis',
-          'Product Messaging',
-          'Launch-Materialien',
-          'Launch-Event',
-          'Performance-Tracking'
+          t('mockData.productLaunch.tasks.marketAnalysis'),
+          t('mockData.productLaunch.tasks.competitiveAnalysis'),
+          t('mockData.productLaunch.tasks.productMessaging'),
+          t('mockData.productLaunch.tasks.launchMaterials'),
+          t('mockData.productLaunch.tasks.launchEvent'),
+          t('mockData.productLaunch.tasks.performanceTracking')
         ],
         successRate: 88,
         usageCount: 87
@@ -75,10 +87,13 @@ export function ProjectTemplateSelector({
     };
 
     return mockDetails[templateId as keyof typeof mockDetails] || {
-      estimatedDuration: 'Variabel',
+      estimatedDuration: t('mockData.default.duration'),
       recommendedTeamSize: 2,
-      phases: ['Planung', 'Umsetzung'],
-      keyTasks: ['Grundlegende Projekt-Tasks'],
+      phases: [
+        t('mockData.default.phases.planning'),
+        t('mockData.default.phases.implementation')
+      ],
+      keyTasks: [t('mockData.default.tasks.basic')],
       successRate: 75,
       usageCount: 0
     };
@@ -93,7 +108,7 @@ export function ProjectTemplateSelector({
       {/* Kategorie-Filter */}
       {categories.length > 1 && (
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700">Kategorie:</span>
+          <span className="text-sm font-medium text-gray-700">{t('categoryFilter.label')}</span>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory('all')}
@@ -103,7 +118,7 @@ export function ProjectTemplateSelector({
                   : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Alle
+              {t('categoryFilter.all')}
             </button>
             {categories.map(category => (
               <button
@@ -115,9 +130,7 @@ export function ProjectTemplateSelector({
                     : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {category === 'standard' ? 'Standard' : 
-                 category === 'custom' ? 'Custom' : 
-                 category === 'industry' ? 'Branche' : category}
+                {t(`categoryFilter.categories.${category}`)}
               </button>
             ))}
           </div>
@@ -139,10 +152,10 @@ export function ProjectTemplateSelector({
           </div>
           <div className="ml-3">
             <h4 className="text-sm font-medium text-gray-900">
-              Ohne Template starten
+              {t('noTemplate.title')}
             </h4>
             <p className="text-sm text-gray-500">
-              Erstellen Sie ein leeres Projekt ohne vordefinierte Aufgaben
+              {t('noTemplate.description')}
             </p>
           </div>
           {!selectedTemplateId && (
@@ -184,8 +197,7 @@ export function ProjectTemplateSelector({
                           ? 'bg-purple-100 text-purple-800'
                           : 'bg-orange-100 text-orange-800'
                       }`}>
-                        {template.category === 'standard' ? 'Standard' : 
-                         template.category === 'custom' ? 'Custom' : 'Branche'}
+                        {t(`categoryFilter.categories.${template.category}`)}
                       </span>
 
                       {/* Success Rate Stars */}
@@ -205,21 +217,21 @@ export function ProjectTemplateSelector({
                     <div className="flex items-center space-x-6 text-sm text-gray-500">
                       <div className="flex items-center">
                         <CheckCircleIcon className="h-4 w-4 mr-1" />
-                        {template.taskCount} Aufgaben
+                        {t('stats.tasks', { count: template.taskCount })}
                       </div>
-                      
+
                       <div className="flex items-center">
                         <ClockIcon className="h-4 w-4 mr-1" />
                         {details.estimatedDuration}
                       </div>
-                      
+
                       <div className="flex items-center">
                         <span className="text-xs">👥</span>
-                        <span className="ml-1">{details.recommendedTeamSize} Team-Mitglieder</span>
+                        <span className="ml-1">{t('stats.teamMembers', { count: details.recommendedTeamSize })}</span>
                       </div>
 
                       <div className="text-xs text-gray-400">
-                        {details.usageCount}x verwendet
+                        {t('stats.usageCount', { count: details.usageCount })}
                       </div>
                     </div>
                   </div>
@@ -232,7 +244,7 @@ export function ProjectTemplateSelector({
                         setShowDetails(showDetails === template.id ? null : template.id);
                       }}
                       className="p-1 text-gray-400 hover:text-gray-600"
-                      title="Details anzeigen"
+                      title={t('actions.showDetails')}
                     >
                       <InformationCircleIcon className="h-5 w-5" />
                     </button>
@@ -252,7 +264,7 @@ export function ProjectTemplateSelector({
                     {/* Phasen */}
                     <div>
                       <h5 className="text-sm font-medium text-gray-900 mb-2">
-                        Projekt-Phasen:
+                        {t('details.phasesTitle')}
                       </h5>
                       <div className="flex flex-wrap gap-2">
                         {details.phases.map((phase, index) => (
@@ -269,7 +281,7 @@ export function ProjectTemplateSelector({
                     {/* Key Tasks */}
                     <div>
                       <h5 className="text-sm font-medium text-gray-900 mb-2">
-                        Wichtige Aufgaben:
+                        {t('details.keyTasksTitle')}
                       </h5>
                       <ul className="text-sm text-gray-600 space-y-1">
                         {details.keyTasks.map(task => (
@@ -285,24 +297,24 @@ export function ProjectTemplateSelector({
                     <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                       <div className="flex items-center space-x-4">
                         <div className="text-sm">
-                          <span className="text-gray-600">Erfolgsrate:</span>
+                          <span className="text-gray-600">{t('details.successRate')}</span>
                           <span className="ml-1 font-medium text-green-600">
                             {details.successRate}%
                           </span>
                         </div>
                         <div className="text-sm">
-                          <span className="text-gray-600">Verwendet:</span>
+                          <span className="text-gray-600">{t('details.used')}</span>
                           <span className="ml-1 font-medium">
                             {details.usageCount}x
                           </span>
                         </div>
                       </div>
-                      
+
                       <button
                         onClick={() => setShowDetails(null)}
                         className="text-sm text-gray-500 hover:text-gray-700"
                       >
-                        Schließen
+                        {t('actions.close')}
                       </button>
                     </div>
                   </div>
@@ -317,12 +329,12 @@ export function ProjectTemplateSelector({
         <div className="text-center py-6">
           <DocumentDuplicateIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">
-            Keine Templates verfügbar
+            {t('empty.title')}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            {selectedCategory === 'all' 
-              ? 'Derzeit sind keine Templates verfügbar.' 
-              : `Keine Templates in der Kategorie "${selectedCategory}" gefunden.`
+            {selectedCategory === 'all'
+              ? t('empty.descriptionAll')
+              : t('empty.descriptionCategory', { category: t(`categoryFilter.categories.${selectedCategory}`) })
             }
           </p>
         </div>

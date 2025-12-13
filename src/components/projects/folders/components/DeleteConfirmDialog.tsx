@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -30,6 +31,8 @@ const DeleteConfirmDialog = React.memo(function DeleteConfirmDialog({
   onConfirm,
   onCancel
 }: DeleteConfirmDialogProps) {
+  const t = useTranslations('projects.folders.deleteConfirm');
+
   if (!isOpen) return null;
 
   return (
@@ -40,10 +43,10 @@ const DeleteConfirmDialog = React.memo(function DeleteConfirmDialog({
       </DialogBody>
       <DialogActions>
         <Button plain onClick={onCancel}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button onClick={onConfirm} className="bg-red-600 text-white hover:bg-red-700">
-          Löschen
+          {t('delete')}
         </Button>
       </DialogActions>
     </Dialog>

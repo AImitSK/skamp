@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
@@ -17,6 +18,7 @@ export default function CampaignsEditStep({
   formData
 }: CampaignsEditStepProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.edit.campaignsStep');
   const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createNewCampaign, setCreateNewCampaign] = useState(false);
@@ -84,10 +86,10 @@ export default function CampaignsEditStep({
       setCreateNewCampaign(false);
       setCampaignTitle('');
 
-      setSuccessMessage(`Kampagne "${campaignTitle.trim()}" wurde erfolgreich erstellt und verknüpft.`);
+      setSuccessMessage(t('successMessage', { title: campaignTitle.trim() }));
     } catch (error: any) {
       console.error('Fehler beim Erstellen der Kampagne:', error);
-      setError(`Fehler beim Erstellen der Kampagne: ${error.message || 'Unbekannter Fehler'}`);
+      setError(t('errorMessage', { message: error.message || t('unknownError') }));
     } finally {
       setIsCreating(false);
     }
@@ -113,16 +115,16 @@ export default function CampaignsEditStep({
 
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Verknüpfte Kampagnen</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('title')}</h3>
           <Text className="text-sm text-gray-600">
-            Verwalten Sie PR-Kampagnen, die mit diesem Projekt verknüpft sind.
+            {t('description')}
           </Text>
         </div>
 
         {/* Bestehende Kampagnen anzeigen */}
         {isLoading ? (
           <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">Lade Kampagnen...</p>
+            <p className="text-sm">{t('loading')}</p>
           </div>
         ) : linkedCampaigns.length > 0 ? (
           <div className="space-y-3">
@@ -131,12 +133,10 @@ export default function CampaignsEditStep({
                 <div className="flex-1">
                   <h4 className="text-sm font-medium text-gray-900">{campaign.title}</h4>
                   <p className="text-xs text-gray-500">
-                    Status: {campaign.status === 'draft' ? 'Entwurf' :
-                            campaign.status === 'approved' ? 'Freigegeben' :
-                            campaign.status === 'sent' ? 'Versendet' : campaign.status}
+                    {t('statusLabel')}: {t(`status.${campaign.status}`, { defaultValue: campaign.status })}
                     {campaign.createdAt && (
                       <span className="ml-2">
-                        • Erstellt: {new Date(campaign.createdAt.seconds * 1000).toLocaleDateString('de-DE')}
+                        • {t('createdLabel')}: {new Date(campaign.createdAt.seconds * 1000).toLocaleDateString('de-DE')}
                       </span>
                     )}
                   </p>
@@ -147,14 +147,14 @@ export default function CampaignsEditStep({
                     color="secondary"
                     onClick={() => window.open(`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`, '_blank')}
                   >
-                    Anzeigen
+                    {t('viewButton')}
                   </Button>
                   <Button
                     type="button"
                     color="secondary"
                     onClick={() => window.open(`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`, '_blank')}
                   >
-                    Bearbeiten
+                    {t('editButton')}
                   </Button>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function CampaignsEditStep({
           </div>
         ) : (
           <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-500">Keine Kampagnen mit diesem Projekt verknüpft.</p>
+            <p className="text-sm text-gray-500">{t('emptyState')}</p>
           </div>
         )}
 
@@ -184,10 +184,10 @@ export default function CampaignsEditStep({
               />
               <div className="flex-1">
                 <label htmlFor="createNewCampaign" className="text-sm font-medium text-gray-700 cursor-pointer">
-                  Neue PR-Kampagne erstellen
+                  {t('createNew.label')}
                 </label>
                 <Text className="text-sm text-gray-600 mt-1">
-                  Erstelle eine neue Kampagne und verknüpfe sie automatisch mit diesem Projekt.
+                  {t('createNew.description')}
                 </Text>
               </div>
             </div>
@@ -195,12 +195,12 @@ export default function CampaignsEditStep({
             {createNewCampaign && (
               <div className="ml-7 space-y-4">
                 <Field>
-                  <Label>Kampagnen-Titel *</Label>
+                  <Label>{t('createNew.titleLabel')}</Label>
                   <Input
                     type="text"
                     value={campaignTitle}
                     onChange={(e) => setCampaignTitle(e.target.value)}
-                    placeholder={`${formData.title} - PR-Kampagne`}
+                    placeholder={t('createNew.titlePlaceholder', { projectTitle: formData.title })}
                   />
                 </Field>
                 <Button
@@ -208,7 +208,7 @@ export default function CampaignsEditStep({
                   onClick={handleCreateCampaign}
                   disabled={!campaignTitle.trim() || isCreating}
                 >
-                  {isCreating ? 'Erstelle...' : 'Kampagne erstellen'}
+                  {isCreating ? t('createNew.creating') : t('createNew.createButton')}
                 </Button>
               </div>
             )}

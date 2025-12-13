@@ -5621,6 +5621,136 @@
     "noOrganization": "Keine Organisation ausgewählt",
     "loading": "Projekte werden geladen...",
     "loadError": "Fehler beim Laden",
+    "creation": {
+      "stepActions": {
+        "back": "Zurück",
+        "cancel": "Abbrechen",
+        "next": "Weiter",
+        "defaultSubmit": "Projekt erstellen",
+        "loading": "{label}..."
+      },
+      "wizard": {
+        "alert": {
+          "close": "Schließen"
+        },
+        "header": {
+          "title": "Neues Projekt erstellen"
+        },
+        "errors": {
+          "organizationNotFound": "Organisation nicht gefunden",
+          "projectCreationFailed": "Projekt konnte nicht erstellt werden: {details}",
+          "unknownError": "Unbekannter Fehler",
+          "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+        }
+      },
+      "templates": {
+        "categoryFilter": {
+          "label": "Kategorie:",
+          "all": "Alle",
+          "categories": {
+            "standard": "Standard",
+            "custom": "Custom",
+            "industry": "Branche"
+          }
+        },
+        "noTemplate": {
+          "title": "Ohne Template starten",
+          "description": "Erstellen Sie ein leeres Projekt ohne vordefinierte Aufgaben"
+        },
+        "stats": {
+          "tasks": "{count} Aufgaben",
+          "teamMembers": "{count} Team-Mitglieder",
+          "usageCount": "{count}x verwendet"
+        },
+        "actions": {
+          "showDetails": "Details anzeigen",
+          "close": "Schließen"
+        },
+        "details": {
+          "phasesTitle": "Projekt-Phasen:",
+          "keyTasksTitle": "Wichtige Aufgaben:",
+          "successRate": "Erfolgsrate:",
+          "used": "Verwendet:"
+        },
+        "empty": {
+          "title": "Keine Templates verfügbar",
+          "descriptionAll": "Derzeit sind keine Templates verfügbar.",
+          "descriptionCategory": "Keine Templates in der Kategorie \"{category}\" gefunden."
+        },
+        "mockData": {
+          "prCampaign": {
+            "duration": "21 Tage",
+            "phases": {
+              "planning": "Planung",
+              "creation": "Erstellung",
+              "approval": "Freigabe",
+              "distribution": "Verteilung"
+            },
+            "tasks": {
+              "briefing": "Projekt-Briefing erstellen",
+              "strategy": "Strategie-Dokument verfassen",
+              "content": "Content erstellen",
+              "internalReview": "Interne Review",
+              "customerApproval": "Kundenfreigabe",
+              "mediaDistribution": "Medienverteilung"
+            }
+          },
+          "productLaunch": {
+            "duration": "30 Tage",
+            "phases": {
+              "research": "Research",
+              "positioning": "Positioning",
+              "content": "Content",
+              "launch": "Launch"
+            },
+            "tasks": {
+              "marketAnalysis": "Marktanalyse",
+              "competitiveAnalysis": "Competitive Analysis",
+              "productMessaging": "Product Messaging",
+              "launchMaterials": "Launch-Materialien",
+              "launchEvent": "Launch-Event",
+              "performanceTracking": "Performance-Tracking"
+            }
+          },
+          "default": {
+            "duration": "Variabel",
+            "phases": {
+              "planning": "Planung",
+              "implementation": "Umsetzung"
+            },
+            "tasks": {
+              "basic": "Grundlegende Projekt-Tasks"
+            }
+          }
+        }
+      }
+    },
+    "folders": {
+      "deleteConfirm": {
+        "cancel": "Abbrechen",
+        "delete": "Löschen"
+      },
+      "boilerplateImport": {
+        "title": "Aus Bibliothek importieren",
+        "categoryLabel": "Kategorie",
+        "searchLabel": "Suche",
+        "searchPlaceholder": "Name oder Beschreibung...",
+        "categories": {
+          "all": "Alle Kategorien",
+          "company": "Unternehmensbeschreibung",
+          "contact": "Kontaktinformationen",
+          "legal": "Rechtliche Hinweise",
+          "product": "Produktbeschreibung",
+          "custom": "Sonstige"
+        },
+        "emptyState": {
+          "noBoilerplates": "Keine Boilerplates gefunden",
+          "tryOtherSearch": "Versuchen Sie eine andere Suche"
+        },
+        "globalBadge": "Global",
+        "cancel": "Abbrechen"
+      }
+    },
     "viewModes": {
       "board": "Board-Ansicht",
       "list": "Listen-Ansicht"
@@ -5836,6 +5966,54 @@
             "loadFailed": "Asset konnte nicht geladen werden"
           }
         }
+      }
+    },
+    "edit": {
+      "wizard": {
+        "title": "Projekt bearbeiten",
+        "steps": {
+          "project": "Projekt",
+          "client": "Kunde",
+          "team": "Team",
+          "campaigns": "Kampagnen"
+        },
+        "actions": {
+          "saveChanges": "Änderungen speichern"
+        },
+        "success": {
+          "updateProject": "Projekt erfolgreich aktualisiert"
+        },
+        "errors": {
+          "noOrganization": "Organisation nicht gefunden",
+          "saveProject": "Fehler beim Speichern des Projekts: {error}",
+          "unknown": "Unbekannter Fehler"
+        }
+      },
+      "campaignsStep": {
+        "title": "Verknüpfte Kampagnen",
+        "description": "Verwalten Sie PR-Kampagnen, die mit diesem Projekt verknüpft sind.",
+        "loading": "Lade Kampagnen...",
+        "statusLabel": "Status",
+        "createdLabel": "Erstellt",
+        "viewButton": "Anzeigen",
+        "editButton": "Bearbeiten",
+        "emptyState": "Keine Kampagnen mit diesem Projekt verknüpft.",
+        "status": {
+          "draft": "Entwurf",
+          "approved": "Freigegeben",
+          "sent": "Versendet"
+        },
+        "createNew": {
+          "label": "Neue PR-Kampagne erstellen",
+          "description": "Erstelle eine neue Kampagne und verknüpfe sie automatisch mit diesem Projekt.",
+          "titleLabel": "Kampagnen-Titel *",
+          "titlePlaceholder": "{projectTitle} - PR-Kampagne",
+          "creating": "Erstelle...",
+          "createButton": "Kampagne erstellen"
+        },
+        "successMessage": "Kampagne \"{title}\" wurde erfolgreich erstellt und verknüpft.",
+        "errorMessage": "Fehler beim Erstellen der Kampagne: {message}",
+        "unknownError": "Unbekannter Fehler"
       }
     },
     "table": {
@@ -6180,6 +6358,96 @@
           "cancel": "Abbrechen",
           "addAssets": "{count, plural, one {# Asset hinzufügen} other {# Assets hinzufügen}}",
           "selectAssets": "Assets auswählen"
+        }
+      }
+    },
+    "distribution": {
+      "lists": {
+        "title": "Projekt-Verteiler",
+        "newList": "Neue Liste",
+        "searchPlaceholder": "Suchen...",
+        "loading": "Lade Verteilerlisten...",
+        "itemLabel": "Listen",
+        "listCount": "{count, plural, =0 {Keine Listen verknüpft} one {# Liste verknüpft} other {# Listen verknüpft}}",
+        "emptyState": {
+          "title": "Keine Listen gefunden",
+          "tryOtherSearch": "Versuchen Sie andere Suchbegriffe",
+          "linkOrCreate": "Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue"
+        },
+        "table": {
+          "name": "Name",
+          "category": "Kategorie",
+          "type": "Typ",
+          "contacts": "Kontakte",
+          "added": "Hinzugefügt"
+        }
+      },
+      "listRow": {
+        "unnamedList": "Unbenannte Liste",
+        "dateUnknown": "Unbekannt",
+        "types": {
+          "linked": "Verknüpft",
+          "project": "Projekt",
+          "combined": "Kombiniert"
+        },
+        "listTypes": {
+          "dynamic": "Dynamisch",
+          "static": "Statisch"
+        },
+        "actions": {
+          "edit": "Bearbeiten",
+          "export": "Exportieren",
+          "removeLink": "Verknüpfung entfernen",
+          "delete": "Löschen"
+        }
+      },
+      "listDetails": {
+        "unknown": "Unbekannt",
+        "category": "Kategorie",
+        "type": "Typ",
+        "dynamic": "Dynamisch",
+        "static": "Statisch",
+        "contacts": "Kontakte",
+        "contactFilters": "Kontakt-Filter",
+        "publicationFilters": "Publikations-Filter",
+        "loading": "Lade...",
+        "contactsCount": "{count} Kontakte",
+        "loadingContacts": "Lade Kontakte...",
+        "noCompany": "Keine Firma",
+        "journalist": "Journalist",
+        "hasEmail": "Hat E-Mail",
+        "hasPhone": "Hat Telefon",
+        "languageLabel": "Sprache: {language}",
+        "emptyDynamic": "Keine Kontakte entsprechen den Filtern.",
+        "emptyStatic": "Noch keine Kontakte ausgewählt.",
+        "filters": {
+          "companyTypes": "Firmentypen",
+          "industries": "Branchen",
+          "countries": "Länder",
+          "tagIds": "Tags",
+          "positions": "Positionen",
+          "hasEmail": "Mit E-Mail",
+          "hasPhone": "Mit Telefon",
+          "beats": "Ressorts",
+          "publications": "Publikationen",
+          "publication": {
+            "publicationIds": "Spezifische Publikationen",
+            "types": "Publikationstypen",
+            "formats": "Formate",
+            "frequencies": "Erscheinungsweise",
+            "countries": "Zielländer",
+            "geographicScopes": "Reichweite",
+            "languages": "Sprachen",
+            "focusAreas": "Themenschwerpunkte",
+            "targetIndustries": "Zielbranchen",
+            "minPrintCirculation": "Min. Druckauflage",
+            "maxPrintCirculation": "Max. Druckauflage",
+            "minOnlineVisitors": "Min. Online-Besucher",
+            "maxOnlineVisitors": "Max. Online-Besucher",
+            "onlyVerified": "Verifizierung",
+            "status": "Status",
+            "publisherIds": "Verlage"
+          }
         }
       }
     }

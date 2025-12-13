@@ -2,6 +2,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import {
@@ -32,15 +33,17 @@ const ProjectListRow = memo(function ProjectListRow({
   onExport,
   onDelete,
 }: ProjectListRowProps) {
+  const t = useTranslations('projects.distribution.listRow');
+
   // Daten aus Liste oder Master-Liste extrahieren
-  const listName = list.name || masterListDetails?.name || 'Unbenannte Liste';
+  const listName = list.name || masterListDetails?.name || t('unnamedList');
   const category = list.category || masterListDetails?.category || 'custom';
   const listType = list.listType || masterListDetails?.type || 'static';
   const contactCount = list.cachedContactCount || masterListDetails?.contactCount || 0;
 
   // Datum formatieren
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    if (!timestamp || !timestamp.toDate) return t('dateUnknown');
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
@@ -68,7 +71,7 @@ const ProjectListRow = memo(function ProjectListRow({
             >
               {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
               {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
-              {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
+              {list.type === 'linked' ? t('types.linked') : list.type === 'custom' ? t('types.project') : t('types.combined')}
             </Badge>
           </div>
         </div>
@@ -88,7 +91,7 @@ const ProjectListRow = memo(function ProjectListRow({
             color={listType === 'dynamic' ? 'green' : 'blue'}
             className="text-xs whitespace-nowrap"
           >
-            {listType === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+            {listType === 'dynamic' ? t('listTypes.dynamic') : t('listTypes.static')}
           </Badge>
         </div>
 
@@ -117,20 +120,20 @@ const ProjectListRow = memo(function ProjectListRow({
                 <>
                   <DropdownItem onClick={onEdit}>
                     <PencilIcon className="h-4 w-4" />
-                    Bearbeiten
+                    {t('actions.edit')}
                   </DropdownItem>
                   <DropdownDivider />
                 </>
               )}
               <DropdownItem onClick={onExport}>
                 <ArrowDownTrayIcon className="h-4 w-4" />
-                Exportieren
+                {t('actions.export')}
               </DropdownItem>
               <DropdownDivider />
               <DropdownItem onClick={onDelete}>
                 <TrashIcon className="h-4 w-4" />
                 <span className="text-red-600">
-                  {list.type === 'linked' ? 'Verknüpfung entfernen' : 'Löschen'}
+                  {list.type === 'linked' ? t('actions.removeLink') : t('actions.delete')}
                 </span>
               </DropdownItem>
             </DropdownMenu>

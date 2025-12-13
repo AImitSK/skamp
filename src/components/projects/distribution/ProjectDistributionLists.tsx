@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export default function ProjectDistributionLists({ projectId, organizationId }: Props) {
+  const t = useTranslations('projects.distribution.lists');
   const { user } = useAuth();
 
   // React Query Hooks
@@ -201,24 +203,26 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   // Listen-Zähler Text
   const listCountText = useMemo(() => {
-    return `${projectLists.length} ${projectLists.length === 1 ? 'Liste' : 'Listen'} verknüpft`;
-  }, [projectLists.length]);
+    return t('listCount', {
+      count: projectLists.length
+    });
+  }, [projectLists.length, t]);
 
   // Empty State Beschreibung
   const emptyStateDescription = useMemo(() => {
     return searchTerm
-      ? 'Versuchen Sie andere Suchbegriffe'
-      : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue';
-  }, [searchTerm]);
+      ? t('emptyState.tryOtherSearch')
+      : t('emptyState.linkOrCreate');
+  }, [searchTerm, t]);
 
   // Tabellen-Spalten Konfiguration
   const tableColumns = useMemo(() => [
-    { label: 'Name', width: 'w-[35%]' },
-    { label: 'Kategorie', width: 'w-[15%]' },
-    { label: 'Typ', width: 'w-[15%]' },
-    { label: 'Kontakte', width: 'w-[12%]' },
-    { label: 'Hinzugefügt', width: 'flex-1' },
-  ], []);
+    { label: t('table.name'), width: 'w-[35%]' },
+    { label: t('table.category'), width: 'w-[15%]' },
+    { label: t('table.type'), width: 'w-[15%]' },
+    { label: t('table.contacts'), width: 'w-[12%]' },
+    { label: t('table.added'), width: 'flex-1' },
+  ], [t]);
 
   // Modal-Daten für Liste bearbeiten
   const editingListModalData = useMemo(() => {
@@ -243,7 +247,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const loading = isLoadingProjects || isLoadingMasters;
 
   if (loading) {
-    return <LoadingSpinner message="Lade Verteilerlisten..." />;
+    return <LoadingSpinner message={t('loading')} />;
   }
 
   return (
@@ -251,7 +255,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       {/* Header mit Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <Heading level={3}>Projekt-Verteiler</Heading>
+          <Heading level={3}>{t('title')}</Heading>
           <Text className="text-gray-500 mt-1">
             {listCountText}
           </Text>
@@ -262,7 +266,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
             <PlusIcon className="w-4 h-4" />
-            Neue Liste
+            {t('newList')}
           </Button>
         </div>
       </div>
@@ -272,7 +276,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <ListSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Suchen..."
+          placeholder={t('searchPlaceholder')}
         />
         <ListFilterButton
           categoryOptions={categoryOptions}
@@ -293,7 +297,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <ListStatsBar
           filteredCount={filteredProjectLists.length}
           totalCount={projectLists.length}
-          itemLabel="Listen"
+          itemLabel={t('itemLabel')}
         />
       )}
 
@@ -326,7 +330,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       ) : (
         <EmptyListState
           icon={UsersIcon}
-          title="Keine Listen gefunden"
+          title={t('emptyState.title')}
           description={emptyStateDescription}
         />
       )}

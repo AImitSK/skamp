@@ -76,7 +76,8 @@
       "Bash(node:*)",
       "Bash(node temp-update-en.js:*)",
       "Bash(del temp-update-de.js temp-update-en.js)",
-      "Bash(del update-pdf-translations.js)"
+      "Bash(del update-pdf-translations.js)",
+      "Bash(timeout 180 npm run build)"
     ]
   },
   "enableAllProjectMcpServers": true,

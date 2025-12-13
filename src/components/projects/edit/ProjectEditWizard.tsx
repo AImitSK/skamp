@@ -14,6 +14,7 @@ import { Tag } from '@/types/crm';
 import { Alert } from '@/components/common/Alert';
 import { useUpdateProject } from '@/lib/hooks/useProjectData';
 import { Timestamp } from 'firebase/firestore';
+import { useTranslations } from 'next-intl';
 
 // Step Components
 import {
@@ -46,6 +47,7 @@ export function ProjectEditWizard({
 }: ProjectEditWizardProps) {
   const { user } = useAuth();
   const updateProject = useUpdateProject();
+  const t = useTranslations('projects.edit.wizard');
 
   // Multi-Step State
   const [currentStep, setCurrentStep] = useState<EditWizardStep>(1);
@@ -138,7 +140,7 @@ export function ProjectEditWizard({
   };
 
   const handleCreateTag = async (name: string, color: any): Promise<string> => {
-    if (!organizationId) throw new Error('Organisation nicht gefunden');
+    if (!organizationId) throw new Error(t('errors.noOrganization'));
 
     try {
       const tagId = await tagsService.create(
@@ -247,7 +249,7 @@ export function ProjectEditWizard({
       },
       {
         onSuccess: () => {
-          setSuccessMessage('Projekt erfolgreich aktualisiert');
+          setSuccessMessage(t('success.updateProject'));
 
           // Call success callback with updated project
           const updatedProject = { ...project, ...updateData };
@@ -260,7 +262,7 @@ export function ProjectEditWizard({
         },
         onError: (error: any) => {
           console.error('Fehler beim Speichern:', error);
-          setError(`Fehler beim Speichern des Projekts: ${error.message || 'Unbekannter Fehler'}`);
+          setError(t('errors.saveProject', { error: error.message || t('errors.unknown') }));
         }
       }
     );
@@ -276,7 +278,7 @@ export function ProjectEditWizard({
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
               <PencilIcon className="w-6 h-6 mr-2 text-primary" />
-              Projekt bearbeiten
+              {t('title')}
             </h2>
             <button
               onClick={onClose}
@@ -292,7 +294,7 @@ export function ProjectEditWizard({
           currentStep={currentStep as any}
           onStepChange={(step) => handleStepChange(step as any)}
           completedSteps={completedSteps as any[]}
-          stepLabels={['Projekt', 'Kunde', 'Team', 'Kampagnen']}
+          stepLabels={[t('steps.project'), t('steps.client'), t('steps.team'), t('steps.campaigns')]}
           allowAllSteps={true}
         />
 
@@ -363,7 +365,7 @@ export function ProjectEditWizard({
           onNext={handleNext}
           onCancel={onClose}
           onSubmit={handleSaveProject}
-          submitLabel="Änderungen speichern"
+          submitLabel={t('actions.saveChanges')}
           showSubmitOnAllSteps={true}
         />
       </div>

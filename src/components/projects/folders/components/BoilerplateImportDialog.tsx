@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,14 +19,8 @@ interface BoilerplateImportDialogProps {
   onImport: (boilerplate: Boilerplate) => Promise<void>;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  all: 'Alle Kategorien',
-  company: 'Unternehmensbeschreibung',
-  contact: 'Kontaktinformationen',
-  legal: 'Rechtliche Hinweise',
-  product: 'Produktbeschreibung',
-  custom: 'Sonstige'
-};
+// Kategorie-Werte als Keys für Übersetzungen
+const CATEGORY_KEYS = ['all', 'company', 'contact', 'legal', 'product', 'custom'] as const;
 
 export default function BoilerplateImportDialog({
   isOpen,
@@ -34,6 +29,7 @@ export default function BoilerplateImportDialog({
   customerId,
   onImport
 }: BoilerplateImportDialogProps) {
+  const t = useTranslations('projects.folders.boilerplateImport');
   const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -109,32 +105,32 @@ export default function BoilerplateImportDialog({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} size="3xl">
-      <DialogTitle>Aus Bibliothek importieren</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
 
       <DialogBody>
         {/* Filter & Suche */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Field>
-            <Label>Kategorie</Label>
+            <Label>{t('categoryLabel')}</Label>
             <Select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {CATEGORY_KEYS.map((categoryKey) => (
+                <option key={categoryKey} value={categoryKey}>
+                  {t(`categories.${categoryKey}`)}
                 </option>
               ))}
             </Select>
           </Field>
 
           <Field className="relative">
-            <Label>Suche</Label>
+            <Label>{t('searchLabel')}</Label>
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Name oder Beschreibung..."
+              placeholder={t('searchPlaceholder')}
               className="pr-10"
             />
             <MagnifyingGlassIcon className="absolute right-3 bottom-2.5 w-5 h-5 text-gray-400 pointer-events-none" />
@@ -149,9 +145,9 @@ export default function BoilerplateImportDialog({
         ) : filteredBoilerplates.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <BookmarkIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p>Keine Boilerplates gefunden</p>
+            <p>{t('emptyState.noBoilerplates')}</p>
             {searchQuery && (
-              <p className="text-sm mt-2">Versuchen Sie eine andere Suche</p>
+              <p className="text-sm mt-2">{t('emptyState.tryOtherSearch')}</p>
             )}
           </div>
         ) : (
@@ -167,11 +163,11 @@ export default function BoilerplateImportDialog({
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-medium text-gray-900">{boilerplate.name}</h4>
                       <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                        {CATEGORY_LABELS[boilerplate.category]}
+                        {t(`categories.${boilerplate.category}`)}
                       </span>
                       {boilerplate.isGlobal && (
                         <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
-                          Global
+                          {t('globalBadge')}
                         </span>
                       )}
                     </div>
@@ -195,7 +191,7 @@ export default function BoilerplateImportDialog({
 
       <DialogActions>
         <Button plain onClick={handleClose} disabled={importing}>
-          Abbrechen
+          {t('cancel')}
         </Button>
       </DialogActions>
     </Dialog>
