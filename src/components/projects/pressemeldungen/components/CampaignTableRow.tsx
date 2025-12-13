@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -37,6 +38,7 @@ interface CampaignTableRowProps {
 function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, onRefresh, onSend }: CampaignTableRowProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const t = useTranslations('projects.pressemeldungen.tableRow');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -66,13 +68,13 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case 'draft': return 'Entwurf';
-      case 'in_review': return 'In Prüfung';
-      case 'approved': return 'Freigegeben';
-      case 'scheduled': return 'Geplant';
-      case 'sent': return 'Versendet';
-      case 'rejected': return 'Abgelehnt';
-      case 'changes_requested': return 'Änderungen Angefordert';
+      case 'draft': return t('status.draft');
+      case 'in_review': return t('status.inReview');
+      case 'approved': return t('status.approved');
+      case 'scheduled': return t('status.scheduled');
+      case 'sent': return t('status.sent');
+      case 'rejected': return t('status.rejected');
+      case 'changes_requested': return t('status.changesRequested');
       default: return status;
     }
   };
@@ -145,7 +147,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unbekannt';
+    if (!timestamp) return t('unknown');
 
     // Handle Firestore Timestamp
     let date: Date;
@@ -156,7 +158,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     } else if (timestamp instanceof Date) {
       date = timestamp;
     } else {
-      return 'Unbekannt';
+      return t('unknown');
     }
 
     return date.toLocaleDateString('de-DE', {
@@ -179,7 +181,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
           </a>
           {campaign.projectTitle && (
             <p className="text-xs text-gray-500 truncate mt-1">
-              Projekt: {campaign.projectTitle}
+              {t('projectLabel')} {campaign.projectTitle}
             </p>
           )}
         </div>
@@ -243,7 +245,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
               href={`/dashboard/analytics/monitoring/${campaign.id}`}
               className="text-xs text-blue-600 hover:text-blue-700 flex items-center"
             >
-              Monitoring →
+              {t('actions.monitoring')}
             </a>
           ) : (
             <Button
@@ -252,7 +254,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
               className="text-xs px-3 py-1"
             >
               <PaperAirplaneIcon className="h-3 w-3 mr-1" />
-              Versenden
+              {t('actions.send')}
             </Button>
           )}
         </div>
@@ -267,26 +269,26 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
             <DropdownMenu anchor="bottom end">
               <DropdownItem onClick={handleEdit}>
                 <PencilIcon className="h-4 w-4" />
-                Bearbeiten
+                {t('actions.edit')}
               </DropdownItem>
               <DropdownItem onClick={handleOpenApproval} disabled={approvalDisabled}>
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                Freigabe öffnen
+                {t('actions.openApproval')}
               </DropdownItem>
               <DropdownDivider />
               <DropdownItem onClick={handleResendApprovalLink} disabled={approvalDisabled || isResending}>
                 <EnvelopeIcon className="h-4 w-4" />
-                {isResending ? 'Wird gesendet...' : 'Freigabe Link erneut senden'}
+                {isResending ? t('actions.sending') : t('actions.resendApproval')}
               </DropdownItem>
               <DropdownItem onClick={handleCopyApprovalLink} disabled={approvalDisabled}>
                 <ClipboardDocumentIcon className="h-4 w-4" />
-                Freigabe Link kopieren
+                {t('actions.copyApproval')}
               </DropdownItem>
               <DropdownDivider />
               <DropdownItem onClick={handleDeleteClick} disabled={isDeleting}>
                 <TrashIcon className="h-4 w-4" />
                 <span className="text-red-600">
-                  {isDeleting ? 'Wird gelöscht...' : 'Löschen'}
+                  {isDeleting ? t('actions.deleting') : t('actions.delete')}
                 </span>
               </DropdownItem>
             </DropdownMenu>
@@ -296,17 +298,17 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
 
       {/* Lösch-Bestätigungs-Dialog */}
       <Dialog open={showDeleteDialog} onClose={handleDeleteCancel} size="sm">
-        <DialogTitle>Kampagne löschen</DialogTitle>
+        <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
         <DialogBody>
-          <p>Möchten Sie die Kampagne <strong>&quot;{campaign.title}&quot;</strong> wirklich löschen?</p>
-          <p className="mt-2 text-red-600">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+          <p>{t('deleteDialog.message', { title: campaign.title })}</p>
+          <p className="mt-2 text-red-600">{t('deleteDialog.warning')}</p>
         </DialogBody>
         <DialogActions>
           <Button onClick={handleDeleteCancel} color="secondary">
-            Abbrechen
+            {t('deleteDialog.cancel')}
           </Button>
           <Button onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700 text-white">
-            Löschen
+            {t('deleteDialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

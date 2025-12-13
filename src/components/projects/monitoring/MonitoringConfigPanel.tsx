@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { CogIcon, PlayIcon } from '@heroicons/react/24/outline';
 import GeneralSettingsTab from './config/GeneralSettingsTab';
 import ProvidersTab from './config/ProvidersTab';
@@ -29,6 +30,8 @@ const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
   isLoading = false,
   className = ''
 }) => {
+  const t = useTranslations('projects.monitoring.config');
+
   const [config, setConfig] = useState<MonitoringConfig>(
     initialConfig || DEFAULT_MONITORING_CONFIG
   );
@@ -36,10 +39,10 @@ const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
   const [activeTab, setActiveTab] = useState<'general' | 'providers' | 'alerts'>('general');
 
   const tabOptions = useMemo(() => [
-    { key: 'general', label: 'Allgemein' },
-    { key: 'providers', label: 'Anbieter' },
-    { key: 'alerts', label: 'Benachrichtigungen' }
-  ], []);
+    { key: 'general', label: t('tabs.general') },
+    { key: 'providers', label: t('tabs.providers') },
+    { key: 'alerts', label: t('tabs.alerts') }
+  ], [t]);
 
   const handleSave = () => {
     if (onSave) onSave(config);
@@ -59,7 +62,7 @@ const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
           <div className="flex items-center space-x-2">
             <CogIcon className="h-5 w-5 text-gray-400" />
             <h3 className="text-lg font-medium text-gray-900">
-              Monitoring Konfiguration
+              {t('title')}
             </h3>
           </div>
           <div className="flex space-x-2">
@@ -67,14 +70,14 @@ const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
               onClick={handleSave}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Speichern
+              {t('actions.save')}
             </button>
             <button
               onClick={handleStart}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
               <PlayIcon className="h-4 w-4" />
-              <span>Monitoring starten</span>
+              <span>{t('actions.start')}</span>
             </button>
           </div>
         </div>

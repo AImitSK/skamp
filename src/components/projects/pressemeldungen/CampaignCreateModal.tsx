@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export default function CampaignCreateModal({
   onClose,
   onSuccess
 }: Props) {
+  const t = useTranslations('projects.pressemeldungen.createModal');
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,17 +96,17 @@ export default function CampaignCreateModal({
           <XMarkIcon className="h-6 w-6" />
         </button>
 
-        <DialogTitle>Neue Pressemeldung erstellen</DialogTitle>
+        <DialogTitle>{t('title')}</DialogTitle>
 
         <form onSubmit={handleSubmit}>
           <DialogBody className="space-y-6">
             <Field>
-              <Label>Titel der Pressemeldung</Label>
+              <Label>{t('titleLabel')}</Label>
               <Input
                 type="text"
                 value={title}
                 onChange={handleTitleChange}
-                placeholder="z.B. Neue Produkteinführung bei..."
+                placeholder={t('titlePlaceholder')}
                 required
                 disabled={isSubmitting}
                 autoFocus
@@ -120,12 +122,11 @@ export default function CampaignCreateModal({
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-blue-800">
-                    Nächster Schritt
+                    {t('infoBox.title')}
                   </h3>
                   <div className="mt-2 text-sm text-blue-700">
                     <p>
-                      Nach dem Erstellen werden Sie zur Kampagnen-Bearbeitung weitergeleitet,
-                      wo Sie den Inhalt der Pressemeldung verfassen können.
+                      {t('infoBox.description')}
                     </p>
                   </div>
                 </div>
@@ -139,14 +140,14 @@ export default function CampaignCreateModal({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Abbrechen
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
               disabled={isSubmitting || !title.trim()}
             >
-              {isSubmitting ? 'Wird erstellt...' : 'Kampagne erstellen'}
+              {isSubmitting ? t('creating') : t('create')}
             </Button>
           </DialogActions>
         </form>

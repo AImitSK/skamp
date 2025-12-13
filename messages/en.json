@@ -6605,7 +6605,252 @@
         }
       }
     },
+    "pressemeldungen": {
+      "createModal": {
+        "title": "Create New Press Release",
+        "titleLabel": "Press Release Title",
+        "titlePlaceholder": "e.g. New Product Launch at...",
+        "infoBox": {
+          "title": "Next Step",
+          "description": "After creating, you will be redirected to the campaign editor where you can write the content of the press release."
+        },
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "create": "Create Campaign"
+      },
+      "tableRow": {
+        "status": {
+          "draft": "Draft",
+          "inReview": "Under Review",
+          "approved": "Approved",
+          "scheduled": "Scheduled",
+          "sent": "Sent",
+          "rejected": "Rejected",
+          "changesRequested": "Changes Requested"
+        },
+        "projectLabel": "Project:",
+        "unknown": "Unknown",
+        "actions": {
+          "monitoring": "Monitoring →",
+          "send": "Send",
+          "edit": "Edit",
+          "openApproval": "Open Approval",
+          "sending": "Sending...",
+          "resendApproval": "Resend Approval Link",
+          "copyApproval": "Copy Approval Link",
+          "deleting": "Deleting...",
+          "delete": "Delete"
+        },
+        "deleteDialog": {
+          "title": "Delete Campaign",
+          "message": "Do you really want to delete the campaign \"{title}\"?",
+          "warning": "This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete"
+        }
+      },
+      "table": {
+        "headers": {
+          "campaign": "Campaign",
+          "status": "Status",
+          "admin": "Admin",
+          "createdAt": "Created",
+          "send": "Send"
+        },
+        "empty": {
+          "title": "No Press Releases",
+          "description": "No press releases linked to this project yet"
+        }
+      },
+      "tab": {
+        "title": "Press Release",
+        "createButton": "Create Release",
+        "actionsMenu": {
+          "createBoilerplate": "Create Boilerplate",
+          "createPdfTemplate": "Create PDF Template"
+        },
+        "dialog": {
+          "title": "Create New Press Release",
+          "message": "Do you really want to create a new press release?",
+          "hint": "You will be redirected to edit the press release afterwards.",
+          "cancel": "Cancel",
+          "confirm": "Yes, create",
+          "creating": "Creating..."
+        },
+        "errors": {
+          "noCampaignForTranslation": "No campaign available for translation",
+          "notLoggedIn": "Not logged in",
+          "translationFailed": "Translation failed",
+          "projectNotFound": "Project not found",
+          "campaignCreationFailed": "Campaign could not be created"
+        }
+      }
+    },
+    "strategy": {
+      "tab": {
+        "header": {
+          "title": "Create Strategy Document",
+          "description": "Choose a template to quickly get started with strategy development."
+        },
+        "templateBadge": "Template",
+        "templates": {
+          "blank": {
+            "title": "Create New Document",
+            "description": "Start with a blank page for your notes and ideas."
+          },
+          "table": {
+            "title": "Create Empty Table",
+            "description": "Structure your data in a simple table."
+          },
+          "companyProfile": {
+            "title": "Company Profile & Sender Analysis",
+            "description": "Capture the core facts about the sender that serve as the foundation for all communications."
+          },
+          "situationAnalysis": {
+            "title": "Situation Analysis",
+            "description": "A comprehensive analysis of the current market position, competitive environment, and internal strengths and weaknesses."
+          },
+          "audienceAnalysis": {
+            "title": "Audience Analysis",
+            "description": "Create detailed profiles of your target audiences to precisely tailor communications to their needs."
+          },
+          "coreMessages": {
+            "title": "Core Messages & Communication Goals",
+            "description": "Define the central statements and overarching goals to be achieved through the PR activity."
+          }
+        }
+      }
+    },
     "monitoring": {
+      "overview": {
+        "title": "Monitoring Overview",
+        "unknown": "Unknown",
+        "actions": {
+          "addPublication": "Add Publication",
+          "reviewPublication": "Review Publication ({count})"
+        },
+        "stats": {
+          "publications": "Publications",
+          "pending": "To Review",
+          "avgReach": "Avg. Reach",
+          "openRate": "Open Rate"
+        },
+        "crawler": {
+          "title": "Automatic Monitoring",
+          "lastCrawl": "Last Crawl: {date}",
+          "noCrawlYet": "No crawl performed yet",
+          "active": "Active",
+          "inactive": "Inactive",
+          "clickDetails": "Click for details"
+        },
+        "statusChart": {
+          "manual": "Manual",
+          "autoConfirmed": "Auto-Confirmed",
+          "pending": "Review"
+        },
+        "charts": {
+          "statusDistribution": "Status Distribution",
+          "topMedia": "Top Media",
+          "timeline": "Publications Timeline (30 Days)"
+        },
+        "emptyStates": {
+          "noData": "No data available yet",
+          "noPublications": "No publications yet"
+        },
+        "pendingSuggestions": {
+          "title": "Pending Auto-Finds ({count})",
+          "viewAll": "View All",
+          "matchBadge": "Match {score}%",
+          "confirm": "Confirm",
+          "reject": "Reject"
+        },
+        "recentClippings": {
+          "title": "Recent Publications",
+          "viewAll": "View All ({count})",
+          "autoBadge": "🤖 Auto"
+        },
+        "recipients": {
+          "title": "Recipient Performance",
+          "detailList": "Detailed List",
+          "openRate": "Open Rate",
+          "clickRate": "Click Rate",
+          "sent": "{count} sent",
+          "opened": "{count} opened",
+          "clicked": "{count} clicked"
+        },
+        "confirmDialog": {
+          "title": "Accept Clipping",
+          "unknownSource": "Unknown Source",
+          "sentiment": "Sentiment",
+          "sentiments": {
+            "positive": "Positive",
+            "neutral": "Neutral",
+            "negative": "Negative"
+          },
+          "cancel": "Cancel",
+          "create": "Create Clipping"
+        },
+        "crawlerModal": {
+          "title": "Crawler Status",
+          "lastCrawl": "Last Crawl",
+          "nextCrawl": "Next Crawl",
+          "notPerformedYet": "Not performed yet",
+          "notPlanned": "Not planned",
+          "stats": {
+            "channels": "Channels",
+            "totalFound": "Total Found",
+            "autoConfirmed": "Auto-Confirmed",
+            "spam": "Marked as Spam"
+          },
+          "channelsTable": {
+            "title": "Monitored Channels",
+            "channel": "Channel",
+            "type": "Type",
+            "status": "Status",
+            "findings": "Findings",
+            "lastCheck": "Last Check",
+            "noChannels": "No channels configured"
+          },
+          "channelTypes": {
+            "rssFeed": "RSS Feed",
+            "googleNews": "Google News"
+          },
+          "close": "Close"
+        }
+      },
+      "status": {
+        "title": "Monitoring",
+        "loading": "Loading...",
+        "active": {
+          "label": "Actively monitored",
+          "displayText": "Monitoring running"
+        },
+        "completed": {
+          "label": "Completed",
+          "displayText": "Monitoring completed"
+        },
+        "paused": {
+          "label": "Paused",
+          "displayText": "Monitoring paused"
+        },
+        "notStarted": {
+          "label": "Not started",
+          "displayText": "Monitoring not started"
+        },
+        "metrics": {
+          "reach": "Reach",
+          "clippings": "Clippings",
+          "sentiment": "Sentiment"
+        },
+        "actions": {
+          "start": "Start",
+          "pause": "Pause",
+          "stop": "Stop",
+          "resume": "Resume",
+          "dashboard": "Dashboard",
+          "report": "Report"
+        }
+      },
       "analytics": {
         "kpis": {
           "totalReach": "Total Reach",
@@ -6691,6 +6936,18 @@
           "content": "Content",
           "screenshot": "Screenshot",
           "screenshotAlt": "Clipping Screenshot"
+        }
+      },
+      "config": {
+        "title": "Monitoring Configuration",
+        "tabs": {
+          "general": "General",
+          "providers": "Providers",
+          "alerts": "Notifications"
+        },
+        "actions": {
+          "save": "Save",
+          "start": "Start Monitoring"
         }
       }
     }
@@ -8281,6 +8538,30 @@
           "durationValue": "{seconds}s",
           "startedAt": "Started: {date}"
         }
+      }
+    },
+    "documentsTable": {
+      "unknownDate": "Unknown",
+      "empty": {
+        "title": "No strategy documents created yet",
+        "description": "Use one of the templates above to get started."
+      },
+      "header": {
+        "title": "Existing Strategy Documents"
+      },
+      "columns": {
+        "title": "Title",
+        "type": "Type",
+        "status": "Status",
+        "createdAt": "Created At",
+        "author": "Author",
+        "actions": "Actions"
+      },
+      "templateLabel": "Template: {name}",
+      "folderSystemBadge": "Folder System",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
       }
     }
   },

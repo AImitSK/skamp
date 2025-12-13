@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
+import { useTranslations } from 'next-intl';
 import { pdfVersionsService } from '@/lib/firebase/pdf-versions-service';
 import { CampaignAssetAttachment } from '@/types/pr';
 import { PDFVersion } from '@/types/customer-review';
@@ -51,6 +52,7 @@ export default function PressemeldungToggleSection({
   campaignId,
   organizationId
 }: Props) {
+  const t = useTranslations('projects.pressemeldungen.toggle');
   const [mediaItems, setMediaItems] = useState<CampaignAssetAttachment[]>([]);
   const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
   const [communicationCount, setCommunicationCount] = useState(0);
@@ -219,8 +221,8 @@ export default function PressemeldungToggleSection({
     return (
       <EmptyState
         icon={FolderIcon}
-        title="Keine Pressemeldung"
-        description="Erstellen Sie eine Pressemeldung, um Medien, PDF-Historie und Kommunikation anzuzeigen"
+        title={t('emptyState.title')}
+        description={t('emptyState.description')}
       />
     );
   }
@@ -241,7 +243,7 @@ export default function PressemeldungToggleSection({
         {/* Angehängte Medien */}
         <MediaToggleBox
           id="media"
-          title="Angehängte Medien"
+          title={t('mediaTitle')}
           count={mediaItems.length}
           isExpanded={expandedToggles['media'] || false}
           onToggle={handleToggle}
@@ -253,7 +255,7 @@ export default function PressemeldungToggleSection({
         {/* PDF-Historie */}
         <PDFHistoryToggleBox
           id="pdf-history"
-          title="PDF-Historie"
+          title={t('pdfHistoryTitle')}
           count={pdfVersions.length}
           isExpanded={expandedToggles['pdf-history'] || false}
           onToggle={handleToggle}
@@ -266,7 +268,7 @@ export default function PressemeldungToggleSection({
         {/* Kommunikation */}
         <CommunicationToggleBox
           id="communication"
-          title="Kommunikation"
+          title={t('communicationTitle')}
           count={communicationCount}
           isExpanded={expandedToggles['communication'] || false}
           onToggle={handleToggle}

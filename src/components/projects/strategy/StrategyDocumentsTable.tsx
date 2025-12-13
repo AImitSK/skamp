@@ -7,6 +7,7 @@ import {
   TrashIcon,
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -32,8 +33,12 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
   onDelete,
   loading
 }: StrategyDocumentsTableProps) {
+  const t = useTranslations('strategy.documentsTable');
+  const tStatus = useTranslations('strategy.status');
+  const tTypes = useTranslations('strategy.types');
+
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unbekannt';
+    if (!timestamp) return t('unknownDate');
 
     let date: Date;
     if (timestamp.toDate) {
@@ -43,7 +48,7 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
     } else if (timestamp instanceof Date) {
       date = timestamp;
     } else {
-      return 'Unbekannt';
+      return t('unknownDate');
     }
 
     return date.toLocaleDateString('de-DE', {
@@ -65,20 +70,20 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'draft': return 'Entwurf';
-      case 'review': return 'In Prüfung';
-      case 'approved': return 'Freigegeben';
-      case 'archived': return 'Archiviert';
+      case 'draft': return tStatus('draft');
+      case 'review': return tStatus('review');
+      case 'approved': return tStatus('approved');
+      case 'archived': return tStatus('archived');
       default: return status;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'briefing': return 'Briefing';
-      case 'strategy': return 'Strategie';
-      case 'analysis': return 'Analyse';
-      case 'notes': return 'Notizen';
+      case 'briefing': return tTypes('briefing');
+      case 'strategy': return tTypes('strategy');
+      case 'analysis': return tTypes('analysis');
+      case 'notes': return tTypes('notes');
       default: return type;
     }
   };
@@ -103,9 +108,9 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
   if (documents.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <p className="text-gray-500 mb-2">Noch keine Strategiedokumente erstellt</p>
+        <p className="text-gray-500 mb-2">{t('empty.title')}</p>
         <p className="text-sm text-gray-400">
-          Verwenden Sie eine der Vorlagen oben, um zu beginnen.
+          {t('empty.description')}
         </p>
       </div>
     );
@@ -116,7 +121,7 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
         <h3 className="text-lg font-medium text-gray-900">
-          Bestehende Strategiedokumente
+          {t('header.title')}
         </h3>
       </div>
 
@@ -126,22 +131,22 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Titel
+                {t('columns.title')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
+                {t('columns.type')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                {t('columns.status')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Erstellt am
+                {t('columns.createdAt')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Autor
+                {t('columns.author')}
               </th>
               <th className="relative px-6 py-3">
-                <span className="sr-only">Aktionen</span>
+                <span className="sr-only">{t('columns.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -155,12 +160,12 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
                   <div className="flex items-center gap-2 mt-1">
                     {document.templateName && (
                       <div className="text-xs text-gray-500">
-                        Vorlage: {document.templateName}
+                        {t('templateLabel', { name: document.templateName })}
                       </div>
                     )}
                     {document.source === 'folder' && (
                       <Badge color="zinc" className="text-xs">
-                        Ordner-System
+                        {t('folderSystemBadge')}
                       </Badge>
                     )}
                   </div>
@@ -189,11 +194,11 @@ const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => onEdit(document)}>
                         <PencilIcon className="h-4 w-4" />
-                        Bearbeiten
+                        {t('actions.edit')}
                       </DropdownItem>
                       <DropdownItem onClick={() => onDelete(document.id)}>
                         <TrashIcon className="h-4 w-4" />
-                        <span className="text-red-600">Löschen</span>
+                        <span className="text-red-600">{t('actions.delete')}</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>

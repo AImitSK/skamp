@@ -6629,7 +6629,252 @@
         }
       }
     },
+    "pressemeldungen": {
+      "createModal": {
+        "title": "Neue Pressemeldung erstellen",
+        "titleLabel": "Titel der Pressemeldung",
+        "titlePlaceholder": "z.B. Neue Produkteinführung bei...",
+        "infoBox": {
+          "title": "Nächster Schritt",
+          "description": "Nach dem Erstellen werden Sie zur Kampagnen-Bearbeitung weitergeleitet, wo Sie den Inhalt der Pressemeldung verfassen können."
+        },
+        "cancel": "Abbrechen",
+        "creating": "Wird erstellt...",
+        "create": "Kampagne erstellen"
+      },
+      "tableRow": {
+        "status": {
+          "draft": "Entwurf",
+          "inReview": "In Prüfung",
+          "approved": "Freigegeben",
+          "scheduled": "Geplant",
+          "sent": "Versendet",
+          "rejected": "Abgelehnt",
+          "changesRequested": "Änderungen Angefordert"
+        },
+        "projectLabel": "Projekt:",
+        "unknown": "Unbekannt",
+        "actions": {
+          "monitoring": "Monitoring →",
+          "send": "Versenden",
+          "edit": "Bearbeiten",
+          "openApproval": "Freigabe öffnen",
+          "sending": "Wird gesendet...",
+          "resendApproval": "Freigabe Link erneut senden",
+          "copyApproval": "Freigabe Link kopieren",
+          "deleting": "Wird gelöscht...",
+          "delete": "Löschen"
+        },
+        "deleteDialog": {
+          "title": "Kampagne löschen",
+          "message": "Möchten Sie die Kampagne \"{title}\" wirklich löschen?",
+          "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+          "cancel": "Abbrechen",
+          "confirm": "Löschen"
+        }
+      },
+      "table": {
+        "headers": {
+          "campaign": "Kampagne",
+          "status": "Status",
+          "admin": "Admin",
+          "createdAt": "Erstellt am",
+          "send": "Versenden"
+        },
+        "empty": {
+          "title": "Keine Pressemeldungen",
+          "description": "Noch keine Pressemeldungen mit diesem Projekt verknüpft"
+        }
+      },
+      "tab": {
+        "title": "Pressemeldung",
+        "createButton": "Meldung Erstellen",
+        "actionsMenu": {
+          "createBoilerplate": "Boilerplate erstellen",
+          "createPdfTemplate": "PDF Template erstellen"
+        },
+        "dialog": {
+          "title": "Neue Pressemeldung erstellen",
+          "message": "Wollen Sie wirklich eine neue Pressemeldung erstellen?",
+          "hint": "Sie werden anschließend zur Bearbeitung der Pressemeldung weitergeleitet.",
+          "cancel": "Abbrechen",
+          "confirm": "Ja, erstellen",
+          "creating": "Wird erstellt..."
+        },
+        "errors": {
+          "noCampaignForTranslation": "Keine Kampagne für Übersetzung verfügbar",
+          "notLoggedIn": "Nicht angemeldet",
+          "translationFailed": "Übersetzung fehlgeschlagen",
+          "projectNotFound": "Projekt nicht gefunden",
+          "campaignCreationFailed": "Kampagne konnte nicht erstellt werden"
+        }
+      }
+    },
+    "strategy": {
+      "tab": {
+        "header": {
+          "title": "Strategiedokument erstellen",
+          "description": "Wählen Sie eine Vorlage aus, um schnell mit der Strategieentwicklung zu beginnen."
+        },
+        "templateBadge": "Vorlage",
+        "templates": {
+          "blank": {
+            "title": "Neues Dokument erstellen",
+            "description": "Beginnen Sie mit einem leeren Blatt für Ihre Notizen und Ideen."
+          },
+          "table": {
+            "title": "Leere Tabelle erstellen",
+            "description": "Strukturieren Sie Ihre Daten in einer einfachen Tabelle."
+          },
+          "companyProfile": {
+            "title": "Unternehmensprofil & Senderanalyse",
+            "description": "Erfassen Sie die Kernfakten des Absenders, die als Grundlage für die gesamte Kommunikation dienen."
+          },
+          "situationAnalysis": {
+            "title": "Situationsanalyse",
+            "description": "Eine fundierte Analyse der aktuellen Marktposition, des Wettbewerbsumfelds sowie der internen Stärken und Schwächen."
+          },
+          "audienceAnalysis": {
+            "title": "Zielgruppenanalyse",
+            "description": "Erstellen Sie detaillierte Profile Ihrer Zielgruppen, um die Kommunikation präzise auf ihre Bedürfnisse abzustimmen."
+          },
+          "coreMessages": {
+            "title": "Kernbotschaften & Kommunikationsziele",
+            "description": "Definieren Sie die zentralen Aussagen und die übergeordneten Ziele, die durch die PR-Aktivität erreicht werden sollen."
+          }
+        }
+      }
+    },
     "monitoring": {
+      "overview": {
+        "title": "Monitoring Übersicht",
+        "unknown": "Unbekannt",
+        "actions": {
+          "addPublication": "Veröffentlichung erfassen",
+          "reviewPublication": "Veröffentlichung prüfen ({count})"
+        },
+        "stats": {
+          "publications": "Veröffentlichungen",
+          "pending": "Zu prüfen",
+          "avgReach": "Ø Reichweite",
+          "openRate": "Öffnungsrate"
+        },
+        "crawler": {
+          "title": "Automatisches Monitoring",
+          "lastCrawl": "Letzter Crawl: {date} Uhr",
+          "noCrawlYet": "Noch kein Crawl durchgeführt",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "clickDetails": "Klicken für Details"
+        },
+        "statusChart": {
+          "manual": "Manuell",
+          "autoConfirmed": "Auto-Bestätigt",
+          "pending": "Prüfen"
+        },
+        "charts": {
+          "statusDistribution": "Status-Verteilung",
+          "topMedia": "Top Medien",
+          "timeline": "Veröffentlichungen im Zeitverlauf (30 Tage)"
+        },
+        "emptyStates": {
+          "noData": "Noch keine Daten vorhanden",
+          "noPublications": "Noch keine Veröffentlichungen"
+        },
+        "pendingSuggestions": {
+          "title": "Pending Auto-Funde ({count})",
+          "viewAll": "Alle anzeigen",
+          "matchBadge": "Match {score}%",
+          "confirm": "Bestätigen",
+          "reject": "Ablehnen"
+        },
+        "recentClippings": {
+          "title": "Letzte Veröffentlichungen",
+          "viewAll": "Alle anzeigen ({count})",
+          "autoBadge": "🤖 Auto"
+        },
+        "recipients": {
+          "title": "Empfänger-Performance",
+          "detailList": "Detaillierte Liste",
+          "openRate": "Öffnungsrate",
+          "clickRate": "Klickrate",
+          "sent": "{count} versandt",
+          "opened": "{count} geöffnet",
+          "clicked": "{count} geklickt"
+        },
+        "confirmDialog": {
+          "title": "Clipping übernehmen",
+          "unknownSource": "Unbekannte Quelle",
+          "sentiment": "Sentiment",
+          "sentiments": {
+            "positive": "Positiv",
+            "neutral": "Neutral",
+            "negative": "Negativ"
+          },
+          "cancel": "Abbrechen",
+          "create": "Clipping erstellen"
+        },
+        "crawlerModal": {
+          "title": "Crawler-Status",
+          "lastCrawl": "Letzter Crawl",
+          "nextCrawl": "Nächster Crawl",
+          "notPerformedYet": "Noch nicht durchgeführt",
+          "notPlanned": "Nicht geplant",
+          "stats": {
+            "channels": "Channels",
+            "totalFound": "Funde gesamt",
+            "autoConfirmed": "Auto-Bestätigt",
+            "spam": "Als Spam"
+          },
+          "channelsTable": {
+            "title": "Überwachte Channels",
+            "channel": "Channel",
+            "type": "Typ",
+            "status": "Status",
+            "findings": "Funde",
+            "lastCheck": "Letzter Check",
+            "noChannels": "Keine Channels konfiguriert"
+          },
+          "channelTypes": {
+            "rssFeed": "RSS Feed",
+            "googleNews": "Google News"
+          },
+          "close": "Schließen"
+        }
+      },
+      "status": {
+        "title": "Monitoring",
+        "loading": "Laden...",
+        "active": {
+          "label": "Aktiv überwacht",
+          "displayText": "Monitoring läuft"
+        },
+        "completed": {
+          "label": "Abgeschlossen",
+          "displayText": "Monitoring abgeschlossen"
+        },
+        "paused": {
+          "label": "Pausiert",
+          "displayText": "Monitoring pausiert"
+        },
+        "notStarted": {
+          "label": "Nicht gestartet",
+          "displayText": "Monitoring nicht gestartet"
+        },
+        "metrics": {
+          "reach": "Reichweite",
+          "clippings": "Clippings",
+          "sentiment": "Sentiment"
+        },
+        "actions": {
+          "start": "Starten",
+          "pause": "Pausieren",
+          "stop": "Stoppen",
+          "resume": "Fortsetzen",
+          "dashboard": "Dashboard",
+          "report": "Report"
+        }
+      },
       "analytics": {
         "kpis": {
           "totalReach": "Gesamtreichweite",
@@ -6715,6 +6960,18 @@
           "content": "Inhalt",
           "screenshot": "Screenshot",
           "screenshotAlt": "Clipping Screenshot"
+        }
+      },
+      "config": {
+        "title": "Monitoring Konfiguration",
+        "tabs": {
+          "general": "Allgemein",
+          "providers": "Anbieter",
+          "alerts": "Benachrichtigungen"
+        },
+        "actions": {
+          "save": "Speichern",
+          "start": "Monitoring starten"
         }
       }
     }
@@ -8305,6 +8562,30 @@
           "durationValue": "{seconds}s",
           "startedAt": "Gestartet: {date}"
         }
+      }
+    },
+    "documentsTable": {
+      "unknownDate": "Unbekannt",
+      "empty": {
+        "title": "Noch keine Strategiedokumente erstellt",
+        "description": "Verwenden Sie eine der Vorlagen oben, um zu beginnen."
+      },
+      "header": {
+        "title": "Bestehende Strategiedokumente"
+      },
+      "columns": {
+        "title": "Titel",
+        "type": "Typ",
+        "status": "Status",
+        "createdAt": "Erstellt am",
+        "author": "Autor",
+        "actions": "Aktionen"
+      },
+      "templateLabel": "Vorlage: {name}",
+      "folderSystemBadge": "Ordner-System",
+      "actions": {
+        "edit": "Bearbeiten",
+        "delete": "Löschen"
       }
     }
   },

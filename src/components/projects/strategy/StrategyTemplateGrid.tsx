@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   DocumentTextIcon,
   TableCellsIcon,
@@ -24,6 +25,16 @@ interface StrategyTemplateGridProps {
   onTemplateSelect: (templateType: TemplateType, content?: string) => void;
 }
 
+const TemplateBadge = React.memo(function TemplateBadge() {
+  const t = useTranslations('projects.strategy.tab');
+
+  return (
+    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+      {t('templateBadge')}
+    </span>
+  );
+});
+
 const TemplateCard = React.memo(function TemplateCard({ id, title, description, icon: Icon, onClick }: TemplateCardProps) {
   const isTemplate = id !== 'blank' && id !== 'table';
 
@@ -45,9 +56,7 @@ const TemplateCard = React.memo(function TemplateCard({ id, title, description, 
                 {title}
               </h3>
               {isTemplate && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                  Vorlage
-                </span>
+                <TemplateBadge />
               )}
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
@@ -61,6 +70,8 @@ const TemplateCard = React.memo(function TemplateCard({ id, title, description, 
 });
 
 const StrategyTemplateGrid = React.memo(function StrategyTemplateGrid({ onTemplateSelect }: StrategyTemplateGridProps) {
+  const t = useTranslations('projects.strategy.tab');
+
   const handleTemplateClick = (templateType: TemplateType) => {
     const template = STRATEGY_TEMPLATES[templateType];
     onTemplateSelect(templateType, template.content);
@@ -78,26 +89,39 @@ const StrategyTemplateGrid = React.memo(function StrategyTemplateGrid({ onTempla
     { id: 'core-messages', icon: SpeakerWaveIcon },
   ], []);
 
+  // Map template IDs to i18n keys
+  const getTemplateKey = (id: TemplateType): string => {
+    const keyMap: Record<TemplateType, string> = {
+      'blank': 'blank',
+      'table': 'table',
+      'company-profile': 'companyProfile',
+      'situation-analysis': 'situationAnalysis',
+      'audience-analysis': 'audienceAnalysis',
+      'core-messages': 'coreMessages'
+    };
+    return keyMap[id];
+  };
+
   return (
     <div className="mb-8">
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Strategiedokument erstellen
+          {t('header.title')}
         </h2>
         <p className="text-sm text-gray-600">
-          Wählen Sie eine Vorlage aus, um schnell mit der Strategieentwicklung zu beginnen.
+          {t('header.description')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {templateCards.map(({ id, icon }) => {
-          const template = STRATEGY_TEMPLATES[id];
+          const templateKey = getTemplateKey(id);
           return (
             <TemplateCard
               key={id}
               id={id}
-              title={template.title}
-              description={template.description}
+              title={t(`templates.${templateKey}.title`)}
+              description={t(`templates.${templateKey}.description`)}
               icon={icon}
               onClick={() => handleTemplateClick(id)}
             />

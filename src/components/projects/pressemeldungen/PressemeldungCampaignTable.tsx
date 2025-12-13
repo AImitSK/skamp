@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
 import { ApprovalEnhanced } from '@/types/approvals';
@@ -24,6 +25,7 @@ export default function PressemeldungCampaignTable({
   organizationId,
   onRefresh
 }: Props) {
+  const t = useTranslations('projects.pressemeldungen.table');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSendModal, setShowSendModal] = useState<PRCampaign | null>(null);
@@ -63,8 +65,8 @@ export default function PressemeldungCampaignTable({
     return (
       <EmptyState
         icon={DocumentTextIcon}
-        title="Keine Pressemeldungen"
-        description="Noch keine Pressemeldungen mit diesem Projekt verknüpft"
+        title={t('empty.title')}
+        description={t('empty.description')}
       />
     );
   }
@@ -74,11 +76,11 @@ export default function PressemeldungCampaignTable({
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
         <div className="flex items-center">
-          <div className="w-[40%] min-w-0 pr-4">Kampagne</div>
-          <div className="w-[18%] shrink-0 -ml-3">Status</div>
-          <div className="w-[12%] shrink-0 -ml-3">Admin</div>
-          <div className="w-[15%] shrink-0 -ml-3">Erstellt am</div>
-          <div className="flex-1 -ml-3">Versenden</div>
+          <div className="w-[40%] min-w-0 pr-4">{t('headers.campaign')}</div>
+          <div className="w-[18%] shrink-0 -ml-3">{t('headers.status')}</div>
+          <div className="w-[12%] shrink-0 -ml-3">{t('headers.admin')}</div>
+          <div className="w-[15%] shrink-0 -ml-3">{t('headers.createdAt')}</div>
+          <div className="flex-1 -ml-3">{t('headers.send')}</div>
           <div className="ml-4 w-7">{/* Aktionen-Platzhalter */}</div>
         </div>
       </div>

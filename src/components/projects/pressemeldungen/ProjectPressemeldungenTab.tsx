@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
@@ -28,6 +29,7 @@ export default function ProjectPressemeldungenTab({
   projectId,
   organizationId
 }: Props) {
+  const t = useTranslations('projects.pressemeldungen.tab');
   const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -61,11 +63,11 @@ export default function ProjectPressemeldungenTab({
     // Erste Kampagne des Projekts für Übersetzung verwenden
     const campaign = campaigns[0];
     if (!campaign?.id) {
-      throw new Error('Keine Kampagne für Übersetzung verfügbar');
+      throw new Error(t('errors.noCampaignForTranslation'));
     }
 
     if (!user) {
-      throw new Error('Nicht angemeldet');
+      throw new Error(t('errors.notLoggedIn'));
     }
 
     // Firebase ID Token für Auth holen
@@ -103,7 +105,7 @@ export default function ProjectPressemeldungenTab({
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Übersetzung fehlgeschlagen');
+      throw new Error(error.error || t('errors.translationFailed'));
     }
 
     toastService.success('Übersetzung erfolgreich erstellt');
@@ -124,7 +126,7 @@ export default function ProjectPressemeldungenTab({
       // Projekt laden um Titel zu bekommen
       const project = await projectService.getById(projectId, { organizationId });
       if (!project) {
-        throw new Error('Projekt nicht gefunden');
+        throw new Error(t('errors.projectNotFound'));
       }
 
       // Gleiche Funktion wie im Wizard verwenden
@@ -147,7 +149,7 @@ export default function ProjectPressemeldungenTab({
         // Weiterleitung zur Edit-Seite
         router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${result.campaignId}`);
       } else {
-        throw new Error('Kampagne konnte nicht erstellt werden');
+        throw new Error(t('errors.campaignCreationFailed'));
       }
     } catch (error) {
       toastService.error('Fehler beim Erstellen der Pressemeldung');
@@ -171,7 +173,7 @@ export default function ProjectPressemeldungenTab({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <Heading level={3}>Pressemeldung</Heading>
+        <Heading level={3}>{t('title')}</Heading>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setShowConfirmDialog(true)}
@@ -182,7 +184,7 @@ export default function ProjectPressemeldungenTab({
             disabled={hasLinkedCampaign}
           >
             <PlusIcon className="w-4 h-4 mr-2" />
-            Meldung Erstellen
+            {t('createButton')}
           </Button>
 
           {/* Actions Menu */}
@@ -207,14 +209,14 @@ export default function ProjectPressemeldungenTab({
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     <BookmarkIcon className="h-4 w-4" />
-                    Boilerplate erstellen
+                    {t('actionsMenu.createBoilerplate')}
                   </a>
                   <a
                     href="/dashboard/settings/templates"
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     <DocumentTextIcon className="h-4 w-4" />
-                    PDF Template erstellen
+                    {t('actionsMenu.createPdfTemplate')}
                   </a>
                 </div>
               </Popover.Panel>
@@ -243,13 +245,13 @@ export default function ProjectPressemeldungenTab({
 
       {/* Bestätigungs-Dialog */}
       <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} size="sm">
-        <DialogTitle>Neue Pressemeldung erstellen</DialogTitle>
+        <DialogTitle>{t('dialog.title')}</DialogTitle>
         <DialogBody>
           <p className="text-gray-700">
-            Wollen Sie wirklich eine neue Pressemeldung erstellen?
+            {t('dialog.message')}
           </p>
           <p className="mt-2 text-sm text-gray-500">
-            Sie werden anschließend zur Bearbeitung der Pressemeldung weitergeleitet.
+            {t('dialog.hint')}
           </p>
         </DialogBody>
         <DialogActions>
@@ -258,14 +260,14 @@ export default function ProjectPressemeldungenTab({
             onClick={() => setShowConfirmDialog(false)}
             disabled={isCreating}
           >
-            Abbrechen
+            {t('dialog.cancel')}
           </Button>
           <Button
             onClick={handleCreateCampaign}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             disabled={isCreating}
           >
-            {isCreating ? 'Wird erstellt...' : 'Ja, erstellen'}
+            {isCreating ? t('dialog.creating') : t('dialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

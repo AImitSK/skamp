@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,8 @@ export function ProjectMonitoringOverview({
   onConfirmSuggestion,
   onRejectSuggestion
 }: ProjectMonitoringOverviewProps) {
+  const t = useTranslations('projects.monitoring.overview');
+
   // State für Sentiment-Dialog
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<MonitoringSuggestion | null>(null);
@@ -153,18 +156,18 @@ export function ProjectMonitoringOverview({
     const pending = pendingSuggestions.length;
 
     return [
-      { name: 'Manuell', value: manual, color: '#005fab' },
-      { name: 'Auto-Bestätigt', value: autoConfirmed, color: '#3397d7' },
-      { name: 'Prüfen', value: pending, color: '#f59e0b' }
+      { name: t('statusChart.manual'), value: manual, color: '#005fab' },
+      { name: t('statusChart.autoConfirmed'), value: autoConfirmed, color: '#3397d7' },
+      { name: t('statusChart.pending'), value: pending, color: '#f59e0b' }
     ].filter(item => item.value > 0);
-  }, [clippings, pendingSuggestions]);
+  }, [clippings, pendingSuggestions, t]);
 
   // Top Publications Data
   const topPublicationsData = useMemo(() => {
     const publicationCounts: Record<string, number> = {};
 
     clippings.forEach(clip => {
-      const outlet = clip.outletName || 'Unbekannt';
+      const outlet = clip.outletName || t('unknown');
       publicationCounts[outlet] = (publicationCounts[outlet] || 0) + 1;
     });
 
@@ -243,7 +246,7 @@ export function ProjectMonitoringOverview({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <Heading level={3}>Monitoring Übersicht</Heading>
+        <Heading level={3}>{t('title')}</Heading>
         <div className="flex gap-3">
           <Button
             onClick={() => {
@@ -255,7 +258,7 @@ export function ProjectMonitoringOverview({
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
             <PlusIcon className="w-4 h-4 mr-2" />
-            Veröffentlichung erfassen
+            {t('actions.addPublication')}
           </Button>
 
           {pendingSuggestions.length > 0 && (
@@ -271,7 +274,7 @@ export function ProjectMonitoringOverview({
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <BellAlertIcon className="w-4 h-4 mr-2" />
-              Veröffentlichung prüfen ({pendingSuggestions.length})
+              {t('actions.reviewPublication', { count: pendingSuggestions.length })}
             </Button>
           )}
         </div>
@@ -282,7 +285,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="text-sm text-gray-600">Veröffentlichungen</Text>
+              <Text className="text-sm text-gray-600">{t('stats.publications')}</Text>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {clippings.length}
               </div>
@@ -294,7 +297,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="text-sm text-gray-600">Zu prüfen</Text>
+              <Text className="text-sm text-gray-600">{t('stats.pending')}</Text>
               <div className="text-2xl font-semibold text-orange-600 mt-1">
                 {pendingSuggestions.length}
               </div>
@@ -306,7 +309,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="text-sm text-gray-600">Ø Reichweite</Text>
+              <Text className="text-sm text-gray-600">{t('stats.avgReach')}</Text>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {formatNumber(avgReach)}
               </div>
@@ -318,7 +321,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text className="text-sm text-gray-600">Öffnungsrate</Text>
+              <Text className="text-sm text-gray-600">{t('stats.openRate')}</Text>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {emailStats.openRate}%
               </div>
@@ -337,11 +340,11 @@ export function ProjectMonitoringOverview({
           <div className="flex items-center gap-3">
             <SignalIcon className={`h-5 w-5 ${tracker.isActive ? 'text-green-600' : 'text-gray-400'}`} />
             <div>
-              <Text className="text-sm font-medium text-gray-900">Automatisches Monitoring</Text>
+              <Text className="text-sm font-medium text-gray-900">{t('crawler.title')}</Text>
               <Text className="text-xs text-gray-500">
                 {tracker.lastCrawlAt
-                  ? `Letzter Crawl: ${format(tracker.lastCrawlAt.toDate(), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr`
-                  : 'Noch kein Crawl durchgeführt'
+                  ? t('crawler.lastCrawl', { date: format(tracker.lastCrawlAt.toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) })
+                  : t('crawler.noCrawlYet')
                 }
               </Text>
             </div>
@@ -350,12 +353,12 @@ export function ProjectMonitoringOverview({
             {tracker.isActive ? (
               <Badge color="green" className="text-xs">
                 <CheckCircleSolidIcon className="h-3 w-3 mr-1" />
-                Aktiv
+                {t('crawler.active')}
               </Badge>
             ) : (
-              <Badge color="zinc" className="text-xs">Inaktiv</Badge>
+              <Badge color="zinc" className="text-xs">{t('crawler.inactive')}</Badge>
             )}
-            <Text className="text-xs text-gray-400">Klicken für Details</Text>
+            <Text className="text-xs text-gray-400">{t('crawler.clickDetails')}</Text>
           </div>
         </div>
       )}
@@ -366,7 +369,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <ChartBarIcon className="h-5 w-5 text-[#005fab]" />
-            <Subheading>Status-Verteilung</Subheading>
+            <Subheading>{t('charts.statusDistribution')}</Subheading>
           </div>
           {statusData.length > 0 ? (
             <>
@@ -402,7 +405,7 @@ export function ProjectMonitoringOverview({
             </>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <Text>Noch keine Daten vorhanden</Text>
+              <Text>{t('emptyStates.noData')}</Text>
             </div>
           )}
         </div>
@@ -411,7 +414,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
-            <Subheading>Top Medien</Subheading>
+            <Subheading>{t('charts.topMedia')}</Subheading>
           </div>
           {topPublicationsData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
@@ -425,7 +428,7 @@ export function ProjectMonitoringOverview({
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <Text>Noch keine Veröffentlichungen</Text>
+              <Text>{t('emptyStates.noPublications')}</Text>
             </div>
           )}
         </div>
@@ -436,7 +439,7 @@ export function ProjectMonitoringOverview({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <ChartBarIcon className="h-5 w-5 text-[#005fab]" />
-            <Subheading>Veröffentlichungen im Zeitverlauf (30 Tage)</Subheading>
+            <Subheading>{t('charts.timeline')}</Subheading>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={timelineData}>
@@ -462,13 +465,13 @@ export function ProjectMonitoringOverview({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <BellAlertIcon className="h-5 w-5 text-[#005fab]" />
-              <Subheading>Pending Auto-Funde ({pendingSuggestions.length})</Subheading>
+              <Subheading>{t('pendingSuggestions.title', { count: pendingSuggestions.length })}</Subheading>
             </div>
             <Button
               plain
               onClick={() => onViewSuggestion(pendingSuggestions[0])}
             >
-              Alle anzeigen
+              {t('pendingSuggestions.viewAll')}
               <ArrowRightIcon className="h-4 w-4 ml-1" />
             </Button>
           </div>
@@ -485,7 +488,7 @@ export function ProjectMonitoringOverview({
                       {suggestion.articleTitle}
                     </Text>
                     <Badge color="orange" className="text-xs">
-                      Match {suggestion.highestMatchScore}%
+                      {t('pendingSuggestions.matchBadge', { score: suggestion.highestMatchScore })}
                     </Badge>
                   </div>
                   <Text className="text-sm text-gray-600 truncate">
@@ -499,7 +502,7 @@ export function ProjectMonitoringOverview({
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm"
                     >
                       <CheckCircleIcon className="h-4 w-4" />
-                      Bestätigen
+                      {t('pendingSuggestions.confirm')}
                     </Button>
                   )}
                   {onRejectSuggestion && (
@@ -508,7 +511,7 @@ export function ProjectMonitoringOverview({
                       onClick={() => onRejectSuggestion(suggestion.id!)}
                       className="!text-red-600 hover:!text-red-700 px-3 py-1.5 text-sm"
                     >
-                      Ablehnen
+                      {t('pendingSuggestions.reject')}
                     </Button>
                   )}
                 </div>
@@ -523,7 +526,7 @@ export function ProjectMonitoringOverview({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
-            <Subheading>Letzte Veröffentlichungen</Subheading>
+            <Subheading>{t('recentClippings.title')}</Subheading>
           </div>
           <Button
             plain
@@ -534,7 +537,7 @@ export function ProjectMonitoringOverview({
               }
             }}
           >
-            Alle anzeigen ({clippings.length})
+            {t('recentClippings.viewAll', { count: clippings.length })}
             <ArrowRightIcon className="h-4 w-4 ml-1" />
           </Button>
         </div>
@@ -590,7 +593,7 @@ export function ProjectMonitoringOverview({
                         clipping.detectionMethod === 'web_scraping') && (
                         <>
                           <span>•</span>
-                          <Badge color="green" className="text-xs !py-0">🤖 Auto</Badge>
+                          <Badge color="green" className="text-xs !py-0">{t('recentClippings.autoBadge')}</Badge>
                         </>
                       )}
                     </div>
@@ -602,7 +605,7 @@ export function ProjectMonitoringOverview({
         ) : (
           <div className="text-center py-8 text-gray-500">
             <NewspaperIcon className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-            <Text>Noch keine Veröffentlichungen</Text>
+            <Text>{t('emptyStates.noPublications')}</Text>
           </div>
         )}
       </div>
@@ -612,7 +615,7 @@ export function ProjectMonitoringOverview({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <UsersIcon className="h-5 w-5 text-[#005fab]" />
-            <Subheading>Empfänger-Performance</Subheading>
+            <Subheading>{t('recipients.title')}</Subheading>
           </div>
           <Button
             plain
@@ -623,7 +626,7 @@ export function ProjectMonitoringOverview({
               }
             }}
           >
-            Detaillierte Liste
+            {t('recipients.detailList')}
             <ArrowRightIcon className="h-4 w-4 ml-1" />
           </Button>
         </div>
@@ -632,7 +635,7 @@ export function ProjectMonitoringOverview({
           {/* Progress Bar für Öffnungsrate */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <Text className="text-sm text-gray-600">Öffnungsrate</Text>
+              <Text className="text-sm text-gray-600">{t('recipients.openRate')}</Text>
               <Text className="text-sm font-semibold text-gray-900">{emailStats.openRate}%</Text>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
@@ -646,7 +649,7 @@ export function ProjectMonitoringOverview({
           {/* Progress Bar für Klickrate */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <Text className="text-sm text-gray-600">Klickrate</Text>
+              <Text className="text-sm text-gray-600">{t('recipients.clickRate')}</Text>
               <Text className="text-sm font-semibold text-gray-900">{emailStats.clickRate}%</Text>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
@@ -660,13 +663,13 @@ export function ProjectMonitoringOverview({
           {/* Stats Summary */}
           <div className="flex justify-between items-center pt-2 border-t border-gray-200">
             <Text className="text-sm text-gray-600">
-              {emailStats.total} versandt
+              {t('recipients.sent', { count: emailStats.total })}
             </Text>
             <Text className="text-sm text-gray-600">
-              {emailStats.opened} geöffnet
+              {t('recipients.opened', { count: emailStats.opened })}
             </Text>
             <Text className="text-sm text-gray-600">
-              {emailStats.clicked} geklickt
+              {t('recipients.clicked', { count: emailStats.clicked })}
             </Text>
           </div>
         </div>
@@ -674,38 +677,38 @@ export function ProjectMonitoringOverview({
 
       {/* Bestätigungs-Dialog mit Sentiment-Auswahl */}
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Clipping übernehmen</DialogTitle>
+        <DialogTitle>{t('confirmDialog.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             {selectedSuggestion && (
               <div>
                 <Text className="font-medium text-gray-900">{selectedSuggestion.articleTitle}</Text>
                 <Text className="text-sm text-gray-500 mt-1">
-                  {selectedSuggestion.sources[0]?.sourceName || 'Unbekannte Quelle'}
+                  {selectedSuggestion.sources[0]?.sourceName || t('confirmDialog.unknownSource')}
                 </Text>
               </div>
             )}
 
             <Field>
-              <Label>Sentiment</Label>
+              <Label>{t('confirmDialog.sentiment')}</Label>
               <div className="flex gap-3 mt-2">
                 <SentimentButton
                   sentiment="positive"
                   selected={selectedSentiment === 'positive'}
                   onClick={() => setSelectedSentiment('positive')}
-                  label="Positiv"
+                  label={t('confirmDialog.sentiments.positive')}
                 />
                 <SentimentButton
                   sentiment="neutral"
                   selected={selectedSentiment === 'neutral'}
                   onClick={() => setSelectedSentiment('neutral')}
-                  label="Neutral"
+                  label={t('confirmDialog.sentiments.neutral')}
                 />
                 <SentimentButton
                   sentiment="negative"
                   selected={selectedSentiment === 'negative'}
                   onClick={() => setSelectedSentiment('negative')}
-                  label="Negativ"
+                  label={t('confirmDialog.sentiments.negative')}
                 />
               </div>
             </Field>
@@ -713,13 +716,13 @@ export function ProjectMonitoringOverview({
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setConfirmDialogOpen(false)}>
-            Abbrechen
+            {t('confirmDialog.cancel')}
           </Button>
           <Button
             onClick={handleConfirmWithSentiment}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
-            Clipping erstellen
+            {t('confirmDialog.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -729,7 +732,7 @@ export function ProjectMonitoringOverview({
         <DialogTitle>
           <div className="flex items-center gap-2">
             <SignalIcon className={`h-5 w-5 ${tracker?.isActive ? 'text-green-600' : 'text-gray-400'}`} />
-            Crawler-Status
+            {t('crawlerModal.title')}
           </div>
         </DialogTitle>
         <DialogBody>
@@ -738,20 +741,20 @@ export function ProjectMonitoringOverview({
               {/* Status-Übersicht */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Text className="text-xs text-gray-500 uppercase">Letzter Crawl</Text>
+                  <Text className="text-xs text-gray-500 uppercase">{t('crawlerModal.lastCrawl')}</Text>
                   <Text className="text-lg font-semibold text-gray-900">
                     {tracker.lastCrawlAt
                       ? format(tracker.lastCrawlAt.toDate(), 'dd.MM.yyyy \'um\' HH:mm \'Uhr\'', { locale: de })
-                      : 'Noch nicht durchgeführt'
+                      : t('crawlerModal.notPerformedYet')
                     }
                   </Text>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <Text className="text-xs text-gray-500 uppercase">Nächster Crawl</Text>
+                  <Text className="text-xs text-gray-500 uppercase">{t('crawlerModal.nextCrawl')}</Text>
                   <Text className="text-lg font-semibold text-gray-900">
                     {tracker.nextCrawlAt
                       ? format(tracker.nextCrawlAt.toDate(), 'dd.MM.yyyy \'um\' HH:mm \'Uhr\'', { locale: de })
-                      : 'Nicht geplant'
+                      : t('crawlerModal.notPlanned')
                     }
                   </Text>
                 </div>
@@ -761,34 +764,34 @@ export function ProjectMonitoringOverview({
               <div className="grid grid-cols-4 gap-3">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
                   <Text className="text-2xl font-bold text-blue-600">{tracker.channels?.length || 0}</Text>
-                  <Text className="text-xs text-gray-600">Channels</Text>
+                  <Text className="text-xs text-gray-600">{t('crawlerModal.stats.channels')}</Text>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <Text className="text-2xl font-bold text-green-600">{tracker.totalArticlesFound || 0}</Text>
-                  <Text className="text-xs text-gray-600">Funde gesamt</Text>
+                  <Text className="text-xs text-gray-600">{t('crawlerModal.stats.totalFound')}</Text>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                   <Text className="text-2xl font-bold text-purple-600">{tracker.totalAutoConfirmed || 0}</Text>
-                  <Text className="text-xs text-gray-600">Auto-Bestätigt</Text>
+                  <Text className="text-xs text-gray-600">{t('crawlerModal.stats.autoConfirmed')}</Text>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
                   <Text className="text-2xl font-bold text-orange-600">{tracker.totalSpamMarked || 0}</Text>
-                  <Text className="text-xs text-gray-600">Als Spam</Text>
+                  <Text className="text-xs text-gray-600">{t('crawlerModal.stats.spam')}</Text>
                 </div>
               </div>
 
               {/* Channel-Tabelle */}
               <div>
-                <Subheading className="mb-3">Überwachte Channels</Subheading>
+                <Subheading className="mb-3">{t('crawlerModal.channelsTable.title')}</Subheading>
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Channel</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Typ</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Funde</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Letzter Check</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('crawlerModal.channelsTable.channel')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('crawlerModal.channelsTable.type')}</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">{t('crawlerModal.channelsTable.status')}</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">{t('crawlerModal.channelsTable.findings')}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('crawlerModal.channelsTable.lastCheck')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -809,7 +812,7 @@ export function ProjectMonitoringOverview({
                             </td>
                             <td className="px-4 py-3">
                               <Badge color={channel.type === 'rss_feed' ? 'orange' : 'blue'} className="text-xs">
-                                {channel.type === 'rss_feed' ? 'RSS Feed' : 'Google News'}
+                                {channel.type === 'rss_feed' ? t('crawlerModal.channelTypes.rssFeed') : t('crawlerModal.channelTypes.googleNews')}
                               </Badge>
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -841,7 +844,7 @@ export function ProjectMonitoringOverview({
                       ) : (
                         <tr>
                           <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                            <Text>Keine Channels konfiguriert</Text>
+                            <Text>{t('crawlerModal.channelsTable.noChannels')}</Text>
                           </td>
                         </tr>
                       )}
@@ -854,7 +857,7 @@ export function ProjectMonitoringOverview({
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setCrawlerModalOpen(false)}>
-            Schließen
+            {t('crawlerModal.close')}
           </Button>
         </DialogActions>
       </Dialog>
