@@ -21,13 +21,16 @@ export interface EmptyStateProps {
  *
  * @component
  * @example
+ * Mit i18n (empfohlen):
  * ```tsx
+ * const t = useTranslations('crm.companies');
+ *
  * <EmptyState
  *   icon={BuildingOfficeIcon}
- *   title="Keine Firmen vorhanden"
- *   description="Erstellen Sie Ihre erste Firma."
+ *   title={t('empty.title')}
+ *   description={t('empty.description')}
  *   action={{
- *     label: "Firma erstellen",
+ *     label: t('empty.action'),
  *     onClick: () => setShowModal(true)
  *   }}
  * />

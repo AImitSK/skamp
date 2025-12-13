@@ -46,9 +46,10 @@ const getProjectStatusColor = (status: string) => {
 
 /**
  * Helper: Format Date
+ * Note: Pass t() function to enable i18n for fallback values
  */
-const formatDate = (timestamp: any) => {
-  if (!timestamp) return 'Unbekannt';
+const formatDate = (timestamp: any, t: any) => {
+  if (!timestamp) return t('dateUnknown');
   try {
     // Handle Firestore Timestamp
     if (timestamp && typeof timestamp.toDate === 'function') {
@@ -77,38 +78,39 @@ const formatDate = (timestamp: any) => {
         });
       }
     }
-    return 'Unbekannt';
+    return t('dateUnknown');
   } catch (error) {
     console.error('Fehler beim Formatieren des Datums:', error);
-    return 'Ungültiges Datum';
+    return t('dateInvalid');
   }
 };
 
 /**
  * Helper: Format Project Date
+ * Note: Pass t() function to enable i18n for fallback values
  */
-const formatProjectDate = (date: any): string => {
+const formatProjectDate = (date: any, t: any): string => {
   try {
     if (!date) return '-';
 
     // Firestore Timestamp mit toDate Methode
     if (date && typeof date === 'object' && date.toDate) {
-      return formatDate(date.toDate());
+      return formatDate(date.toDate(), t);
     }
 
     // Firestore Timestamp mit seconds/nanoseconds
     if (date && typeof date === 'object' && date.seconds) {
-      return formatDate(new Date(date.seconds * 1000));
+      return formatDate(new Date(date.seconds * 1000), t);
     }
 
     // Date Object direkt
     if (date instanceof Date) {
-      return formatDate(date);
+      return formatDate(date, t);
     }
 
     // String (ISO date oder andere Formate)
     if (typeof date === 'string') {
-      return formatDate(new Date(date));
+      return formatDate(new Date(date), t);
     }
 
     return '-';
@@ -164,7 +166,7 @@ export const ProjectHeader = React.memo(function ProjectHeader({
           </Badge>
           {/* Erstellt-Datum */}
           <span className="text-sm text-gray-500">
-            {t('created')}: {formatProjectDate(project.createdAt)}
+            {t('created')}: {formatProjectDate(project.createdAt, t)}
           </span>
         </div>
 

@@ -37,7 +37,7 @@ import CandidatesTable from './CandidatesTable';
 import CandidateFilters from './CandidateFilters';
 
 export default function MatchingCandidatesPage() {
-  const t = useTranslations('superadmin.matching.candidatesPage');
+  const t = useTranslations('strategy.matching.candidatesPage');
   const router = useRouter();
 
   // State

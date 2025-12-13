@@ -51,7 +51,7 @@ export default function CandidateFilters({
   scanning,
   onScan
 }: CandidateFiltersProps) {
-  const t = useTranslations('superadmin.matching.filters');
+  const t = useTranslations('strategy.matching.filters');
   /**
    * Zählt aktive Filter
    */

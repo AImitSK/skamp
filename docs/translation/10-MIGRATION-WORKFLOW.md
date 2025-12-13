@@ -111,6 +111,39 @@ npm run lint
 
 ---
 
+## Agenten-Workflow (WICHTIG!)
+
+### Parallele Migration mit Agenten
+
+**RICHTIG:** Starte 10-15 Agenten parallel OHNE `run_in_background`:
+
+```
+Task(subagent_type="i18n-migration", prompt="...", description="...")
+Task(subagent_type="i18n-migration", prompt="...", description="...")
+Task(subagent_type="i18n-migration", prompt="...", description="...")
+// ... bis zu 15 parallel in EINER Nachricht
+```
+
+Die Ergebnisse kommen direkt zurück. Kein `TaskOutput` nötig. Hauptchat bleibt schlank.
+
+**FALSCH:** Agenten im Hintergrund starten und mit TaskOutput warten:
+
+```
+// NICHT SO:
+Task(..., run_in_background=true)
+TaskOutput(task_id="...", block=true)  // Füllt Kontext unnötig!
+```
+
+### Ablauf pro Runde
+
+1. **Starten:** 10-15 Task-Aufrufe parallel (OHNE background)
+2. **Warten:** Ergebnisse kommen automatisch zurück
+3. **Prüfen:** `npm run type-check`
+4. **Committen:** `git add . && git commit -m "i18n: Runde X..."`
+5. **Pushen:** `git push`
+
+---
+
 ## Hinweise für zukünftige Entwicklung
 
 1. **Neue Komponenten:** Immer gleich mit i18n erstellen

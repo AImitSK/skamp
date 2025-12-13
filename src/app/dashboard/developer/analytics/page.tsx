@@ -264,9 +264,11 @@ export default function AnalyticsPage() {
           ? Math.max(...keyLogs.map(log => log.timestamp.getTime()))
           : null;
         
-        const lastRequestText = lastRequest 
-          ? `vor ${Math.floor((Date.now() - lastRequest) / (1000 * 60))} Min.`
-          : 'Nie verwendet';
+        const lastRequestText = lastRequest
+          ? t('table.lastRequestAgo', {
+              minutes: Math.floor((Date.now() - lastRequest) / (1000 * 60))
+            })
+          : t('table.neverUsed');
 
         keyStatsMap.set(apiKey.id, {
           requests: totalRequests,

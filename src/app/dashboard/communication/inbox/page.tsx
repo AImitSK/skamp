@@ -463,9 +463,10 @@ export default function InboxPage() {
       let isDraft = false;
       
       // Create a test thread first
+      const dateTime = new Date().toLocaleString('de-DE');
       const testThread = await threadMatcherService.findOrCreateThread({
         messageId: `test-${Date.now()}@celeropress.de`,
-        subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,
+        subject: t('testEmail.subject', { dateTime }),
         from: { email: 'test@example.com', name: 'Test Sender' },
         to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
         organizationId,
@@ -481,7 +482,7 @@ export default function InboxPage() {
       // Im Team-System wird keine automatische Kunden/Kampagnen-Zuordnung mehr vorgenommen
       // E-Mails werden in allgemeine Anfragen erstellt und können dann zugewiesen werden
       let assignedToUserId = undefined;
-      
+
       if (selectedFolderType === 'team' && selectedTeamMemberId) {
         assignedToUserId = selectedTeamMemberId;
       }
@@ -492,10 +493,10 @@ export default function InboxPage() {
         threadId: testThread.threadId,
         from: { email: 'test@example.com', name: 'Test Sender' },
         to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
-        subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,
-        textContent: `Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.`,
-        htmlContent: `<p>Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>`,
-        snippet: `Dies ist eine Test-E-Mail...`,
+        subject: t('testEmail.subject', { dateTime }),
+        textContent: t('testEmail.textContent'),
+        htmlContent: t('testEmail.htmlContent'),
+        snippet: t('testEmail.snippet'),
         folder: folder,
         isRead: isDraft,
         isStarred: false,
@@ -934,7 +935,7 @@ export default function InboxPage() {
                 <button
                   onClick={copyEmailToClipboard}
                   className="flex items-center gap-2 min-w-0 group"
-                  title="Klicken zum Kopieren"
+                  title={t('emailList.header.clickToCopy')}
                 >
                   <span className="font-medium text-sm text-gray-700 truncate group-hover:text-[#005fab]">
                     {selectedMailboxEmail}

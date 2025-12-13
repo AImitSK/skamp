@@ -29,7 +29,7 @@ export default function CandidateRecommendationBox({
   variantIndex,
   onSelectVariant
 }: CandidateRecommendationBoxProps) {
-  const t = useTranslations('superadmin.matching.recommendation');
+  const t = useTranslations('strategy.matching.recommendation');
   const isRecommendedSelected = variantIndex === recommendation.recommendedIndex;
 
   return (

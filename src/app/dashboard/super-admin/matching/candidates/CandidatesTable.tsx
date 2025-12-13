@@ -48,7 +48,7 @@ export default function CandidatesTable({
   onRefresh,
   useAiMerge
 }: CandidatesTableProps) {
-  const t = useTranslations('superadmin.matching.table');
+  const t = useTranslations('strategy.matching.table');
 
   /**
    * Ändert Sortierung

@@ -312,7 +312,7 @@ export default function DashboardLayout({
       await signOut(auth);
       router.push("/");
     } catch (error) {
-      console.error("Fehler beim Logout:", error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -325,7 +325,7 @@ export default function DashboardLayout({
           <a href="/dashboard" className="-m-1.5 p-1.5">
             <Image
               src="/logo_skamp.svg"
-              alt="CeleroPress Logo"
+              alt={tMobile('logoAlt')}
               width={32}
               height={32}
               className="h-8 w-auto"
@@ -510,7 +510,7 @@ export default function DashboardLayout({
               <a href="/dashboard" className="flex-shrink-0">
                 <Image
                   src="/logo_skamp.svg"
-                  alt="CeleroPress Logo"
+                  alt={t('logoAlt')}
                   width={40}
                   height={40}
                   className="h-10 w-auto max-w-[100px]"
@@ -761,7 +761,7 @@ export default function DashboardLayout({
                 <a href="/dashboard">
                   <Image
                     src="/logo_skamp.svg"
-                    alt="CeleroPress Logo"
+                    alt={t('logoAlt')}
                     width={40}
                     height={40}
                     className="h-10 w-auto max-w-[150px]"

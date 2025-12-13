@@ -42,7 +42,7 @@ export default function CandidateVariantCard({
   isRecommended,
   onSelect
 }: CandidateVariantCardProps) {
-  const t = useTranslations('superadmin.matching.variantCard');
+  const t = useTranslations('strategy.matching.variantCard');
   const data = variant.contactData;
 
   /**

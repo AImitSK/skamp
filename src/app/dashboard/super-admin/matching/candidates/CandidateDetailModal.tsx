@@ -38,7 +38,7 @@ export default function CandidateDetailModal({
   onUpdate,
   useAiMerge
 }: CandidateDetailModalProps) {
-  const t = useTranslations('superadmin.matching.detailModal');
+  const t = useTranslations('strategy.matching.detailModal');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);

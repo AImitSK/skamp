@@ -3218,6 +3218,80 @@
     }
   },
   "developer": {
+    "header": {
+      "title": "Developer Portal",
+      "subtitle": "Baue leistungsstarke Integrationen mit der CeleroPress API",
+      "downloadSpec": "OpenAPI Spec herunterladen",
+      "viewDocs": "Zur Dokumentation"
+    },
+    "features": {
+      "apiDocs": {
+        "title": "API Dokumentation",
+        "description": "Vollständige REST API Referenz mit allen Endpoints, Parametern und Beispielen"
+      },
+      "sdks": {
+        "title": "SDKs & Libraries",
+        "description": "Vorgefertigte Client-Libraries für JavaScript, Python, Go und mehr"
+      },
+      "codeExamples": {
+        "title": "Code Examples",
+        "description": "Integration-Beispiele für Salesforce, HubSpot, Zapier und weitere Plattformen"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "description": "Erstelle und verwalte API Keys für sichere Authentifizierung"
+      },
+      "analytics": {
+        "title": "Analytics & Monitoring",
+        "description": "Überwache deine API-Nutzung, Performance und Fehlerraten"
+      }
+    },
+    "stats": {
+      "requestsToday": "Requests heute",
+      "requestsMonth": "Requests Monat",
+      "rateLimit": "Rate Limit",
+      "activeKeys": "Aktive Keys"
+    },
+    "quickStart": {
+      "title": "Getting Started",
+      "step1": {
+        "title": "API Key erstellen",
+        "description": "Gehe zu",
+        "link": "API Keys",
+        "descriptionEnd": "und erstelle einen neuen API Key mit den gewünschten Berechtigungen."
+      },
+      "step2": {
+        "title": "SDK installieren"
+      },
+      "step3": {
+        "title": "Ersten Request senden"
+      }
+    },
+    "endpoints": {
+      "title": "Verfügbare API Endpoints",
+      "rest": {
+        "title": "REST API",
+        "items": {
+          "auth": "Authentication & User Management",
+          "crm": "CRM (Contacts, Companies, Tags)",
+          "publications": "Publications & Content",
+          "bulk": "Bulk Operations",
+          "webhooks": "Webhooks & Events",
+          "search": "Search & Filtering"
+        }
+      },
+      "advanced": {
+        "title": "Advanced Features",
+        "items": {
+          "graphql": "GraphQL API (Beta)",
+          "websocket": "WebSocket Real-time Updates",
+          "batch": "Batch Processing",
+          "events": "Event Streaming",
+          "customWebhooks": "Custom Webhooks",
+          "rateLimit": "Rate Limit Management"
+        }
+      }
+    },
     "sdks": {
       "backToDeveloperPortal": "Zurück zum Developer Portal",
       "title": "SDKs & Libraries",
@@ -3335,6 +3409,7 @@
             "status": "Status"
           },
           "neverUsed": "Nie verwendet",
+          "lastRequestAgo": "vor {minutes} Min.",
           "active": "Aktiv"
         }
       },
@@ -4502,7 +4577,8 @@
       "header": {
         "emails": "E-Mails",
         "count": "({count})",
-        "resolvingThreads": "Threads werden erstellt..."
+        "resolvingThreads": "Threads werden erstellt...",
+        "clickToCopy": "Klicken zum Kopieren"
       },
       "timeAgo": {
         "justNow": "gerade eben",
@@ -4511,6 +4587,27 @@
         "daysAgo": "vor {days} Tag{plural}"
       },
       "unknown": "Unbekannt"
+    },
+    "errors": {
+      "setupRealtimeUpdates": "Fehler beim Einrichten der Echtzeit-Updates",
+      "loadingThreads": "Fehler beim Laden der E-Mail-Threads",
+      "loadingMessages": "Fehler beim Laden der E-Mails",
+      "loadingThreadMessages": "Fehler beim Laden der Thread-Nachrichten",
+      "loadingThreadMessagesWithReason": "Fehler beim Laden der Thread-Nachrichten: {reason}"
+    },
+    "testEmail": {
+      "subject": "Test E-Mail - {dateTime}",
+      "textContent": "Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.",
+      "htmlContent": "<p>Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>",
+      "snippet": "Dies ist eine Test-E-Mail..."
+    },
+    "threadStatus": {
+      "labels": {
+        "active": "Aktiv",
+        "waiting": "Wartend",
+        "resolved": "Gelöst",
+        "archived": "Archiviert"
+      }
     },
     "emailViewer": {
       "actions": {
@@ -4745,6 +4842,7 @@
   },
   "layout": {
     "navigation": {
+      "logoAlt": "CeleroPress Logo",
       "dashboard": "Dashboard",
       "contacts": "Kontakte",
       "companies": "Unternehmen",
@@ -4798,6 +4896,7 @@
       "logout": "Abmelden"
     },
     "mobile": {
+      "logoAlt": "CeleroPress Logo",
       "closeMenu": "Menü schließen",
       "openMenu": "Hauptmenü öffnen",
       "settings": "Einstellungen",
@@ -4817,7 +4916,20 @@
       "monitoringControl": "Monitoring Control",
       "monitoringControlDesc": "Monitoring & Crawler Control",
       "globalSettings": "Global-Einstellungen",
-      "globalSettingsDesc": "Global-System konfigurieren"
+      "globalSettingsDesc": "Global-System konfigurieren",
+      "candidateRow": {
+        "noEmail": "Keine E-Mail",
+        "organizations": "{count, plural, =0 {Org.} one {Org.} other {Org.}}",
+        "actions": {
+          "viewDetails": "Details anzeigen",
+          "quickImport": "Schnell importieren (erste Variante)",
+          "skip": "Überspringen",
+          "reject": "Ablehnen"
+        },
+        "status": {
+          "imported": "✓ Importiert"
+        }
+      }
     }
   },
   "library": {
@@ -5582,6 +5694,8 @@
         "delete": "Projekt löschen",
         "created": "Erstellt",
         "moreMembers": "{count} weitere Mitglieder",
+        "dateUnknown": "Unbekannt",
+        "dateInvalid": "Ungültiges Datum",
         "status": {
           "active": "Aktiv",
           "on_hold": "Pausiert",
@@ -5630,6 +5744,65 @@
       "errors": {
         "projectIdMissing": "Projekt-ID nicht gefunden",
         "loadingFailed": "Projekt konnte nicht geladen werden"
+      },
+      "documentStatus": {
+        "draft": "Entwurf",
+        "review": "In Prüfung",
+        "approved": "Genehmigt",
+        "archived": "Archiviert"
+      },
+      "dateFormat": {
+        "unknown": "Unbekannt",
+        "invalid": "Ungültiges Datum",
+        "error": "Fehler bei Datumsformatierung"
+      },
+      "stages": {
+        "ideasPlanning": "Ideen & Planung",
+        "creation": "Content und Materialien",
+        "approval": "Freigabe",
+        "distribution": "Verteilung",
+        "monitoring": "Monitoring",
+        "completed": "Abgeschlossen"
+      },
+      "template": {
+        "newDocument": "Neues Dokument",
+        "unknownAuthor": "Unbekannter Autor",
+        "briefing": {
+          "title": "Briefing-Dokument",
+          "situation": "Ausgangssituation",
+          "situationDesc": "Beschreiben Sie die aktuelle Situation und den Hintergrund...",
+          "goals": "Ziele",
+          "mainGoal": "Hauptziel definieren",
+          "secondaryGoals": "Weitere Ziele auflisten",
+          "targetGroups": "Zielgruppen",
+          "targetGroupsDesc": "Beschreiben Sie die Hauptzielgruppen...",
+          "keyMessages": "Kernbotschaften",
+          "keyMessagesDesc": "Definieren Sie die wichtigsten Botschaften..."
+        },
+        "strategy": {
+          "title": "Strategie-Dokument",
+          "strategicDirection": "Strategische Ausrichtung",
+          "strategicDirectionDesc": "Beschreiben Sie die strategische Ausrichtung...",
+          "channelsMedia": "Kanäle & Medien",
+          "printMedia": "Printmedien",
+          "onlineMedia": "Online-Medien",
+          "socialMedia": "Social Media",
+          "timeline": "Zeitplan",
+          "timelineDesc": "Beschreiben Sie den zeitlichen Ablauf..."
+        },
+        "analysis": {
+          "title": "Analyse-Dokument",
+          "marketEnvironment": "Markt & Umfeld",
+          "marketEnvironmentDesc": "Analysieren Sie das Marktumfeld...",
+          "competitors": "Wettbewerber",
+          "competitorsDesc": "Beschreiben Sie die Wettbewerbssituation...",
+          "swot": "SWOT-Analyse",
+          "opportunities": "Chancen analysieren",
+          "risks": "Risiken identifizieren"
+        }
+      },
+      "chat": {
+        "unknownUser": "Unbekannter Benutzer"
       }
     },
     "table": {
@@ -7194,7 +7367,13 @@
       "candidateRow": {
         "noEmail": "Keine E-Mail",
         "orgLabel": "{count, plural, one {Org} other {Orgs}}",
-        "importedLabel": "Importiert"
+        "importedLabel": "Importiert",
+        "actions": {
+          "viewDetails": "Details anzeigen",
+          "quickImport": "Schnell importieren (erste Variante)",
+          "skip": "Überspringen",
+          "reject": "Ablehnen"
+        }
       },
       "table": {
         "loading": "Lade Kandidaten...",

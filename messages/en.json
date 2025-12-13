@@ -2114,6 +2114,11 @@
       }
     },
     "redirecting": "Redirecting...",
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirm": "Confirm"
+    },
     "companyTypes": {
       "customer": "Customer",
       "supplier": "Supplier",
@@ -3218,6 +3223,80 @@
     }
   },
   "developer": {
+    "header": {
+      "title": "Developer Portal",
+      "subtitle": "Build powerful integrations with the CeleroPress API",
+      "downloadSpec": "Download OpenAPI Spec",
+      "viewDocs": "View Documentation"
+    },
+    "features": {
+      "apiDocs": {
+        "title": "API Documentation",
+        "description": "Complete REST API reference with all endpoints, parameters and examples"
+      },
+      "sdks": {
+        "title": "SDKs & Libraries",
+        "description": "Pre-built client libraries for JavaScript, Python, Go and more"
+      },
+      "codeExamples": {
+        "title": "Code Examples",
+        "description": "Integration examples for Salesforce, HubSpot, Zapier and other platforms"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "description": "Create and manage API keys for secure authentication"
+      },
+      "analytics": {
+        "title": "Analytics & Monitoring",
+        "description": "Monitor your API usage, performance and error rates"
+      }
+    },
+    "stats": {
+      "requestsToday": "Requests Today",
+      "requestsMonth": "Requests Month",
+      "rateLimit": "Rate Limit",
+      "activeKeys": "Active Keys"
+    },
+    "quickStart": {
+      "title": "Getting Started",
+      "step1": {
+        "title": "Create API Key",
+        "description": "Go to",
+        "link": "API Keys",
+        "descriptionEnd": "and create a new API key with the desired permissions."
+      },
+      "step2": {
+        "title": "Install SDK"
+      },
+      "step3": {
+        "title": "Send First Request"
+      }
+    },
+    "endpoints": {
+      "title": "Available API Endpoints",
+      "rest": {
+        "title": "REST API",
+        "items": {
+          "auth": "Authentication & User Management",
+          "crm": "CRM (Contacts, Companies, Tags)",
+          "publications": "Publications & Content",
+          "bulk": "Bulk Operations",
+          "webhooks": "Webhooks & Events",
+          "search": "Search & Filtering"
+        }
+      },
+      "advanced": {
+        "title": "Advanced Features",
+        "items": {
+          "graphql": "GraphQL API (Beta)",
+          "websocket": "WebSocket Real-time Updates",
+          "batch": "Batch Processing",
+          "events": "Event Streaming",
+          "customWebhooks": "Custom Webhooks",
+          "rateLimit": "Rate Limit Management"
+        }
+      }
+    },
     "sdks": {
       "backToDeveloperPortal": "Back to Developer Portal",
       "title": "SDKs & Libraries",
@@ -3335,6 +3414,7 @@
             "status": "Status"
           },
           "neverUsed": "Never used",
+          "lastRequestAgo": "{minutes} min. ago",
           "active": "Active"
         }
       },
@@ -4741,10 +4821,24 @@
           "loyal": "Loyal"
         }
       }
+    },
+    "errors": {
+      "setupRealtimeUpdates": "Error setting up real-time updates",
+      "loadingThreads": "Error loading email threads",
+      "loadingMessages": "Error loading emails",
+      "loadingThreadMessages": "Error loading thread messages",
+      "loadingThreadMessagesWithReason": "Error loading thread messages: {reason}"
+    },
+    "testEmail": {
+      "subject": "Test Email - {dateTime}",
+      "textContent": "This is a test email to verify inbox functionality.\n\nThis email was automatically generated.",
+      "htmlContent": "<p>This is a test email to verify inbox functionality.</p><p>This email was automatically generated.</p>",
+      "snippet": "This is a test email..."
     }
   },
   "layout": {
     "navigation": {
+      "logoAlt": "CeleroPress Logo",
       "dashboard": "Dashboard",
       "contacts": "Contacts",
       "companies": "Companies",
@@ -4798,6 +4892,7 @@
       "logout": "Logout"
     },
     "mobile": {
+      "logoAlt": "CeleroPress Logo",
       "closeMenu": "Close menu",
       "openMenu": "Open main menu",
       "settings": "Settings",
@@ -4817,7 +4912,20 @@
       "monitoringControl": "Monitoring Control",
       "monitoringControlDesc": "Monitoring & crawler control",
       "globalSettings": "Global Settings",
-      "globalSettingsDesc": "Configure global system"
+      "globalSettingsDesc": "Configure global system",
+      "candidateRow": {
+        "noEmail": "No email",
+        "organizations": "{count, plural, =0 {Org.} one {Org.} other {Org.}}",
+        "actions": {
+          "viewDetails": "View details",
+          "quickImport": "Quick import (first variant)",
+          "skip": "Skip",
+          "reject": "Reject"
+        },
+        "status": {
+          "imported": "✓ Imported"
+        }
+      }
     }
   },
   "library": {
@@ -5582,6 +5690,8 @@
         "delete": "Delete project",
         "created": "Created",
         "moreMembers": "{count} more members",
+        "dateUnknown": "Unknown",
+        "dateInvalid": "Invalid date",
         "status": {
           "active": "Active",
           "on_hold": "On Hold",
@@ -5630,6 +5740,65 @@
       "errors": {
         "projectIdMissing": "Project ID not found",
         "loadingFailed": "Could not load project"
+      },
+      "documentStatus": {
+        "draft": "Draft",
+        "review": "Under Review",
+        "approved": "Approved",
+        "archived": "Archived"
+      },
+      "dateFormat": {
+        "unknown": "Unknown",
+        "invalid": "Invalid date",
+        "error": "Date formatting error"
+      },
+      "stages": {
+        "ideasPlanning": "Ideas & Planning",
+        "creation": "Content & Materials",
+        "approval": "Approval",
+        "distribution": "Distribution",
+        "monitoring": "Monitoring",
+        "completed": "Completed"
+      },
+      "template": {
+        "newDocument": "New Document",
+        "unknownAuthor": "Unknown Author",
+        "briefing": {
+          "title": "Briefing Document",
+          "situation": "Current Situation",
+          "situationDesc": "Describe the current situation and background...",
+          "goals": "Goals",
+          "mainGoal": "Define main objective",
+          "secondaryGoals": "List additional goals",
+          "targetGroups": "Target Groups",
+          "targetGroupsDesc": "Describe the main target groups...",
+          "keyMessages": "Key Messages",
+          "keyMessagesDesc": "Define the most important messages..."
+        },
+        "strategy": {
+          "title": "Strategy Document",
+          "strategicDirection": "Strategic Direction",
+          "strategicDirectionDesc": "Describe the strategic direction...",
+          "channelsMedia": "Channels & Media",
+          "printMedia": "Print Media",
+          "onlineMedia": "Online Media",
+          "socialMedia": "Social Media",
+          "timeline": "Timeline",
+          "timelineDesc": "Describe the timeline..."
+        },
+        "analysis": {
+          "title": "Analysis Document",
+          "marketEnvironment": "Market & Environment",
+          "marketEnvironmentDesc": "Analyze the market environment...",
+          "competitors": "Competitors",
+          "competitorsDesc": "Describe the competitive situation...",
+          "swot": "SWOT Analysis",
+          "opportunities": "Analyze opportunities",
+          "risks": "Identify risks"
+        }
+      },
+      "chat": {
+        "unknownUser": "Unknown User"
       }
     },
     "table": {
@@ -7194,7 +7363,13 @@
       "candidateRow": {
         "noEmail": "No Email",
         "orgLabel": "{count, plural, one {Org} other {Orgs}}",
-        "importedLabel": "Imported"
+        "importedLabel": "Imported",
+        "actions": {
+          "viewDetails": "View details",
+          "quickImport": "Quick import (first variant)",
+          "skip": "Skip",
+          "reject": "Reject"
+        }
       },
       "table": {
         "loading": "Loading candidates...",

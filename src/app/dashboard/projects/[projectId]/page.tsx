@@ -254,10 +254,10 @@ export default function ProjectDetailPage() {
 
   const getDocumentStatusLabel = (status: string) => {
     switch (status) {
-      case 'draft': return 'Entwurf';
-      case 'review': return 'In Prüfung';
-      case 'approved': return 'Freigegeben';
-      case 'archived': return 'Archiviert';
+      case 'draft': return t('documentStatus.draft');
+      case 'review': return t('documentStatus.review');
+      case 'approved': return t('documentStatus.approved');
+      case 'archived': return t('documentStatus.archived');
       default: return status;
     }
   };
@@ -475,12 +475,12 @@ export default function ProjectDetailPage() {
 
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
-      case 'ideas_planning': return 'Ideen & Planung';
-      case 'creation': return 'Content und Materialien';
-      case 'approval': return 'Freigabe';
-      case 'distribution': return 'Verteilung';
-      case 'monitoring': return 'Monitoring';
-      case 'completed': return 'Abgeschlossen';
+      case 'ideas_planning': return t('stages.ideasPlanning');
+      case 'creation': return t('stages.creation');
+      case 'approval': return t('stages.approval');
+      case 'distribution': return t('stages.distribution');
+      case 'monitoring': return t('stages.monitoring');
+      case 'completed': return t('stages.completed');
       default: return stage;
     }
   };
@@ -490,7 +490,7 @@ export default function ProjectDetailPage() {
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unbekannt';
+    if (!timestamp) return t('dateFormat.unknown');
     try {
       // Handle Firestore Timestamp
       if (timestamp && typeof timestamp.toDate === 'function') {
@@ -502,7 +502,7 @@ export default function ProjectDetailPage() {
       }
       // Handle regular Date or string
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return 'Ungültiges Datum';
+      if (isNaN(date.getTime())) return t('dateFormat.invalid');
       return date.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
@@ -510,7 +510,7 @@ export default function ProjectDetailPage() {
       });
     } catch (error) {
       console.error('Date formatting error:', error);
-      return 'Datumsformatfehler';
+      return t('dateFormat.error');
     }
   };
 
@@ -546,58 +546,58 @@ export default function ProjectDetailPage() {
       switch (templateType) {
         case 'briefing-template':
           content = `
-            <h1>Projekt-Briefing</h1>
-            <h2>Ausgangssituation</h2>
-            <p>[Beschreibung der aktuellen Situation]</p>
+            <h1>${t('template.briefing.title')}</h1>
+            <h2>${t('template.briefing.situation')}</h2>
+            <p>${t('template.briefing.situationDesc')}</p>
 
-            <h2>Ziele</h2>
+            <h2>${t('template.briefing.goals')}</h2>
             <ul>
-              <li>Hauptziel</li>
-              <li>Nebenziele</li>
+              <li>${t('template.briefing.mainGoal')}</li>
+              <li>${t('template.briefing.secondaryGoals')}</li>
             </ul>
 
-            <h2>Zielgruppen</h2>
-            <p>[Primäre und sekundäre Zielgruppen]</p>
+            <h2>${t('template.briefing.targetGroups')}</h2>
+            <p>${t('template.briefing.targetGroupsDesc')}</p>
 
-            <h2>Kernbotschaften</h2>
-            <p>[Hauptbotschaften]</p>
+            <h2>${t('template.briefing.keyMessages')}</h2>
+            <p>${t('template.briefing.keyMessagesDesc')}</p>
           `;
           break;
         case 'strategy-template':
           content = `
-            <h1>Kommunikationsstrategie</h1>
-            <h2>Strategische Ausrichtung</h2>
-            <p>[Grundlegende Strategie]</p>
+            <h1>${t('template.strategy.title')}</h1>
+            <h2>${t('template.strategy.strategicDirection')}</h2>
+            <p>${t('template.strategy.strategicDirectionDesc')}</p>
 
-            <h2>Kanäle & Medien</h2>
+            <h2>${t('template.strategy.channelsMedia')}</h2>
             <ul>
-              <li>Print-Medien</li>
-              <li>Online-Medien</li>
-              <li>Social Media</li>
+              <li>${t('template.strategy.printMedia')}</li>
+              <li>${t('template.strategy.onlineMedia')}</li>
+              <li>${t('template.strategy.socialMedia')}</li>
             </ul>
 
-            <h2>Timeline & Meilensteine</h2>
-            <p>[Zeitplan]</p>
+            <h2>${t('template.strategy.timeline')}</h2>
+            <p>${t('template.strategy.timelineDesc')}</p>
           `;
           break;
         case 'analysis-template':
           content = `
-            <h1>Marktanalyse</h1>
-            <h2>Marktumfeld</h2>
-            <p>[Marktanalyse]</p>
+            <h1>${t('template.analysis.title')}</h1>
+            <h2>${t('template.analysis.marketEnvironment')}</h2>
+            <p>${t('template.analysis.marketEnvironmentDesc')}</p>
 
-            <h2>Wettbewerber</h2>
-            <p>[Competitor-Analyse]</p>
+            <h2>${t('template.analysis.competitors')}</h2>
+            <p>${t('template.analysis.competitorsDesc')}</p>
 
-            <h2>Chancen & Risiken</h2>
+            <h2>${t('template.analysis.swot')}</h2>
             <ul>
-              <li>Chancen</li>
-              <li>Risiken</li>
+              <li>${t('template.analysis.opportunities')}</li>
+              <li>${t('template.analysis.risks')}</li>
             </ul>
           `;
           break;
         default:
-          content = '<p>Neues Strategiedokument</p>';
+          content = `<p>${t('template.newDocument')}</p>`;
       }
 
       // Dokument erstellen
@@ -609,7 +609,7 @@ export default function ProjectDetailPage() {
         content,
         status: 'draft' as const,
         author: user.uid,
-        authorName: user.displayName || user.email || 'Unbekannter Autor',
+        authorName: user.displayName || user.email || t('template.unknownAuthor'),
         organizationId: currentOrganization.id
       }, {
         organizationId: currentOrganization.id,
@@ -647,8 +647,8 @@ export default function ProjectDetailPage() {
     >
       <ErrorBoundary
         translations={{
-          errorTitle: t('shared.errorBoundary.title'),
-          reloadButton: t('shared.errorBoundary.reload')
+          title: t('shared.errorBoundary.title'),
+          reload: t('shared.errorBoundary.reload')
         }}
       >
         <div>
@@ -782,7 +782,7 @@ export default function ProjectDetailPage() {
       {project && currentOrganization && user && (
         <FloatingChat
           userId={user.uid}
-          userDisplayName={user.displayName || 'Unbekannter User'}
+          userDisplayName={user.displayName || t('chat.unknownUser')}
         />
       )}
         </div>

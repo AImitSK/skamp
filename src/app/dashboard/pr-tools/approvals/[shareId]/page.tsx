@@ -800,12 +800,12 @@ export default function ApprovalPage() {
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-1">
                   <CalendarIcon className="h-4 w-4" />
-                  Erstellt am {formatDate(approval?.createdAt || campaign?.createdAt)}
+                  {t('createdAt', { date: formatDate(approval?.createdAt || campaign?.createdAt) })}
                 </div>
                 {(approval?.approvedAt || campaign?.approvalData?.approvedAt) && (
                   <div className="flex items-center gap-1 text-green-600">
                     <CheckCircleIcon className="h-4 w-4" />
-                    Freigegeben am {formatDate(approval?.approvedAt || campaign?.approvalData?.approvedAt)}
+                    {t('approvedAt', { date: formatDate(approval?.approvedAt || campaign?.approvalData?.approvedAt) })}
                   </div>
                 )}
               </div>
@@ -821,7 +821,7 @@ export default function ApprovalPage() {
                 />
               ) : (
                 <>
-                  <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
+                  <div className="text-xs text-gray-400 mb-1">{t('header.fallback.system')}</div>
                   <div className="text-sm font-medium text-[#005fab]">CeleroPress</div>
                 </>
               )}
@@ -845,9 +845,9 @@ export default function ApprovalPage() {
                 <>
                   <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-green-900">Freigabe erfolgreich erteilt</p>
+                    <p className="font-medium text-green-900">{t('success.approved.title')}</p>
                     <p className="text-sm text-green-700 mt-1">
-                      Die Pressemitteilung wurde freigegeben und kann nun versendet werden.
+                      {t('success.approved.message')}
                     </p>
                   </div>
                 </>
@@ -855,9 +855,9 @@ export default function ApprovalPage() {
                 <>
                   <ExclamationCircleIcon className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-orange-900">Änderungen angefordert</p>
+                    <p className="font-medium text-orange-900">{t('success.changesRequested.title')}</p>
                     <p className="text-sm text-orange-700 mt-1">
-                      Ihr Feedback wurde übermittelt. Die Agentur wird die gewünschten Änderungen vornehmen.
+                      {t('success.changesRequested.message')}
                     </p>
                   </div>
                 </>
@@ -879,7 +879,10 @@ export default function ApprovalPage() {
             <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <UserIcon className="h-4 w-4" />
-                Freigabe-Status ({(approval.recipients || []).filter(r => r.status === 'approved').length} von {(approval.recipients || []).length})
+                {t('recipients.title', {
+                  approved: (approval.recipients || []).filter(r => r.status === 'approved').length,
+                  total: (approval.recipients || []).length
+                })}
               </h3>
               <div className="space-y-2">
                 {(approval.recipients || []).map((recipient) => (
@@ -898,7 +901,7 @@ export default function ApprovalPage() {
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                Bisheriges Feedback
+                {t('feedback.historyTitle')}
               </h3>
               <div className="space-y-3">
                 {approval.history
@@ -921,7 +924,7 @@ export default function ApprovalPage() {
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                Bisheriges Feedback
+                {t('feedback.historyTitle')}
               </h3>
               <div className="space-y-3">
                 {campaign.approvalData.feedbackHistory.map((feedback, index) => (
@@ -942,7 +945,7 @@ export default function ApprovalPage() {
             <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                Inhalt der Pressemitteilung
+                {t('content.title')}
               </h2>
             </div>
             <div className="px-6 py-6">
@@ -964,23 +967,23 @@ export default function ApprovalPage() {
           {/* Actions */}
           {canTakeAction && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('actions.title')}</h3>
+
               {/* E-Mail Eingabe wenn Enhanced Approval und kein Empfänger gefunden */}
               {approval && !currentRecipient && !currentUserEmail && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ihre E-Mail-Adresse
+                    {t('actions.emailLabel')}
                   </label>
                   <input
                     type="email"
                     value={currentUserEmail}
                     onChange={(e) => setCurrentUserEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#005fab] focus:border-[#005fab]"
-                    placeholder="ihre.email@beispiel.de"
+                    placeholder={t('actions.emailPlaceholder')}
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Bitte geben Sie Ihre E-Mail-Adresse ein, um fortzufahren.
+                    {t('actions.emailHint')}
                   </p>
                 </div>
               )}
@@ -989,18 +992,18 @@ export default function ApprovalPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Welche Änderungen wünschen Sie?
+                      {t('actions.feedbackLabel')}
                     </label>
                     <Textarea
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
                       rows={4}
-                      placeholder="Bitte beschreiben Sie die gewünschten Änderungen..."
+                      placeholder={t('actions.feedbackPlaceholder')}
                       className="w-full"
                       autoFocus
                     />
                   </div>
-                  
+
                   <div className="flex gap-3">
                     <Button
                       onClick={handleRequestChanges}
@@ -1008,7 +1011,7 @@ export default function ApprovalPage() {
                       color="indigo"
                       className="flex-1"
                     >
-                      {submitting ? 'Wird gesendet...' : 'Änderungen senden'}
+                      {submitting ? t('actions.sending') : t('actions.sendChanges')}
                     </Button>
                     <Button
                       plain
@@ -1018,17 +1021,19 @@ export default function ApprovalPage() {
                       }}
                       disabled={submitting}
                     >
-                      Abbrechen
+                      {t('actions.cancel')}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-gray-600">
-                    Bitte prüfen Sie die Pressemitteilung {attachedAssets && attachedAssets.length > 0 ? 'und die angehängten Medien ' : ''}sorgfältig. 
-                    Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
+                    {attachedAssets && attachedAssets.length > 0
+                      ? t('actions.reviewWithMedia')
+                      : t('actions.review')
+                    }
                   </p>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       onClick={handleApprove}
@@ -1036,7 +1041,7 @@ export default function ApprovalPage() {
                       disabled={submitting || (approval && !currentRecipient && !currentUserEmail) || false}
                     >
                       <CheckIcon className="h-5 w-5 mr-2" />
-                      {submitting ? 'Wird verarbeitet...' : 'Freigabe erteilen'}
+                      {submitting ? t('actions.processing') : t('actions.approve')}
                     </Button>
                     <Button
                       onClick={() => setShowFeedbackForm(true)}
@@ -1044,7 +1049,7 @@ export default function ApprovalPage() {
                       disabled={submitting}
                     >
                       <PencilSquareIcon className="h-5 w-5 mr-2" />
-                      Änderungen anfordern
+                      {t('actions.requestChanges')}
                     </Button>
                   </div>
                 </div>
@@ -1065,11 +1070,16 @@ export default function ApprovalPage() {
             <div className="flex">
               <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Hinweis zum Freigabeprozess</p>
+                <p className="font-medium mb-1">{t('infoBox.title')}</p>
                 <p>
-                  Nach Ihrer Freigabe kann die Pressemitteilung {attachedAssets && attachedAssets.length > 0 ? 'zusammen mit den Medien ' : ''}
-                  von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
-                  {currentPdfVersion && ' Das zugehörige PDF wird ebenfalls nach der Freigabe finalisiert.'}
+                  {currentPdfVersion
+                    ? (attachedAssets && attachedAssets.length > 0
+                        ? t('infoBox.messageWithMediaAndPdf')
+                        : t('infoBox.messageWithPdf'))
+                    : (attachedAssets && attachedAssets.length > 0
+                        ? t('infoBox.messageWithMedia')
+                        : t('infoBox.message'))
+                  }
                 </p>
               </div>
             </div>
@@ -1142,13 +1152,13 @@ export default function ApprovalPage() {
               {/* Copyright-Zeile */}
               {brandingSettings.showCopyright && (
                 <div className="text-center text-xs text-gray-500">
-                  <p>Copyright © {new Date().getFullYear()} {brandingSettings.companyName || 'CeleroPress'}. Alle Rechte vorbehalten.</p>
+                  <p>{t('footer.copyright', { year: new Date().getFullYear(), company: brandingSettings.companyName || 'CeleroPress' })}</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center text-sm text-gray-500">
-              <p>Bereitgestellt über CeleroPress</p>
+              <p>{t('footer.fallback')}</p>
             </div>
           )}
         </div>

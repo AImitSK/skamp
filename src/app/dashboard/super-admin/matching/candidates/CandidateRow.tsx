@@ -50,7 +50,7 @@ function CandidateRow({
   onViewDetails,
   useAiMerge
 }: CandidateRowProps) {
-  const t = useTranslations('superadmin.matching.candidateRow');
+  const t = useTranslations('strategy.matching.candidateRow');
   const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -282,7 +282,7 @@ function CandidateRow({
             color="zinc"
             onClick={onViewDetails}
             disabled={actionLoading}
-            title="Details anzeigen"
+            title={t('actions.viewDetails')}
             className="px-2 py-1"
           >
             <EyeIcon className="size-4" />
@@ -296,7 +296,7 @@ function CandidateRow({
                 color="primary"
                 onClick={handleQuickImport}
                 disabled={actionLoading}
-                title="Schnell importieren (erste Variante)"
+                title={t('actions.quickImport')}
                 className="px-2 py-1"
               >
                 <CheckIcon className="size-4" />
@@ -307,7 +307,7 @@ function CandidateRow({
                 color="zinc"
                 onClick={handleSkip}
                 disabled={actionLoading}
-                title="Überspringen"
+                title={t('actions.skip')}
                 className="px-2 py-1"
               >
                 <ForwardIcon className="size-4" />
@@ -318,7 +318,7 @@ function CandidateRow({
                 color="secondary"
                 onClick={handleReject}
                 disabled={actionLoading}
-                title="Ablehnen"
+                title={t('actions.reject')}
                 className="px-2 py-1"
               >
                 <XMarkIcon className="size-4" />

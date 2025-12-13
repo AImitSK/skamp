@@ -46,7 +46,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel
 }: ConfirmDialogProps) {
-  const t = useTranslations('common.confirmDialog');
+  const t = useTranslations('crm.confirmDialog');
   const defaultCancelLabel = cancelLabel || t('cancel');
   const defaultConfirmLabel = confirmLabel || (type === 'danger' ? t('delete') : t('confirm'));
 
