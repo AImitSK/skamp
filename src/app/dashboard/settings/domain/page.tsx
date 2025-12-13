@@ -70,7 +70,7 @@ export default function DomainsPage() {
       setDomains(data);
     } catch (error: any) {
       console.error('Domain loading error:', error);
-      toastService.error('Domains konnten nicht geladen werden');
+      toastService.error('Domain loading failed');
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ export default function DomainsPage() {
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.sendgridDomainId) {
-        toastService.error('Domain oder SendGrid ID nicht gefunden');
+        toastService.error('Domain or SendGrid ID not found');
         return;
       }
 
@@ -122,7 +122,7 @@ export default function DomainsPage() {
         await loadDomains();
       }
     } catch (error: any) {
-      toastService.error(error.message || 'Verifizierung fehlgeschlagen');
+      toastService.error(error.message || 'Verification failed');
     } finally {
       setVerifying(null);
     }
@@ -134,7 +134,7 @@ export default function DomainsPage() {
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.dnsRecords || domain.dnsRecords.length === 0) {
-        toastService.error('Domain oder DNS Records nicht gefunden');
+        toastService.error('Domain or DNS records not found');
         return;
       }
 
@@ -163,7 +163,7 @@ export default function DomainsPage() {
         }
       }
     } catch (error: any) {
-      toastService.error('DNS-Überprüfung fehlgeschlagen');
+      toastService.error('DNS check failed');
     } finally {
       setCheckingDns(null);
     }
@@ -187,10 +187,10 @@ export default function DomainsPage() {
       const context = getContext();
       await domainServiceEnhanced.softDelete(domainId, context);
       await loadDomains();
-      toastService.success('Domain erfolgreich gelöscht');
+      toastService.success('Domain deleted successfully');
 
     } catch (error: any) {
-      toastService.error('Domain konnte nicht gelöscht werden');
+      toastService.error('Failed to delete domain');
     }
   };
 

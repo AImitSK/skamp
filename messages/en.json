@@ -814,6 +814,14 @@
         "globalVisible": "Globally visible",
         "clientSpecific": "Client-specific"
       }
+    },
+    "toasts": {
+      "deleteSuccess": "\"{name}\" successfully deleted",
+      "deleteError": "Error deleting: {message}",
+      "deleteErrorGeneric": "Error deleting boilerplate",
+      "favoriteSuccess": "Favorite status updated",
+      "favoriteError": "Error updating: {message}",
+      "favoriteErrorGeneric": "Error updating favorite status"
     }
   },
   "campaigns": {
@@ -6749,6 +6757,7 @@
     },
     "language": {
       "title": "Language",
+      "description": "Manage UI language and glossary for AI translations",
       "uiLanguage": "UI Language",
       "uiLanguageDescription": "Choose the language of the user interface",
       "contentLanguages": "Content Languages",
@@ -6764,7 +6773,21 @@
       "selectCustomer": "Select customer",
       "german": "German",
       "context": "Context",
-      "contextOptional": "Context (optional)"
+      "contextOptional": "Context (optional)",
+      "allCustomers": "All customers",
+      "termGerman": "Term (DE)",
+      "translations": "Translations",
+      "loadingGlossary": "Loading glossary...",
+      "noEntriesFound": "No entries found",
+      "noEntriesYet": "No glossary entries yet",
+      "clickToAddTerm": "Click \"{button}\" to add a term",
+      "entryCount": "{count, plural, one {# entry} other {# entries}}",
+      "searchResultSuffix": " for \"{query}\"",
+      "deleteConfirm": "Do you really want to delete the entry \"{term}\"?",
+      "infoBox": {
+        "title": "About Glossary",
+        "description": "The glossary defines customer-specific terminology that should be translated exactly as specified during AI translations. Each entry is assigned to a customer and will be automatically used for translations for that customer."
+      }
     },
     "spam": {
       "title": "Global Spam Blocklist",
@@ -6909,6 +6932,26 @@
         "youBecomeMember": "You become Member",
         "cancel": "Cancel",
         "confirm": "Yes, Transfer Owner Role"
+      },
+      "emailTemplates": {
+        "invite": {
+          "subject": "Team invitation from {inviterName}",
+          "heading": "You've been invited!",
+          "body": "{inviterName} has invited you to join the team.",
+          "roleLabel": "Role: {role}",
+          "instruction": "Click the link below to accept the invitation:",
+          "buttonText": "Accept Invitation",
+          "validityNote": "This link is valid for 7 days.",
+          "plainText": "You've been invited to the team. Click here: {url}"
+        },
+        "reminder": {
+          "subject": "Reminder: Team invitation",
+          "heading": "Reminder: You've been invited!",
+          "body": "This is a reminder about your team invitation.",
+          "roleLabel": "Role: {role}",
+          "buttonText": "Accept Invitation",
+          "plainText": "Reminder: You've been invited to the team. Click here: {url}"
+        }
       }
     },
     "monitoring": {

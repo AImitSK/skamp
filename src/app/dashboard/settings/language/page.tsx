@@ -117,7 +117,7 @@ export default function LanguageSettingsPage() {
   // Kunden-Name Helper
   const getCustomerName = (customerId: string) => {
     const customer = companies?.find(c => c.id === customerId);
-    return customer?.name || 'Unbekannt';
+    return customer?.name || tCommon('unknown');
   };
 
   const handleUiLanguageChange = async (newLanguage: UILanguage) => {
@@ -183,7 +183,7 @@ export default function LanguageSettingsPage() {
   const handleDeleteEntry = async (entry: CustomerGlossaryEntry) => {
     if (!organizationId) return;
 
-    if (!confirm(`Möchten Sie den Eintrag "${entry.translations.de}" wirklich löschen?`)) {
+    if (!confirm(t('deleteConfirm', { term: entry.translations.de }))) {
       return;
     }
 
@@ -232,7 +232,7 @@ export default function LanguageSettingsPage() {
               <div className="min-w-0 flex-1">
                 <Heading level={1}>{t('title')}</Heading>
                 <Text className="mt-2 text-gray-600">
-                  Verwalten Sie die UI-Sprache und das Glossar für KI-Übersetzungen
+                  {t('description')}
                 </Text>
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function LanguageSettingsPage() {
                     onChange={(e) => setGlossaryCustomerFilter(e.target.value)}
                     className="block w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-[#005fab] focus:ring-[#005fab] sm:text-sm"
                   >
-                    <option value="all">{tCommon('all')} Kunden</option>
+                    <option value="all">{t('allCustomers')}</option>
                     {customerOptions.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -319,10 +319,10 @@ export default function LanguageSettingsPage() {
                           {t('customer')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Begriff (DE)
+                          {t('termGerman')}
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Übersetzungen
+                          {t('translations')}
                         </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {tCommon('actions')}
@@ -334,7 +334,7 @@ export default function LanguageSettingsPage() {
                         <tr>
                           <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
-                            <Text className="mt-2">Lade Glossar...</Text>
+                            <Text className="mt-2">{t('loadingGlossary')}</Text>
                           </td>
                         </tr>
                       ) : filteredEntries.length === 0 ? (
@@ -343,12 +343,12 @@ export default function LanguageSettingsPage() {
                             <BookOpenIcon className="h-8 w-8 mx-auto text-gray-300 mb-2" />
                             <Text>
                               {glossarySearch
-                                ? 'Keine Einträge gefunden'
-                                : 'Noch keine Glossar-Einträge vorhanden'}
+                                ? t('noEntriesFound')
+                                : t('noEntriesYet')}
                             </Text>
                             {!glossarySearch && (
                               <Text className="text-sm">
-                                Klicken Sie auf "{t('newEntry')}" um einen Begriff hinzuzufügen
+                                {t('clickToAddTerm', { button: t('newEntry') })}
                               </Text>
                             )}
                           </td>
@@ -397,14 +397,14 @@ export default function LanguageSettingsPage() {
                                 <button
                                   onClick={() => handleEditEntry(entry)}
                                   className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                                  title="Bearbeiten"
+                                  title={tCommon('edit')}
                                 >
                                   <PencilIcon className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteEntry(entry)}
                                   className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                                  title="Löschen"
+                                  title={tCommon('delete')}
                                   disabled={isDeleting}
                                 >
                                   <TrashIcon className="h-4 w-4" />
@@ -421,8 +421,8 @@ export default function LanguageSettingsPage() {
                 {/* Anzahl */}
                 {filteredEntries.length > 0 && (
                   <div className="mt-3 text-sm text-gray-500">
-                    {filteredEntries.length} Eintrag{filteredEntries.length !== 1 ? 'e' : ''}
-                    {glossarySearch && ` für "${glossarySearch}"`}
+                    {t('entryCount', { count: filteredEntries.length })}
+                    {glossarySearch && t('searchResultSuffix', { query: glossarySearch })}
                   </div>
                 )}
               </div>
@@ -432,12 +432,8 @@ export default function LanguageSettingsPage() {
                 <div className="flex">
                   <BookOpenIcon className="h-5 w-5 text-purple-400 mr-2 flex-shrink-0" />
                   <div className="text-sm text-purple-800">
-                    <p className="font-medium mb-1">Hinweis zum Glossar</p>
-                    <p>
-                      Das <strong>Glossar</strong> definiert kundenspezifische Fachbegriffe, die bei
-                      KI-Übersetzungen exakt so übersetzt werden sollen. Jeder Eintrag ist einem
-                      Kunden zugeordnet und wird automatisch bei Übersetzungen für diesen Kunden verwendet.
-                    </p>
+                    <p className="font-medium mb-1">{t('infoBox.title')}</p>
+                    <p>{t('infoBox.description')}</p>
                   </div>
                 </div>
               </div>

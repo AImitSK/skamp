@@ -203,18 +203,18 @@ export default function TeamSettingsPage() {
               email: process.env.NEXT_PUBLIC_SENDGRID_FROM_EMAIL || 's.kuehne@sk-online-marketing.de',
               name: user.displayName || 'CeleroPress Team'
             },
-            subject: `Einladung zum Team von ${user.displayName || 'CeleroPress'}`,
+            subject: t('emailTemplates.invite.subject', { inviterName: user.displayName || 'CeleroPress' }),
             htmlContent: `
-              <h2>Sie wurden eingeladen!</h2>
-              <p>${user.displayName || user.email} hat Sie zum Team eingeladen.</p>
-              <p>Rolle: ${roleConfig[inviteRole].label}</p>
-              <p>Klicken Sie auf den folgenden Link, um die Einladung anzunehmen:</p>
+              <h2>${t('emailTemplates.invite.heading')}</h2>
+              <p>${t('emailTemplates.invite.body', { inviterName: user.displayName || user.email || 'CeleroPress' })}</p>
+              <p>${t('emailTemplates.invite.roleLabel', { role: roleConfig[inviteRole].label })}</p>
+              <p>${t('emailTemplates.invite.instruction')}</p>
               <a href="${invitationUrl}" style="display: inline-block; padding: 12px 24px; background: #005fab; color: white; text-decoration: none; border-radius: 4px;">
-                Einladung annehmen
+                ${t('emailTemplates.invite.buttonText')}
               </a>
-              <p><small>Dieser Link ist 7 Tage gültig.</small></p>
+              <p><small>${t('emailTemplates.invite.validityNote')}</small></p>
             `,
-            textContent: `Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`,
+            textContent: t('emailTemplates.invite.plainText', { url: invitationUrl }),
             replyTo: 'noreply@celeropress.com'
           })
         });
@@ -366,16 +366,16 @@ export default function TeamSettingsPage() {
             email: user.email || 'noreply@celeropress.com',
             name: user.displayName || 'CeleroPress Team'
           },
-          subject: `Erinnerung: Einladung zum Team`,
+          subject: t('emailTemplates.reminder.subject'),
           htmlContent: `
-            <h2>Erinnerung: Sie wurden eingeladen!</h2>
-            <p>Dies ist eine Erinnerung an Ihre Team-Einladung.</p>
-            <p>Rolle: ${roleConfig[member.role].label}</p>
+            <h2>${t('emailTemplates.reminder.heading')}</h2>
+            <p>${t('emailTemplates.reminder.body')}</p>
+            <p>${t('emailTemplates.reminder.roleLabel', { role: roleConfig[member.role].label })}</p>
             <a href="${invitationUrl}" style="display: inline-block; padding: 12px 24px; background: #005fab; color: white; text-decoration: none; border-radius: 4px;">
-              Einladung annehmen
+              ${t('emailTemplates.reminder.buttonText')}
             </a>
           `,
-          textContent: `Erinnerung: Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`,
+          textContent: t('emailTemplates.reminder.plainText', { url: invitationUrl }),
           replyTo: 'noreply@celeropress.com'
         })
       });

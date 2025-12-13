@@ -292,7 +292,7 @@ export default function TemplatesPage() {
         throw new Error('Failed to delete template');
       }
     } catch (error) {
-      console.error('Fehler beim Löschen des Templates:', error);
+      // Error beim Löschen - sollte durch Toast-Service behandelt werden
     }
   };
 

@@ -814,6 +814,14 @@
         "globalVisible": "Global sichtbar",
         "clientSpecific": "Kundenspezifisch"
       }
+    },
+    "toasts": {
+      "deleteSuccess": "\"{name}\" erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen: {message}",
+      "deleteErrorGeneric": "Fehler beim Löschen des Textbausteins",
+      "favoriteSuccess": "Favorit-Status aktualisiert",
+      "favoriteError": "Fehler beim Aktualisieren: {message}",
+      "favoriteErrorGeneric": "Fehler beim Aktualisieren des Favorit-Status"
     }
   },
   "campaigns": {
@@ -6508,6 +6516,7 @@
     },
     "language": {
       "title": "Sprache",
+      "description": "Verwalten Sie die UI-Sprache und das Glossar für KI-Übersetzungen",
       "uiLanguage": "UI-Sprache",
       "uiLanguageDescription": "Wählen Sie die Sprache der Benutzeroberfläche",
       "contentLanguages": "Content-Sprachen",
@@ -6523,7 +6532,21 @@
       "selectCustomer": "Kunde auswählen",
       "german": "Deutsch",
       "context": "Kontext",
-      "contextOptional": "Kontext (optional)"
+      "contextOptional": "Kontext (optional)",
+      "allCustomers": "Alle Kunden",
+      "termGerman": "Begriff (DE)",
+      "translations": "Übersetzungen",
+      "loadingGlossary": "Lade Glossar...",
+      "noEntriesFound": "Keine Einträge gefunden",
+      "noEntriesYet": "Noch keine Glossar-Einträge vorhanden",
+      "clickToAddTerm": "Klicken Sie auf \"{button}\" um einen Begriff hinzuzufügen",
+      "entryCount": "{count, plural, one {# Eintrag} other {# Einträge}}",
+      "searchResultSuffix": " für \"{query}\"",
+      "deleteConfirm": "Möchten Sie den Eintrag \"{term}\" wirklich löschen?",
+      "infoBox": {
+        "title": "Hinweis zum Glossar",
+        "description": "Das Glossar definiert kundenspezifische Fachbegriffe, die bei KI-Übersetzungen exakt so übersetzt werden sollen. Jeder Eintrag ist einem Kunden zugeordnet und wird automatisch bei Übersetzungen für diesen Kunden verwendet."
+      }
     },
     "templates": {
       "title": "PDF Templates",
@@ -7010,6 +7033,26 @@
         "youBecomeMember": "Du wirst Mitglied",
         "cancel": "Abbrechen",
         "confirm": "Ja, Owner-Rolle übertragen"
+      },
+      "emailTemplates": {
+        "invite": {
+          "subject": "Einladung zum Team von {inviterName}",
+          "heading": "Sie wurden eingeladen!",
+          "body": "{inviterName} hat Sie zum Team eingeladen.",
+          "roleLabel": "Rolle: {role}",
+          "instruction": "Klicken Sie auf den folgenden Link, um die Einladung anzunehmen:",
+          "buttonText": "Einladung annehmen",
+          "validityNote": "Dieser Link ist 7 Tage gültig.",
+          "plainText": "Sie wurden zum Team eingeladen. Klicken Sie hier: {url}"
+        },
+        "reminder": {
+          "subject": "Erinnerung: Einladung zum Team",
+          "heading": "Erinnerung: Sie wurden eingeladen!",
+          "body": "Dies ist eine Erinnerung an Ihre Team-Einladung.",
+          "roleLabel": "Rolle: {role}",
+          "buttonText": "Einladung annehmen",
+          "plainText": "Erinnerung: Sie wurden zum Team eingeladen. Klicken Sie hier: {url}"
+        }
       }
     }
   },

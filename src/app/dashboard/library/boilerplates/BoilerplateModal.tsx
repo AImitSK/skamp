@@ -171,7 +171,6 @@ export default function BoilerplateModal({
       const companiesData = await companiesEnhancedService.getAll(organizationId);
       setCompanies(companiesData);
     } catch (error) {
-      console.error('Fehler beim Laden der Companies:', error);
       setCompanies([]);
     }
   };
@@ -226,7 +225,6 @@ export default function BoilerplateModal({
       onSave();
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
       toastService.error(
         error instanceof Error
           ? `Fehler beim Speichern: ${error.message}`

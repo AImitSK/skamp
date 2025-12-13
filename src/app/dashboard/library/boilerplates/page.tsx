@@ -175,17 +175,17 @@ export default function BoilerplatesPage() {
       onConfirm: async () => {
         try {
           await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
-          toastService.success(`"${name}" erfolgreich gelöscht`);
+          toastService.success(t('toasts.deleteSuccess', { name }));
         } catch (error) {
           toastService.error(
             error instanceof Error
-              ? `Fehler beim Löschen: ${error.message}`
-              : 'Fehler beim Löschen des Textbausteins'
+              ? t('toasts.deleteError', { message: error.message })
+              : t('toasts.deleteErrorGeneric')
           );
         }
       }
     });
-  }, [deleteBoilerplateMutation, organizationId]);
+  }, [deleteBoilerplateMutation, organizationId, t]);
 
   const handleToggleFavorite = useCallback(async (id: string) => {
     if (!organizationId || !id || !user) return;
@@ -196,15 +196,15 @@ export default function BoilerplatesPage() {
         organizationId,
         userId: user.uid
       });
-      toastService.success('Favorit-Status aktualisiert');
+      toastService.success(t('toasts.favoriteSuccess'));
     } catch (error) {
       toastService.error(
         error instanceof Error
-          ? `Fehler beim Aktualisieren: ${error.message}`
-          : 'Fehler beim Aktualisieren des Favorit-Status'
+          ? t('toasts.favoriteError', { message: error.message })
+          : t('toasts.favoriteErrorGeneric')
       );
     }
-  }, [toggleFavoriteMutation, organizationId, user]);
+  }, [toggleFavoriteMutation, organizationId, user, t]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return t('unknown');

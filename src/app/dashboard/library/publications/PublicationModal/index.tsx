@@ -348,7 +348,6 @@ export function PublicationModal({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern der Publikation:', error);
       toastService.error(
         error instanceof Error
           ? t('errors.saveError', { message: error.message })
