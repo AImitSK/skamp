@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ClipboardDocumentListIcon,
   MagnifyingGlassIcon,
@@ -28,12 +29,14 @@ interface ClippingCardProps {
   onView: (clipping: ClippingAsset) => void;
 }
 
-const ClippingCard: React.FC<ClippingCardProps> = ({ 
-  clipping, 
-  isSelected, 
-  onSelect, 
-  onView 
+const ClippingCard: React.FC<ClippingCardProps> = ({
+  clipping,
+  isSelected,
+  onSelect,
+  onView
 }) => {
+  const t = useTranslations('projects.monitoring.clippingsGallery');
+
   const getSentimentColor = (score: number) => {
     if (score > 0.1) return 'text-green-600 bg-green-50';
     if (score < -0.1) return 'text-red-600 bg-red-50';
@@ -53,9 +56,9 @@ const ClippingCard: React.FC<ClippingCardProps> = ({
       {/* Screenshot/Preview */}
       <div className="aspect-video bg-gray-100 relative">
         {(clipping as any).screenshot ? (
-          <img 
-            src={(clipping as any).screenshot} 
-            alt={`Screenshot von ${clipping.outlet}`}
+          <img
+            src={(clipping as any).screenshot}
+            alt={t('card.screenshotAlt', { outlet: clipping.outlet })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -63,7 +66,7 @@ const ClippingCard: React.FC<ClippingCardProps> = ({
             <ClipboardDocumentListIcon className="h-8 w-8 text-gray-400" />
           </div>
         )}
-        
+
         {/* Auswahl-Checkbox */}
         <div className="absolute top-2 left-2">
           <input
@@ -100,13 +103,13 @@ const ClippingCard: React.FC<ClippingCardProps> = ({
         {/* Metrics */}
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="text-gray-500">Reichweite</div>
+            <div className="text-gray-500">{t('card.reach')}</div>
             <div className="font-medium text-gray-900">
               {clipping.reachValue.toLocaleString()}
             </div>
           </div>
           <div>
-            <div className="text-gray-500">Media Value</div>
+            <div className="text-gray-500">{t('card.mediaValue')}</div>
             <div className="font-medium text-gray-900">
               €{((clipping as any).mediaValue || 0).toLocaleString()}
             </div>
@@ -120,9 +123,9 @@ const ClippingCard: React.FC<ClippingCardProps> = ({
             className="flex items-center text-xs text-blue-600 hover:text-blue-800"
           >
             <EyeIcon className="h-3 w-3 mr-1" />
-            Ansehen
+            {t('card.view')}
           </button>
-          
+
           {clipping.url && (
             <a
               href={clipping.url}
@@ -131,7 +134,7 @@ const ClippingCard: React.FC<ClippingCardProps> = ({
               className="flex items-center text-xs text-gray-500 hover:text-gray-700"
             >
               <ArrowDownTrayIcon className="h-3 w-3 mr-1" />
-              Original
+              {t('card.original')}
             </a>
           )}
         </div>
@@ -169,6 +172,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onFiltersChange,
   outlets
 }) => {
+  const t = useTranslations('projects.monitoring.clippingsGallery.filters');
+
   if (!isOpen) return null;
 
   return (
@@ -176,7 +181,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">Filter</h3>
+            <h3 className="text-lg font-medium">{t('title')}</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -189,7 +194,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {/* Search */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Suche
+                {t('search')}
               </label>
               <input
                 type="text"
@@ -198,7 +203,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   ...filters,
                   searchTerm: e.target.value
                 })}
-                placeholder="Titel, Inhalt oder Outlet..."
+                placeholder={t('searchPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -206,7 +211,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {/* Outlets */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Outlets
+                {t('outlets')}
               </label>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {outlets.map(outlet => (
@@ -234,7 +239,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {/* Date Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Zeitraum
+                {t('dateRange')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -271,7 +276,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {/* Sentiment Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sentiment-Bereich
+                {t('sentimentRange')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -289,7 +294,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="Min"
+                    placeholder={t('minPlaceholder')}
                   />
                 </div>
                 <div>
@@ -307,7 +312,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="Max"
+                    placeholder={t('maxPlaceholder')}
                   />
                 </div>
               </div>
@@ -316,7 +321,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             {/* Min Reach */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mindest-Reichweite
+                {t('minReach')}
               </label>
               <input
                 type="number"
@@ -327,7 +332,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   reachMin: parseInt(e.target.value) || 0
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0"
+                placeholder={t('minReachPlaceholder')}
               />
             </div>
           </div>
@@ -343,13 +348,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               })}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
-              Zurücksetzen
+              {t('reset')}
             </button>
             <button
               onClick={onClose}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Anwenden
+              {t('apply')}
             </button>
           </div>
         </div>
@@ -363,6 +368,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
   organizationId,
   className = ''
 }) => {
+  const t = useTranslations('projects.monitoring.clippingsGallery');
   const [clippings, setClippings] = useState<ClippingAsset[]>([]);
   const [filteredClippings, setFilteredClippings] = useState<ClippingAsset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -388,7 +394,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
         setClippings(projectClippings as ClippingAsset[]);
         setFilteredClippings(projectClippings as ClippingAsset[]);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Fehler beim Laden der Clippings');
+        setError(err instanceof Error ? err.message : t('loadError'));
         console.error('Clippings loading error:', err);
       } finally {
         setLoading(false);
@@ -396,7 +402,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
     };
 
     loadClippings();
-  }, [projectId, organizationId]);
+  }, [projectId, organizationId, t]);
 
   // Filter anwenden
   useEffect(() => {
@@ -495,7 +501,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
     return (
       <div className={`p-6 ${className}`}>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Fehler: {error}</p>
+          <p className="text-red-800">{t('error', { error })}</p>
         </div>
       </div>
     );
@@ -508,10 +514,10 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
         <div>
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <ClipboardDocumentListIcon className="h-5 w-5 mr-2" />
-            Clippings Gallery
+            {t('title')}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {filteredClippings.length} von {clippings.length} Clippings
+            {t('count', { filtered: filteredClippings.length, total: clippings.length })}
           </p>
         </div>
 
@@ -523,7 +529,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
               type="text"
               value={filters.searchTerm}
               onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-              placeholder="Suche..."
+              placeholder={t('searchPlaceholder')}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm w-64"
             />
           </div>
@@ -534,7 +540,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
             className="flex items-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
           >
             <FunnelIcon className="h-4 w-4 mr-1" />
-            Filter
+            {t('filterButton')}
           </button>
 
           {/* Bulk Actions */}
@@ -544,7 +550,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
               className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
-              Export ({selectedIds.size})
+              {t('exportButton', { count: selectedIds.size })}
             </button>
           )}
         </div>
@@ -561,7 +567,7 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <span className="ml-2 text-sm text-gray-700">
-              Alle auswählen ({filteredClippings.length})
+              {t('selectAll', { count: filteredClippings.length })}
             </span>
           </label>
         </div>
@@ -592,12 +598,12 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
         <div className="text-center py-12">
           <ClipboardDocumentListIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Keine Clippings gefunden
+            {t('empty.title')}
           </h3>
           <p className="text-gray-500">
             {filters.searchTerm || filters.outlets.length > 0 || filters.reachMin > 0
-              ? 'Versuchen Sie andere Filterkriterien.'
-              : 'Für dieses Projekt wurden noch keine Clippings erfasst.'
+              ? t('empty.tryOtherFilters')
+              : t('empty.noClippings')
             }
           </p>
         </div>
@@ -628,36 +634,36 @@ const ClippingsGallery: React.FC<ClippingsGalleryProps> = ({
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Outlet:</span> {viewingClipping.outlet}
+                    <span className="font-medium">{t('detail.outlet')}:</span> {viewingClipping.outlet}
                   </div>
                   <div>
-                    <span className="font-medium">Datum:</span> {new Date(viewingClipping.publishDate.seconds * 1000).toLocaleDateString('de-DE')}
+                    <span className="font-medium">{t('detail.date')}:</span> {new Date(viewingClipping.publishDate.seconds * 1000).toLocaleDateString('de-DE')}
                   </div>
                   <div>
-                    <span className="font-medium">Reichweite:</span> {viewingClipping.reachValue.toLocaleString()}
+                    <span className="font-medium">{t('detail.reach')}:</span> {viewingClipping.reachValue.toLocaleString()}
                   </div>
                   <div>
-                    <span className="font-medium">Sentiment:</span> {viewingClipping.sentimentScore.toFixed(2)}
+                    <span className="font-medium">{t('detail.sentiment')}:</span> {viewingClipping.sentimentScore.toFixed(2)}
                   </div>
                 </div>
-                
+
                 {viewingClipping.description && (
                   <div>
-                    <h4 className="font-medium mb-2">Inhalt:</h4>
+                    <h4 className="font-medium mb-2">{t('detail.content')}:</h4>
                     <p className="text-gray-700 text-sm">{viewingClipping.description}</p>
                   </div>
                 )}
 
                 {(viewingClipping as any).screenshot && (
                   <div>
-                    <h4 className="font-medium mb-2">Screenshot:</h4>
-                    <img 
-                      src={(viewingClipping as any).screenshot} 
-                      alt="Clipping Screenshot"
+                    <h4 className="font-medium mb-2">{t('detail.screenshot')}:</h4>
+                    <img
+                      src={(viewingClipping as any).screenshot}
+                      alt={t('detail.screenshotAlt')}
                       className="w-full border border-gray-200 rounded"
                     />
                   </div>

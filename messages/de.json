@@ -5749,6 +5749,50 @@
         },
         "globalBadge": "Global",
         "cancel": "Abbrechen"
+      },
+      "uploadZone": {
+        "title": "Dateien hochladen",
+        "dropHere": "Dateien hier ablegen oder",
+        "browse": "durchsuchen",
+        "selectedFiles": "Ausgewählte Dateien ({count})",
+        "cancel": "Abbrechen",
+        "uploading": "Wird hochgeladen...",
+        "upload": "hochladen",
+        "file": "Datei",
+        "files": "Dateien",
+        "uploadSuccess": "{count, plural, =1 {Datei wurde} other {Dateien wurden}} erfolgreich hochgeladen.",
+        "uploadError": "Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut."
+      },
+      "moveAssetModal": {
+        "title": "Datei verschieben",
+        "currentPath": "Aktueller Pfad:",
+        "projectFolder": "Projekt-Ordner",
+        "backButton": "..",
+        "navigationArrow": "→",
+        "emptyState": {
+          "noSubfolders": "Keine Unterordner vorhanden",
+          "canMoveHere": "Sie können hier verschieben"
+        },
+        "moveToTarget": "✓ Verschieben nach: {path}",
+        "cancel": "Abbrechen",
+        "moveHere": "Hier verschieben",
+        "moving": "Wird verschoben...",
+        "errors": {
+          "loadFolder": "Fehler beim Laden des Ordners.",
+          "navigate": "Fehler beim Navigieren.",
+          "moveAsset": "Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut."
+        }
+      },
+      "createDialog": {
+        "title": "Neuen Ordner erstellen",
+        "label": "Ordnername",
+        "placeholder": "Ordnername eingeben...",
+        "description": "Unterordner erstellt von {userName}",
+        "error": "Fehler beim Erstellen des Ordners. Bitte versuchen Sie es erneut.",
+        "cancel": "Abbrechen",
+        "create": "Ordner erstellen",
+        "creating": "Wird erstellt...",
+        "unknownUser": "Unbekannt"
       }
     },
     "viewModes": {
@@ -6050,6 +6094,50 @@
         "unarchive": "Reaktivieren",
         "delete": "Löschen",
         "deleteConfirm": "Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      }
+    },
+    "kanban": {
+      "card": {
+        "moreTags": "+{count}",
+        "moreMembers": "+{count}",
+        "overdue": "Überfällig",
+        "criticalTasks": "{count} kritische Aufgaben",
+        "priority": {
+          "urgent": "Dringend",
+          "high": "Hoch",
+          "medium": "Mittel",
+          "low": "Niedrig",
+          "none": "Keine"
+        },
+        "status": {
+          "active": "Aktiv",
+          "onHold": "Pausiert",
+          "completed": "Abgeschlossen",
+          "cancelled": "Abgebrochen"
+        },
+        "deleteDialog": {
+          "title": "Projekt löschen",
+          "message": "Möchten Sie das Projekt {projectTitle} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+          "error": "Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.",
+          "deleting": "Lösche..."
+        }
+      },
+      "quickActions": {
+        "view": "Projekt anzeigen",
+        "edit": "Bearbeiten",
+        "moveTo": "Verschieben nach:",
+        "addComment": "Kommentar hinzufügen",
+        "viewReports": "Reports anzeigen",
+        "scheduleMeeting": "Meeting planen",
+        "inviteTeam": "Team einladen",
+        "archive": "Archivieren",
+        "delete": "Löschen"
+      },
+      "errors": {
+        "filterError": "Filter-Fehler",
+        "projectNotFound": "Projekt nicht gefunden",
+        "moveFailed": "Verschieben fehlgeschlagen",
+        "moveError": "Move-Fehler"
       }
     },
     "tabs": {
@@ -6448,6 +6536,185 @@
             "status": "Status",
             "publisherIds": "Verlage"
           }
+        }
+      }
+    },
+    "guides": {
+      "title": "Projekt-Guide",
+      "progressCompleted": "{progress}% abgeschlossen",
+      "phaseProgress": "({completed} von {total} erledigt)",
+      "currentBadge": "Aktuell",
+      "phases": {
+        "ideasPlanning": {
+          "title": "Ideen & Planung",
+          "steps": {
+            "createTasks": {
+              "title": "Aufgabenliste erstellen",
+              "description": "Plane und verteile Aufgaben an dein Team"
+            },
+            "createStrategy": {
+              "title": "Strategie-Dokumente erstellen",
+              "description": "Definiere Ziele und Kernbotschaften"
+            }
+          }
+        },
+        "creation": {
+          "title": "Content Erstellung",
+          "steps": {
+            "uploadMedia": {
+              "title": "Bilder & Videos hochladen",
+              "description": "Lade relevante Medien in den Daten-Bereich"
+            },
+            "createDraft": {
+              "title": "KI-Entwurf erstellen",
+              "description": "Nutze den KI-Assistenten für den ersten Entwurf"
+            }
+          }
+        },
+        "internalApproval": {
+          "title": "Interne Freigabe",
+          "steps": {
+            "teamFeedback": {
+              "title": "Team-Feedback einholen",
+              "description": "Diskutiere mit deinem Team im Chat"
+            }
+          }
+        },
+        "customerApproval": {
+          "title": "Kunden-Freigabe",
+          "steps": {
+            "customerApproval": {
+              "title": "Kundenfreigabe erhalten",
+              "description": "Lass die Pressemitteilung vom Kunden absegnen"
+            }
+          }
+        },
+        "distribution": {
+          "title": "Verteilung",
+          "steps": {
+            "createList": {
+              "title": "Verteiler zusammenstellen",
+              "description": "Wähle relevante Journalisten und Redaktionen"
+            },
+            "createLetter": {
+              "title": "Anschreiben verfassen",
+              "description": "Personalisiere deine Nachricht"
+            },
+            "testSend": {
+              "title": "Testversand durchführen",
+              "description": "Prüfe alles vor dem finalen Versand"
+            },
+            "sendCampaign": {
+              "title": "Pressemeldung versenden",
+              "description": "Starte den Versand an alle Empfänger"
+            }
+          }
+        },
+        "monitoring": {
+          "title": "Monitoring & Analyse",
+          "steps": {
+            "manageInbox": {
+              "title": "Mit Redaktionen korrespondieren",
+              "description": "Beantworte Rückfragen und pflege Kontakte"
+            },
+            "trackPublications": {
+              "title": "Veröffentlichungen tracken",
+              "description": "Nutze den Alert für neue Artikel"
+            },
+            "analyzeSuccess": {
+              "title": "Erfolg analysieren",
+              "description": "Bewerte Reichweite und Impact"
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "analytics": {
+        "kpis": {
+          "totalReach": "Gesamtreichweite",
+          "peopleReached": "Personen erreicht",
+          "clippings": "Clippings",
+          "mediaMentions": "Medienerwähnungen",
+          "mediaValue": "Media Value",
+          "calculatedValue": "Berechneter Medienwert",
+          "sentiment": "Sentiment",
+          "averageRating": "Durchschnittsbewertung"
+        },
+        "charts": {
+          "reachDevelopment": "Reichweiten-Entwicklung",
+          "noData": "Keine Daten verfügbar",
+          "showingLast7Days": "Zeigt die letzten 7 Tage",
+          "topOutlets": "Top Outlets",
+          "noOutletData": "Keine Outlet-Daten verfügbar",
+          "clippingsReach": "{clippings} Clippings • {reach} Reichweite",
+          "sentimentDistribution": "Sentiment-Verteilung"
+        },
+        "sentiment": {
+          "positive": "Positiv",
+          "neutral": "Neutral",
+          "negative": "Negativ",
+          "averageSentiment": "Durchschnittliches Sentiment"
+        },
+        "export": {
+          "title": "Report-Export",
+          "pdfReport": "PDF-Report generieren",
+          "excelExport": "Excel-Export",
+          "powerpoint": "PowerPoint-Präsentation"
+        },
+        "errors": {
+          "loadError": "Fehler beim Laden der Analytics",
+          "error": "Fehler: {error}"
+        },
+        "empty": {
+          "title": "Keine Analytics-Daten",
+          "description": "Monitoring für dieses Projekt wurde noch nicht gestartet oder es sind keine Daten verfügbar."
+        },
+        "lastUpdated": "Letzte Aktualisierung: {date}"
+      },
+      "clippingsGallery": {
+        "title": "Clippings Gallery",
+        "count": "{filtered} von {total} Clippings",
+        "searchPlaceholder": "Suche...",
+        "filterButton": "Filter",
+        "exportButton": "Export ({count})",
+        "selectAll": "Alle auswählen ({count})",
+        "loadError": "Fehler beim Laden der Clippings",
+        "error": "Fehler: {error}",
+        "card": {
+          "screenshotAlt": "Screenshot von {outlet}",
+          "reach": "Reichweite",
+          "mediaValue": "Media Value",
+          "view": "Ansehen",
+          "original": "Original"
+        },
+        "filters": {
+          "title": "Filter",
+          "search": "Suche",
+          "searchPlaceholder": "Titel, Inhalt oder Outlet...",
+          "outlets": "Outlets",
+          "dateRange": "Zeitraum",
+          "sentimentRange": "Sentiment-Bereich",
+          "minPlaceholder": "Min",
+          "maxPlaceholder": "Max",
+          "minReach": "Mindest-Reichweite",
+          "minReachPlaceholder": "0",
+          "reset": "Zurücksetzen",
+          "apply": "Anwenden"
+        },
+        "empty": {
+          "title": "Keine Clippings gefunden",
+          "tryOtherFilters": "Versuchen Sie andere Filterkriterien.",
+          "noClippings": "Für dieses Projekt wurden noch keine Clippings erfasst."
+        },
+        "detail": {
+          "outlet": "Outlet",
+          "date": "Datum",
+          "reach": "Reichweite",
+          "sentiment": "Sentiment",
+          "content": "Inhalt",
+          "screenshot": "Screenshot",
+          "screenshotAlt": "Clipping Screenshot"
         }
       }
     }

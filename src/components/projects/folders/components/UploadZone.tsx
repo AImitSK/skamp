@@ -13,6 +13,7 @@ import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { uploadMedia } from '@/lib/firebase/media-assets-service';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslations } from 'next-intl';
 import Alert from './Alert';
 
 interface UploadZoneProps {
@@ -41,6 +42,7 @@ const UploadZone = React.memo(function UploadZone({
   projectId
 }: UploadZoneProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.folders.uploadZone');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
@@ -113,7 +115,7 @@ const UploadZone = React.memo(function UploadZone({
 
       await Promise.all(uploadPromises);
 
-      showAlert('success', `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei wurde' : 'Dateien wurden'} erfolgreich hochgeladen.`);
+      showAlert('success', t('uploadSuccess', { count: selectedFiles.length }));
       setSelectedFiles([]);
       setTimeout(() => {
         onUploadSuccess();
@@ -122,7 +124,7 @@ const UploadZone = React.memo(function UploadZone({
 
     } catch (error) {
       console.error('Upload-Fehler:', error);
-      showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
+      showAlert('error', t('uploadError'));
     } finally {
       setUploading(false);
       setUploadProgress({});
@@ -136,7 +138,7 @@ const UploadZone = React.memo(function UploadZone({
       <DialogTitle>
         <div className="flex items-center">
           <CloudArrowUpIcon className="w-5 h-5 mr-2 text-blue-600" />
-          Dateien hochladen
+          {t('title')}
           {folderName && (
             <Badge className="ml-2" color="blue">
               {folderName}
@@ -156,11 +158,11 @@ const UploadZone = React.memo(function UploadZone({
         >
           <CloudArrowUpIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
           <Text className="text-lg font-medium text-gray-900 mb-2">
-            Dateien hier ablegen oder
+            {t('dropHere')}
           </Text>
           <label className="cursor-pointer">
             <span className="font-medium text-blue-600 hover:text-blue-500">
-              durchsuchen
+              {t('browse')}
             </span>
             <input
               type="file"
@@ -175,7 +177,7 @@ const UploadZone = React.memo(function UploadZone({
         {/* Selected Files */}
         {selectedFiles.length > 0 && (
           <div className="space-y-2">
-            <Text className="font-medium">Ausgewählte Dateien ({selectedFiles.length})</Text>
+            <Text className="font-medium">{t('selectedFiles', { count: selectedFiles.length })}</Text>
             <div className="max-h-40 overflow-y-auto space-y-2">
               {selectedFiles.map((file, index) => (
                 <div key={index} className="bg-gray-50 rounded-lg p-3">
@@ -222,13 +224,16 @@ const UploadZone = React.memo(function UploadZone({
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={uploading}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleUpload}
           disabled={selectedFiles.length === 0 || uploading}
         >
-          {uploading ? 'Wird hochgeladen...' : `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei' : 'Dateien'} hochladen`}
+          {uploading
+            ? t('uploading')
+            : `${selectedFiles.length} ${selectedFiles.length === 1 ? t('file') : t('files')} ${t('upload')}`
+          }
         </Button>
       </DialogActions>
     </Dialog>

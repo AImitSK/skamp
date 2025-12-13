@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { PipelineStage } from '@/types/project';
 import {
   BoardData,
@@ -174,6 +175,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
   children,
   organizationId
 }) => {
+  const t = useTranslations('projects.kanban');
   const [state, dispatch] = useReducer(boardReducer, initialBoardState);
   const { user } = useAuth();
   const moveProjectMutation = useMoveProject();
@@ -231,7 +233,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
 
       dispatch({ type: 'SET_BOARD_DATA', payload: filteredBoardData });
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message || 'Filter-Fehler' });
+      dispatch({ type: 'SET_ERROR', payload: error.message || t('errors.filterError') });
     } finally {
       dispatch({ type: 'SET_FILTERING', payload: false });
     }
@@ -268,7 +270,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
       }
 
       if (!currentStage) {
-        throw new Error('Projekt nicht gefunden');
+        throw new Error(t('errors.projectNotFound'));
       }
 
       // Set drag state
@@ -290,11 +292,11 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
       });
 
       if (!result.success) {
-        throw new Error(result.errors?.join(', ') || 'Move failed');
+        throw new Error(result.errors?.join(', ') || t('errors.moveFailed'));
       }
 
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message || 'Move-Fehler' });
+      dispatch({ type: 'SET_ERROR', payload: error.message || t('errors.moveError') });
     } finally {
       dispatch({ type: 'SET_MOVING', payload: false });
       dispatch({ type: 'SET_DRAG_STATE', payload: {

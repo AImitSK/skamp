@@ -13,6 +13,7 @@ import {
   UserPlusIcon,
   ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageConfig, getAllStages } from './kanban-constants';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
@@ -60,6 +61,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
   onArchive,
   triggerRef
 }) => {
+  const t = useTranslations('projects.kanban.quickActions');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -148,7 +150,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <EyeIcon className="h-4 w-4" />
-            <span>Projekt anzeigen</span>
+            <span>{t('view')}</span>
           </button>
         )}
 
@@ -158,7 +160,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <PencilIcon className="h-4 w-4" />
-            <span>Bearbeiten</span>
+            <span>{t('edit')}</span>
           </button>
         )}
       </div>
@@ -168,7 +170,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         <div className="py-1 border-t border-gray-100">
           <div className="px-4 py-1">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Verschieben nach:
+              {t('moveTo')}
             </p>
           </div>
           {validTargetStages.map((targetStage) => (
@@ -192,7 +194,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <ChatBubbleLeftIcon className="h-4 w-4" />
-            <span>Kommentar hinzufügen</span>
+            <span>{t('addComment')}</span>
           </button>
         )}
 
@@ -202,7 +204,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <DocumentTextIcon className="h-4 w-4" />
-            <span>Reports anzeigen</span>
+            <span>{t('viewReports')}</span>
           </button>
         )}
 
@@ -212,7 +214,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <CalendarIcon className="h-4 w-4" />
-            <span>Meeting planen</span>
+            <span>{t('scheduleMeeting')}</span>
           </button>
         )}
 
@@ -222,7 +224,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <UserPlusIcon className="h-4 w-4" />
-            <span>Team einladen</span>
+            <span>{t('inviteTeam')}</span>
           </button>
         )}
       </div>
@@ -235,7 +237,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <ArchiveBoxIcon className="h-4 w-4" />
-            <span>Archivieren</span>
+            <span>{t('archive')}</span>
           </button>
         </div>
       )}
@@ -248,7 +250,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
             className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
           >
             <TrashIcon className="h-4 w-4" />
-            <span>Löschen</span>
+            <span>{t('delete')}</span>
           </button>
         </div>
       )}

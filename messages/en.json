@@ -6002,6 +6002,50 @@
         "deleteConfirm": "Really delete project? This action cannot be undone."
       }
     },
+    "kanban": {
+      "card": {
+        "moreTags": "+{count}",
+        "moreMembers": "+{count}",
+        "overdue": "Overdue",
+        "criticalTasks": "{count} critical tasks",
+        "priority": {
+          "urgent": "Urgent",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low",
+          "none": "None"
+        },
+        "status": {
+          "active": "Active",
+          "onHold": "On Hold",
+          "completed": "Completed",
+          "cancelled": "Cancelled"
+        },
+        "deleteDialog": {
+          "title": "Delete Project",
+          "message": "Do you really want to delete the project {projectTitle}? This action cannot be undone.",
+          "error": "Error deleting the project. Please try again.",
+          "deleting": "Deleting..."
+        }
+      },
+      "quickActions": {
+        "view": "View project",
+        "edit": "Edit",
+        "moveTo": "Move to:",
+        "addComment": "Add comment",
+        "viewReports": "View reports",
+        "scheduleMeeting": "Schedule meeting",
+        "inviteTeam": "Invite team",
+        "archive": "Archive",
+        "delete": "Delete"
+      },
+      "errors": {
+        "filterError": "Filter error",
+        "projectNotFound": "Project not found",
+        "moveFailed": "Move failed",
+        "moveError": "Move error"
+      }
+    },
     "tabs": {
       "daten": {
         "title": "Manage project data",
@@ -6033,6 +6077,50 @@
         },
         "globalBadge": "Global",
         "cancel": "Cancel"
+      },
+      "uploadZone": {
+        "title": "Upload Files",
+        "dropHere": "Drop files here or",
+        "browse": "browse",
+        "selectedFiles": "Selected Files ({count})",
+        "cancel": "Cancel",
+        "uploading": "Uploading...",
+        "upload": "upload",
+        "file": "file",
+        "files": "files",
+        "uploadSuccess": "{count, plural, =1 {File was} other {Files were}} successfully uploaded.",
+        "uploadError": "Error uploading files. Please try again."
+      },
+      "moveAssetModal": {
+        "title": "Move File",
+        "currentPath": "Current Path:",
+        "projectFolder": "Project Folder",
+        "backButton": "..",
+        "navigationArrow": "→",
+        "emptyState": {
+          "noSubfolders": "No subfolders available",
+          "canMoveHere": "You can move here"
+        },
+        "moveToTarget": "✓ Move to: {path}",
+        "cancel": "Cancel",
+        "moveHere": "Move Here",
+        "moving": "Moving...",
+        "errors": {
+          "loadFolder": "Error loading folder.",
+          "navigate": "Error navigating.",
+          "moveAsset": "Error moving file. Please try again."
+        }
+      },
+      "createDialog": {
+        "title": "Create New Folder",
+        "label": "Folder Name",
+        "placeholder": "Enter folder name...",
+        "description": "Subfolder created by {userName}",
+        "error": "Error creating folder. Please try again.",
+        "cancel": "Cancel",
+        "create": "Create Folder",
+        "creating": "Creating...",
+        "unknownUser": "Unknown"
       }
     },
     "communication": {
@@ -6424,6 +6512,185 @@
             "status": "Status",
             "publisherIds": "Publishers"
           }
+        }
+      }
+    },
+    "guides": {
+      "title": "Project Guide",
+      "progressCompleted": "{progress}% completed",
+      "phaseProgress": "({completed} of {total} done)",
+      "currentBadge": "Current",
+      "phases": {
+        "ideasPlanning": {
+          "title": "Ideas & Planning",
+          "steps": {
+            "createTasks": {
+              "title": "Create task list",
+              "description": "Plan and distribute tasks to your team"
+            },
+            "createStrategy": {
+              "title": "Create strategy documents",
+              "description": "Define goals and key messages"
+            }
+          }
+        },
+        "creation": {
+          "title": "Content Creation",
+          "steps": {
+            "uploadMedia": {
+              "title": "Upload images & videos",
+              "description": "Upload relevant media to the data section"
+            },
+            "createDraft": {
+              "title": "Create AI draft",
+              "description": "Use the AI assistant for the first draft"
+            }
+          }
+        },
+        "internalApproval": {
+          "title": "Internal Approval",
+          "steps": {
+            "teamFeedback": {
+              "title": "Gather team feedback",
+              "description": "Discuss with your team in the chat"
+            }
+          }
+        },
+        "customerApproval": {
+          "title": "Customer Approval",
+          "steps": {
+            "customerApproval": {
+              "title": "Get customer approval",
+              "description": "Have the press release approved by the customer"
+            }
+          }
+        },
+        "distribution": {
+          "title": "Distribution",
+          "steps": {
+            "createList": {
+              "title": "Compile distribution list",
+              "description": "Select relevant journalists and editorial offices"
+            },
+            "createLetter": {
+              "title": "Write cover letter",
+              "description": "Personalize your message"
+            },
+            "testSend": {
+              "title": "Perform test send",
+              "description": "Check everything before the final send"
+            },
+            "sendCampaign": {
+              "title": "Send press release",
+              "description": "Start sending to all recipients"
+            }
+          }
+        },
+        "monitoring": {
+          "title": "Monitoring & Analysis",
+          "steps": {
+            "manageInbox": {
+              "title": "Correspond with editorial offices",
+              "description": "Answer inquiries and maintain contacts"
+            },
+            "trackPublications": {
+              "title": "Track publications",
+              "description": "Use the alert for new articles"
+            },
+            "analyzeSuccess": {
+              "title": "Analyze success",
+              "description": "Evaluate reach and impact"
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "analytics": {
+        "kpis": {
+          "totalReach": "Total Reach",
+          "peopleReached": "People reached",
+          "clippings": "Clippings",
+          "mediaMentions": "Media mentions",
+          "mediaValue": "Media Value",
+          "calculatedValue": "Calculated media value",
+          "sentiment": "Sentiment",
+          "averageRating": "Average rating"
+        },
+        "charts": {
+          "reachDevelopment": "Reach Development",
+          "noData": "No data available",
+          "showingLast7Days": "Showing last 7 days",
+          "topOutlets": "Top Outlets",
+          "noOutletData": "No outlet data available",
+          "clippingsReach": "{clippings} Clippings • {reach} Reach",
+          "sentimentDistribution": "Sentiment Distribution"
+        },
+        "sentiment": {
+          "positive": "Positive",
+          "neutral": "Neutral",
+          "negative": "Negative",
+          "averageSentiment": "Average Sentiment"
+        },
+        "export": {
+          "title": "Report Export",
+          "pdfReport": "Generate PDF Report",
+          "excelExport": "Excel Export",
+          "powerpoint": "PowerPoint Presentation"
+        },
+        "errors": {
+          "loadError": "Error loading analytics",
+          "error": "Error: {error}"
+        },
+        "empty": {
+          "title": "No Analytics Data",
+          "description": "Monitoring for this project has not been started yet or no data is available."
+        },
+        "lastUpdated": "Last updated: {date}"
+      },
+      "clippingsGallery": {
+        "title": "Clippings Gallery",
+        "count": "{filtered} of {total} clippings",
+        "searchPlaceholder": "Search...",
+        "filterButton": "Filter",
+        "exportButton": "Export ({count})",
+        "selectAll": "Select all ({count})",
+        "loadError": "Error loading clippings",
+        "error": "Error: {error}",
+        "card": {
+          "screenshotAlt": "Screenshot of {outlet}",
+          "reach": "Reach",
+          "mediaValue": "Media Value",
+          "view": "View",
+          "original": "Original"
+        },
+        "filters": {
+          "title": "Filter",
+          "search": "Search",
+          "searchPlaceholder": "Title, content or outlet...",
+          "outlets": "Outlets",
+          "dateRange": "Date Range",
+          "sentimentRange": "Sentiment Range",
+          "minPlaceholder": "Min",
+          "maxPlaceholder": "Max",
+          "minReach": "Minimum Reach",
+          "minReachPlaceholder": "0",
+          "reset": "Reset",
+          "apply": "Apply"
+        },
+        "empty": {
+          "title": "No clippings found",
+          "tryOtherFilters": "Try different filter criteria.",
+          "noClippings": "No clippings have been captured for this project yet."
+        },
+        "detail": {
+          "outlet": "Outlet",
+          "date": "Date",
+          "reach": "Reach",
+          "sentiment": "Sentiment",
+          "content": "Content",
+          "screenshot": "Screenshot",
+          "screenshotAlt": "Clipping Screenshot"
         }
       }
     }

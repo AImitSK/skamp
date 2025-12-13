@@ -3,6 +3,7 @@
 
 import React, { memo } from 'react';
 import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 
 export interface DeleteConfirmDialogProps {
@@ -22,6 +23,9 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
   isDeleting,
   hasError
 }) => {
+  const t = useTranslations('projects.kanban.card.deleteDialog');
+  const tCommon = useTranslations('common');
+
   if (!isOpen) return null;
 
   return (
@@ -36,11 +40,10 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
           </div>
           <div className="ml-4 flex-1">
             <h3 className="text-lg font-medium text-gray-900">
-              Projekt löschen
+              {t('title')}
             </h3>
             <p className="mt-2 text-sm text-gray-500">
-              Möchten Sie das Projekt <strong>{projectTitle}</strong> wirklich löschen?
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              {t('message', { projectTitle })}
             </p>
           </div>
           <button
@@ -54,7 +57,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
         {/* Error Message */}
         {hasError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-800">Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.</p>
+            <p className="text-sm text-red-800">{t('error')}</p>
           </div>
         )}
 
@@ -66,7 +69,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
             onClick={onClose}
             disabled={isDeleting}
           >
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <button
             type="button"
@@ -77,12 +80,12 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
             {isDeleting ? (
               <>
                 <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                Lösche...
+                {t('deleting')}
               </>
             ) : (
               <>
                 <TrashIcon className="h-4 w-4 mr-2" />
-                Löschen
+                {tCommon('delete')}
               </>
             )}
           </button>

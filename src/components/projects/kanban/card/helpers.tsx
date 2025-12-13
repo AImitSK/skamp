@@ -1,6 +1,9 @@
 // src/components/projects/kanban/card/helpers.tsx
+'use client';
+
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { ProjectPriority } from '@/types/project';
+import { useTranslations } from 'next-intl';
 
 export const getPriorityColor = (priority?: ProjectPriority): string => {
   switch (priority) {
@@ -39,32 +42,40 @@ export const getStatusColor = (status: string): string => {
   }
 };
 
-export const getPriorityLabel = (priority?: ProjectPriority): string => {
-  switch (priority) {
-    case 'urgent':
-      return 'Dringend';
-    case 'high':
-      return 'Hoch';
-    case 'medium':
-      return 'Mittel';
-    case 'low':
-      return 'Niedrig';
-    default:
-      return 'Keine';
-  }
+export const usePriorityLabel = () => {
+  const t = useTranslations('projects.kanban.card');
+
+  return (priority?: ProjectPriority): string => {
+    switch (priority) {
+      case 'urgent':
+        return t('priority.urgent');
+      case 'high':
+        return t('priority.high');
+      case 'medium':
+        return t('priority.medium');
+      case 'low':
+        return t('priority.low');
+      default:
+        return t('priority.none');
+    }
+  };
 };
 
-export const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'active':
-      return 'Aktiv';
-    case 'on_hold':
-      return 'Pausiert';
-    case 'completed':
-      return 'Abgeschlossen';
-    case 'cancelled':
-      return 'Abgebrochen';
-    default:
-      return status;
-  }
+export const useStatusLabel = () => {
+  const t = useTranslations('projects.kanban.card');
+
+  return (status: string): string => {
+    switch (status) {
+      case 'active':
+        return t('status.active');
+      case 'on_hold':
+        return t('status.onHold');
+      case 'completed':
+        return t('status.completed');
+      case 'cancelled':
+        return t('status.cancelled');
+      default:
+        return status;
+    }
+  };
 };

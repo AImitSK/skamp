@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { createFolder } from '@/lib/firebase/media-folders-service';
@@ -21,6 +22,7 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
   parentFolderId,
   organizationId
 }: FolderCreateDialogProps) {
+  const t = useTranslations('projects.folders.createDialog');
   const { user } = useAuth();
   const [folderName, setFolderName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -41,7 +43,7 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
         organizationId, // Erforderlich für MediaFolder
         name: folderName.trim(),
         parentFolderId,
-        description: `Unterordner erstellt von ${user.displayName || user.email}`
+        description: t('description', { userName: user.displayName || user.email || t('unknownUser') })
       }, { organizationId, userId: user.uid });
 
       setFolderName('');
@@ -49,7 +51,7 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
       onClose();
     } catch (error) {
       console.error('Fehler beim Erstellen des Ordners:', error);
-      showAlert('Fehler beim Erstellen des Ordners. Bitte versuchen Sie es erneut.');
+      showAlert(t('error'));
     } finally {
       setCreating(false);
     }
@@ -59,20 +61,20 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <DialogTitle>Neuen Ordner erstellen</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
       <DialogBody className="space-y-4">
         {alert && <Alert type={alert.type} message={alert.message} />}
 
         <div>
           <label htmlFor="folderName" className="block text-sm font-medium text-gray-700 mb-2">
-            Ordnername
+            {t('label')}
           </label>
           <input
             id="folderName"
             type="text"
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
-            placeholder="Ordnername eingeben..."
+            placeholder={t('placeholder')}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={creating}
             maxLength={50}
@@ -81,13 +83,13 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
       </DialogBody>
       <DialogActions>
         <Button plain onClick={onClose} disabled={creating}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleCreate}
           disabled={!folderName.trim() || creating}
         >
-          {creating ? 'Wird erstellt...' : 'Ordner erstellen'}
+          {creating ? t('creating') : t('create')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { getFolders } from '@/lib/firebase/media-folders-service';
 import { updateAsset } from '@/lib/firebase/media-assets-service';
+import { useTranslations } from 'next-intl';
 import Alert from './Alert';
 
 interface MoveAssetModalProps {
@@ -36,6 +37,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
   organizationId,
   rootFolder
 }: MoveAssetModalProps) {
+  const t = useTranslations('projects.folders.moveAssetModal');
   const [currentPath, setCurrentPath] = useState<{id: string, name: string}[]>([]);
   const [currentFolders, setCurrentFolders] = useState<any[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -75,7 +77,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
       setSelectedFolderId(folder.id); // Aktueller Ordner ist ausgewählt
     } catch (error) {
       console.error('Fehler beim Laden des Ordners:', error);
-      showAlert('Fehler beim Laden des Ordners.');
+      showAlert(t('errors.loadFolder'));
     }
   };
 
@@ -103,7 +105,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
       }
     } catch (error) {
       console.error('Fehler beim Zurücknavigieren:', error);
-      showAlert('Fehler beim Navigieren.');
+      showAlert(t('errors.navigate'));
     }
   };
 
@@ -120,7 +122,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
       onClose();
     } catch (error) {
       console.error('Fehler beim Verschieben der Datei:', error);
-      showAlert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+      showAlert(t('errors.moveAsset'));
     } finally {
       setMoving(false);
     }
@@ -129,13 +131,13 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
   if (!isOpen || !asset) return null;
 
   const getPathString = () => {
-    if (currentPath.length === 0) return 'Projekt-Ordner';
-    return 'Projekt-Ordner > ' + currentPath.map(p => p.name).join(' > ');
+    if (currentPath.length === 0) return t('projectFolder');
+    return t('projectFolder') + ' > ' + currentPath.map(p => p.name).join(' > ');
   };
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
-      <DialogTitle>Datei verschieben</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
       <DialogBody className="space-y-4">
         {alert && <Alert type={alert.type} message={alert.message} />}
 
@@ -149,7 +151,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
 
         {/* Aktueller Pfad */}
         <div className="bg-gray-50 p-3 rounded-lg">
-          <Text className="text-sm font-medium text-gray-700">Aktueller Pfad:</Text>
+          <Text className="text-sm font-medium text-gray-700">{t('currentPath')}</Text>
           <Text className="text-sm text-gray-600">{getPathString()}</Text>
         </div>
 
@@ -162,16 +164,16 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
               onClick={handleBackClick}
             >
               <FolderIcon className="w-5 h-5 text-gray-500" />
-              <Text className="text-sm font-medium text-gray-700">..</Text>
+              <Text className="text-sm font-medium text-gray-700">{t('backButton')}</Text>
             </div>
           )}
 
           {/* Ordner-Liste */}
           {currentFolders.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              <Text className="text-sm">Keine Unterordner vorhanden</Text>
+              <Text className="text-sm">{t('emptyState.noSubfolders')}</Text>
               {selectedFolderId && (
-                <Text className="text-xs mt-1">Sie können hier verschieben</Text>
+                <Text className="text-xs mt-1">{t('emptyState.canMoveHere')}</Text>
               )}
             </div>
           ) : (
@@ -183,7 +185,7 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
               >
                 <FolderIcon className="w-5 h-5 text-blue-500" />
                 <Text className="text-sm font-medium">{folder.name}</Text>
-                <div className="ml-auto text-gray-400">→</div>
+                <div className="ml-auto text-gray-400">{t('navigationArrow')}</div>
               </div>
             ))
           )}
@@ -193,20 +195,20 @@ const MoveAssetModal = React.memo(function MoveAssetModal({
         {selectedFolderId && (
           <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
             <Text className="text-sm font-medium text-green-800">
-              ✓ Verschieben nach: {getPathString()}
+              {t('moveToTarget', { path: getPathString() })}
             </Text>
           </div>
         )}
       </DialogBody>
       <DialogActions>
         <Button plain onClick={onClose} disabled={moving}>
-          Abbrechen
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleMove}
           disabled={moving || selectedFolderId === null}
         >
-          {moving ? 'Wird verschoben...' : 'Hier verschieben'}
+          {moving ? t('moving') : t('moveHere')}
         </Button>
       </DialogActions>
     </Dialog>

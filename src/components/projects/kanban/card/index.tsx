@@ -18,8 +18,9 @@ import { de } from 'date-fns/locale';
 import { useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import { toastService } from '@/lib/utils/toast';
 import { ProjectCardProps } from './types';
-import { getPriorityColor, getPriorityIcon, getStatusColor, getPriorityLabel, getStatusLabel } from './helpers';
+import { getPriorityColor, getPriorityIcon, getStatusColor, usePriorityLabel, useStatusLabel } from './helpers';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { useTranslations } from 'next-intl';
 
 export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   project,
@@ -35,6 +36,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 }) => {
   const router = useRouter();
   const { currentOrganization } = useOrganization();
+  const t = useTranslations('projects.kanban.card');
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -46,6 +48,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
+
+  // Label Hooks
+  const getPriorityLabel = usePriorityLabel();
+  const getStatusLabel = useStatusLabel();
 
   // Project Properties with useMemo
   const projectPriority = useMemo(() => (project as any).priority as ProjectPriority, [project]);
@@ -222,7 +228,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             ))}
             {projectTagNames.length > 3 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-600">
-                +{projectTagNames.length - 3}
+                {t('moreTags', { count: projectTagNames.length - 3 })}
               </span>
             )}
           </div>
@@ -264,7 +270,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                   {assignedMembers.length > 3 && (
                     <div className="h-8 w-8 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
                       <span className="text-xs font-medium text-zinc-600">
-                        +{assignedMembers.length - 3}
+                        {t('moreMembers', { count: assignedMembers.length - 3 })}
                       </span>
                     </div>
                   )}
@@ -297,13 +303,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             {isOverdue && (
               <div className="flex items-center text-xs text-red-600 mb-1">
                 <ClockIcon className="h-3 w-3 mr-1" />
-                <span>Überfällig</span>
+                <span>{t('overdue')}</span>
               </div>
             )}
             {progress?.criticalTasks && progress.criticalTasks > 0 && (
               <div className="flex items-center text-xs text-orange-600">
                 <UserIcon className="h-3 w-3 mr-1" />
-                <span>{progress.criticalTasks} kritische Aufgaben</span>
+                <span>{t('criticalTasks', { count: progress.criticalTasks })}</span>
               </div>
             )}
           </div>

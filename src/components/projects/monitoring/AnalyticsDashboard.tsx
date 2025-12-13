@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ChartBarIcon,
   DocumentChartBarIcon,
@@ -69,15 +70,17 @@ interface TimelineChartProps {
 }
 
 const TimelineChart: React.FC<TimelineChartProps> = ({ data, className }) => {
+  const t = useTranslations('projects.monitoring.analytics');
+
   if (!data || data.length === 0) {
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
         <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
           <ChartBarIcon className="h-5 w-5 mr-2" />
-          Reichweiten-Entwicklung
+          {t('charts.reachDevelopment')}
         </h3>
         <div className="flex items-center justify-center h-32 text-gray-500">
-          Keine Daten verfügbar
+          {t('charts.noData')}
         </div>
       </div>
     );
@@ -90,13 +93,13 @@ const TimelineChart: React.FC<TimelineChartProps> = ({ data, className }) => {
     <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
       <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
         <ChartBarIcon className="h-5 w-5 mr-2" />
-        Reichweiten-Entwicklung
+        {t('charts.reachDevelopment')}
       </h3>
       <div className="space-y-3">
         {data.slice(-7).map((item, index) => {
           const date = new Date(item.date.seconds * 1000);
           const percentage = maxReach > 0 ? (item.dailyReach / maxReach) * 100 : 0;
-          
+
           return (
             <div key={index} className="flex items-center space-x-3">
               <div className="w-16 text-xs text-gray-500">
@@ -120,7 +123,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({ data, className }) => {
       </div>
       {data.length > 7 && (
         <p className="text-xs text-gray-500 mt-3">
-          Zeigt die letzten 7 Tage
+          {t('charts.showingLast7Days')}
         </p>
       )}
     </div>
@@ -133,15 +136,17 @@ interface OutletRankingProps {
 }
 
 const OutletRanking: React.FC<OutletRankingProps> = ({ outlets, className }) => {
+  const t = useTranslations('projects.monitoring.analytics');
+
   if (!outlets || outlets.length === 0) {
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
         <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
           <TrophyIcon className="h-5 w-5 mr-2" />
-          Top Outlets
+          {t('charts.topOutlets')}
         </h3>
         <div className="text-gray-500 text-center py-8">
-          Keine Outlet-Daten verfügbar
+          {t('charts.noOutletData')}
         </div>
       </div>
     );
@@ -166,7 +171,7 @@ const OutletRanking: React.FC<OutletRankingProps> = ({ outlets, className }) => 
     <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
       <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
         <TrophyIcon className="h-5 w-5 mr-2" />
-        Top Outlets
+        {t('charts.topOutlets')}
       </h3>
       <div className="space-y-3">
         {outlets.slice(0, 5).map((outlet, index) => (
@@ -181,7 +186,7 @@ const OutletRanking: React.FC<OutletRankingProps> = ({ outlets, className }) => 
                 </span>
               </div>
               <p className="text-xs text-gray-500">
-                {outlet.clippingCount} Clippings • {outlet.totalReach.toLocaleString()} Reichweite
+                {t('charts.clippingsReach', { clippings: outlet.clippingCount, reach: outlet.totalReach.toLocaleString() })}
               </p>
             </div>
             <div className={`text-sm font-medium ${getSentimentColor(outlet.averageSentiment)}`}>
@@ -200,6 +205,8 @@ interface SentimentDistributionProps {
 }
 
 const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics, className }) => {
+  const t = useTranslations('projects.monitoring.analytics');
+
   // Berechne Sentiment-Verteilung aus Timeline-Daten
   const calculateSentimentDistribution = () => {
     if (!analytics.timelineData || analytics.timelineData.length === 0) {
@@ -228,9 +235,9 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
     <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
       <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
         <EyeIcon className="h-5 w-5 mr-2" />
-        Sentiment-Verteilung
+        {t('charts.sentimentDistribution')}
       </h3>
-      
+
       <div className="space-y-4">
         {/* Sentiment-Balken */}
         <div className="flex rounded-lg overflow-hidden h-8">
@@ -250,7 +257,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
           <div>
             <div className="flex items-center justify-center space-x-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
-              <span className="text-sm font-medium text-gray-900">Positiv</span>
+              <span className="text-sm font-medium text-gray-900">{t('sentiment.positive')}</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
               {distribution.positive.toFixed(1)}%
@@ -259,7 +266,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
           <div>
             <div className="flex items-center justify-center space-x-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#add8f0' }} />
-              <span className="text-sm font-medium text-gray-900">Neutral</span>
+              <span className="text-sm font-medium text-gray-900">{t('sentiment.neutral')}</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
               {distribution.neutral.toFixed(1)}%
@@ -268,7 +275,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
           <div>
             <div className="flex items-center justify-center space-x-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }} />
-              <span className="text-sm font-medium text-gray-900">Negativ</span>
+              <span className="text-sm font-medium text-gray-900">{t('sentiment.negative')}</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
               {distribution.negative.toFixed(1)}%
@@ -279,7 +286,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
         {/* Durchschnitts-Score */}
         <div className="border-t pt-4">
           <div className="text-center">
-            <p className="text-sm text-gray-600">Durchschnittliches Sentiment</p>
+            <p className="text-sm text-gray-600">{t('sentiment.averageSentiment')}</p>
             <p className={`text-2xl font-bold ${
               analytics.sentimentScore > 0.1 ? 'text-green-600' :
               analytics.sentimentScore < -0.1 ? 'text-red-600' : 'text-gray-600'
@@ -299,6 +306,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   analytics: providedAnalytics,
   className = ''
 }) => {
+  const t = useTranslations('projects.monitoring.analytics');
   const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(providedAnalytics || null);
   const [loading, setLoading] = useState(!providedAnalytics);
   const [error, setError] = useState<string | null>(null);
@@ -306,13 +314,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   useEffect(() => {
     const loadAnalytics = async () => {
       if (providedAnalytics) return;
-      
+
       try {
         setLoading(true);
         const dashboard = await projectService.getAnalyticsDashboard(projectId, { organizationId });
         setAnalytics(dashboard.analytics);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Fehler beim Laden der Analytics');
+        setError(err instanceof Error ? err.message : t('errors.loadError'));
         console.error('Analytics loading error:', err);
       } finally {
         setLoading(false);
@@ -320,7 +328,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     };
 
     loadAnalytics();
-  }, [projectId, organizationId, providedAnalytics]);
+  }, [projectId, organizationId, providedAnalytics, t]);
 
   if (loading) {
     return (
@@ -344,7 +352,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     return (
       <div className={`p-6 ${className}`}>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Fehler: {error}</p>
+          <p className="text-red-800">{t('errors.error', { error })}</p>
         </div>
       </div>
     );
@@ -356,10 +364,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <EyeIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Keine Analytics-Daten
+            {t('empty.title')}
           </h3>
           <p className="text-gray-500">
-            Monitoring für dieses Projekt wurde noch nicht gestartet oder es sind keine Daten verfügbar.
+            {t('empty.description')}
           </p>
         </div>
       </div>
@@ -371,27 +379,27 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       {/* KPI-Karten */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          title="Gesamtreichweite"
+          title={t('kpis.totalReach')}
           value={analytics.totalReach}
-          subtitle="Personen erreicht"
+          subtitle={t('kpis.peopleReached')}
           icon={EyeIcon}
         />
         <KPICard
-          title="Clippings"
+          title={t('kpis.clippings')}
           value={analytics.clippingCount}
-          subtitle="Medienerwähnungen"
+          subtitle={t('kpis.mediaMentions')}
           icon={DocumentChartBarIcon}
         />
         <KPICard
-          title="Media Value"
+          title={t('kpis.mediaValue')}
           value={`€${(analytics.mediaValue / 1000).toFixed(1)}K`}
-          subtitle="Berechneter Medienwert"
+          subtitle={t('kpis.calculatedValue')}
           icon={TrophyIcon}
         />
         <KPICard
-          title="Sentiment"
+          title={t('kpis.sentiment')}
           value={analytics.sentimentScore > 0 ? `+${analytics.sentimentScore.toFixed(2)}` : analytics.sentimentScore.toFixed(2)}
-          subtitle="Durchschnittsbewertung"
+          subtitle={t('kpis.averageRating')}
           icon={ChartBarIcon}
         />
       </div>
@@ -404,22 +412,22 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <OutletRanking outlets={analytics.topOutlets} />
-        
+
         {/* Export-Aktionen */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <DocumentChartBarIcon className="h-5 w-5 mr-2" />
-            Report-Export
+            {t('export.title')}
           </h3>
           <div className="space-y-3">
             <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
-              PDF-Report generieren
+              {t('export.pdfReport')}
             </button>
             <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
-              Excel-Export
+              {t('export.excelExport')}
             </button>
             <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
-              PowerPoint-Präsentation
+              {t('export.powerpoint')}
             </button>
           </div>
         </div>
@@ -428,7 +436,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       {/* Letzte Aktualisierung */}
       {analytics.lastUpdated && (
         <div className="text-center text-sm text-gray-500">
-          Letzte Aktualisierung: {new Date(analytics.lastUpdated.seconds * 1000).toLocaleString('de-DE')}
+          {t('lastUpdated', { date: new Date(analytics.lastUpdated.seconds * 1000).toLocaleString('de-DE') })}
         </div>
       )}
     </div>

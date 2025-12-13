@@ -18,6 +18,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
@@ -46,140 +47,148 @@ interface ProjectGuideBoxProps {
   className?: string;
 }
 
-const GUIDE_PHASES: GuidePhase[] = [
-  {
-    id: 'ideas_planning',
-    title: 'Ideen & Planung',
-    icon: SparklesIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'create_tasks',
-        title: 'Aufgabenliste erstellen',
-        description: 'Plane und verteile Aufgaben an dein Team',
-        tab: 'tasks'
-      },
-      {
-        id: 'create_strategy',
-        title: 'Strategie-Dokumente erstellen',
-        description: 'Definiere Ziele und Kernbotschaften',
-        tab: 'strategie'
-      }
-    ]
-  },
-  {
-    id: 'creation',
-    title: 'Content Erstellung',
-    icon: DocumentTextIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'upload_media',
-        title: 'Bilder & Videos hochladen',
-        description: 'Lade relevante Medien in den Daten-Bereich',
-        tab: 'daten'
-      },
-      {
-        id: 'create_draft',
-        title: 'KI-Entwurf erstellen',
-        description: 'Nutze den KI-Assistenten für den ersten Entwurf',
-        tab: 'pressemeldung'
-      }
-    ]
-  },
-  {
-    id: 'internal_approval',
-    title: 'Interne Freigabe',
-    icon: ChatBubbleLeftRightIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'team_feedback',
-        title: 'Team-Feedback einholen',
-        description: 'Diskutiere mit deinem Team im Chat',
-        action: 'chat'
-      }
-    ]
-  },
-  {
-    id: 'customer_approval',
-    title: 'Kunden-Freigabe',
-    icon: ShieldCheckIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'customer_approval',
-        title: 'Kundenfreigabe erhalten',
-        description: 'Lass die Pressemitteilung vom Kunden absegnen',
-        tab: 'overview' // Freigaben-Bereich im Overview
-      }
-    ]
-  },
-  {
-    id: 'distribution',
-    title: 'Verteilung',
-    icon: PaperAirplaneIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'create_list',
-        title: 'Verteiler zusammenstellen',
-        description: 'Wähle relevante Journalisten und Redaktionen',
-        tab: 'verteiler'
-      },
-      {
-        id: 'create_letter',
-        title: 'Anschreiben verfassen',
-        description: 'Personalisiere deine Nachricht',
-        tab: 'verteiler'
-      },
-      {
-        id: 'test_send',
-        title: 'Testversand durchführen',
-        description: 'Prüfe alles vor dem finalen Versand',
-        tab: 'verteiler'
-      },
-      {
-        id: 'send_campaign',
-        title: 'Pressemeldung versenden',
-        description: 'Starte den Versand an alle Empfänger',
-        tab: 'verteiler'
-      }
-    ]
-  },
-  {
-    id: 'monitoring',
-    title: 'Monitoring & Analyse',
-    icon: ChartBarIcon,
-    color: 'text-gray-700 bg-gray-50',
-    steps: [
-      {
-        id: 'manage_inbox',
-        title: 'Mit Redaktionen korrespondieren',
-        description: 'Beantworte Rückfragen und pflege Kontakte',
-        action: 'inbox'
-      },
-      {
-        id: 'track_publications',
-        title: 'Veröffentlichungen tracken',
-        description: 'Nutze den Alert für neue Artikel',
-        tab: 'monitoring'
-      },
-      {
-        id: 'analyze_success',
-        title: 'Erfolg analysieren',
-        description: 'Bewerte Reichweite und Impact',
-        tab: 'monitoring'
-      }
-    ]
-  }
-];
+// Helper to build guide phases with translations
+function useGuidePhases() {
+  const t = useTranslations('projects.guides');
+
+  return [
+    {
+      id: 'ideas_planning',
+      title: t('phases.ideasPlanning.title'),
+      icon: SparklesIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'create_tasks',
+          title: t('phases.ideasPlanning.steps.createTasks.title'),
+          description: t('phases.ideasPlanning.steps.createTasks.description'),
+          tab: 'tasks'
+        },
+        {
+          id: 'create_strategy',
+          title: t('phases.ideasPlanning.steps.createStrategy.title'),
+          description: t('phases.ideasPlanning.steps.createStrategy.description'),
+          tab: 'strategie'
+        }
+      ]
+    },
+    {
+      id: 'creation',
+      title: t('phases.creation.title'),
+      icon: DocumentTextIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'upload_media',
+          title: t('phases.creation.steps.uploadMedia.title'),
+          description: t('phases.creation.steps.uploadMedia.description'),
+          tab: 'daten'
+        },
+        {
+          id: 'create_draft',
+          title: t('phases.creation.steps.createDraft.title'),
+          description: t('phases.creation.steps.createDraft.description'),
+          tab: 'pressemeldung'
+        }
+      ]
+    },
+    {
+      id: 'internal_approval',
+      title: t('phases.internalApproval.title'),
+      icon: ChatBubbleLeftRightIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'team_feedback',
+          title: t('phases.internalApproval.steps.teamFeedback.title'),
+          description: t('phases.internalApproval.steps.teamFeedback.description'),
+          action: 'chat'
+        }
+      ]
+    },
+    {
+      id: 'customer_approval',
+      title: t('phases.customerApproval.title'),
+      icon: ShieldCheckIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'customer_approval',
+          title: t('phases.customerApproval.steps.customerApproval.title'),
+          description: t('phases.customerApproval.steps.customerApproval.description'),
+          tab: 'overview'
+        }
+      ]
+    },
+    {
+      id: 'distribution',
+      title: t('phases.distribution.title'),
+      icon: PaperAirplaneIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'create_list',
+          title: t('phases.distribution.steps.createList.title'),
+          description: t('phases.distribution.steps.createList.description'),
+          tab: 'verteiler'
+        },
+        {
+          id: 'create_letter',
+          title: t('phases.distribution.steps.createLetter.title'),
+          description: t('phases.distribution.steps.createLetter.description'),
+          tab: 'verteiler'
+        },
+        {
+          id: 'test_send',
+          title: t('phases.distribution.steps.testSend.title'),
+          description: t('phases.distribution.steps.testSend.description'),
+          tab: 'verteiler'
+        },
+        {
+          id: 'send_campaign',
+          title: t('phases.distribution.steps.sendCampaign.title'),
+          description: t('phases.distribution.steps.sendCampaign.description'),
+          tab: 'verteiler'
+        }
+      ]
+    },
+    {
+      id: 'monitoring',
+      title: t('phases.monitoring.title'),
+      icon: ChartBarIcon,
+      color: 'text-gray-700 bg-gray-50',
+      steps: [
+        {
+          id: 'manage_inbox',
+          title: t('phases.monitoring.steps.manageInbox.title'),
+          description: t('phases.monitoring.steps.manageInbox.description'),
+          action: 'inbox'
+        },
+        {
+          id: 'track_publications',
+          title: t('phases.monitoring.steps.trackPublications.title'),
+          description: t('phases.monitoring.steps.trackPublications.description'),
+          tab: 'monitoring'
+        },
+        {
+          id: 'analyze_success',
+          title: t('phases.monitoring.steps.analyzeSuccess.title'),
+          description: t('phases.monitoring.steps.analyzeSuccess.description'),
+          tab: 'monitoring'
+        }
+      ]
+    }
+  ];
+}
 
 export default function ProjectGuideBox({
   completedSteps = [],
   onStepToggle,
   className = ''
 }: ProjectGuideBoxProps) {
+  const t = useTranslations('projects.guides');
+  const GUIDE_PHASES = useGuidePhases();
+
   // Context verwenden statt Props
   const { project, setActiveTab } = useProject();
   const currentPhase = project?.currentStage || 'ideas_planning';
@@ -242,10 +251,10 @@ export default function ProjectGuideBox({
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <ClipboardDocumentListIcon className="h-5 w-5 text-primary mr-2" />
-            <Subheading>Projekt-Guide</Subheading>
+            <Subheading>{t('title')}</Subheading>
           </div>
           <Badge color="blue" className="font-medium">
-            {progress}% abgeschlossen
+            {t('progressCompleted', { progress })}
           </Badge>
         </div>
 
@@ -294,10 +303,13 @@ export default function ProjectGuideBox({
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-gray-900">{phase.title}</span>
                     <Text className="text-xs text-gray-500">
-                      ({phase.steps.filter(s => completedSteps.includes(s.id)).length} von {phase.steps.length} erledigt)
+                      {t('phaseProgress', {
+                        completed: phase.steps.filter(s => completedSteps.includes(s.id)).length,
+                        total: phase.steps.length
+                      })}
                     </Text>
                     {status === 'current' && (
-                      <Badge color="blue" className="text-xs py-0">Aktuell</Badge>
+                      <Badge color="blue" className="text-xs py-0">{t('currentBadge')}</Badge>
                     )}
                   </div>
                 </div>
