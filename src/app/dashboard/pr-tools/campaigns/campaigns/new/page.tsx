@@ -97,7 +97,7 @@ function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; mess
 
 
 export default function NewPRCampaignPage() {
-  const t = useTranslations('campaigns');
+  const t = useTranslations('campaigns.new');
   const tCommon = useTranslations('common');
   const tErrors = useTranslations('errors');
   const { user } = useAuth();
@@ -240,7 +240,7 @@ export default function NewPRCampaignPage() {
     if (enabled) {
       const steps = [];
       if (approvalData.customerApprovalRequired) {
-        steps.push(`Kunden-Freigabe (${approvalData.customerContact?.name || 'TBD'})`);
+        steps.push(t('pdf.workflow.customerApprovalStep', { name: approvalData.customerContact?.name || 'TBD' }));
       }
       
       setPdfWorkflowPreview({
@@ -1210,7 +1210,7 @@ export default function NewPRCampaignPage() {
                               {attachment.metadata.fileName || attachment.metadata.folderName}
                             </p>
                             {attachment.type === 'folder' && (
-                              <Badge color="blue" className="text-xs">Ordner</Badge>
+                              <Badge color="blue" className="text-xs">{t('media.folderBadge')}</Badge>
                             )}
                           </div>
                         </div>

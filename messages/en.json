@@ -1275,7 +1275,9 @@
       "savedWithProject": "Campaign successfully saved and linked to project \"{projectTitle}\"!"
     },
     "error": {
-      "withMessage": "Error: {message}"
+      "withMessage": "Error: {message}",
+      "loadFailed": "Failed to load data",
+      "generic": "An error occurred. Please try again."
     },
     "editLock": {
       "unknownReason": "unknown",
@@ -1359,7 +1361,9 @@
       "openApproval": "Open approval",
       "customerLink": "Customer link",
       "approvedAutoTransition": "✓ Approval received. Project will automatically be forwarded to distribution.",
-      "rejectedRevise": "✗ Approval rejected. Please revise the campaign based on customer feedback."
+      "rejectedRevise": "✗ Approval rejected. Please revise the campaign based on customer feedback.",
+      "approvalTitle": "Project Approval: {title}",
+      "approvalDesc": "Customer approval for project pipeline"
     },
     "actions": {
       "cancel": "Cancel",
@@ -1368,6 +1372,16 @@
       "saving": "Saving...",
       "requestApproval": "Request Approval",
       "saveAsDraft": "Save as Draft"
+    },
+    "migration": {
+      "unknownError": "Unknown error",
+      "apiError": "API Error: {error}",
+      "prepFailed": "Migration preparation failed: {error}",
+      "assetDescription": "Migrated from Campaign {campaignId}",
+      "partialFailure": "Migration partially failed: {errors}",
+      "successMessage": "✅ {count, plural, =1 {1 asset} other {# assets}} successfully migrated to project folder",
+      "errorMessage": "⚠️ {count, plural, =1 {1 asset could} other {# assets could}} not be migrated",
+      "failed": "❌ Migration failed: {message}"
     },
     "detail": {
       "loading": "Loading campaign...",

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { prService } from "@/lib/firebase/pr-service";
 import { approvalService } from "@/lib/firebase/approval-service";
 import { mediaService } from "@/lib/firebase/media-service";
@@ -46,13 +47,14 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/
 import clsx from "clsx";
 
 // Media Gallery Component
-function MediaGallery({ 
+function MediaGallery({
   attachments,
-  loading 
-}: { 
+  loading
+}: {
   attachments: CampaignAssetAttachment[];
   loading: boolean;
 }) {
+  const t = useTranslations('prTools.approvals');
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(true);
@@ -88,7 +90,7 @@ function MediaGallery({
       setFolders(loadedFolders.filter(Boolean) as MediaFolder[]);
       
     } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
+      console.error('Error loading media:', error);
     } finally {
       setLoadingAssets(false);
     }
@@ -123,15 +125,15 @@ function MediaGallery({
       <div className="border-b border-gray-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <PhotoIcon className="h-5 w-5 text-gray-400" />
-          Angehängte Medien ({attachments.length})
+          {t('media.title', { count: attachments.length })}
         </h2>
       </div>
-      
+
       <div className="p-6">
         {/* Folders */}
         {folders.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Ordner</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">{t('media.folders')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {folders.map((folder) => (
                 <div 
@@ -145,7 +147,7 @@ function MediaGallery({
                       <p className="text-xs text-gray-500">{folder.description}</p>
                     )}
                   </div>
-                  <Badge color="blue" className="text-xs">Ordner</Badge>
+                  <Badge color="blue" className="text-xs">{t('media.folderBadge')}</Badge>
                 </div>
               ))}
             </div>
@@ -155,7 +157,7 @@ function MediaGallery({
         {/* Assets Grid */}
         {assets.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Dateien</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">{t('media.files')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {assets.map((asset) => {
                 const FileIcon = getFileIcon(asset.fileType);
@@ -187,7 +189,7 @@ function MediaGallery({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                          title="Ansehen"
+                          title={t('media.view')}
                         >
                           <EyeIcon className="h-5 w-5 text-gray-700" />
                         </a>
@@ -200,7 +202,7 @@ function MediaGallery({
                         {asset.fileName}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
+                        {asset.fileType?.split('/')[1]?.toUpperCase() || t('media.file')}
                       </p>
                     </div>
                   </div>
@@ -215,8 +217,7 @@ function MediaGallery({
           <div className="flex">
             <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
             <p className="text-sm text-blue-800">
-              Diese Medien sind Teil der Pressemitteilung und werden nach Ihrer Freigabe 
-              zusammen mit der Mitteilung an die Empfänger versendet.
+              {t('media.info')}
             </p>
           </div>
         </div>
@@ -226,20 +227,22 @@ function MediaGallery({
 }
 
 // PDF-Version-Overview Component
-function PDFVersionOverview({ 
-  version, 
+function PDFVersionOverview({
+  version,
   campaignTitle,
-  onHistoryToggle 
-}: { 
+  onHistoryToggle
+}: {
   version: PDFVersion;
   campaignTitle: string;
   onHistoryToggle: () => void;
 }) {
+  const t = useTranslations('prTools.approvals');
+
   const statusConfig = {
-    draft: { color: 'zinc', label: 'Entwurf', icon: DocumentIcon },
-    pending_customer: { color: 'yellow', label: 'Zur Freigabe', icon: ClockIcon },
-    approved: { color: 'green', label: 'Freigegeben', icon: CheckCircleIcon },
-    rejected: { color: 'red', label: 'Abgelehnt', icon: XCircleIcon }
+    draft: { color: 'zinc', labelKey: 'pdfVersion.status.draft', icon: DocumentIcon },
+    pending_customer: { color: 'yellow', labelKey: 'pdfVersion.status.pending', icon: ClockIcon },
+    approved: { color: 'green', labelKey: 'pdfVersion.status.approved', icon: CheckCircleIcon },
+    rejected: { color: 'red', labelKey: 'pdfVersion.status.rejected', icon: XCircleIcon }
   };
   
   const config = statusConfig[version.status] || statusConfig.draft;
@@ -270,14 +273,14 @@ function PDFVersionOverview({
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-            PDF-Version {version.version}
+            {t('pdfVersion.title', { version: version.version })}
           </h2>
           <Button
             plain
             onClick={onHistoryToggle}
             className="text-sm"
           >
-            Versionshistorie anzeigen
+            {t('pdfVersion.showHistory')}
           </Button>
         </div>
       </div>
@@ -289,19 +292,23 @@ function PDFVersionOverview({
             <div>
               <h3 className="font-medium text-gray-900">{campaignTitle}</h3>
               <div className="text-sm text-gray-600 mt-1">
-                Erstellt am {formatDate(version.createdAt)}
+                {t('pdfVersion.createdAt', { date: formatDate(version.createdAt) })}
               </div>
               {version.metadata && (
                 <div className="text-xs text-gray-500 mt-1">
-                  {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten • {formatFileSize(version.fileSize)}
+                  {t('pdfVersion.metadata', {
+                    words: version.metadata.wordCount,
+                    pages: version.metadata.pageCount,
+                    size: formatFileSize(version.fileSize)
+                  })}
                 </div>
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Badge color={config.color as any} className="text-sm">
-              {config.label}
+              {t(config.labelKey)}
             </Badge>
             <a
               href={version.downloadUrl}
@@ -311,15 +318,15 @@ function PDFVersionOverview({
             >
               <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
                 <DocumentIcon className="h-4 w-4 mr-2" />
-                PDF öffnen
+                {t('pdfVersion.openPdf')}
               </Button>
             </a>
           </div>
         </div>
-        
+
         {/* Content Preview */}
         <div className="border-t pt-4">
-          <h4 className="font-medium text-gray-900 mb-2">Inhalt (Preview)</h4>
+          <h4 className="font-medium text-gray-900 mb-2">{t('pdfVersion.contentPreview')}</h4>
           <div className="text-sm text-gray-600 line-clamp-3">
             {version.contentSnapshot.title}
           </div>
@@ -328,14 +335,14 @@ function PDFVersionOverview({
         {/* PDF-Approval Integration */}
         {version.customerApproval && (
           <div className="mt-4 pt-4 border-t">
-            <h4 className="font-medium text-gray-900 mb-2">Freigabe-Information</h4>
+            <h4 className="font-medium text-gray-900 mb-2">{t('pdfVersion.approvalInfo')}</h4>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <ClockIcon className="h-4 w-4" />
-              {version.customerApproval.requestedAt && 
-                `Angefordert am ${formatDate(version.customerApproval.requestedAt)}`
+              {version.customerApproval.requestedAt &&
+                t('pdfVersion.requestedAt', { date: formatDate(version.customerApproval.requestedAt) })
               }
-              {version.customerApproval.approvedAt && 
-                ` • Freigegeben am ${formatDate(version.customerApproval.approvedAt)}`
+              {version.customerApproval.approvedAt &&
+                ` • ${t('pdfVersion.approvedAt', { date: formatDate(version.customerApproval.approvedAt) })}`
               }
             </div>
           </div>
@@ -346,13 +353,15 @@ function PDFVersionOverview({
 }
 
 // PDF-History Modal
-function PDFHistoryModal({ 
-  versions, 
-  onClose 
-}: { 
-  versions: PDFVersion[]; 
+function PDFHistoryModal({
+  versions,
+  onClose
+}: {
+  versions: PDFVersion[];
   onClose: () => void;
 }) {
+  const t = useTranslations('prTools.approvals');
+
   const getPDFStatusBadgeColor = (status: string): 'green' | 'yellow' | 'red' | 'blue' | 'zinc' => {
     switch (status) {
       case 'approved': return 'green';
@@ -363,12 +372,12 @@ function PDFHistoryModal({
     }
   };
 
-  const getPDFStatusLabel = (status: string): string => {
+  const getPDFStatusLabelKey = (status: string): string => {
     switch (status) {
-      case 'approved': return 'Freigegeben';
-      case 'pending_customer': return 'Zur Freigabe';
-      case 'rejected': return 'Abgelehnt';
-      case 'draft': return 'Entwurf';
+      case 'approved': return 'pdfVersion.status.approved';
+      case 'pending_customer': return 'pdfVersion.status.pending';
+      case 'rejected': return 'pdfVersion.status.rejected';
+      case 'draft': return 'pdfVersion.status.draft';
       default: return status;
     }
   };
@@ -388,7 +397,7 @@ function PDFHistoryModal({
   return (
     <Dialog open={true} onClose={onClose} size="4xl">
       <div className="p-6">
-        <DialogTitle>PDF-Versionshistorie</DialogTitle>
+        <DialogTitle>{t('pdfHistory.title')}</DialogTitle>
         <DialogBody className="mt-4">
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {versions.map((version) => (
@@ -397,16 +406,16 @@ function PDFHistoryModal({
                   <div className="flex items-center gap-3">
                     <DocumentIcon className="h-5 w-5 text-gray-500" />
                     <div>
-                      <span className="font-medium">Version {version.version}</span>
+                      <span className="font-medium">{t('pdfHistory.versionLabel', { version: version.version })}</span>
                       <div className="text-sm text-gray-600">
                         {formatDate(version.createdAt)}
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <Badge color={getPDFStatusBadgeColor(version.status)} className="text-xs">
-                      {getPDFStatusLabel(version.status)}
+                      {t(getPDFStatusLabelKey(version.status))}
                     </Badge>
                     <a
                       href={version.downloadUrl}
@@ -415,17 +424,20 @@ function PDFHistoryModal({
                     >
                       <Button plain>
                         <DocumentIcon className="h-4 w-4 mr-1" />
-                        Öffnen
+                        {t('pdfHistory.open')}
                       </Button>
                     </a>
                   </div>
                 </div>
-                
+
                 <div className="text-sm text-gray-600">
                   <div className="font-medium mb-1">{version.contentSnapshot.title}</div>
                   {version.metadata && (
                     <div className="text-xs">
-                      {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
+                      {t('pdfHistory.metadata', {
+                        words: version.metadata.wordCount,
+                        pages: version.metadata.pageCount
+                      })}
                     </div>
                   )}
                 </div>
@@ -434,7 +446,7 @@ function PDFHistoryModal({
           </div>
         </DialogBody>
         <DialogActions>
-          <Button plain onClick={onClose}>Schließen</Button>
+          <Button plain onClick={onClose}>{t('pdfHistory.close')}</Button>
         </DialogActions>
       </div>
     </Dialog>
@@ -442,13 +454,15 @@ function PDFHistoryModal({
 }
 
 // Recipient Status Component
-function RecipientStatus({ 
+function RecipientStatus({
   recipient,
-  isCurrentUser 
-}: { 
+  isCurrentUser
+}: {
   recipient: any;
   isCurrentUser: boolean;
 }) {
+  const t = useTranslations('prTools.approvals');
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -464,18 +478,18 @@ function RecipientStatus({
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabelKey = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'Freigegeben';
+        return 'recipientStatus.approved';
       case 'rejected':
-        return 'Abgelehnt';
+        return 'recipientStatus.rejected';
       case 'commented':
-        return 'Kommentiert';
+        return 'recipientStatus.commented';
       case 'viewed':
-        return 'Angesehen';
+        return 'recipientStatus.viewed';
       default:
-        return 'Ausstehend';
+        return 'recipientStatus.pending';
     }
   };
 
@@ -504,10 +518,10 @@ function RecipientStatus({
         <div className="flex items-center gap-2">
           <p className="font-medium text-sm">
             {recipient.name}
-            {isCurrentUser && <span className="text-blue-600"> (Sie)</span>}
+            {isCurrentUser && <span className="text-blue-600"> {t('recipientStatus.you')}</span>}
           </p>
           <Badge color={getStatusColor(recipient.status) as any} className="text-xs">
-            {getStatusLabel(recipient.status)}
+            {t(getStatusLabelKey(recipient.status))}
           </Badge>
         </div>
         {recipient.email && (
@@ -515,7 +529,7 @@ function RecipientStatus({
         )}
       </div>
       {recipient.role === 'approver' && recipient.isRequired && (
-        <div className="text-xs text-gray-500">Erforderlich</div>
+        <div className="text-xs text-gray-500">{t('recipientStatus.required')}</div>
       )}
     </div>
   );
@@ -524,7 +538,8 @@ function RecipientStatus({
 export default function ApprovalPage() {
   const params = useParams();
   const shareId = params.shareId as string;
-  
+  const t = useTranslations('prTools.approvals');
+
   const [approval, setApproval] = useState<ApprovalEnhanced | null>(null);
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
@@ -566,7 +581,7 @@ export default function ApprovalPage() {
           setPdfVersions(pdfVersions);
           setCurrentPdfVersion(currentPdfVersion);
         } catch (pdfError) {
-          console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+          console.error('Error loading PDF versions:', pdfError);
         }
         
         // Markiere als angesehen
@@ -583,16 +598,16 @@ export default function ApprovalPage() {
               const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
               setBrandingSettings(branding);
             } catch (brandingError) {
-              console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
+              console.error('Error loading branding settings:', brandingError);
             }
           }
         }
       } else {
         // Fallback zu Legacy-Methode
         const campaignData = await prService.getCampaignByShareId(shareId);
-        
+
         if (!campaignData) {
-          setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
+          setError(t('errors.notFound'));
           return;
         }
 
@@ -610,14 +625,14 @@ export default function ApprovalPage() {
             const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
             setBrandingSettings(branding);
           } catch (brandingError) {
-            console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
+            console.error('Error loading branding settings:', brandingError);
           }
         }
       }
 
     } catch (error) {
-      console.error('Fehler beim Laden der Freigabe:', error);
-      setError('Die Pressemitteilung konnte nicht geladen werden.');
+      console.error('Error loading approval:', error);
+      setError(t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -643,8 +658,8 @@ export default function ApprovalPage() {
       // Reload
       await loadApproval();
     } catch (error) {
-      console.error('Fehler bei der Freigabe:', error);
-      alert('Die Freigabe konnte nicht erteilt werden. Bitte versuchen Sie es erneut.');
+      console.error('Error approving:', error);
+      alert(t('errors.approveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -655,7 +670,7 @@ export default function ApprovalPage() {
 
     try {
       setSubmitting(true);
-      
+
       if (approval) {
         // Enhanced Approval
         await approvalService.requestChanges(shareId, currentUserEmail || 'unknown@example.com', feedbackText.trim());
@@ -663,16 +678,16 @@ export default function ApprovalPage() {
         // Legacy Approval
         await prService.submitFeedback(shareId, feedbackText.trim());
       }
-      
+
       setFeedbackText('');
       setShowFeedbackForm(false);
       setActionCompleted(true);
-      
+
       // Reload
       await loadApproval();
     } catch (error) {
-      console.error('Fehler beim Senden des Feedbacks:', error);
-      alert('Das Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
+      console.error('Error sending feedback:', error);
+      alert(t('errors.feedbackFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -696,7 +711,7 @@ export default function ApprovalPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto mb-4"></div>
-          <p className="text-gray-600">Lade Pressemitteilung...</p>
+          <p className="text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );
@@ -708,7 +723,7 @@ export default function ApprovalPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <Heading level={2} className="text-red-900 mb-2">Fehler</Heading>
+          <Heading level={2} className="text-red-900 mb-2">{t('errors.title')}</Heading>
           <Text className="text-gray-600">{error}</Text>
         </div>
       </div>
@@ -773,13 +788,13 @@ export default function ApprovalPage() {
               </Heading>
               
               <Text className="text-gray-600">
-                {mappedStatus === 'pending' && 'Diese Pressemitteilung wartet auf Ihre Prüfung.'}
-                {mappedStatus === 'in_review' && 'Sie haben diese Pressemitteilung angesehen.'}
-                {mappedStatus === 'changes_requested' && 'Sie haben Änderungen zu dieser Pressemitteilung angefordert.'}
-                {mappedStatus === 'approved' && 'Diese Pressemitteilung wurde von Ihnen freigegeben.'}
-                {mappedStatus === 'rejected' && 'Diese Pressemitteilung wurde abgelehnt.'}
-                {mappedStatus === 'completed' && 'Diese Pressemitteilung wurde freigegeben und versendet.'}
-                {!['pending', 'in_review', 'changes_requested', 'approved', 'rejected', 'completed'].includes(mappedStatus) && 'Status der Pressemitteilung.'}
+                {mappedStatus === 'pending' && t('status.description.pending')}
+                {mappedStatus === 'in_review' && t('status.description.inReview')}
+                {mappedStatus === 'changes_requested' && t('status.description.changesRequested')}
+                {mappedStatus === 'approved' && t('status.description.approved')}
+                {mappedStatus === 'rejected' && t('status.description.rejected')}
+                {mappedStatus === 'completed' && t('status.description.completed')}
+                {!['pending', 'in_review', 'changes_requested', 'approved', 'rejected', 'completed'].includes(mappedStatus) && t('status.description.default')}
               </Text>
               
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">

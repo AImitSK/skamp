@@ -88,7 +88,7 @@ export default function ReportingPage() {
   const handleDelete = async (reporting: AutoReporting) => {
     if (!currentOrganization?.id || !user?.uid || !reporting.id) return;
 
-    if (!confirm(`Auto-Reporting für "${reporting.campaignName}" wirklich löschen?`)) return;
+    if (!confirm(t('confirmDelete', { campaign: reporting.campaignName }))) return;
 
     try {
       await autoReportingService.deleteAutoReporting(

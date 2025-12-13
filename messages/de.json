@@ -1275,7 +1275,9 @@
       "savedWithProject": "Kampagne erfolgreich gespeichert und mit Projekt \"{projectTitle}\" verknüpft!"
     },
     "error": {
-      "withMessage": "Fehler: {message}"
+      "withMessage": "Fehler: {message}",
+      "loadFailed": "Daten konnten nicht geladen werden",
+      "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
     },
     "editLock": {
       "unknownReason": "unbekannt",
@@ -1359,7 +1361,9 @@
       "openApproval": "Freigabe öffnen",
       "customerLink": "Kunden-Link",
       "approvedAutoTransition": "✓ Freigabe erhalten. Projekt wird automatisch zur Distribution weitergeleitet.",
-      "rejectedRevise": "✗ Freigabe abgelehnt. Bitte überarbeiten Sie die Kampagne basierend auf dem Kunden-Feedback."
+      "rejectedRevise": "✗ Freigabe abgelehnt. Bitte überarbeiten Sie die Kampagne basierend auf dem Kunden-Feedback.",
+      "approvalTitle": "Projekt-Freigabe: {title}",
+      "approvalDesc": "Kunden-Freigabe für Projekt-Pipeline"
     },
     "actions": {
       "cancel": "Abbrechen",
@@ -1368,6 +1372,16 @@
       "saving": "Speichert...",
       "requestApproval": "Freigabe anfordern",
       "saveAsDraft": "Als Entwurf speichern"
+    },
+    "migration": {
+      "unknownError": "Unbekannter Fehler",
+      "apiError": "API-Fehler: {error}",
+      "prepFailed": "Migration-Vorbereitung fehlgeschlagen: {error}",
+      "assetDescription": "Migriert von Campaign {campaignId}",
+      "partialFailure": "Migration teilweise fehlgeschlagen: {errors}",
+      "successMessage": "✅ {count, plural, =1 {1 Asset} other {# Assets}} erfolgreich in Projekt-Ordner migriert",
+      "errorMessage": "⚠️ {count, plural, =1 {1 Asset konnte} other {# Assets konnten}} nicht migriert werden",
+      "failed": "❌ Migration fehlgeschlagen: {message}"
     },
     "detail": {
       "loading": "Lade Kampagne...",

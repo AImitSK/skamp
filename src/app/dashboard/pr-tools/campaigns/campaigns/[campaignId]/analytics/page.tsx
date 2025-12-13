@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
@@ -99,6 +100,8 @@ function MetricCard({
 
 // Aktivitäts-Item Komponente
 function ActivityItem({ activity }: { activity: EmailActivity }) {
+  const t = useTranslations('prTools.campaignAnalytics');
+
   const getActivityIcon = () => {
     switch (activity.type) {
       case 'sent': return EnvelopeIcon;
@@ -125,13 +128,13 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
 
   const getActivityLabel = () => {
     switch (activity.type) {
-      case 'sent': return 'E-Mail versendet';
-      case 'delivered': return 'E-Mail zugestellt';
-      case 'opened': return 'E-Mail geöffnet';
-      case 'clicked': return 'Link angeklickt';
-      case 'bounced': return 'E-Mail abgewiesen';
-      case 'failed': return 'Versand fehlgeschlagen';
-      default: return 'Unbekannte Aktivität';
+      case 'sent': return t('activityTypes.sent');
+      case 'delivered': return t('activityTypes.delivered');
+      case 'opened': return t('activityTypes.opened');
+      case 'clicked': return t('activityTypes.clicked');
+      case 'bounced': return t('activityTypes.bounced');
+      case 'failed': return t('activityTypes.failed');
+      default: return t('activityTypes.unknown');
     }
   };
 
@@ -152,7 +155,7 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
               {activity.metadata?.userAgent && (
                 <>
                   <span>•</span>
-                  <span>{activity.metadata.userAgent.includes('Mobile') ? 'Mobil' : 'Desktop'}</span>
+                  <span>{activity.metadata.userAgent.includes('Mobile') ? t('deviceTypes.mobile') : t('deviceTypes.desktop')}</span>
                 </>
               )}
               {activity.metadata?.location && (
@@ -181,7 +184,7 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
         )}
         {activity.metadata?.failureReason && (
           <Text className="text-sm text-red-600 mt-1">
-            Fehler: {activity.metadata.failureReason}
+            {t('errorLabel')}: {activity.metadata.failureReason}
           </Text>
         )}
       </div>
@@ -190,9 +193,18 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
 }
 
 // Export Funktion
-function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activities: EmailActivity[]) {
+function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activities: EmailActivity[], t: any) {
   // Erstelle CSV-Inhalt
-  const headers = ['E-Mail', 'Status', 'Versendet', 'Zugestellt', 'Geöffnet', 'Geklickt', 'Fehlgeschlagen', 'Abgewiesen'];
+  const headers = [
+    t('export.headers.email'),
+    t('export.headers.status'),
+    t('export.headers.sent'),
+    t('export.headers.delivered'),
+    t('export.headers.opened'),
+    t('export.headers.clicked'),
+    t('export.headers.failed'),
+    t('export.headers.bounced')
+  ];
 
   // Gruppiere Aktivitäten nach E-Mail
   const emailStats = new Map<string, any>();
@@ -227,22 +239,22 @@ function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activ
 
   // Erstelle CSV-Zeilen
   const rows = Array.from(emailStats.values()).map(stats => {
-    const status = stats.failed ? 'Fehlgeschlagen' :
-      stats.bounced ? 'Abgewiesen' :
-        stats.clicked ? 'Geklickt' :
-          stats.opened ? 'Geöffnet' :
-            stats.delivered ? 'Zugestellt' :
-              stats.sent ? 'Versendet' : 'Unbekannt';
+    const status = stats.failed ? t('export.statusValues.failed') :
+      stats.bounced ? t('export.statusValues.bounced') :
+        stats.clicked ? t('export.statusValues.clicked') :
+          stats.opened ? t('export.statusValues.opened') :
+            stats.delivered ? t('export.statusValues.delivered') :
+              stats.sent ? t('export.statusValues.sent') : t('export.statusValues.unknown');
 
     return [
       stats.email,
       status,
-      stats.sent ? 'Ja' : 'Nein',
-      stats.delivered ? 'Ja' : 'Nein',
-      stats.opened ? 'Ja' : 'Nein',
-      stats.clicked ? 'Ja' : 'Nein',
-      stats.failed ? 'Ja' : 'Nein',
-      stats.bounced ? 'Ja' : 'Nein'
+      stats.sent ? t('export.yes') : t('export.no'),
+      stats.delivered ? t('export.yes') : t('export.no'),
+      stats.opened ? t('export.yes') : t('export.no'),
+      stats.clicked ? t('export.yes') : t('export.no'),
+      stats.failed ? t('export.yes') : t('export.no'),
+      stats.bounced ? t('export.yes') : t('export.no')
     ];
   });
 
@@ -258,6 +270,7 @@ function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activ
 }
 
 export default function CampaignAnalyticsPage() {
+  const t = useTranslations('prTools.campaignAnalytics');
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -304,7 +317,7 @@ export default function CampaignAnalyticsPage() {
       // Lade Kampagne
       const campaignData = await prService.getById(campaignId);
       if (!campaignData) {
-        setError('Kampagne nicht gefunden');
+        setError(t('errors.campaignNotFound'));
         setLoading(false);
         return;
       }
@@ -411,11 +424,11 @@ export default function CampaignAnalyticsPage() {
 
       setActivities(mockActivities);
     } catch {
-      setError('Fehler beim Laden der Analytics');
+      setError(t('errors.loadingError'));
     } finally {
       setLoading(false);
     }
-  }, [campaignId, user, organizationId]);
+  }, [campaignId, user, organizationId, t]);
 
 
   useEffect(() => {
@@ -479,7 +492,7 @@ export default function CampaignAnalyticsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
-          <Text className="mt-4">Lade Analytics...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -489,10 +502,10 @@ export default function CampaignAnalyticsPage() {
     return (
       <div className="text-center py-12">
         <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <Heading level={2}>Fehler</Heading>
-        <Text className="mt-2">{error || 'Kampagne nicht gefunden'}</Text>
+        <Heading level={2}>{t('errorState.title')}</Heading>
+        <Text className="mt-2">{error || t('errors.campaignNotFound')}</Text>
         <Button href="/dashboard/pr-tools/campaigns" className="mt-4">
-          Zurück zur Übersicht
+          {t('errorState.backButton')}
         </Button>
       </div>
     );
@@ -509,12 +522,12 @@ export default function CampaignAnalyticsPage() {
           className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Zurück zur Kampagne
+          {t('backToCampaign')}
         </button>
 
         <div className="flex flex-col md:flex-row items-start justify-between gap-4">
           <div>
-            <Heading level={1}>Kampagnen-Analytics</Heading>
+            <Heading level={1}>{t('title')}</Heading>
             <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-2">
               <Text className="text-gray-600 font-semibold">{campaign.title}</Text>
               {company && (
@@ -533,14 +546,14 @@ export default function CampaignAnalyticsPage() {
               disabled={refreshing}
             >
               <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Aktualisieren
+              {t('refreshButton')}
             </Button>
             <Button
               plain
-              onClick={() => exportAnalytics(campaign, sends, activities)}
+              onClick={() => exportAnalytics(campaign, sends, activities, t)}
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
-              Export CSV
+              {t('exportButton')}
             </Button>
           </div>
         </div>
@@ -549,43 +562,43 @@ export default function CampaignAnalyticsPage() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         <MetricCard
-          title="Versendet"
+          title={t('metrics.sent')}
           value={stats.sent}
           icon={EnvelopeIcon}
           color="gray"
         />
         <MetricCard
-          title="Zugestellt"
+          title={t('metrics.delivered')}
           value={stats.delivered}
           percentage={stats.deliveryRate}
           icon={CheckCircleIcon}
           color="green"
         />
         <MetricCard
-          title="Geöffnet"
+          title={t('metrics.opened')}
           value={stats.opened}
           percentage={stats.openRate}
           icon={EnvelopeOpenIcon}
           color="blue"
-          detail={`von ${stats.delivered} zugestellten`}
+          detail={t('metrics.openedDetail', { count: stats.delivered })}
         />
         <MetricCard
-          title="Geklickt"
+          title={t('metrics.clicked')}
           value={stats.clicked}
           percentage={stats.clickRate}
           icon={CursorArrowRaysIcon}
           color="indigo"
-          detail={`von ${stats.opened} geöffneten`}
+          detail={t('metrics.clickedDetail', { count: stats.opened })}
         />
         <MetricCard
-          title="Abgewiesen"
+          title={t('metrics.bounced')}
           value={stats.bounced}
           percentage={stats.bounceRate}
           icon={ExclamationTriangleIcon}
           color="yellow"
         />
         <MetricCard
-          title="Fehlgeschlagen"
+          title={t('metrics.failed')}
           value={stats.failed}
           percentage={stats.sent > 0 ? (stats.failed / stats.sent) * 100 : 0}
           icon={XCircleIcon}
@@ -597,19 +610,19 @@ export default function CampaignAnalyticsPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold">Aktivitätsverlauf</h2>
+            <h2 className="text-lg font-semibold">{t('activityFeed.title')}</h2>
             <div className="flex items-center gap-2">
-              <Badge color="zinc">{filteredActivities.length} Aktivitäten</Badge>
+              <Badge color="zinc">{t('activityFeed.count', { count: filteredActivities.length })}</Badge>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
                 className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-[#005fab] focus:border-[#005fab]"
               >
-                <option value="all">Alle Aktivitäten</option>
-                <option value="opened">Nur Öffnungen</option>
-                <option value="clicked">Nur Klicks</option>
-                <option value="bounced">Nur Abweisungen</option>
-                <option value="failed">Nur Fehler</option>
+                <option value="all">{t('activityFeed.filters.all')}</option>
+                <option value="opened">{t('activityFeed.filters.opened')}</option>
+                <option value="clicked">{t('activityFeed.filters.clicked')}</option>
+                <option value="bounced">{t('activityFeed.filters.bounced')}</option>
+                <option value="failed">{t('activityFeed.filters.failed')}</option>
               </select>
             </div>
           </div>
@@ -625,7 +638,7 @@ export default function CampaignAnalyticsPage() {
           ) : (
             <div className="px-6 py-12 text-center">
               <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <Text>Keine Aktivitäten für diesen Filter gefunden</Text>
+              <Text>{t('activityFeed.empty')}</Text>
             </div>
           )}
         </div>
@@ -634,18 +647,18 @@ export default function CampaignAnalyticsPage() {
       {/* Send Details */}
       {sends.length > 0 && (
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4">Versanddetails</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('sendDetails.title')}</h2>
           <div className="space-y-3">
             {sends.map(send => (
               <div key={send.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <Text className="font-medium">Versand #{send.id?.slice(-6)}</Text>
+                  <Text className="font-medium">{t('sendDetails.sendId', { id: send.id?.slice(-6) || '' })}</Text>
                   <Text className="text-sm text-gray-500">
-                    {campaign.recipientCount} Empfänger • {formatDate(send.sentAt)}
+                    {t('sendDetails.recipients', { count: campaign.recipientCount })} • {formatDate(send.sentAt)}
                   </Text>
                 </div>
                 <Badge color={send.status === 'sent' ? 'green' : 'yellow'}>
-                  {send.status === 'sent' ? 'Abgeschlossen' : 'In Bearbeitung'}
+                  {send.status === 'sent' ? t('sendDetails.status.completed') : t('sendDetails.status.processing')}
                 </Badge>
               </div>
             ))}

@@ -542,7 +542,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     try {
       await loadData();
     } catch (error) {
-      toastService.error('Daten konnten nicht geladen werden');
+      toastService.error(t('error.loadFailed'));
     } finally {
       setIsLoadingCampaign(false);
     }
@@ -592,8 +592,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       const { approvalService } = await import('@/lib/firebase/approval-service');
       
       const approvalData = {
-        title: `Projekt-Freigabe: ${existingCampaign.title}`,
-        description: 'Kunden-Freigabe für Projekt-Pipeline',
+        title: t('pipeline.approvalTitle', { title: existingCampaign.title }),
+        description: t('pipeline.approvalDesc'),
         campaignId: existingCampaign.id!,
         campaignTitle: existingCampaign.title,
         
@@ -706,11 +706,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       }
 
     } catch (error) {
-      toastService.error('Daten konnten nicht geladen werden');
+      toastService.error(t('error.loadFailed'));
     } finally {
       setIsLoadingCampaign(false);
     }
-  }, [user, currentOrganization, existingCampaign]);
+  }, [user, currentOrganization, existingCampaign, t]);
 
   // 🆕 ENHANCED SUBMIT HANDLER mit vollständiger Edit-Lock Integration
   const handleSubmit = async (e: React.FormEvent) => {
@@ -824,9 +824,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
-        toastService.success('Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.');
+        toastService.success(t('success.savedWithApproval'));
       } else {
-        toastService.success('Kampagne erfolgreich gespeichert!');
+        toastService.success(t('success.saved'));
       }
       
       // Navigation zurück zum Projekt (nicht mehr zu pr-tools)
@@ -842,9 +842,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
     } catch (error) {
 
-      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      let errorMessage = t('error.generic');
       if (error instanceof Error) {
-        errorMessage = `Fehler: ${error.message}`;
+        errorMessage = t('error.withMessage', { message: error.message });
       }
 
       toastService.error(errorMessage);
@@ -1368,11 +1368,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             const result = await response.json();
 
             if (!response.ok) {
-              throw new Error(`API-Fehler: ${result.errors?.[0]?.error || response.statusText}`);
+              throw new Error(t('migration.apiError', { error: result.errors?.[0]?.error || response.statusText }));
             }
 
             if (!result.success) {
-              throw new Error(`Migration-Vorbereitung fehlgeschlagen: ${result.errors?.[0]?.error || 'Unbekannter Fehler'}`);
+              throw new Error(t('migration.prepFailed', { error: result.errors?.[0]?.error || t('migration.unknownError') }));
             }
 
             // Jetzt die echten Frontend-Uploads durchführen
@@ -1413,7 +1413,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                     undefined,
                     {
                       userId: user.uid,
-                      description: `Migriert von Campaign ${existingCampaign.id}`,
+                      description: t('migration.assetDescription', { campaignId: existingCampaign.id || '' }),
                       originalAssetId: preparedAsset.id
                     }
                   );
@@ -1454,7 +1454,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
               }
 
               if (errors.length > 0) {
-                throw new Error(`Migration teilweise fehlgeschlagen: ${errors.join(', ')}`);
+                throw new Error(t('migration.partialFailure', { errors: errors.join(', ') }));
               }
             }
 
@@ -1480,13 +1480,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             // Zeige Erfolgs-Message
             if (result.successCount > 0) {
               toastService.success(
-                `✅ ${result.successCount} ${result.successCount === 1 ? 'Asset' : 'Assets'} erfolgreich in Projekt-Ordner migriert`
+                t('migration.successMessage', { count: result.successCount })
               );
             }
 
             if (result.errors && result.errors.length > 0) {
               toastService.error(
-                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Asset konnte' : 'Assets konnten'} nicht migriert werden`
+                t('migration.errorMessage', { count: result.errors.length })
               );
             }
 
@@ -1495,7 +1495,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            toastService.error(`❌ Migration fehlgeschlagen: ${errorMessage}`);
+            toastService.error(t('migration.failed', { message: errorMessage }));
           } finally {
             setIsMigrating(false);
             setShowMigrationDialog(false);

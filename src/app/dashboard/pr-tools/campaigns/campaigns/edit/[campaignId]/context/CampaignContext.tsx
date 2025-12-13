@@ -10,6 +10,7 @@ import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLo
 import { Project } from '@/types/project';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslations } from 'next-intl';
 
 /**
  * Campaign Context für zentrales State Management der Campaign Edit Page
@@ -117,6 +118,9 @@ export function CampaignProvider({
   campaignId,
   organizationId
 }: CampaignProviderProps) {
+  // Translations
+  const t = useTranslations('prTools.campaignContext');
+
   // Auth Context für User-Daten
   const { user } = useAuth();
 
@@ -326,12 +330,12 @@ export function CampaignProvider({
       }
 
     } catch (error) {
-      toastService.error('Kampagne konnte nicht geladen werden');
+      toastService.error(t('errors.loadFailed'));
       setCampaign(null);
     } finally {
       setLoading(false);
     }
-  }, [campaignId, organizationId]);
+  }, [campaignId, organizationId, t]);
 
   // Load campaign on mount
   useEffect(() => {
@@ -353,25 +357,25 @@ export function CampaignProvider({
 
   const generatePdf = async (forApproval: boolean = false) => {
     if (!user || !campaignTitle.trim()) {
-      toastService.error('Bitte füllen Sie alle erforderlichen Felder aus');
+      toastService.error(t('errors.fillRequiredFields'));
       return;
     }
 
     // Validiere erforderliche Felder bevor PDF erstellt wird
     const errors: string[] = [];
     if (!selectedCompanyId) {
-      errors.push('Bitte wählen Sie einen Kunden aus');
+      errors.push(t('errors.validation.customerRequired'));
     }
     if (!campaignTitle.trim()) {
-      errors.push('Titel ist erforderlich');
+      errors.push(t('errors.validation.titleRequired'));
     }
     if (!editorContent.trim() || editorContent === '<p></p>') {
-      errors.push('Inhalt ist erforderlich');
+      errors.push(t('errors.validation.contentRequired'));
     }
 
     // VALIDIERUNG: Freigabe-Kontakt erforderlich wenn Kundenfreigabe aktiviert
     if (approvalData?.customerApprovalRequired && !approvalData?.customerContact?.contactId) {
-      errors.push('Freigabe-Kontakt ist erforderlich (Tab 3: Freigabe)');
+      errors.push(t('errors.validation.approvalContactRequired'));
     }
 
     if (errors.length > 0) {
@@ -380,7 +384,7 @@ export function CampaignProvider({
     }
 
     if (!campaignId) {
-      toastService.error('Campaign-ID nicht gefunden');
+      toastService.error(t('errors.campaignIdNotFound'));
       return;
     }
 
@@ -409,10 +413,10 @@ export function CampaignProvider({
       const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
       setCurrentPdfVersion(newVersion);
 
-      toastService.success('PDF erfolgreich generiert!');
+      toastService.success(t('success.pdfGenerated'));
 
     } catch (error) {
-      toastService.error('Fehler bei der PDF-Erstellung');
+      toastService.error(t('errors.pdfGenerationFailed'));
     } finally {
       setGeneratingPdf(false);
     }
@@ -463,18 +467,18 @@ export function CampaignProvider({
     setAttachedAssets(prev => {
       const newCount = assets.length - prev.length;
       if (newCount > 0) {
-        toastService.success(`${newCount} Medium${newCount > 1 ? 'en' : ''} hinzugefügt`);
+        toastService.success(t('success.assetsAdded', { count: newCount }));
       }
       return assets;
     });
-  }, []);
+  }, [t]);
 
   const removeAsset = useCallback((assetId: string) => {
     setAttachedAssets(prev => prev.filter(asset =>
       (asset.assetId || asset.folderId) !== assetId
     ));
-    toastService.success('Medium entfernt');
-  }, []);
+    toastService.success(t('success.assetRemoved'));
+  }, [t]);
 
   // Phase 3: Company & Project Actions
   const updateCompany = useCallback((companyId: string, companyName: string) => {
@@ -503,7 +507,7 @@ export function CampaignProvider({
         prevData.customerContact?.contactId &&
         !data.customerContact?.contactId
       ) {
-        toastService.warning('Deaktivieren Sie die Kundenfreigabe, um den Kontakt zu entfernen.');
+        toastService.warning(t('warnings.disableApprovalToRemoveContact'));
         return prevData; // Keine Änderung - behalte alten Zustand
       }
 
@@ -512,9 +516,9 @@ export function CampaignProvider({
       // Kundenfreigabe aktiviert/deaktiviert
       if (data.customerApprovalRequired !== prevData.customerApprovalRequired) {
         if (data.customerApprovalRequired) {
-          toastService.success('Kundenfreigabe aktiviert');
+          toastService.success(t('success.approvalEnabled'));
         } else {
-          toastService.success('Kundenfreigabe deaktiviert');
+          toastService.success(t('success.approvalDisabled'));
         }
       }
 
@@ -524,12 +528,12 @@ export function CampaignProvider({
         data.customerContact?.contactId !== prevData.customerContact?.contactId &&
         data.customerContact?.contactId // Nur wenn ein Kontakt ausgewählt wurde
       ) {
-        toastService.success('Freigabe-Kontakt aktualisiert');
+        toastService.success(t('success.approvalContactUpdated'));
       }
 
       return data;
     });
-  }, []);
+  }, [t]);
 
   // Phase 3: Template Actions
   const updateSelectedTemplate = useCallback((templateId: string, templateName?: string, silent?: boolean) => {
@@ -538,12 +542,12 @@ export function CampaignProvider({
     // Toast-Meldung für Template-Auswahl (nur wenn nicht silent)
     if (!silent) {
       if (templateName) {
-        toastService.success(`PDF-Template "${templateName}" ausgewählt`);
+        toastService.success(t('success.templateSelected', { templateName }));
       } else {
-        toastService.success('PDF-Template ausgewählt');
+        toastService.success(t('success.templateSelectedGeneric'));
       }
     }
-  }, []);
+  }, [t]);
 
   const value: CampaignContextValue = {
     // Core State
