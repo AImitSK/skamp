@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { Badge } from "@/components/ui/badge";
 import { Tag, TagColor } from "@/types/crm";
@@ -17,6 +18,7 @@ interface TagInputProps {
 const tagColors: TagColor[] = ['blue', 'green', 'yellow', 'red', 'purple', 'pink', 'orange', 'zinc'];
 
 export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag }: TagInputProps) {
+  const t = useTranslations('ui.tagInput');
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -107,7 +109,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsOpen(true)}
-            placeholder="Tag eingeben + Enter drücken..."
+            placeholder={t('placeholder')}
             disabled={isCreating}
             className="relative block w-full appearance-none rounded-lg px-3 py-2 text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 border border-zinc-950/10 hover:border-zinc-950/20 bg-white/95 focus:outline-none disabled:border-zinc-950/20 disabled:cursor-not-allowed"
           />

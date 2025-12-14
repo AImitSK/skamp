@@ -6832,6 +6832,9 @@
           "createCampaignLabel": "PR-Kampagne erstellen",
           "createCampaignDescription": "Erstellt automatisch eine verknüpfte PR-Kampagne für dieses Projekt."
         },
+        "client": {
+          "label": "Kunde auswählen *"
+        },
         "team": {
           "teamMembers": "Team-Mitglieder",
           "projectManager": "Projekt-Manager / Besitzer",
@@ -11154,6 +11157,11 @@
         "creating": "Erstelle...",
         "finish": "Setup abschließen"
       }
+    }
+  },
+  "ui": {
+    "tagInput": {
+      "placeholder": "Tag eingeben + Enter drücken..."
     }
   }
 }
