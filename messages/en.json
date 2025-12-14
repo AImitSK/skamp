@@ -5449,9 +5449,33 @@
     }
   },
   "monitoring": {
+    "title": "PR Monitoring & Send History",
+    "description": "Monitor all sent press releases and their performance",
     "loading": "Loading monitoring data...",
     "loadError": "Error loading",
     "retryButton": "Try again",
+    "searchPlaceholder": "Search campaigns...",
+    "empty": {
+      "title": "No campaigns found",
+      "description": "No campaigns have been sent yet."
+    },
+    "table": {
+      "campaign": "Campaign",
+      "sent": "Sent",
+      "status": "Status"
+    },
+    "stats": {
+      "opened": "{count} opened ({rate}%)",
+      "bounced": "{count} bounces ({rate}%)"
+    },
+    "actions": {
+      "details": "View details"
+    },
+    "pagination": {
+      "info": "Page {current} of {total} ({count} campaigns)",
+      "previous": "Previous",
+      "next": "Next"
+    },
     "notFound": "Campaign not found",
     "header": {
       "title": "Monitoring: {campaignTitle}",

@@ -5453,9 +5453,33 @@
     }
   },
   "monitoring": {
+    "title": "PR-Monitoring & Versandhistorie",
+    "description": "Überwache alle versendeten Pressemeldungen und deren Performance",
     "loading": "Lade Monitoring-Daten...",
     "loadError": "Fehler beim Laden",
     "retryButton": "Erneut versuchen",
+    "searchPlaceholder": "Kampagnen durchsuchen...",
+    "empty": {
+      "title": "Keine Kampagnen gefunden",
+      "description": "Es wurden noch keine Kampagnen versendet."
+    },
+    "table": {
+      "campaign": "Kampagne",
+      "sent": "Versendet",
+      "status": "Status"
+    },
+    "stats": {
+      "opened": "{count} geöffnet ({rate}%)",
+      "bounced": "{count} Bounces ({rate}%)"
+    },
+    "actions": {
+      "details": "Details anzeigen"
+    },
+    "pagination": {
+      "info": "Seite {current} von {total} ({count} Kampagnen)",
+      "previous": "Zurück",
+      "next": "Weiter"
+    },
     "notFound": "Kampagne nicht gefunden",
     "header": {
       "title": "Monitoring: {campaignTitle}",
