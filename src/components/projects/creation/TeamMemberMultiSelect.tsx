@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface TeamMember {
   id: string;
@@ -17,11 +18,12 @@ interface TeamMemberMultiSelectProps {
   onSelectionChange: (selectedIds: string[]) => void;
 }
 
-export function TeamMemberMultiSelect({ 
-  teamMembers, 
-  selectedMembers, 
-  onSelectionChange 
+export function TeamMemberMultiSelect({
+  teamMembers,
+  selectedMembers,
+  onSelectionChange
 }: TeamMemberMultiSelectProps) {
+  const t = useTranslations('projects.creation.teamMemberSelect');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterByRole, setFilterByRole] = useState<string>('all');
 
@@ -89,19 +91,19 @@ export function TeamMemberMultiSelect({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Team-Mitglieder suchen..."
+            placeholder={t('searchPlaceholder')}
           />
         </div>
 
         {/* Rolle Filter */}
         <div className="flex items-center space-x-3">
-          <label className="text-sm font-medium text-gray-700">Rolle:</label>
+          <label className="text-sm font-medium text-gray-700">{t('roleLabel')}</label>
           <select
             value={filterByRole}
             onChange={(e) => setFilterByRole(e.target.value)}
             className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">Alle Rollen</option>
+            <option value="all">{t('allRoles')}</option>
             {availableRoles.map(role => (
               <option key={role} value={role}>{role}</option>
             ))}
@@ -112,7 +114,10 @@ export function TeamMemberMultiSelect({
         {filteredMembers.length > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">
-              {selectedMembers.length} von {filteredMembers.length} ausgewählt
+              {t('selectedCount', {
+                selected: selectedMembers.length,
+                filtered: filteredMembers.length
+              })}
             </span>
             <div className="space-x-2">
               <button
@@ -124,7 +129,7 @@ export function TeamMemberMultiSelect({
                 }}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
-                Alle auswählen
+                {t('selectAll')}
               </button>
               <span className="text-gray-300">|</span>
               <button
@@ -136,7 +141,7 @@ export function TeamMemberMultiSelect({
                 }}
                 className="text-sm text-gray-600 hover:text-gray-800"
               >
-                Alle abwählen
+                {t('deselectAll')}
               </button>
             </div>
           </div>
@@ -147,7 +152,7 @@ export function TeamMemberMultiSelect({
       <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-md">
         {Object.keys(membersByRole).length === 0 ? (
           <div className="p-4 text-center text-sm text-gray-500">
-            Keine Team-Mitglieder gefunden
+            {t('noMembersFound')}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">

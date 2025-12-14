@@ -9,15 +9,20 @@ import {
   MegaphoneIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 import { WizardStep, StepConfig } from '../steps/types';
 
-const DEFAULT_STEP_CONFIGS: StepConfig[] = [
-  { id: 1, label: 'Projekt', icon: RocketLaunchIcon },
-  { id: 2, label: 'Kunde', icon: BuildingOfficeIcon },
-  { id: 3, label: 'Team', icon: UserGroupIcon }
-];
-
 const DEFAULT_STEP_ICONS = [RocketLaunchIcon, BuildingOfficeIcon, UserGroupIcon, MegaphoneIcon];
+
+function useDefaultStepConfigs(): StepConfig[] {
+  const t = useTranslations('projects.creation.stepTabs');
+
+  return [
+    { id: 1, label: t('project'), icon: RocketLaunchIcon },
+    { id: 2, label: t('customer'), icon: BuildingOfficeIcon },
+    { id: 3, label: t('team'), icon: UserGroupIcon }
+  ];
+}
 
 interface StepTabsProps {
   currentStep: WizardStep;
@@ -34,6 +39,8 @@ export function StepTabs({
   stepLabels,
   allowAllSteps = false
 }: StepTabsProps) {
+  const defaultStepConfigs = useDefaultStepConfigs();
+
   // Generate step configs from labels or use defaults
   const stepConfigs = stepLabels
     ? stepLabels.map((label, index) => ({
@@ -41,7 +48,7 @@ export function StepTabs({
         label,
         icon: DEFAULT_STEP_ICONS[index] || RocketLaunchIcon
       }))
-    : DEFAULT_STEP_CONFIGS;
+    : defaultStepConfigs;
   return (
     <div className="border-b border-gray-200">
       <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">

@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { ClientSelector } from '../ClientSelector';
 import { BaseStepProps } from './types';
@@ -11,10 +12,12 @@ export default function ClientStep({
   onUpdate,
   creationOptions
 }: BaseStepProps) {
+  const t = useTranslations('projects.creation.steps.client');
+
   return (
     <FieldGroup>
       <Field>
-        <Label>Kunde auswählen *</Label>
+        <Label>{t('label')}</Label>
         <ClientSelector
           clients={creationOptions?.availableClients || []}
           selectedClientId={formData.clientId}

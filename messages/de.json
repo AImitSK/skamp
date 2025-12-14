@@ -6799,6 +6799,201 @@
       "description": "Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden.",
       "title": "Archivansicht aktiv"
     },
+    "creation": {
+      "stepActions": {
+        "back": "Zurück",
+        "cancel": "Abbrechen",
+        "defaultSubmit": "Projekt erstellen",
+        "loading": "{label}...",
+        "next": "Weiter"
+      },
+      "stepTabs": {
+        "project": "Projekt",
+        "customer": "Kunde",
+        "team": "Team"
+      },
+      "steps": {
+        "project": {
+          "title": "Projekt-Titel *",
+          "titlePlaceholder": "z.B. Produktlaunch Q2 2024",
+          "titleValidation": "Mindestens 3 Zeichen erforderlich",
+          "description": "Beschreibung",
+          "descriptionPlaceholder": "Kurze Beschreibung des Projekts...",
+          "priorityLabel": "Priorität",
+          "tagsLabel": "Tags",
+          "createCampaignLabel": "PR-Kampagne erstellen",
+          "createCampaignDescription": "Erstellt automatisch eine verknüpfte PR-Kampagne für dieses Projekt."
+        },
+        "team": {
+          "teamMembers": "Team-Mitglieder",
+          "projectManager": "Projekt-Manager / Besitzer",
+          "selectPlaceholder": "-- Bitte wählen --",
+          "currentUserSuffix": " (Sie)"
+        }
+      },
+      "teamMemberSelect": {
+        "searchPlaceholder": "Team-Mitglieder suchen...",
+        "roleLabel": "Rolle:",
+        "allRoles": "Alle Rollen",
+        "selectedCount": "{selected} von {filtered} ausgewählt",
+        "selectAll": "Alle auswählen",
+        "deselectAll": "Alle abwählen",
+        "noMembersFound": "Keine Team-Mitglieder gefunden"
+      },
+      "templates": {
+        "actions": {
+          "close": "Schließen",
+          "showDetails": "Details anzeigen"
+        },
+        "categoryFilter": {
+          "all": "Alle",
+          "categories": {
+            "custom": "Custom",
+            "industry": "Branche",
+            "standard": "Standard"
+          },
+          "label": "Kategorie:"
+        },
+        "details": {
+          "keyTasksTitle": "Wichtige Aufgaben:",
+          "phasesTitle": "Projekt-Phasen:",
+          "successRate": "Erfolgsrate:",
+          "used": "Verwendet:"
+        },
+        "empty": {
+          "descriptionAll": "Derzeit sind keine Templates verfügbar.",
+          "descriptionCategory": "Keine Templates in der Kategorie \"{category}\" gefunden.",
+          "title": "Keine Templates verfügbar"
+        },
+        "mockData": {
+          "default": {
+            "duration": "Variabel",
+            "phases": {
+              "implementation": "Umsetzung",
+              "planning": "Planung"
+            },
+            "tasks": {
+              "basic": "Grundlegende Projekt-Tasks"
+            }
+          },
+          "prCampaign": {
+            "duration": "21 Tage",
+            "phases": {
+              "approval": "Freigabe",
+              "creation": "Erstellung",
+              "distribution": "Verteilung",
+              "planning": "Planung"
+            },
+            "tasks": {
+              "briefing": "Projekt-Briefing erstellen",
+              "content": "Content erstellen",
+              "customerApproval": "Kundenfreigabe",
+              "internalReview": "Interne Review",
+              "mediaDistribution": "Medienverteilung",
+              "strategy": "Strategie-Dokument verfassen"
+            }
+          },
+          "productLaunch": {
+            "duration": "30 Tage",
+            "phases": {
+              "content": "Content",
+              "launch": "Launch",
+              "positioning": "Positioning",
+              "research": "Research"
+            },
+            "tasks": {
+              "competitiveAnalysis": "Competitive Analysis",
+              "launchEvent": "Launch-Event",
+              "launchMaterials": "Launch-Materialien",
+              "marketAnalysis": "Marktanalyse",
+              "performanceTracking": "Performance-Tracking",
+              "productMessaging": "Product Messaging"
+            }
+          }
+        },
+        "noTemplate": {
+          "description": "Erstellen Sie ein leeres Projekt ohne vordefinierte Aufgaben",
+          "title": "Ohne Template starten"
+        },
+        "stats": {
+          "tasks": "{count} Aufgaben",
+          "teamMembers": "{count} Team-Mitglieder",
+          "usageCount": "{count}x verwendet"
+        }
+      },
+      "wizard": {
+        "alert": {
+          "close": "Schließen"
+        },
+        "errors": {
+          "organizationNotFound": "Organisation nicht gefunden",
+          "projectCreationFailed": "Projekt konnte nicht erstellt werden: {details}",
+          "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+          "unknownError": "Unbekannter Fehler"
+        },
+        "header": {
+          "title": "Neues Projekt erstellen"
+        }
+      },
+      "clientSelector": {
+        "searchPlaceholder": "Kunden suchen...",
+        "recentlyUsed": "Zuletzt verwendet:",
+        "noClientsFound": "Keine Kunden gefunden.",
+        "noClientsAvailable": "Keine Kunden verfügbar.",
+        "typeLabel": "Typ:",
+        "contactsCount": "Kontakte",
+        "contactsLabel": "Kontakte:",
+        "selected": "✓ Ausgewählt",
+        "companyTypes": {
+          "enterprise": "Unternehmen",
+          "startup": "Start-up"
+        }
+      },
+      "success": {
+        "header": {
+          "title": "Projekt erfolgreich erstellt! 🎉",
+          "description": "Ihr Projekt \"{title}\" ist bereit und alle Ressourcen wurden initialisiert."
+        },
+        "resources": {
+          "title": "Erstellte Ressourcen",
+          "project": {
+            "title": "Projekt erstellt",
+            "statusInfo": "Status: {status} | Phase: {phase}"
+          },
+          "campaign": {
+            "title": "PR-Kampagne erstellt",
+            "linkedSuccessfully": "Kampagne erfolgreich verknüpft",
+            "autoLinked": "Automatisch mit Projekt verknüpft"
+          },
+          "tasks": {
+            "title": "Tasks erstellt",
+            "fromTemplate": "{count} Aufgaben aus Template",
+            "ready": "Bereit zur Bearbeitung"
+          },
+          "assets": {
+            "title": "Assets angehängt",
+            "count": "{count} Medien-Asset(s)",
+            "available": "Verfügbar im Projekt"
+          },
+          "team": {
+            "title": "Team benachrichtigt",
+            "notified": "{count} Team-Mitglieder wurden über das neue Projekt informiert"
+          }
+        },
+        "warnings": {
+          "title": "⚠️ Hinweise:"
+        },
+        "infos": {
+          "title": "ℹ️ Informationen:"
+        },
+        "nextSteps": {
+          "title": "Nächste Schritte"
+        },
+        "actions": {
+          "goToProject": "Zum Projekt"
+        }
+      }
+    },
     "assets": {
       "gallery": {
         "assetsCount": "{filtered} von {total} Assets",
@@ -7099,110 +7294,6 @@
           "title": "Emoji auswählen"
         },
         "notTeamMember": "Sie sind kein Mitglied dieses Projekt-Teams. Sie können die Nachrichten lesen, aber nicht schreiben."
-      }
-    },
-    "creation": {
-      "stepActions": {
-        "back": "Zurück",
-        "cancel": "Abbrechen",
-        "defaultSubmit": "Projekt erstellen",
-        "loading": "{label}...",
-        "next": "Weiter"
-      },
-      "templates": {
-        "actions": {
-          "close": "Schließen",
-          "showDetails": "Details anzeigen"
-        },
-        "categoryFilter": {
-          "all": "Alle",
-          "categories": {
-            "custom": "Custom",
-            "industry": "Branche",
-            "standard": "Standard"
-          },
-          "label": "Kategorie:"
-        },
-        "details": {
-          "keyTasksTitle": "Wichtige Aufgaben:",
-          "phasesTitle": "Projekt-Phasen:",
-          "successRate": "Erfolgsrate:",
-          "used": "Verwendet:"
-        },
-        "empty": {
-          "descriptionAll": "Derzeit sind keine Templates verfügbar.",
-          "descriptionCategory": "Keine Templates in der Kategorie \"{category}\" gefunden.",
-          "title": "Keine Templates verfügbar"
-        },
-        "mockData": {
-          "default": {
-            "duration": "Variabel",
-            "phases": {
-              "implementation": "Umsetzung",
-              "planning": "Planung"
-            },
-            "tasks": {
-              "basic": "Grundlegende Projekt-Tasks"
-            }
-          },
-          "prCampaign": {
-            "duration": "21 Tage",
-            "phases": {
-              "approval": "Freigabe",
-              "creation": "Erstellung",
-              "distribution": "Verteilung",
-              "planning": "Planung"
-            },
-            "tasks": {
-              "briefing": "Projekt-Briefing erstellen",
-              "content": "Content erstellen",
-              "customerApproval": "Kundenfreigabe",
-              "internalReview": "Interne Review",
-              "mediaDistribution": "Medienverteilung",
-              "strategy": "Strategie-Dokument verfassen"
-            }
-          },
-          "productLaunch": {
-            "duration": "30 Tage",
-            "phases": {
-              "content": "Content",
-              "launch": "Launch",
-              "positioning": "Positioning",
-              "research": "Research"
-            },
-            "tasks": {
-              "competitiveAnalysis": "Competitive Analysis",
-              "launchEvent": "Launch-Event",
-              "launchMaterials": "Launch-Materialien",
-              "marketAnalysis": "Marktanalyse",
-              "performanceTracking": "Performance-Tracking",
-              "productMessaging": "Product Messaging"
-            }
-          }
-        },
-        "noTemplate": {
-          "description": "Erstellen Sie ein leeres Projekt ohne vordefinierte Aufgaben",
-          "title": "Ohne Template starten"
-        },
-        "stats": {
-          "tasks": "{count} Aufgaben",
-          "teamMembers": "{count} Team-Mitglieder",
-          "usageCount": "{count}x verwendet"
-        }
-      },
-      "wizard": {
-        "alert": {
-          "close": "Schließen"
-        },
-        "errors": {
-          "organizationNotFound": "Organisation nicht gefunden",
-          "projectCreationFailed": "Projekt konnte nicht erstellt werden: {details}",
-          "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-          "unknownError": "Unbekannter Fehler"
-        },
-        "header": {
-          "title": "Neues Projekt erstellen"
-        }
       }
     },
     "detail": {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface Client {
   id: string;
@@ -16,24 +17,20 @@ interface ClientSelectorProps {
   onSelect: (clientId: string) => void;
 }
 
-// Helper function to translate company types to German
-function getCompanyTypeLabel(type: string): string {
-  const translations: Record<string, string> = {
-    'customer': 'Kunde',
-    'supplier': 'Lieferant',
-    'partner': 'Partner',
-    'publisher': 'Verlag',
-    'media_house': 'Medienhaus',
-    'agency': 'Agentur',
-    'enterprise': 'Unternehmen',
-    'startup': 'Start-up',
-    'other': 'Sonstiges'
-  };
-  return translations[type] || type;
-}
-
 export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const t = useTranslations('projects.creation.clientSelector');
+  const tTypes = useTranslations('crm.companyTypes');
+
+  // Helper function to translate company types
+  const getCompanyTypeLabel = (type: string): string => {
+    const typeKey = type.toLowerCase();
+    // Map enterprise and startup to their German equivalents
+    if (typeKey === 'enterprise') return t('companyTypes.enterprise');
+    if (typeKey === 'startup') return t('companyTypes.startup');
+    // Use CRM company types for standard types
+    return tTypes(typeKey as any) || type;
+  };
 
   // Filter Kunden basierend auf Suchbegriff
   const filteredClients = clients.filter(client =>
@@ -65,14 +62,14 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Kunden suchen..."
+          placeholder={t('searchPlaceholder')}
         />
       </div>
 
       {/* Recent Clients Shortcuts (Mock) */}
       {searchTerm === '' && sortedClients.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Zuletzt verwendet:</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('recentlyUsed')}</p>
           <div className="flex flex-wrap gap-2">
             {sortedClients.slice(0, 3).map((client) => (
               <button
@@ -97,7 +94,7 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
         {sortedClients.length === 0 ? (
           <div className="text-center py-4">
             <p className="text-sm text-gray-500">
-              {searchTerm ? 'Keine Kunden gefunden.' : 'Keine Kunden verfügbar.'}
+              {searchTerm ? t('noClientsFound') : t('noClientsAvailable')}
             </p>
           </div>
         ) : (
@@ -118,10 +115,10 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
                   </h4>
                   <div className="flex items-center space-x-4 mt-1">
                     <span className="text-xs text-gray-500">
-                      Typ: {getCompanyTypeLabel(client.type)}
+                      {t('typeLabel')} {getCompanyTypeLabel(client.type)}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {client.contactCount} Kontakte
+                      {client.contactCount} {t('contactsCount')}
                     </span>
                   </div>
                 </div>
@@ -145,8 +142,8 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
                 <div className="mt-2 pt-2 border-t border-blue-200">
                   <div className="text-xs text-blue-700">
                     <div className="flex justify-between items-center">
-                      <span>Kontakte: {client.contactCount}</span>
-                      <span className="text-blue-600">✓ Ausgewählt</span>
+                      <span>{t('contactsLabel')} {client.contactCount}</span>
+                      <span className="text-blue-600">{t('selected')}</span>
                     </div>
                   </div>
                 </div>

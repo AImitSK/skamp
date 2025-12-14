@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { 
+import {
   CheckCircleIcon,
   RocketLaunchIcon,
   SpeakerWaveIcon,
@@ -11,6 +11,7 @@ import {
   ArrowTopRightOnSquareIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { ProjectCreationResult } from '@/types/project';
 
 interface CreationSuccessDashboardProps {
@@ -19,11 +20,12 @@ interface CreationSuccessDashboardProps {
   onGoToProject: (projectId: string) => void;
 }
 
-export function CreationSuccessDashboard({ 
-  result, 
-  onClose, 
-  onGoToProject 
+export function CreationSuccessDashboard({
+  result,
+  onClose,
+  onGoToProject
 }: CreationSuccessDashboardProps) {
+  const t = useTranslations('projects.creation.success');
 
   const handleGoToProject = () => {
     onGoToProject(result.projectId);
@@ -45,10 +47,10 @@ export function CreationSuccessDashboard({
         </div>
         
         <h2 className="mt-4 text-2xl font-bold text-gray-900">
-          Projekt erfolgreich erstellt! 🎉
+          {t('header.title')}
         </h2>
         <p className="mt-2 text-gray-600">
-          Ihr Projekt &quot;{result.project.title}&quot; ist bereit und alle Ressourcen wurden initialisiert.
+          {t('header.description', { title: result.project.title })}
         </p>
       </div>
 
@@ -56,7 +58,7 @@ export function CreationSuccessDashboard({
       <div className="p-6 bg-white border-l border-r border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <ClipboardDocumentListIcon className="w-5 h-5 mr-2 text-blue-500" />
-          Erstellte Ressourcen
+          {t('resources.title')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -65,10 +67,13 @@ export function CreationSuccessDashboard({
             <div className="flex items-center space-x-3">
               <RocketLaunchIcon className="w-6 h-6 text-green-600" />
               <div>
-                <h4 className="font-medium text-green-900">Projekt erstellt</h4>
+                <h4 className="font-medium text-green-900">{t('resources.project.title')}</h4>
                 <p className="text-sm text-green-700">{result.project.title}</p>
                 <p className="text-xs text-green-600 mt-1">
-                  Status: {result.project.status} | Phase: {result.project.currentStage}
+                  {t('resources.project.statusInfo', {
+                    status: result.project.status,
+                    phase: result.project.currentStage
+                  })}
                 </p>
               </div>
             </div>
@@ -80,12 +85,12 @@ export function CreationSuccessDashboard({
               <div className="flex items-center space-x-3">
                 <SpeakerWaveIcon className="w-6 h-6 text-blue-600" />
                 <div>
-                  <h4 className="font-medium text-blue-900">PR-Kampagne erstellt</h4>
+                  <h4 className="font-medium text-blue-900">{t('resources.campaign.title')}</h4>
                   <p className="text-sm text-blue-700">
-                    {result.campaign?.title || 'Kampagne erfolgreich verknüpft'}
+                    {result.campaign?.title || t('resources.campaign.linkedSuccessfully')}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
-                    Automatisch mit Projekt verknüpft
+                    {t('resources.campaign.autoLinked')}
                   </p>
                 </div>
               </div>
@@ -98,12 +103,12 @@ export function CreationSuccessDashboard({
               <div className="flex items-center space-x-3">
                 <ClipboardDocumentListIcon className="w-6 h-6 text-purple-600" />
                 <div>
-                  <h4 className="font-medium text-purple-900">Tasks erstellt</h4>
+                  <h4 className="font-medium text-purple-900">{t('resources.tasks.title')}</h4>
                   <p className="text-sm text-purple-700">
-                    {result.tasksCreated.length} Aufgaben aus Template
+                    {t('resources.tasks.fromTemplate', { count: result.tasksCreated.length })}
                   </p>
                   <p className="text-xs text-purple-600 mt-1">
-                    Bereit zur Bearbeitung
+                    {t('resources.tasks.ready')}
                   </p>
                 </div>
               </div>
@@ -116,12 +121,12 @@ export function CreationSuccessDashboard({
               <div className="flex items-center space-x-3">
                 <PhotoIcon className="w-6 h-6 text-orange-600" />
                 <div>
-                  <h4 className="font-medium text-orange-900">Assets angehängt</h4>
+                  <h4 className="font-medium text-orange-900">{t('resources.assets.title')}</h4>
                   <p className="text-sm text-orange-700">
-                    {result.assetsAttached} Medien-Asset(s)
+                    {t('resources.assets.count', { count: result.assetsAttached })}
                   </p>
                   <p className="text-xs text-orange-600 mt-1">
-                    Verfügbar im Projekt
+                    {t('resources.assets.available')}
                   </p>
                 </div>
               </div>
@@ -135,9 +140,9 @@ export function CreationSuccessDashboard({
             <div className="flex items-center space-x-3">
               <UserGroupIcon className="w-6 h-6 text-indigo-600" />
               <div>
-                <h4 className="font-medium text-indigo-900">Team benachrichtigt</h4>
+                <h4 className="font-medium text-indigo-900">{t('resources.team.title')}</h4>
                 <p className="text-sm text-indigo-700">
-                  {result.project.assignedTo.length} Team-Mitglieder wurden über das neue Projekt informiert
+                  {t('resources.team.notified', { count: result.project.assignedTo.length })}
                 </p>
               </div>
             </div>
@@ -147,7 +152,7 @@ export function CreationSuccessDashboard({
         {/* Warnings */}
         {result.warnings.length > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <h4 className="font-medium text-yellow-900 mb-2">⚠️ Hinweise:</h4>
+            <h4 className="font-medium text-yellow-900 mb-2">{t('warnings.title')}</h4>
             <ul className="text-sm text-yellow-800 space-y-1">
               {result.warnings.map((warning, index) => (
                 <li key={index} className="flex items-start">
@@ -162,7 +167,7 @@ export function CreationSuccessDashboard({
         {/* Info Messages */}
         {result.infos.length > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h4 className="font-medium text-blue-900 mb-2">ℹ️ Informationen:</h4>
+            <h4 className="font-medium text-blue-900 mb-2">{t('infos.title')}</h4>
             <ul className="text-sm text-blue-800 space-y-1">
               {result.infos.map((info, index) => (
                 <li key={index} className="flex items-start">
@@ -178,7 +183,7 @@ export function CreationSuccessDashboard({
       {/* Next Steps Checklist */}
       <div className="p-6 bg-white border-l border-r border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Nächste Schritte
+          {t('nextSteps.title')}
         </h3>
 
         <div className="space-y-3">
@@ -202,7 +207,7 @@ export function CreationSuccessDashboard({
             className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md"
           >
             <RocketLaunchIcon className="w-5 h-5 mr-2" />
-            Zum Projekt
+            {t('actions.goToProject')}
             <ArrowTopRightOnSquareIcon className="w-5 h-5 ml-2" />
           </button>
         </div>

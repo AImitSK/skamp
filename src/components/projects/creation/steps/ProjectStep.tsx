@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,54 +18,57 @@ export default function ProjectStep({
   tags,
   onCreateTag
 }: ProjectStepProps) {
+  const t = useTranslations('projects.creation.steps.project');
+  const tPriority = useTranslations('projects.priority');
+
   return (
     <FieldGroup>
       {/* Projekt-Titel */}
       <Field>
-        <Label>Projekt-Titel *</Label>
+        <Label>{t('title')}</Label>
         <Input
           type="text"
           required
           value={formData.title}
           onChange={(e) => onUpdate({ title: e.target.value })}
-          placeholder="z.B. Produktlaunch Q2 2024"
+          placeholder={t('titlePlaceholder')}
           autoFocus
         />
         {formData.title.length > 0 && formData.title.length < 3 && (
           <Text className="text-sm text-red-600 mt-1">
-            Mindestens 3 Zeichen erforderlich
+            {t('titleValidation')}
           </Text>
         )}
       </Field>
 
       {/* Beschreibung */}
       <Field>
-        <Label>Beschreibung</Label>
+        <Label>{t('description')}</Label>
         <Textarea
           value={formData.description}
           onChange={(e) => onUpdate({ description: e.target.value })}
           rows={3}
-          placeholder="Kurze Beschreibung des Projekts..."
+          placeholder={t('descriptionPlaceholder')}
         />
       </Field>
 
       {/* Priorität */}
       <Field>
-        <Label>Priorität</Label>
+        <Label>{t('priorityLabel')}</Label>
         <Select
           value={formData.priority}
           onChange={(e) => onUpdate({ priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
         >
-          <option value="low">Niedrig</option>
-          <option value="medium">Mittel</option>
-          <option value="high">Hoch</option>
-          <option value="urgent">Dringend</option>
+          <option value="low">{tPriority('low')}</option>
+          <option value="medium">{tPriority('medium')}</option>
+          <option value="high">{tPriority('high')}</option>
+          <option value="urgent">{tPriority('urgent')}</option>
         </Select>
       </Field>
 
       {/* Tags */}
       <Field>
-        <Label>Tags</Label>
+        <Label>{t('tagsLabel')}</Label>
         <TagInput
           selectedTagIds={formData.tags}
           availableTags={tags}
@@ -77,9 +81,9 @@ export default function ProjectStep({
       <Field>
         <div className="flex items-center justify-between py-2">
           <div className="flex-1 pr-4">
-            <Label>PR-Kampagne erstellen</Label>
+            <Label>{t('createCampaignLabel')}</Label>
             <Text className="text-sm text-gray-600 mt-1">
-              Erstellt automatisch eine verknüpfte PR-Kampagne für dieses Projekt.
+              {t('createCampaignDescription')}
             </Text>
           </div>
           <SimpleSwitch
