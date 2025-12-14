@@ -36,7 +36,7 @@ interface NotificationsDropdownProps {
 }
 
 export function NotificationsDropdown({ className }: NotificationsDropdownProps) {
-  const t = useTranslations('notifications.dropdown');
+  const t = useTranslations('dashboard.notifications.dropdown');
   const {
     notifications,
     unreadCount,
