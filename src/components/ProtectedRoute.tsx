@@ -6,9 +6,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
+import { useTranslations } from 'next-intl';
 
 // Diese Komponente umwickelt geschützte Inhalte.
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('auth.protectedRoute');
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -78,7 +80,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   if (loading || checkingSubscription) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-zinc-500">Lade...</div>
+        <div className="text-zinc-500">{t('loading')}</div>
       </div>
     );
   }

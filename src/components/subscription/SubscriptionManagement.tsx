@@ -73,7 +73,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
     try {
       const { auth } = await import('@/lib/firebase/client-init');
       const user = auth.currentUser;
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(t('errors.notAuthenticated'));
 
       const token = await user.getIdToken();
       const response = await fetch('/api/subscription/customer-portal', {
@@ -86,7 +86,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Fehler beim Öffnen des Customer Portals');
+        throw new Error(errorData.error || t('payment.portalError'));
       }
 
       const data = await response.json();
@@ -108,7 +108,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
     try {
       const { auth } = await import('@/lib/firebase/client-init');
       const user = auth.currentUser;
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(t('errors.notAuthenticated'));
 
       const token = await user.getIdToken();
       const response = await fetch('/api/subscription/reactivate', {
@@ -120,7 +120,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Fehler beim Reaktivieren');
+        throw new Error(errorData.error || t('cancellation.reactivateError'));
       }
 
       toastService.success('Subscription erfolgreich reaktiviert');

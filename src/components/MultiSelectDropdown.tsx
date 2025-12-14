@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Combobox } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 import { Badge } from './ui/badge';
 
 interface Option {
@@ -27,6 +28,7 @@ export function MultiSelectDropdown({
   onChange,
   placeholder,
 }: MultiSelectDropdownProps) {
+  const t = useTranslations('common.multiSelect');
   const [query, setQuery] = useState('');
 
   const selectedOptions = options.filter(opt => selectedValues.includes(opt.value));
@@ -69,7 +71,7 @@ export function MultiSelectDropdown({
                     handleRemove(option.value);
                   }}
                   className="rounded-full hover:bg-black/10 p-0.5"
-                  aria-label={`Entferne ${option.label}`}
+                  aria-label={t('removeItem', { item: option.label })}
                 >
                   <XMarkIcon className="h-3.5 w-3.5" />
                 </button>
@@ -97,7 +99,7 @@ export function MultiSelectDropdown({
           <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-10">
             {filteredOptions.length === 0 && query !== '' ? (
               <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                Nichts gefunden.
+                {t('nothingFound')}
               </div>
             ) : (
               filteredOptions.map(option => (

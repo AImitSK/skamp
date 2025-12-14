@@ -85,7 +85,8 @@
       "Bash(powershell -Command:*)",
       "Bash(del update-de-json.js update-en-json.js)",
       "Bash(timeout 5 tail:*)",
-      "Bash(del update-translations.py messagesde.json.backup messagesen.json.backup)"
+      "Bash(del update-translations.py messagesde.json.backup messagesen.json.backup)",
+      "Bash(del add_templates_validator.py)"
     ]
   },
   "enableAllProjectMcpServers": true,

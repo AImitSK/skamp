@@ -730,6 +730,11 @@
       "title": "Approval Workflow"
     }
   },
+  "auth": {
+    "protectedRoute": {
+      "loading": "Loading..."
+    }
+  },
   "boilerplates": {
     "actions": {
       "addFavorite": "Add to favorites",
@@ -1999,6 +2004,10 @@
     },
     "help": "Help",
     "loading": "Loading...",
+    "multiSelect": {
+      "nothingFound": "Nothing found.",
+      "removeItem": "Remove {item}"
+    },
     "next": "Next",
     "no": "No",
     "none": "None",
@@ -10191,7 +10200,8 @@
         "daysRemaining": "({count, plural, =1 {# day} other {# days}} remaining)",
         "expiringTitle": "Subscription expiring",
         "reactivateButton": "Reactivate Subscription",
-        "reactivating": "Reactivating..."
+        "reactivating": "Reactivating...",
+        "reactivateError": "Error reactivating subscription"
       },
       "changePlan": {
         "actions": {
@@ -10237,7 +10247,8 @@
       "payment": {
         "manageButton": "Manage Payment Method & Invoices",
         "openingPortal": "Opening portal...",
-        "title": "Payment Management"
+        "title": "Payment Management",
+        "portalError": "Error opening customer portal"
       },
       "perMonth": "/month",
       "plan": "Plan",
@@ -10257,6 +10268,9 @@
         "notAvailable": "Usage data not available. Click the 3-dot menu at the top right and select \"Refresh usage\".",
         "title": "Current Usage",
         "unlimited": "Unlimited ∞"
+      },
+      "errors": {
+        "notAuthenticated": "Not authenticated"
       }
     },
     "cancelModal": {

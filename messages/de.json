@@ -730,6 +730,11 @@
       "title": "Freigabe-Workflow"
     }
   },
+  "auth": {
+    "protectedRoute": {
+      "loading": "Lade..."
+    }
+  },
   "boilerplates": {
     "actions": {
       "addFavorite": "Als Favorit",
@@ -1999,6 +2004,10 @@
     },
     "help": "Hilfe",
     "loading": "Laden...",
+    "multiSelect": {
+      "nothingFound": "Nichts gefunden.",
+      "removeItem": "Entferne {item}"
+    },
     "next": "Weiter",
     "no": "Nein",
     "none": "Keine",
@@ -10225,7 +10234,8 @@
         "daysRemaining": "({count, plural, =1 {# Tag} other {# Tage}} verbleibend)",
         "expiringTitle": "Subscription läuft aus",
         "reactivateButton": "Subscription reaktivieren",
-        "reactivating": "Wird reaktiviert..."
+        "reactivating": "Wird reaktiviert...",
+        "reactivateError": "Fehler beim Reaktivieren"
       },
       "changePlan": {
         "actions": {
@@ -10271,7 +10281,8 @@
       "payment": {
         "manageButton": "Zahlungsmethode & Rechnungen verwalten",
         "openingPortal": "Öffne Portal...",
-        "title": "Zahlungsverwaltung"
+        "title": "Zahlungsverwaltung",
+        "portalError": "Fehler beim Öffnen des Customer Portals"
       },
       "perMonth": "/Monat",
       "plan": "Plan",
@@ -10291,6 +10302,9 @@
         "notAvailable": "Nutzungsdaten nicht verfügbar. Klicke auf das 3-Punkte-Menü oben rechts und wähle \"Usage aktualisieren\".",
         "title": "Aktuelle Nutzung",
         "unlimited": "Unlimited ∞"
+      },
+      "errors": {
+        "notAuthenticated": "Nicht authentifiziert"
       }
     },
     "cancelModal": {
