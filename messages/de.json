@@ -7424,11 +7424,19 @@
         "type": "Typ",
         "unknown": "Unbekannt"
       },
+      "listFilter": {
+        "ariaLabel": "Filter",
+        "header": "Filter",
+        "reset": "Zurücksetzen",
+        "typeLabel": "Typ",
+        "categoryLabel": "Kategorie"
+      },
       "listRow": {
         "actions": {
           "delete": "Löschen",
           "edit": "Bearbeiten",
           "export": "Exportieren",
+          "link": "Liste verknüpfen",
           "removeLink": "Verknüpfung entfernen"
         },
         "dateUnknown": "Unbekannt",
@@ -7462,6 +7470,26 @@
           "type": "Typ"
         },
         "title": "Projekt-Verteiler"
+      },
+      "masterListBrowser": {
+        "title": "Listen Bibliothek",
+        "listsAvailable": "{count, plural, =0 {Keine Listen verfügbar} one {# Liste verfügbar} other {# Listen verfügbar}}",
+        "searchPlaceholder": "Suchen...",
+        "columns": {
+          "name": "Name",
+          "category": "Kategorie",
+          "type": "Typ",
+          "contacts": "Kontakte",
+          "updated": "Aktualisiert"
+        },
+        "emptyState": {
+          "noListsFound": "Keine Listen gefunden",
+          "noMasterLists": "Keine weiteren Master-Listen verfügbar"
+        }
+      },
+      "pagination": {
+        "next": "Weiter",
+        "previous": "Zurück"
       }
     },
     "documentEditor": {

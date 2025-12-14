@@ -2,6 +2,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowPathIcon, StarIcon } from '@heroicons/react/24/outline';
@@ -20,9 +21,11 @@ const MasterListRow = memo(function MasterListRow({
   onViewDetails,
   onToggleLink,
 }: MasterListRowProps) {
+  const t = useTranslations('projects.distribution.listRow');
+
   // Datum formatieren
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    if (!timestamp || !timestamp.toDate) return t('dateUnknown');
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
@@ -70,7 +73,7 @@ const MasterListRow = memo(function MasterListRow({
             color={list.type === 'dynamic' ? 'green' : 'blue'}
             className="text-xs whitespace-nowrap"
           >
-            {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+            {list.type === 'dynamic' ? t('listTypes.dynamic') : t('listTypes.static')}
           </Badge>
         </div>
 
@@ -109,7 +112,7 @@ const MasterListRow = memo(function MasterListRow({
               color: '#4b5563',
               border: '1px solid #d1d5db'
             }}
-            aria-label={isLinked ? 'Verknüpfung entfernen' : 'Liste verknüpfen'}
+            aria-label={isLinked ? t('actions.removeLink') : t('actions.link')}
           >
             <StarIcon
               className={`h-3 w-3 ${

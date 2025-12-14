@@ -4,6 +4,7 @@
 import { Fragment, memo } from 'react';
 import { Popover, Transition } from '@headlessui/react';
 import { FunnelIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface FilterOption {
   value: string;
@@ -29,6 +30,7 @@ const ListFilterButton = memo(function ListFilterButton({
   onTypeChange,
   onReset,
 }: ListFilterButtonProps) {
+  const t = useTranslations('projects.distribution.listFilter');
   const activeFiltersCount = selectedCategories.length + selectedTypes.length;
 
   const handleCheckboxChange = (
@@ -51,7 +53,7 @@ const ListFilterButton = memo(function ListFilterButton({
             ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
         }`}
-        aria-label="Filter"
+        aria-label={t('ariaLabel')}
       >
         <FunnelIcon className="h-5 w-5 stroke-2" />
         {activeFiltersCount > 0 && (
@@ -74,14 +76,14 @@ const ListFilterButton = memo(function ListFilterButton({
           <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Filter</h3>
+              <h3 className="text-sm font-medium text-gray-900">{t('header')}</h3>
               {activeFiltersCount > 0 && (
                 <button
                   onClick={onReset}
                   className="text-sm text-gray-500 hover:text-gray-700"
                   type="button"
                 >
-                  Zurücksetzen
+                  {t('reset')}
                 </button>
               )}
             </div>
@@ -90,7 +92,7 @@ const ListFilterButton = memo(function ListFilterButton({
             {typeOptions.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Typ
+                  {t('typeLabel')}
                 </label>
                 <div className="space-y-2">
                   {typeOptions.map((option) => {
@@ -127,7 +129,7 @@ const ListFilterButton = memo(function ListFilterButton({
             {categoryOptions.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategorie
+                  {t('categoryLabel')}
                 </label>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {categoryOptions.map((option) => {

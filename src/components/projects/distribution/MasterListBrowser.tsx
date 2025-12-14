@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { UsersIcon } from '@heroicons/react/24/outline';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function MasterListBrowser({ lists, linkedListIds = [], onLink, onUnlink }: Props) {
+  const t = useTranslations('projects.distribution.masterListBrowser');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -73,9 +75,9 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Heading>Listen Bibliothek</Heading>
+        <Heading>{t('title')}</Heading>
         <Text className="text-sm text-gray-500">
-          {filteredLists.length} {filteredLists.length === 1 ? 'Liste' : 'Listen'} verfügbar
+          {t('listsAvailable', { count: filteredLists.length })}
         </Text>
       </div>
 
@@ -84,7 +86,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
         <ListSearchBar
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Suchen..."
+          placeholder={t('searchPlaceholder')}
         />
         <ListFilterButton
           categoryOptions={categoryOptions}
@@ -113,11 +115,11 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
           {/* Header */}
           <ListTableHeader
             columns={[
-              { label: 'Name', width: 'w-[35%]' },
-              { label: 'Kategorie', width: 'w-[15%]' },
-              { label: 'Typ', width: 'w-[15%]' },
-              { label: 'Kontakte', width: 'w-[12%]' },
-              { label: 'Aktualisiert', width: 'flex-1' },
+              { label: t('columns.name'), width: 'w-[35%]' },
+              { label: t('columns.category'), width: 'w-[15%]' },
+              { label: t('columns.type'), width: 'w-[15%]' },
+              { label: t('columns.contacts'), width: 'w-[12%]' },
+              { label: t('columns.updated'), width: 'flex-1' },
             ]}
           />
 
@@ -150,8 +152,8 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
           icon={UsersIcon}
           title={
             searchTerm || selectedCategories.length > 0 || selectedTypes.length > 0
-              ? 'Keine Listen gefunden'
-              : 'Keine weiteren Master-Listen verfügbar'
+              ? t('emptyState.noListsFound')
+              : t('emptyState.noMasterLists')
           }
           description=""
         />

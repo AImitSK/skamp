@@ -2,6 +2,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -16,6 +17,8 @@ const ListPagination = memo(function ListPagination({
   totalPages,
   onPageChange
 }: ListPaginationProps) {
+  const t = useTranslations('projects.distribution.pagination');
+
   if (totalPages <= 1) return null;
 
   // Berechne sichtbare Seiten (max 7)
@@ -60,7 +63,7 @@ const ListPagination = memo(function ListPagination({
         className="flex items-center text-sm"
       >
         <ChevronLeftIcon className="h-4 w-4 mr-1" />
-        Zurück
+        {t('previous')}
       </Button>
 
       {/* Page Numbers */}
@@ -88,7 +91,7 @@ const ListPagination = memo(function ListPagination({
         disabled={currentPage === totalPages}
         className="flex items-center text-sm"
       >
-        Weiter
+        {t('next')}
         <ChevronRightIcon className="h-4 w-4 ml-1" />
       </Button>
     </div>

@@ -7408,11 +7408,19 @@
         "type": "Type",
         "unknown": "Unknown"
       },
+      "listFilter": {
+        "ariaLabel": "Filter",
+        "header": "Filter",
+        "reset": "Reset",
+        "typeLabel": "Type",
+        "categoryLabel": "Category"
+      },
       "listRow": {
         "actions": {
           "delete": "Delete",
           "edit": "Edit",
           "export": "Export",
+          "link": "Link list",
           "removeLink": "Remove Link"
         },
         "dateUnknown": "Unknown",
@@ -7446,6 +7454,26 @@
           "type": "Type"
         },
         "title": "Project Distribution Lists"
+      },
+      "masterListBrowser": {
+        "title": "List Library",
+        "listsAvailable": "{count, plural, =0 {No lists available} one {# list available} other {# lists available}}",
+        "searchPlaceholder": "Search...",
+        "columns": {
+          "name": "Name",
+          "category": "Category",
+          "type": "Type",
+          "contacts": "Contacts",
+          "updated": "Updated"
+        },
+        "emptyState": {
+          "noListsFound": "No lists found",
+          "noMasterLists": "No more master lists available"
+        }
+      },
+      "pagination": {
+        "next": "Next",
+        "previous": "Previous"
       }
     },
     "documentEditor": {
