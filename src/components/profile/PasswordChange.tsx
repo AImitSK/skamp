@@ -21,7 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function PasswordChange() {
-  const t = useTranslations('profile.passwordChange');
+  const t = useTranslations('admin.profile.passwordChange');
   const { user } = useAuth();
   const [isChanging, setIsChanging] = useState(false);
   const [saving, setSaving] = useState(false);

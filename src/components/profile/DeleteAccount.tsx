@@ -23,7 +23,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function DeleteAccount() {
-  const t = useTranslations('profile.deleteAccount');
+  const t = useTranslations('admin.profile.deleteAccount');
   const { user } = useAuth();
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

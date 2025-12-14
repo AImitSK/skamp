@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function EmailVerification() {
-  const t = useTranslations('profile.emailVerification');
+  const t = useTranslations('admin.profile.emailVerification');
   const { user, sendVerificationEmail } = useAuth();
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);

@@ -24,7 +24,7 @@ interface ProviderInfo {
 }
 
 export function SocialProviders() {
-  const t = useTranslations('profile.socialProviders');
+  const t = useTranslations('admin.profile.socialProviders');
   const { user } = useAuth();
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);

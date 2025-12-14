@@ -28,7 +28,7 @@ import {
 
 export function TwoFactorSettings() {
   const { user } = useAuth();
-  const t = useTranslations('profile.twoFactor');
+  const t = useTranslations('admin.profile.twoFactor');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [setupStep, setSetupStep] = useState<'phone' | 'verify' | 'complete'>('phone');
