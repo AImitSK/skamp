@@ -189,7 +189,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
               className="px-4 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-colors flex items-center gap-2 h-10"
             >
               <PencilSquareIcon className="w-5 h-5" />
-              {t('changePlan')}
+              {t('changePlanButton')}
             </button>
           </div>
         </div>

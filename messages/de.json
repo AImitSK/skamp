@@ -10483,6 +10483,7 @@
         "title": "Zahlungsverwaltung",
         "portalError": "Fehler beim Öffnen des Customer Portals"
       },
+      "changePlanButton": "Plan ändern",
       "perMonth": "/Monat",
       "plan": "Plan",
       "tierWarning": {

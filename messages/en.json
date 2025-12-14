@@ -10449,6 +10449,7 @@
         "title": "Payment Management",
         "portalError": "Error opening customer portal"
       },
+      "changePlanButton": "Change Plan",
       "perMonth": "/month",
       "plan": "Plan",
       "tierWarning": {
