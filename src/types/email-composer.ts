@@ -254,6 +254,10 @@ export interface VariableDefinition {
 
 /**
  * Vordefinierte Variablen für die Anzeige (nur CRM-Personen Felder)
+ *
+ * @deprecated Die label, example und description Felder sind jetzt in i18n migriert.
+ * Verwende stattdessen die Übersetzungen unter `email.variables.{key}`.
+ * Diese Konstante wird nur noch für die Key-Struktur verwendet.
  */
 export const EMAIL_VARIABLES: VariableDefinition[] = [
   {

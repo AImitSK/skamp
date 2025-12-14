@@ -60,6 +60,7 @@ export default function CampaignRecipientManager({
   campaignRecipientCount
 }: CampaignRecipientManagerProps) {
   const t = useTranslations('campaigns');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [lists, setLists] = useState<DistributionList[]>([]);
@@ -263,7 +264,7 @@ export default function CampaignRecipientManager({
                   <button
                     onClick={() => onRemoveManualRecipient(recipient.id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded"
-                    title="Entfernen"
+                    title={tCommon('remove')}
                   >
                     <XMarkIcon className="h-5 w-5 text-gray-500" />
                   </button>

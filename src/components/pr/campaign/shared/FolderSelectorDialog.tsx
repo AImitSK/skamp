@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -46,9 +47,10 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
   organizationId,
   clientId
 }: FolderSelectorDialogProps) {
+  const t = useTranslations('pr.campaign.folderSelector');
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
-  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ id?: string; name: string }>>([{ name: 'Mediathek' }]);
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ id?: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,11 +75,11 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
       if (currentFolderId) {
         const crumbs = await mediaService.getBreadcrumbs(currentFolderId);
         setBreadcrumbs([
-          { name: 'Mediathek' },
+          { name: t('mediaLibrary') },
           ...crumbs.map(c => ({ id: c.id, name: c.name }))
         ]);
       } else {
-        setBreadcrumbs([{ name: 'Mediathek' }]);
+        setBreadcrumbs([{ name: t('mediaLibrary') }]);
       }
     } catch (error) {
       console.error('Fehler beim Laden der Ordner:', error);
@@ -99,7 +101,7 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
-      <DialogTitle className="px-6 py-4">PDF Speicherort auswählen</DialogTitle>
+      <DialogTitle className="px-6 py-4">{t('title')}</DialogTitle>
       <DialogBody className="px-6">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 mb-4 text-sm">
@@ -119,7 +121,7 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-            <Text className="mt-4">Lade Ordner...</Text>
+            <Text className="mt-4">{t('loading')}</Text>
           </div>
         ) : (
           <div className="min-h-[300px] max-h-[400px] overflow-y-auto">
@@ -130,16 +132,16 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
                   <HomeIcon className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="font-medium text-blue-900">
-                      {currentFolderId ? breadcrumbs[breadcrumbs.length - 1].name : 'Mediathek (Hauptordner)'}
+                      {currentFolderId ? breadcrumbs[breadcrumbs.length - 1].name : t('mediaLibraryRoot')}
                     </p>
-                    <p className="text-sm text-blue-700">PDF hier speichern</p>
+                    <p className="text-sm text-blue-700">{t('saveHereDescription')}</p>
                   </div>
                 </div>
                 <Button
                   onClick={handleConfirm}
                   className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
                 >
-                  Hier speichern
+                  {t('saveHereButton')}
                 </Button>
               </div>
             </div>
@@ -170,14 +172,14 @@ const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <FolderIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p>Keine Unterordner vorhanden</p>
+                <p>{t('noSubfolders')}</p>
               </div>
             )}
           </div>
         )}
       </DialogBody>
       <DialogActions className="px-6 py-4">
-        <Button plain onClick={onClose}>Abbrechen</Button>
+        <Button plain onClick={onClose}>{t('cancel')}</Button>
       </DialogActions>
     </Dialog>
   );

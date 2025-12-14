@@ -448,7 +448,7 @@ export default function Step3Preview({
   // Finaler Versand mit API
   const handleFinalSend = async () => {
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
-      setAlert({ type: 'error', message: t('scheduling.dateTimeRequired') });
+      setAlert({ type: 'error', message: t('errors.dateTimeRequired') });
       return;
     }
 
@@ -568,7 +568,7 @@ export default function Step3Preview({
           const result = await response.json();
 
           if (!response.ok || !result.success) {
-            throw new Error(result.error || 'Versand fehlgeschlagen');
+            throw new Error(result.error || t('errors.sendFailed', { reason: t('errors.unknownError') }));
           }
 
           emailLogger.info('Email sent successfully', {
@@ -837,7 +837,7 @@ export default function Step3Preview({
               <div className="space-y-4">
                 {/* Versand-Modus */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('finalSend.sendTime')}</label>
+                  <label className="block text-sm font-medium mb-2">{t('finalSend.timing')}</label>
                   <div className="space-y-2">
                     <label className="flex items-center">
                       <input
@@ -859,7 +859,7 @@ export default function Step3Preview({
                         className="h-4 w-4 text-[#005fab] border-gray-300 focus:ring-[#005fab]"
                         disabled={isDisabled}
                       />
-                      <span className="ml-2">{t('finalSend.sendScheduled')}</span>
+                      <span className="ml-2">{t('finalSend.schedule')}</span>
                     </label>
                   </div>
                 </div>
@@ -869,7 +869,7 @@ export default function Step3Preview({
                   <div className="pl-6 space-y-3">
                     <div>
                       <label htmlFor="schedule-date" className="block text-sm font-medium mb-1">
-                        {t('finalSend.date')}
+                        {t('finalSend.dateLabel')}
                       </label>
                       <Input
                         id="schedule-date"
@@ -882,7 +882,7 @@ export default function Step3Preview({
                     </div>
                     <div>
                       <label htmlFor="schedule-time" className="block text-sm font-medium mb-1">
-                        {t('finalSend.time')}
+                        {t('finalSend.timeLabel')}
                       </label>
                       <Input
                         id="schedule-time"
@@ -893,7 +893,7 @@ export default function Step3Preview({
                       />
                     </div>
                     <p className="text-xs text-gray-500">
-                      {t('finalSend.minScheduleNote')}
+                      {t('finalSend.minTimeHint')}
                     </p>
                   </div>
                 )}
@@ -908,12 +908,12 @@ export default function Step3Preview({
                     {sendMode === 'now' ? (
                       <>
                         <PaperAirplaneIcon className="-ml-1 mr-2 h-4 w-4" />
-                        {t('finalSend.sendToRecipients', { count: totalRecipients })}
+                        {t('finalSend.sendNowButton', { count: totalRecipients })}
                       </>
                     ) : (
                       <>
                         <ClockIcon className="-ml-1 mr-2 h-4 w-4" />
-                        {t('finalSend.scheduleSend')}
+                        {t('finalSend.scheduleButton')}
                       </>
                     )}
                   </Button>
@@ -964,7 +964,7 @@ export default function Step3Preview({
               {/* Email-Metadaten */}
               <div className="mb-4 p-3 bg-gray-50 rounded text-sm space-y-1">
                 <div><strong>{t('preview.from')}</strong> {draft.emailAddressId ? `Email ID: ${draft.emailAddressId.substring(0, 8)}...` : t('preview.notSelected')}</div>
-                <div><strong>{t('preview.to')}</strong> {t('preview.recipients', { count: totalRecipients })}</div>
+                <div><strong>{t('preview.to')}</strong> {totalRecipients} {t('preview.recipients')}</div>
                 <div><strong>{t('preview.subject')}</strong> {draft.metadata.subject}</div>
                 {draft.metadata.preheader && (
                   <div><strong>{t('preview.preheader')}</strong> {draft.metadata.preheader}</div>
@@ -974,7 +974,7 @@ export default function Step3Preview({
                     <strong>{t('preview.attachments')}</strong>
                     <span className="flex items-center gap-1">
                       <PaperClipIcon className="h-4 w-4 text-gray-500" />
-                      {t('preview.files', { count: attachments.length })}
+                      {attachments.length} {attachments.length === 1 ? t('preview.file') : t('preview.files')}
                     </span>
                   </div>
                 )}

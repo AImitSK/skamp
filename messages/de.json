@@ -996,6 +996,15 @@
         "remove": "Entfernen",
         "emptyTitle": "Textbausteine hinzufügen",
         "emptyHint": "Klicken zum Auswählen"
+      },
+      "fallbackTitles": {
+        "lead": "Lead-Absatz",
+        "main": "Haupttext",
+        "quote": "Zitat",
+        "element": "Element"
+      },
+      "quoteAttribution": {
+        "at": "bei"
       }
     },
     "assets": {
@@ -3789,6 +3798,33 @@
       "copyTooltip": "Variable kopieren",
       "copyManually": "Bitte kopieren Sie manuell: {variable}"
     },
+    "variables": {
+      "salutationFormal": {
+        "label": "Formelle Anrede",
+        "description": "Komplette formelle Anrede (Sehr geehrte Frau / Sehr geehrter Herr)",
+        "example": "Sehr geehrte Frau"
+      },
+      "title": {
+        "label": "Titel",
+        "description": "Akademischer Titel",
+        "example": "Dr."
+      },
+      "firstName": {
+        "label": "Vorname",
+        "description": "Vorname des Empfängers",
+        "example": "Max"
+      },
+      "lastName": {
+        "label": "Nachname",
+        "description": "Nachname des Empfängers",
+        "example": "Mustermann"
+      },
+      "companyName": {
+        "label": "Firma",
+        "description": "Firma des Empfängers",
+        "example": "Musterfirma GmbH"
+      }
+    },
     "step1": {
       "signature": {
         "title": "E-Mail-Signatur",
@@ -3920,29 +3956,6 @@
         "companyLabel": "Firma (optional)",
         "cancelButton": "Abbrechen",
         "addButton": "Hinzufügen"
-      }
-    },
-    "senderSelector": {
-      "senderType": "Absender-Typ",
-      "selectContactFrom": "Kontakt aus {company} wählen",
-      "companyFallback": "Firma",
-      "enterManually": "Manuell eingeben",
-      "selectContact": "Kontakt auswählen",
-      "pleaseSelect": "Bitte wählen...",
-      "noContactsFound": "Keine Kontakte für {company} gefunden. Bitte wählen Sie \"Manuell eingeben\" oder fügen Sie zuerst einen Kontakt zur Firma hinzu.",
-      "fields": {
-        "name": "Name *",
-        "email": "E-Mail *",
-        "position": "Position",
-        "phone": "Telefon",
-        "company": "Firma"
-      },
-      "placeholders": {
-        "name": "Max Mustermann",
-        "email": "max@firma.de",
-        "position": "PR Manager",
-        "phone": "+49 30 12345678",
-        "company": "Firma GmbH"
       }
     },
     "step2": {
@@ -9677,6 +9690,57 @@
           "cancel": "Abbrechen",
           "useDocuments": "Dokumente verwenden"
         }
+      }
+    },
+    "email": {
+      "senderSelector": {
+        "senderType": "Absender-Typ",
+        "selectContactFrom": "Kontakt aus {company} wählen",
+        "companyFallback": "Firma",
+        "enterManually": "Manuell eingeben",
+        "selectContact": "Kontakt auswählen",
+        "pleaseSelect": "Bitte wählen...",
+        "noContactsFound": "Keine Kontakte für {company} gefunden. Bitte wählen Sie \"Manuell eingeben\" oder fügen Sie zuerst einen Kontakt zur Firma hinzu.",
+        "fields": {
+          "name": "Name *",
+          "email": "E-Mail *",
+          "position": "Position",
+          "phone": "Telefon",
+          "company": "Firma"
+        },
+        "placeholders": {
+          "name": "Max Mustermann",
+          "email": "max@firma.de",
+          "position": "PR Manager",
+          "phone": "+49 30 12345678",
+          "company": "Firma GmbH"
+        }
+      },
+      "step1": {
+        "signature": {
+          "title": "E-Mail-Signatur",
+          "tooltip": "Die ausgewählte Signatur wird automatisch am Ende der E-Mail eingefügt.",
+          "loading": "Signaturen werden geladen...",
+          "none": "Keine Signatur verwenden",
+          "default": "Standard",
+          "empty": "Noch keine Signaturen vorhanden. Erstellen Sie Signaturen in den",
+          "settingsLink": "E-Mail-Einstellungen"
+        },
+        "editor": {
+          "placeholder": "{{salutationFormal}} {{title}} {{firstName}} {{lastName}},\n\nich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen..."
+        }
+      }
+    },
+    "campaign": {
+      "folderSelector": {
+        "title": "PDF Speicherort auswählen",
+        "mediaLibrary": "Mediathek",
+        "mediaLibraryRoot": "Mediathek (Hauptordner)",
+        "loading": "Lade Ordner...",
+        "saveHereDescription": "PDF hier speichern",
+        "saveHereButton": "Hier speichern",
+        "noSubfolders": "Keine Unterordner vorhanden",
+        "cancel": "Abbrechen"
       }
     }
   }

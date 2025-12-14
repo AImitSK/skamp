@@ -26,7 +26,7 @@ export default function Step1Content({
   validation,
   campaign
 }: Step1ContentProps) {
-  const t = useTranslations('email.step1');
+  const t = useTranslations('pr.email.step1');
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
 
@@ -85,9 +85,7 @@ export default function Step1Content({
           <EmailEditor
             content={content.body}
             onChange={handleContentChange}
-            placeholder="{{salutationFormal}} {{title}} {{firstName}} {{lastName}},
-
-ich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen..."
+            placeholder={t('editor.placeholder')}
             onOpenVariables={openVariablesForInsert}
             error={validation.errors.body}
             minHeight="320px"

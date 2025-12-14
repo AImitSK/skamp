@@ -25,7 +25,7 @@ interface SenderSelectorProps {
 }
 
 export default function SenderSelector({ campaign, sender, onChange, error }: SenderSelectorProps) {
-  const t = useTranslations('email.senderSelector');
+  const t = useTranslations('pr.email.senderSelector');
   const [companyContacts, setCompanyContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [manualData, setManualData] = useState({

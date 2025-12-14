@@ -320,7 +320,7 @@ export default function IntelligentBoilerplateSection({
         order: sections.length,
         isLocked: false,
         isCollapsed: false,
-        customTitle: type === 'lead' ? 'Lead-Absatz' : type === 'main' ? 'Haupttext' : 'Zitat'
+        customTitle: type === 'lead' ? t('boilerplates.fallbackTitles.lead') : type === 'main' ? t('boilerplates.fallbackTitles.main') : t('boilerplates.fallbackTitles.quote')
       };
       
       const updatedSections = [...sections, newSection];
@@ -471,7 +471,7 @@ export default function IntelligentBoilerplateSection({
             <p className="text-sm text-gray-600 mt-2">
               — {section.metadata.person}
               {section.metadata.role && `, ${section.metadata.role}`}
-              {section.metadata.company && ` bei ${section.metadata.company}`}
+              {section.metadata.company && ` ${t('boilerplates.quoteAttribution.at')} ${section.metadata.company}`}
             </p>
           </div>
         </div>
@@ -726,16 +726,16 @@ export default function IntelligentBoilerplateSection({
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">{getTypeIcon(section.type)}</span>
                                 <h4 className="font-medium text-gray-900">
-                                  {section.customTitle || section.boilerplate?.name || 
-                                   (section.type === 'lead' ? 'Lead-Absatz' : 
-                                    section.type === 'main' ? 'Haupttext' : 
-                                    section.type === 'quote' ? 'Zitat' : 'Element')}
+                                  {section.customTitle || section.boilerplate?.name ||
+                                   (section.type === 'lead' ? t('boilerplates.fallbackTitles.lead') :
+                                    section.type === 'main' ? t('boilerplates.fallbackTitles.main') :
+                                    section.type === 'quote' ? t('boilerplates.fallbackTitles.quote') : t('boilerplates.fallbackTitles.element'))}
                                 </h4>
                                 <Badge color={getTypeBadgeColor(section.type)} className="text-xs whitespace-nowrap">
                                   {getTypeLabel(section.type)}
                                 </Badge>
                                 {section.type === 'boilerplate' && section.boilerplate?.isGlobal ? (
-                                  <Badge color="blue" className="text-xs whitespace-nowrap">Global</Badge>
+                                  <Badge color="blue" className="text-xs whitespace-nowrap">{t('boilerplates.simple.badgeGlobal')}</Badge>
                                 ) : section.type === 'boilerplate' && clientName ? (
                                   <Badge color="orange" className="text-xs whitespace-nowrap">{clientName}</Badge>
                                 ) : null}
@@ -918,7 +918,7 @@ function BoilerplateSelectorModal({
                       <div className="flex items-center gap-2 mt-2">
                         <Badge color="zinc" className="text-xs">{boilerplate.category}</Badge>
                         {boilerplate.isGlobal ? (
-                          <Badge color="blue" className="text-xs">Global</Badge>
+                          <Badge color="blue" className="text-xs">{t('boilerplates.simple.badgeGlobal')}</Badge>
                         ) : (
                           <Badge color="orange" className="text-xs">{boilerplate.clientName}</Badge>
                         )}

@@ -996,6 +996,15 @@
         "remove": "Remove",
         "emptyTitle": "Add Boilerplates",
         "emptyHint": "Click to select"
+      },
+      "fallbackTitles": {
+        "lead": "Lead Paragraph",
+        "main": "Main Text",
+        "quote": "Quote",
+        "element": "Element"
+      },
+      "quoteAttribution": {
+        "at": "at"
       }
     },
     "assets": {
@@ -3794,6 +3803,33 @@
       "copyTooltip": "Copy variable",
       "copyManually": "Please copy manually: {variable}"
     },
+    "variables": {
+      "salutationFormal": {
+        "label": "Formal Salutation",
+        "description": "Complete formal salutation (Dear Ms. / Dear Mr.)",
+        "example": "Dear Ms."
+      },
+      "title": {
+        "label": "Title",
+        "description": "Academic title",
+        "example": "Dr."
+      },
+      "firstName": {
+        "label": "First Name",
+        "description": "Recipient's first name",
+        "example": "John"
+      },
+      "lastName": {
+        "label": "Last Name",
+        "description": "Recipient's last name",
+        "example": "Doe"
+      },
+      "companyName": {
+        "label": "Company",
+        "description": "Recipient's company",
+        "example": "Example Corp"
+      }
+    },
     "step1": {
       "signature": {
         "title": "Email Signature",
@@ -3925,29 +3961,6 @@
         "companyLabel": "Company (optional)",
         "cancelButton": "Cancel",
         "addButton": "Add"
-      }
-    },
-    "senderSelector": {
-      "senderType": "Sender Type",
-      "selectContactFrom": "Select contact from {company}",
-      "companyFallback": "Company",
-      "enterManually": "Enter manually",
-      "selectContact": "Select contact",
-      "pleaseSelect": "Please select...",
-      "noContactsFound": "No contacts found for {company}. Please select \"Enter manually\" or add a contact to the company first.",
-      "fields": {
-        "name": "Name *",
-        "email": "Email *",
-        "position": "Position",
-        "phone": "Phone",
-        "company": "Company"
-      },
-      "placeholders": {
-        "name": "John Doe",
-        "email": "john@company.com",
-        "position": "PR Manager",
-        "phone": "+1 555 123 4567",
-        "company": "Company Inc."
       }
     },
     "step2": {
@@ -8057,8 +8070,10 @@
         },
         "errors": {
           "noAuthentication": "No authentication available",
+          "noSenderEmail": "No sender email address selected",
           "sendFailed": "Send failed: {reason}",
           "schedulingFailed": "Scheduling failed",
+          "dateTimeRequired": "Date and time are required for scheduled sending",
           "unknownError": "Unknown error"
         },
         "testSend": {
@@ -9653,6 +9668,57 @@
           "cancel": "Cancel",
           "useDocuments": "Use Documents"
         }
+      }
+    },
+    "email": {
+      "senderSelector": {
+        "senderType": "Sender Type",
+        "selectContactFrom": "Select contact from {company}",
+        "companyFallback": "Company",
+        "enterManually": "Enter manually",
+        "selectContact": "Select contact",
+        "pleaseSelect": "Please select...",
+        "noContactsFound": "No contacts found for {company}. Please select \"Enter manually\" or add a contact to the company first.",
+        "fields": {
+          "name": "Name *",
+          "email": "Email *",
+          "position": "Position",
+          "phone": "Phone",
+          "company": "Company"
+        },
+        "placeholders": {
+          "name": "John Doe",
+          "email": "john@company.com",
+          "position": "PR Manager",
+          "phone": "+1 555 123 4567",
+          "company": "Company Inc."
+        }
+      },
+      "step1": {
+        "signature": {
+          "title": "Email Signature",
+          "tooltip": "The selected signature will be automatically added at the end of the email.",
+          "loading": "Loading signatures...",
+          "none": "No signature",
+          "default": "Default",
+          "empty": "No signatures available yet. Create signatures in",
+          "settingsLink": "Email Settings"
+        },
+        "editor": {
+          "placeholder": "{{salutationFormal}} {{title}} {{firstName}} {{lastName}},\n\nI am pleased to share our latest press release with you..."
+        }
+      }
+    },
+    "campaign": {
+      "folderSelector": {
+        "title": "Select PDF Location",
+        "mediaLibrary": "Media Library",
+        "mediaLibraryRoot": "Media Library (Root Folder)",
+        "loading": "Loading folders...",
+        "saveHereDescription": "Save PDF here",
+        "saveHereButton": "Save here",
+        "noSubfolders": "No subfolders available",
+        "cancel": "Cancel"
       }
     }
   }
