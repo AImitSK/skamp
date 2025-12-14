@@ -1156,7 +1156,12 @@
       "pdf": {
         "defaultTitle": "PDF Vorschau",
         "loading": "PDF wird geladen...",
-        "noPreview": "Keine PDF-Vorschau verfügbar"
+        "noPreview": "Keine PDF-Vorschau verfügbar",
+        "workflow": {
+          "ready": "PDF-Freigabe-Workflow bereit",
+          "description": "Beim Speichern wird automatisch folgendes ausgeführt:",
+          "tip": "💡 Tipp: Der Kunde erhält eine E-Mail mit einem sicheren Link zur PDF-Prüfung."
+        }
       },
       "tabs": {
         "approval": {
@@ -1169,6 +1174,7 @@
           }
         },
         "approvals": "Freigaben",
+        "attachmentsTab": "Anhänge",
         "attachments": {
           "addMedia": "Medien hinzufügen",
           "mediaTitle": "Medien"
@@ -1177,6 +1183,7 @@
           "pressReleaseTitle": "Pressemeldung"
         },
         "pressRelease": "Pressemeldung",
+        "previewTab": "Vorschau",
         "preview": {
           "approvalPdf": "Freigabe-PDF",
           "current": "Aktuell",
@@ -1270,7 +1277,8 @@
       "badge": "Key Visual",
       "clickToEdit": "Zum Bearbeiten klicken",
       "noVisualAgency": "Key Visual nicht verfügbar",
-      "noVisualCustomer": "Kein Key Visual"
+      "noVisualCustomer": "Kein Key Visual",
+      "title": "Key Visual"
     },
     "keywordInput": {
       "add": "Hinzufügen",

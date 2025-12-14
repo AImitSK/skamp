@@ -50,7 +50,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <PaperClipIcon className="h-4 w-4 mr-2" />
-          {t('attachments')}
+          {t('attachmentsTab')}
           {currentStep > 2 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
         </button>
 
@@ -80,7 +80,7 @@ export default function TabNavigation({ currentStep, onStepChange, onGeneratePre
           }`}
         >
           <InformationCircleIcon className="h-4 w-4 mr-2" />
-          {t('preview')}
+          {t('previewTab')}
         </button>
       </nav>
     </div>

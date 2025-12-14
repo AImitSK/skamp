@@ -1156,7 +1156,12 @@
       "pdf": {
         "defaultTitle": "PDF Preview",
         "loading": "Loading PDF...",
-        "noPreview": "No PDF preview available"
+        "noPreview": "No PDF preview available",
+        "workflow": {
+          "ready": "PDF Approval Workflow Ready",
+          "description": "When saving, the following will be automatically executed:",
+          "tip": "💡 Tip: The customer will receive an email with a secure link to review the PDF."
+        }
       },
       "tabs": {
         "approval": {
@@ -1169,6 +1174,7 @@
           }
         },
         "approvals": "Approvals",
+        "attachmentsTab": "Attachments",
         "attachments": {
           "addMedia": "Add Media",
           "mediaTitle": "Media"
@@ -1177,6 +1183,7 @@
           "pressReleaseTitle": "Press Release"
         },
         "pressRelease": "Press Release",
+        "previewTab": "Preview",
         "preview": {
           "approvalPdf": "Approval PDF",
           "current": "Current",
@@ -1270,7 +1277,8 @@
       "badge": "Key Visual",
       "clickToEdit": "Click to edit",
       "noVisualAgency": "Key Visual not available",
-      "noVisualCustomer": "No Key Visual"
+      "noVisualCustomer": "No Key Visual",
+      "title": "Key Visual"
     },
     "keywordInput": {
       "add": "Add",
