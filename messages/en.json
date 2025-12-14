@@ -4334,9 +4334,28 @@
       "actions": {
         "cancel": "Cancel",
         "create": "Create Signature",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "edit": "Edit",
+        "preview": "Preview",
         "save": "Save",
         "saving": "Saving..."
       },
+      "assignedTo": "Assigned to:",
+      "createdOn": "Created on {date}",
+      "dateUnknown": "Unknown",
+      "default": "Default",
+      "deleteConfirm": "Are you sure you want to delete this signature?",
+      "empty": {
+        "createFirst": "Create First Signature",
+        "description": "Create an email signature that will be automatically attached to your messages.",
+        "title": "No Signatures"
+      },
+      "loading": "Loading signatures...",
+      "moreCount": "+{count} more",
+      "newSignature": "New Signature",
+      "noContent": "No content",
+      "noEmailsAssigned": "Not assigned to any email",
       "editor": {
         "assignmentLabel": "Use this signature for",
         "assignmentTooltip": "Select the email addresses that should use this signature.",

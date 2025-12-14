@@ -4329,9 +4329,28 @@
       "actions": {
         "cancel": "Abbrechen",
         "create": "Signatur erstellen",
+        "delete": "Löschen",
+        "duplicate": "Duplizieren",
+        "edit": "Bearbeiten",
+        "preview": "Vorschau",
         "save": "Speichern",
         "saving": "Speichern..."
       },
+      "assignedTo": "Zugewiesen an:",
+      "createdOn": "Erstellt am {date}",
+      "dateUnknown": "Unbekannt",
+      "default": "Standard",
+      "deleteConfirm": "Möchten Sie diese Signatur wirklich löschen?",
+      "empty": {
+        "createFirst": "Erste Signatur erstellen",
+        "description": "Erstellen Sie eine E-Mail-Signatur, die automatisch an Ihre Nachrichten angehängt wird.",
+        "title": "Keine Signaturen vorhanden"
+      },
+      "loading": "Signaturen werden geladen...",
+      "moreCount": "+{count} weitere",
+      "newSignature": "Neue Signatur",
+      "noContent": "Kein Inhalt",
+      "noEmailsAssigned": "Keiner E-Mail zugewiesen",
       "editor": {
         "assignmentLabel": "Diese Signatur verwenden für",
         "assignmentTooltip": "Wählen Sie die E-Mail-Adressen aus, die diese Signatur verwenden sollen.",
