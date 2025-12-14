@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -24,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { type ContextSetupStepProps, INDUSTRIES, TONES, AUDIENCES } from '../types';
+import { type ContextSetupStepProps, INDUSTRY_IDS, TONE_IDS, AUDIENCE_IDS } from '../types';
 
 /**
  * ContextSetupStep Component
@@ -67,6 +68,8 @@ function ContextSetupStep({
   onClearDocuments,
   onRemoveDocument
 }: ContextSetupStepProps) {
+  const t = useTranslations('pr.ai.structuredGeneration');
+
   // Icon mapping für TONES und AUDIENCES
   const iconMap: Record<string, any> = {
     AcademicCapIcon,
@@ -78,14 +81,16 @@ function ContextSetupStep({
     NewspaperIcon
   };
 
-  const tones = TONES.map(tone => ({
-    ...tone,
-    icon: iconMap[tone.icon]
+  const tones = TONE_IDS.map(id => ({
+    id,
+    label: t(`tones.${id}.label`),
+    icon: iconMap[id === 'formal' ? 'AcademicCapIcon' : id === 'modern' ? 'SparklesIcon' : id === 'technical' ? 'BeakerIcon' : 'RocketLaunchIcon']
   }));
 
-  const audiences = AUDIENCES.map(audience => ({
-    ...audience,
-    icon: iconMap[audience.icon]
+  const audiences = AUDIENCE_IDS.map(id => ({
+    id,
+    label: t(`audiences.${id}.label`),
+    icon: iconMap[id === 'b2b' ? 'BriefcaseIcon' : id === 'consumer' ? 'ShoppingBagIcon' : 'NewspaperIcon']
   }));
 
   return (
@@ -93,7 +98,7 @@ function ContextSetupStep({
       {/* MODUS-AUSWAHL */}
       <div className="mb-8">
         <Field>
-          <Label className="text-base font-semibold">KI-Modus *</Label>
+          <Label className="text-base font-semibold">{t('contextStep.modeLabel')}</Label>
           <div className="grid grid-cols-2 gap-6 mt-3">
           <button
             type="button"
@@ -118,7 +123,7 @@ function ContextSetupStep({
                 <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0"></div>
               )}
               <h3 className={`text-lg font-semibold ${generationMode === 'standard' ? 'text-green-900' : 'text-gray-900'}`}>
-                Standard
+                {t('contextStep.modeStandard')}
               </h3>
             </div>
           </button>
@@ -143,7 +148,7 @@ function ContextSetupStep({
                 <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0"></div>
               )}
               <h3 className={`text-lg font-semibold ${generationMode === 'expert' ? 'text-green-900' : 'text-gray-900'}`}>
-                Experte
+                {t('contextStep.modeExpert')}
               </h3>
             </div>
           </button>
@@ -156,25 +161,25 @@ function ContextSetupStep({
         <>
           <div className="grid grid-cols-2 gap-6 mb-8">
             <Field>
-              <Label className="text-base font-semibold">Branche *</Label>
+              <Label className="text-base font-semibold">{t('contextStep.industryLabel')}</Label>
               <Select
                 value={context.industry || ''}
                 onChange={(e) => onChange({ ...context, industry: e.target.value })}
                 className="mt-2"
               >
-                <option value="">Branche auswählen...</option>
-                {INDUSTRIES.map(industry => (
-                  <option key={industry} value={industry}>{industry}</option>
+                <option value="">{t('contextStep.industryPlaceholder')}</option>
+                {INDUSTRY_IDS.map(id => (
+                  <option key={id} value={id}>{t(`industries.${id}`)}</option>
                 ))}
               </Select>
             </Field>
 
             <Field>
-              <Label className="text-base font-semibold">Unternehmensname *</Label>
+              <Label className="text-base font-semibold">{t('contextStep.companyNameLabel')}</Label>
               <Input
                 value={context.companyName || ''}
                 onChange={(e) => onChange({ ...context, companyName: e.target.value })}
-                placeholder="Ihre Firma GmbH"
+                placeholder={t('contextStep.companyNamePlaceholder')}
                 className="mt-2"
               />
             </Field>
@@ -182,7 +187,7 @@ function ContextSetupStep({
 
       <div className="mb-8">
         <Field>
-          <Label className="text-base font-semibold">Tonalität *</Label>
+          <Label className="text-base font-semibold">{t('contextStep.toneLabel')}</Label>
           <div className="grid grid-cols-2 gap-3 mt-3">
             {tones.map(tone => (
               <button
@@ -200,7 +205,7 @@ function ContextSetupStep({
                   <h3 className="text-lg font-semibold text-gray-900">{tone.label}</h3>
                   {context.tone === tone.id && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded ml-auto">
-                      Aktiv
+                      {t('contextStep.activeBadge')}
                     </span>
                   )}
                 </div>
@@ -212,7 +217,7 @@ function ContextSetupStep({
 
       <div className="mb-8">
         <Field>
-          <Label className="text-base font-semibold">Zielgruppe *</Label>
+          <Label className="text-base font-semibold">{t('contextStep.audienceLabel')}</Label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
             {audiences.map(audience => (
               <button
@@ -230,7 +235,7 @@ function ContextSetupStep({
                   <h3 className="text-lg font-semibold text-gray-900">{audience.label}</h3>
                   {context.audience === audience.id && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded ml-auto">
-                      Aktiv
+                      {t('contextStep.activeBadge')}
                     </span>
                   )}
                 </div>
@@ -248,11 +253,11 @@ function ContextSetupStep({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-3">
               <DocumentTextIcon className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">Planungsdokumente</h4>
+              <h4 className="font-semibold text-blue-900">{t('contextStep.documentsHeading')}</h4>
             </div>
 
             <p className="text-sm text-blue-700 mb-4">
-              Fügen Sie Ihre Strategiedokumente hinzu (Kernbotschaft, Zielgruppenanalyse, Unternehmensprofil, etc.)
+              {t('contextStep.documentsDescription')}
             </p>
 
           <Field>
@@ -263,7 +268,10 @@ function ContextSetupStep({
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="h-5 w-5 text-blue-600" />
                   <span className="text-sm font-medium text-blue-900">
-                    {selectedDocuments.length} Dokument{selectedDocuments.length !== 1 ? 'e' : ''} ausgewählt
+                    {t('contextStep.documentsSelected', {
+                      count: selectedDocuments.length,
+                      plural: selectedDocuments.length !== 1 ? t('contextStep.documentsSelectedPlural') : ''
+                    })}
                   </span>
                 </div>
                 <Button
@@ -271,7 +279,7 @@ function ContextSetupStep({
                   onClick={onOpenDocumentPicker}
                   className="text-sm text-blue-700 hover:text-blue-800"
                 >
-                  Ändern
+                  {t('contextStep.changeButton')}
                 </Button>
               </div>
 
@@ -280,14 +288,14 @@ function ContextSetupStep({
                   <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg hover:border-blue-200 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-blue-900 truncate">{doc.fileName.replace('.celero-doc', '')}</p>
-                      <p className="text-xs text-blue-600">{doc.wordCount} Wörter</p>
+                      <p className="text-xs text-blue-600">{t('contextStep.wordCount', { count: doc.wordCount })}</p>
                     </div>
                     {onRemoveDocument && (
                       <button
                         type="button"
                         onClick={() => onRemoveDocument(doc.id)}
                         className="ml-3 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Dokument entfernen"
+                        title={t('contextStep.removeDocumentTitle')}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -303,7 +311,7 @@ function ContextSetupStep({
               className="w-full"
             >
               <DocumentTextIcon className="h-5 w-5 mr-2" />
-              Planungsdokumente auswählen
+              {t('contextStep.selectDocumentsButton')}
             </Button>
           )}
           </Field>

@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { DocumentTextIcon, LightBulbIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,12 +65,14 @@ function ContentInputStep({
   hasDocuments,
   documentCount
 }: ContentInputStepProps) {
+  const t = useTranslations('pr.ai.structuredGeneration');
+
   const tipExamples = [
-    "Nenne konkrete Zahlen und Fakten (z.B. 50% Wachstum, 10.000 Nutzer)",
-    "Beschreibe das Alleinstellungsmerkmal klar und deutlich",
-    "Erwähne die Zielgruppe und welchen Nutzen sie hat",
-    "Gib Kontext zur aktuellen Marktsituation",
-    "Füge relevante Personen mit Namen und Position hinzu"
+    t('contentStep.tip1'),
+    t('contentStep.tip2'),
+    t('contentStep.tip3'),
+    t('contentStep.tip4'),
+    t('contentStep.tip5')
   ];
 
   return (
@@ -94,14 +97,16 @@ function ContentInputStep({
           )}
           {context.audience && (
             <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-              {context.audience === 'b2b' ? 'B2B' :
-               context.audience === 'consumer' ? 'Verbraucher' : 'Medien'}
+              {t(`audiences.${context.audience}.label`)}
             </span>
           )}
-          {hasDocuments && (
+          {hasDocuments && documentCount && (
             <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
               <DocumentTextIcon className="h-4 w-4" />
-              {documentCount} Planungsdokument{documentCount !== 1 ? 'e' : ''} angehängt
+              {t('contentStep.documentsAttached', {
+                count: documentCount,
+                plural: documentCount !== 1 ? t('contentStep.documentsAttachedPlural') : ''
+              })}
             </span>
           )}
         </div>
@@ -115,11 +120,10 @@ function ContentInputStep({
               <CheckCircleIcon className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-green-900 mb-2">
-                  Kontext-basierte Generierung aktiviert
+                  {t('contentStep.expertModeTitle')}
                 </h3>
                 <p className="text-sm text-green-700 mb-3">
-                  Die KI nutzt die {documentCount} ausgewählten Planungsdokumente als Kontext.
-                  Gib optional weitere Anweisungen oder lasse das Feld leer für eine automatische Generierung.
+                  {t('contentStep.expertModeDescription', { count: documentCount || 0 })}
                 </p>
               </div>
             </div>
@@ -139,8 +143,8 @@ function ContentInputStep({
           <div className="flex items-center justify-between mb-2">
             <Label className="text-base font-semibold">
               {generationMode === 'expert'
-                ? 'Weitere Anweisungen oder spezifische Schwerpunkte (optional)'
-                : 'Beschreibe deine Pressemitteilung *'
+                ? t('contentStep.promptLabelExpert')
+                : t('contentStep.promptLabelStandard')
               }
             </Label>
             {prompt.length > 0 && (
@@ -148,7 +152,7 @@ function ContentInputStep({
                 "text-sm",
                 prompt.length > 500 ? "text-orange-600" : "text-gray-500"
               )}>
-                {prompt.length} Zeichen
+                {t('contentStep.charactersLabel', { count: prompt.length })}
               </span>
             )}
           </div>
@@ -158,16 +162,8 @@ function ContentInputStep({
             onChange={(e) => onChange(e.target.value)}
             rows={generationMode === 'expert' ? 8 : 12}
             placeholder={generationMode === 'expert'
-              ? `Optionale Anweisungen für die KI...
-
-Beispiele:
-- "Fokussiere auf die technischen Innovationen"
-- "Zielgruppe sind Investoren und Finanzmedien"
-- "Betone die Nachhaltigkeitsaspekte besonders"
-- Leer lassen für automatische Generierung basierend auf den Planungsdokumenten`
-              : `Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter deine Beschreibung, desto besser wird das Ergebnis.
-
-Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unternehmensdaten 10x schneller analysiert als herkömmliche Tools. Die Plattform nutzt maschinelles Lernen und kann...`
+              ? t('contentStep.placeholderExpert')
+              : t('contentStep.placeholderStandard')
             }
             className="w-full font-mono text-sm"
           />
@@ -179,7 +175,7 @@ Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unte
             <LightBulbIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="font-semibold text-blue-900 text-sm mb-2">
-                Tipps für bessere Ergebnisse:
+                {t('contentStep.tipsHeading')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {tipExamples.map((tip, index) => (

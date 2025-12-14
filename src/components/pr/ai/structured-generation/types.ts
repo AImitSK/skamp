@@ -95,76 +95,62 @@ export interface TemplateDropdownProps {
 // ===== Constants =====
 
 /**
- * Verfügbare Branchen für die Kontext-Auswahl
+ * IDs für Branchen - Labels kommen aus Übersetzungen (pr.ai.structuredGeneration.industries.{id})
  */
-export const INDUSTRIES = [
-  'Technologie & Software',
-  'Finanzdienstleistungen',
-  'Gesundheitswesen',
-  'Automobil',
-  'Handel & E-Commerce',
-  'Medien & Entertainment',
-  'Energie & Umwelt',
-  'Bildung',
-  'Non-Profit',
-  'Immobilien',
-  'Tourismus & Gastgewerbe',
-  'Sonstiges'
+export const INDUSTRY_IDS = [
+  'technology',
+  'finance',
+  'healthcare',
+  'automotive',
+  'retail',
+  'media',
+  'energy',
+  'education',
+  'nonprofit',
+  'realestate',
+  'tourism',
+  'other'
 ] as const;
 
-/**
- * Verfügbare Tonalitäten mit Beschreibungen und Icons
- */
-export const TONES = [
-  {
-    id: 'formal',
-    label: 'Formal',
-    desc: 'Seriös, traditionell, konservativ',
-    icon: 'AcademicCapIcon'
-  },
-  {
-    id: 'modern',
-    label: 'Modern',
-    desc: 'Zeitgemäß, innovativ, zugänglich',
-    icon: 'SparklesIcon'
-  },
-  {
-    id: 'technical',
-    label: 'Technisch',
-    desc: 'Fachspezifisch, präzise, detailliert',
-    icon: 'BeakerIcon'
-  },
-  {
-    id: 'startup',
-    label: 'Startup',
-    desc: 'Dynamisch, visionär, disruptiv',
-    icon: 'RocketLaunchIcon'
-  }
-] as const;
+export type IndustryId = typeof INDUSTRY_IDS[number];
 
 /**
- * Verfügbare Zielgruppen mit Beschreibungen und Icons
+ * IDs für Tonalitäten - Labels kommen aus Übersetzungen (pr.ai.structuredGeneration.tones.{id})
  */
-export const AUDIENCES = [
-  {
-    id: 'b2b',
-    label: 'B2B',
-    desc: 'Unternehmen und Experten',
-    icon: 'BriefcaseIcon'
-  },
-  {
-    id: 'consumer',
-    label: 'Verbraucher',
-    desc: 'Endkunden und Publikum',
-    icon: 'ShoppingBagIcon'
-  },
-  {
-    id: 'media',
-    label: 'Medien',
-    desc: 'Journalisten und Redaktionen',
-    icon: 'NewspaperIcon'
-  }
-] as const;
+export const TONE_IDS = ['formal', 'modern', 'technical', 'startup'] as const;
+
+export type ToneId = typeof TONE_IDS[number];
+
+/**
+ * Icon mapping für Tonalitäten
+ */
+export const TONE_ICONS: Record<ToneId, string> = {
+  formal: 'AcademicCapIcon',
+  modern: 'SparklesIcon',
+  technical: 'BeakerIcon',
+  startup: 'RocketLaunchIcon'
+};
+
+/**
+ * IDs für Zielgruppen - Labels kommen aus Übersetzungen (pr.ai.structuredGeneration.audiences.{id})
+ */
+export const AUDIENCE_IDS = ['b2b', 'consumer', 'media'] as const;
+
+export type AudienceId = typeof AUDIENCE_IDS[number];
+
+/**
+ * Icon mapping für Zielgruppen
+ */
+export const AUDIENCE_ICONS: Record<AudienceId, string> = {
+  b2b: 'BriefcaseIcon',
+  consumer: 'ShoppingBagIcon',
+  media: 'NewspaperIcon'
+};
+
+// Legacy exports for backwards compatibility (deprecated)
+export const INDUSTRIES = INDUSTRY_IDS;
+export const TONES = TONE_IDS.map(id => ({ id, icon: TONE_ICONS[id] }));
+export const AUDIENCES = AUDIENCE_IDS.map(id => ({ id, icon: AUDIENCE_ICONS[id] }));
 
 // ===== Type Guards & Helpers =====
 
