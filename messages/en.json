@@ -6987,11 +6987,6 @@
         "actions": {
           "goToProject": "Go to Project"
         }
-      },
-      "steps": {
-        "client": {
-          "label": "Select Client *"
-        }
       }
     },
     "assets": {
