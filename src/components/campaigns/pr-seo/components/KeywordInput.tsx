@@ -12,7 +12,7 @@ import type { KeywordInputProps } from '../types';
  * Erlaubt das Hinzufügen neuer Keywords (max 2)
  */
 export const KeywordInput = React.memo(function KeywordInput({ keywords, onAddKeyword, maxKeywords = 2 }: KeywordInputProps) {
-  const t = useTranslations('campaigns.prSeo.keywords');
+  const t = useTranslations('campaigns.keywordInput');
   const [newKeyword, setNewKeyword] = useState('');
 
   const handleAdd = () => {

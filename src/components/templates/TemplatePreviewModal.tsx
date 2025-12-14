@@ -93,21 +93,19 @@ export function TemplatePreviewModal({
       });
 
       if (!response.ok) {
-        throw new Error(`Preview-Generation fehlgeschlagen: ${response.status}`);
+        throw new Error(t('errors.generationFailed', { status: response.status }));
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
-        throw new Error(data.error || 'Preview konnte nicht generiert werden');
+        throw new Error(data.error || t('errors.generationDefault'));
       }
 
       setPreviewHtml(data.html);
-      // Template-Vorschau erfolgreich generiert
 
     } catch (err) {
-      // Fehler bei Template-Vorschau
-      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler bei Preview-Generation';
+      const errorMessage = err instanceof Error ? err.message : t('errors.unknown');
       setError(errorMessage);
     } finally {
       setLoading(false);

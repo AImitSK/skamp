@@ -88,7 +88,6 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
         setTemplateData(template);
       }
     } catch (error) {
-      console.error('Fehler beim Laden des Templates:', error);
       setError(t('errors.loadFailed'));
     } finally {
       setIsLoading(false);
@@ -386,7 +385,6 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
       onSave(templateData);
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
       setError(t('errors.saveFailed'));
     } finally {
       setIsSaving(false);

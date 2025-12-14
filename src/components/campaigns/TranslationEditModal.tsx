@@ -30,6 +30,7 @@ import { toastService } from "@/lib/utils/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client-init";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 
 // TranslationEditor dynamisch laden
 const TranslationEditor = dynamic(
@@ -74,18 +75,16 @@ const getBoilerplateIcon = (type: string) => {
 };
 
 /** Anzeige-Name für Boilerplate-Typ */
-const getBoilerplateDisplayName = (type?: string, customTitle?: string): string => {
+const getBoilerplateDisplayName = (
+  type?: string,
+  customTitle?: string,
+  t?: (key: string) => string
+): string => {
   if (customTitle) return customTitle;
+  if (!t) return type || 'Boilerplate';
 
-  const typeNames: Record<string, string> = {
-    'lead': 'Lead/Einleitung',
-    'main': 'Haupttext',
-    'quote': 'Zitat',
-    'contact': 'Kontakt',
-    'boilerplate': 'Unternehmensprofil',
-  };
-
-  return typeNames[type || ''] || 'Textbaustein';
+  const typeKey = type || 'default';
+  return t(`boilerplateTypes.${typeKey}`);
 };
 
 /**
@@ -100,6 +99,8 @@ export function TranslationEditModal({
   projectId,
   onSaved,
 }: TranslationEditModalProps) {
+  const t = useTranslations('campaigns.translationEdit');
+
   // Campaign für Original-Daten
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [loadingCampaign, setLoadingCampaign] = useState(false);
@@ -152,7 +153,7 @@ export function TranslationEditModal({
             originalContent: original?.content || '',
             originalTitle: original?.customTitle,
             type: original?.type || 'boilerplate',
-            displayName: getBoilerplateDisplayName(original?.type, original?.customTitle),
+            displayName: getBoilerplateDisplayName(original?.type, original?.customTitle, t),
           };
         });
         setEnrichedBoilerplates(enriched);
@@ -165,12 +166,12 @@ export function TranslationEditModal({
           originalContent: '',
           originalTitle: undefined,
           type: 'boilerplate',
-          displayName: `Textbaustein ${idx + 1}`,
+          displayName: t('boilerplateFallback', { number: idx + 1 }),
         }));
         setEnrichedBoilerplates(basic);
       }
     }
-  }, [isOpen, translation, campaign]);
+  }, [isOpen, translation, campaign, t]);
 
   // Content-Änderung vom Editor
   const handleContentChange = useCallback((html: string) => {
@@ -228,7 +229,7 @@ export function TranslationEditModal({
       <DialogTitle>
         <div className="flex items-center gap-3">
           <PencilIcon className="h-5 w-5 text-purple-600" />
-          <span>Übersetzung bearbeiten</span>
+          <span>{t('title')}</span>
           <div className="flex items-center gap-2 ml-4">
             <LanguageFlagIcon languageCode={translation.language} />
             <Text className="text-base font-normal text-gray-600">
@@ -237,7 +238,7 @@ export function TranslationEditModal({
           </div>
           <Badge color="purple" className="ml-auto text-xs">
             <SparklesIcon className="h-3 w-3 mr-1" />
-            KI-generiert
+            {t('aiGenerated')}
           </Badge>
         </div>
       </DialogTitle>
@@ -251,22 +252,22 @@ export function TranslationEditModal({
           <>
             {/* Titel */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <Text className="text-sm font-medium text-gray-700 mb-3">Titel</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-3">{t('sections.titleLabel')}</Text>
               <div className="grid grid-cols-2 gap-4">
                 {/* Original */}
                 <div>
-                  <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                  <Text className="text-xs text-gray-500 mb-1">{t('sections.original')}</Text>
                   <div className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700">
                     {campaign?.title || '–'}
                   </div>
                 </div>
                 {/* Übersetzung */}
                 <div>
-                  <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                  <Text className="text-xs text-gray-500 mb-1">{t('sections.translation')}</Text>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Übersetzter Titel"
+                    placeholder={t('sections.titlePlaceholder')}
                     disabled={isSaving}
                   />
                 </div>
@@ -275,20 +276,20 @@ export function TranslationEditModal({
 
             {/* Hauptinhalt */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <Text className="text-sm font-medium text-gray-700 mb-3">Hauptinhalt</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-3">{t('sections.mainContent')}</Text>
               <div className="grid grid-cols-2 gap-4">
                 {/* Original */}
                 <div>
-                  <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                  <Text className="text-xs text-gray-500 mb-1">{t('sections.original')}</Text>
                   <div
                     className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700 prose prose-sm max-w-none overflow-y-auto"
                     style={{ minHeight: '200px', maxHeight: '400px' }}
-                    dangerouslySetInnerHTML={{ __html: campaign?.mainContent || '<p class="text-gray-400">Kein Original-Content verfügbar</p>' }}
+                    dangerouslySetInnerHTML={{ __html: campaign?.mainContent || `<p class="text-gray-400">${t('sections.noOriginalContent')}</p>` }}
                   />
                 </div>
                 {/* Übersetzung */}
                 <div>
-                  <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                  <Text className="text-xs text-gray-500 mb-1">{t('sections.translation')}</Text>
                   <TranslationEditor
                     content={content}
                     onChange={handleContentChange}
@@ -303,7 +304,7 @@ export function TranslationEditModal({
             {enrichedBoilerplates.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Text className="text-sm font-medium text-gray-700">Textbausteine</Text>
+                  <Text className="text-sm font-medium text-gray-700">{t('sections.boilerplates')}</Text>
                   <Badge color="zinc" className="text-xs">
                     {enrichedBoilerplates.length}
                   </Badge>
@@ -335,18 +336,18 @@ export function TranslationEditModal({
                             <div className="grid grid-cols-2 gap-4 pt-2">
                               {/* Original */}
                               <div>
-                                <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                                <Text className="text-xs text-gray-500 mb-1">{t('sections.original')}</Text>
                                 <div
                                   className="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm text-gray-700 prose prose-sm max-w-none overflow-y-auto"
                                   style={{ minHeight: '120px', maxHeight: '300px' }}
                                   dangerouslySetInnerHTML={{
-                                    __html: bp.originalContent || '<p class="text-gray-400 italic">Original nicht verfügbar</p>'
+                                    __html: bp.originalContent || `<p class="text-gray-400 italic">${t('sections.noOriginalAvailable')}</p>`
                                   }}
                                 />
                               </div>
                               {/* Übersetzung */}
                               <div>
-                                <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                                <Text className="text-xs text-gray-500 mb-1">{t('sections.translation')}</Text>
                                 <TranslationEditor
                                   content={bp.translatedContent}
                                   onChange={(html) => handleBoilerplateContentChange(bp.id, html)}
@@ -369,11 +370,11 @@ export function TranslationEditModal({
               <div className="flex items-start gap-2">
                 <SparklesIcon className="h-5 w-5 text-purple-500 shrink-0" />
                 <Text className="text-sm text-purple-700">
-                  Diese Übersetzung wurde mit KI generiert. Spezielle Formatierungen wie
-                  <span className="font-bold mx-1">CTA</span>,
-                  <span className="text-blue-600 font-semibold mx-1">#Hashtags</span> und
-                  <span className="italic mx-1">Zitate</span>
-                  bleiben beim Bearbeiten erhalten.
+                  {t.rich('hint', {
+                    cta: (chunks) => <span className="font-bold mx-1">{chunks}</span>,
+                    hashtags: (chunks) => <span className="text-blue-600 font-semibold mx-1">{chunks}</span>,
+                    quotes: (chunks) => <span className="italic mx-1">{chunks}</span>,
+                  })}
                 </Text>
               </div>
             </div>
@@ -384,7 +385,7 @@ export function TranslationEditModal({
       <DialogActions>
         <Button plain onClick={onClose} disabled={isSaving}>
           <XMarkIcon className="h-4 w-4 mr-1" />
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button
           color="primary"
@@ -393,11 +394,11 @@ export function TranslationEditModal({
           className="!bg-purple-600 hover:!bg-purple-700"
         >
           {isSaving ? (
-            "Speichern..."
+            t('actions.saving')
           ) : (
             <>
               <CheckIcon className="h-4 w-4 mr-1" />
-              Speichern
+              {t('actions.save')}
             </>
           )}
         </Button>

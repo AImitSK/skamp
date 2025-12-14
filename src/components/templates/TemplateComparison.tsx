@@ -138,13 +138,13 @@ export function TemplateComparison({
       });
 
       if (!response.ok) {
-        throw new Error(`Preview-Generation fehlgeschlagen: ${response.status}`);
+        throw new Error(t('preview.generationFailed', { status: response.status }));
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
-        throw new Error(data.error || 'Preview konnte nicht generiert werden');
+        throw new Error(data.error || t('preview.notGenerated'));
       }
 
       setPreviewStates(prev => new Map(prev.set(template.id, {
@@ -157,7 +157,7 @@ export function TemplateComparison({
 
     } catch (err) {
       // Fehler bei Vergleichs-Vorschau
-      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      const errorMessage = err instanceof Error ? err.message : t('errors.unknownError');
       
       setPreviewStates(prev => new Map(prev.set(template.id, {
         html: '',

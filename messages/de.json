@@ -831,6 +831,11 @@
         "gridView": "Kachel-Ansicht"
       }
     },
+    "keywordInput": {
+      "placeholder": "Keyword hinzufügen...",
+      "maxReached": "Maximum {max} Keywords erreicht",
+      "add": "Hinzufügen"
+    },
     "approvalSettings": {
       "customerApprovalRequired": "Kundenfreigabe erforderlich",
       "customerApprovalDescription": "Kampagne muss vom Kunden freigegeben werden",
@@ -896,6 +901,20 @@
         "distribution": "Verteilung",
         "completed": "Abgeschlossen"
       }
+    },
+    "projectUpload": {
+      "title": "Medien hochladen",
+      "uploadTarget": "Upload-Ziel:",
+      "selectFiles": "Dateien auswählen",
+      "dragAndDrop": "oder Dateien hierher ziehen",
+      "fileFormats": "Unterstützt: PDF, JPG, PNG, GIF, MP4, MOV, AVI",
+      "selectedFiles": "{count, plural, =1 {1 Datei} other {# Dateien}} ausgewählt",
+      "supportedFormats": "Alle gängigen Bild-, Video- und Dokumentformate werden unterstützt.",
+      "cancel": "Abbrechen",
+      "uploadFiles": "{count, plural, =1 {1 Datei} other {# Dateien}} hochladen",
+      "uploading": "Hochladen... ({current}/{total})",
+      "uploadSuccess": "{count, plural, =1 {1 Datei} other {# Dateien}} erfolgreich hochgeladen",
+      "uploadError": "Fehler beim Hochladen der Dateien"
     },
     "recipients": {
       "title": "Verteiler",
@@ -1637,6 +1656,105 @@
         "defaultTitle": "PDF Vorschau",
         "loading": "PDF wird geladen...",
         "noPreview": "Keine PDF-Vorschau verfügbar"
+      }
+    },
+    "translationModal": {
+      "title": "Pressemitteilung übersetzen",
+      "successTitle": "Übersetzung erfolgreich!",
+      "successMessage": "Die Pressemitteilung wurde erfolgreich übersetzt und gespeichert.",
+      "errorTitle": "Fehler",
+      "error": "Fehler bei der Übersetzung",
+      "sourceLanguage": "Quellsprache",
+      "targetLanguage": "Zielsprache",
+      "alreadyAvailable": "bereits vorhanden",
+      "alreadyTranslatedWarning": "Diese Sprache wurde bereits übersetzt. Eine neue Übersetzung ersetzt die vorhandene.",
+      "useGlossary": "Kundenspezifisches Glossar verwenden",
+      "glossaryEntries": "{count} Einträge",
+      "glossaryAvailableFor": "verfügbar für {source} → {target}",
+      "noGlossaryEntries": "Keine Glossar-Einträge für diese Sprachkombination vorhanden.",
+      "tone": {
+        "label": "Tonalität",
+        "professional": "Professionell (Standard)",
+        "formal": "Formell",
+        "neutral": "Neutral",
+        "professionalDesc": "Geschäftssprache, kompetent und seriös aber zugänglich.",
+        "formalDesc": "Formelle, distanzierte Sprache. Keine Umgangssprache.",
+        "neutralDesc": "Sachliche Sprache ohne emotionale Färbung."
+      },
+      "aiNotice": {
+        "title": "KI-gestützte Übersetzung",
+        "description": "Die Übersetzung wird von Gemini AI erstellt. HTML-Formatierungen, Eigennamen und Glossar-Begriffe werden automatisch berücksichtigt."
+      },
+      "cancel": "Abbrechen",
+      "translate": "Übersetzen",
+      "translating": "Übersetze...",
+      "done": "Fertig"
+    },
+    "translationEdit": {
+      "title": "Übersetzung bearbeiten",
+      "aiGenerated": "KI-generiert",
+      "sections": {
+        "titleLabel": "Titel",
+        "mainContent": "Hauptinhalt",
+        "boilerplates": "Textbausteine",
+        "original": "Original (DE)",
+        "translation": "Übersetzung",
+        "titlePlaceholder": "Übersetzter Titel",
+        "noOriginalContent": "Kein Original-Content verfügbar",
+        "noOriginalAvailable": "Original nicht verfügbar"
+      },
+      "boilerplateTypes": {
+        "lead": "Lead/Einleitung",
+        "main": "Haupttext",
+        "quote": "Zitat",
+        "contact": "Kontakt",
+        "boilerplate": "Unternehmensprofil",
+        "default": "Textbaustein"
+      },
+      "boilerplateFallback": "Textbaustein {number}",
+      "hint": "Diese Übersetzung wurde mit KI generiert. Spezielle Formatierungen wie <cta>CTA</cta>, <hashtags>#Hashtags</hashtags> und <quotes>Zitate</quotes> bleiben beim Bearbeiten erhalten.",
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "saving": "Speichern..."
+      }
+    },
+    "translationList": {
+      "status": {
+        "outdated": "Veraltet",
+        "reviewed": "Geprüft",
+        "approved": "Freigegeben",
+        "generated": "Generiert"
+      },
+      "empty": {
+        "message": "Noch keine Übersetzungen vorhanden",
+        "createFirst": "Erste Übersetzung erstellen"
+      },
+      "header": {
+        "title": "Übersetzungen ({count})",
+        "newTranslation": "Neue Übersetzung"
+      },
+      "meta": {
+        "created": "Erstellt"
+      },
+      "actions": {
+        "generatingPdf": "Generiere PDF...",
+        "previewPdf": "Vorschau PDF",
+        "edit": "Bearbeiten",
+        "retranslate": "Neu übersetzen",
+        "delete": "Löschen"
+      },
+      "outdatedNotice": {
+        "title": "Veraltete Übersetzungen",
+        "message": "Das Original wurde geändert. Klicke auf den Aktualisieren-Button bei der jeweiligen Sprache, um die Übersetzung zu erneuern."
+      },
+      "deleteDialog": {
+        "title": "Übersetzung löschen?",
+        "message": "Möchtest du die {language} Übersetzung wirklich löschen?",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+        "cancel": "Abbrechen",
+        "delete": "Löschen",
+        "deleting": "Löschen..."
       }
     }
   },
@@ -8370,6 +8488,11 @@
           "title": "Fehler beim Generieren der Vorschau",
           "retryButton": "Erneut versuchen"
         },
+        "errors": {
+          "generationFailed": "Preview-Generation fehlgeschlagen: {status}",
+          "generationDefault": "Preview konnte nicht generiert werden",
+          "unknown": "Unbekannter Fehler bei Preview-Generation"
+        },
         "status": {
           "ready": "Vorschau bereit mit {mockData}",
           "preparing": "Template-Vorschau wird vorbereitet..."
@@ -8413,11 +8536,16 @@
         "preview": {
           "loadError": "Fehler beim Laden",
           "retry": "Erneut",
-          "iframeTitle": "Vorschau: {name}"
+          "iframeTitle": "Vorschau: {name}",
+          "generationFailed": "Preview-Generation fehlgeschlagen: {status}",
+          "notGenerated": "Preview konnte nicht generiert werden"
         },
         "footer": {
           "info": "{count} Templates im Vergleich • Mock-Daten: {mockData}",
           "refreshAll": "Alle aktualisieren"
+        },
+        "errors": {
+          "unknownError": "Unbekannter Fehler"
         }
       },
       "editor": {
@@ -8520,6 +8648,36 @@
         "preview": {
           "noPreview": "Keine Vorschau verfügbar",
           "addHtml": "Fügen Sie HTML-Inhalt hinzu für eine Vorschau"
+        }
+      },
+      "selector": {
+        "loading": "Lädt...",
+        "loadingTemplates": "Templates werden geladen...",
+        "title": "PDF-Template auswählen",
+        "description": "Wählen Sie ein Template für Ihre PDF-Pressemitteilung.",
+        "templatesAvailable": "{count} Templates verfügbar.",
+        "warning": "Warnung",
+        "retry": "Erneut versuchen",
+        "refresh": "Aktualisieren",
+        "noTemplates": "Keine Templates verfügbar",
+        "categories": {
+          "system": "System-Templates",
+          "custom": "Eigene Templates"
+        },
+        "category": {
+          "empty": "Keine Templates in dieser Kategorie"
+        },
+        "card": {
+          "selectTemplate": "Template auswählen: {name}",
+          "previewAlt": "Vorschau {name}",
+          "thumbnailGenerating": "Thumbnail wird generiert...",
+          "preview": "Vorschau"
+        },
+        "errorMessages": {
+          "unknownError": "Unbekannter Fehler beim Laden der Templates",
+          "loadFailed": "Templates konnten nicht geladen werden",
+          "popupBlocked": "Vorschau konnte nicht geöffnet werden. Bitte erlauben Sie Popups für diese Seite.",
+          "previewFailed": "Vorschau konnte nicht generiert werden"
         }
       }
     },

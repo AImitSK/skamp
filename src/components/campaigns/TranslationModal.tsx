@@ -18,6 +18,7 @@ import {
   InformationCircleIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 import { useGlossaryEntries } from "@/lib/hooks/useGlossary";
 import { useAvailableLanguages } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
@@ -120,6 +121,8 @@ export function TranslationModal({
   contentLanguages,
   preselectedLanguage,
 }: TranslationModalProps) {
+  const t = useTranslations("campaigns.translationModal");
+
   // State
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("en");
   const [useGlossary, setUseGlossary] = useState(true);
@@ -197,7 +200,7 @@ export function TranslationModal({
         onClose();
       }, 2000);
     } catch (err: any) {
-      setError(err.message || "Fehler bei der Übersetzung");
+      setError(err.message || t("error"));
     } finally {
       setIsTranslating(false);
     }
@@ -211,7 +214,7 @@ export function TranslationModal({
       <DialogTitle>
         <div className="flex items-center gap-2">
           <LanguageIcon className="h-5 w-5 text-primary-600" />
-          Pressemitteilung übersetzen
+          {t("title")}
         </div>
       </DialogTitle>
 
@@ -221,23 +224,23 @@ export function TranslationModal({
           {success && (
             <Alert
               type="success"
-              title="Übersetzung erfolgreich!"
-              message="Die Pressemitteilung wurde erfolgreich übersetzt und gespeichert."
+              title={t("successTitle")}
+              message={t("successMessage")}
             />
           )}
 
           {/* Fehler-Nachricht */}
-          {error && <Alert type="error" title="Fehler" message={error} />}
+          {error && <Alert type="error" title={t("errorTitle")} message={error} />}
 
           {/* Quellsprache Info */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <Text className="text-sm text-gray-600 mb-1">Quellsprache</Text>
+            <Text className="text-sm text-gray-600 mb-1">{t("sourceLanguage")}</Text>
             <Text className="font-medium">{LANGUAGE_NAMES[sourceLanguage] || sourceLanguage}</Text>
           </div>
 
           {/* Zielsprache Auswahl */}
           <div>
-            <Text className="text-sm font-medium text-gray-900 mb-2 block">Zielsprache</Text>
+            <Text className="text-sm font-medium text-gray-900 mb-2 block">{t("targetLanguage")}</Text>
             <Select
               value={targetLanguage}
               onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
@@ -246,7 +249,7 @@ export function TranslationModal({
               {availableLanguages.map((lang) => (
                 <option key={lang} value={lang}>
                   {LANGUAGE_NAMES[lang] || lang}
-                  {existingLanguages?.includes(lang) ? " (bereits vorhanden)" : ""}
+                  {existingLanguages?.includes(lang) ? ` (${t("alreadyAvailable")})` : ""}
                 </option>
               ))}
             </Select>
@@ -254,7 +257,7 @@ export function TranslationModal({
             {isAlreadyTranslated && (
               <Text className="text-sm text-amber-600 mt-2 flex items-center gap-1">
                 <ExclamationTriangleIcon className="h-4 w-4" />
-                Diese Sprache wurde bereits übersetzt. Eine neue Übersetzung ersetzt die vorhandene.
+                {t("alreadyTranslatedWarning")}
               </Text>
             )}
           </div>
@@ -270,7 +273,7 @@ export function TranslationModal({
                 />
                 <Label className="flex items-center gap-2">
                   <BookOpenIcon className="h-4 w-4" />
-                  Kundenspezifisches Glossar verwenden
+                  {t("useGlossary")}
                 </Label>
               </CheckboxField>
 
@@ -278,15 +281,18 @@ export function TranslationModal({
                 <div className="mt-3 pl-6">
                   <div className="flex items-center gap-2">
                     <Badge color={relevantGlossaryCount > 0 ? "green" : "zinc"}>
-                      {relevantGlossaryCount} Einträge
+                      {t("glossaryEntries", { count: relevantGlossaryCount })}
                     </Badge>
                     <Text className="text-sm text-gray-600">
-                      verfügbar für {LANGUAGE_NAMES[sourceLanguage]} → {LANGUAGE_NAMES[targetLanguage]}
+                      {t("glossaryAvailableFor", {
+                        source: LANGUAGE_NAMES[sourceLanguage],
+                        target: LANGUAGE_NAMES[targetLanguage]
+                      })}
                     </Text>
                   </div>
                   {relevantGlossaryCount === 0 && (
                     <Text className="text-xs text-gray-500 mt-1">
-                      Keine Glossar-Einträge für diese Sprachkombination vorhanden.
+                      {t("noGlossaryEntries")}
                     </Text>
                   )}
                 </div>
@@ -296,20 +302,20 @@ export function TranslationModal({
 
           {/* Tonalität Auswahl */}
           <div>
-            <Text className="text-sm font-medium text-gray-900 mb-2 block">Tonalität</Text>
+            <Text className="text-sm font-medium text-gray-900 mb-2 block">{t("tone.label")}</Text>
             <Select
               value={tone}
               onChange={(e) => setTone(e.target.value as "formal" | "professional" | "neutral")}
               disabled={isTranslating || success}
             >
-              <option value="professional">Professionell (Standard)</option>
-              <option value="formal">Formell</option>
-              <option value="neutral">Neutral</option>
+              <option value="professional">{t("tone.professional")}</option>
+              <option value="formal">{t("tone.formal")}</option>
+              <option value="neutral">{t("tone.neutral")}</option>
             </Select>
             <Text className="text-xs text-gray-500 mt-1">
-              {tone === "professional" && "Geschäftssprache, kompetent und seriös aber zugänglich."}
-              {tone === "formal" && "Formelle, distanzierte Sprache. Keine Umgangssprache."}
-              {tone === "neutral" && "Sachliche Sprache ohne emotionale Färbung."}
+              {tone === "professional" && t("tone.professionalDesc")}
+              {tone === "formal" && t("tone.formalDesc")}
+              {tone === "neutral" && t("tone.neutralDesc")}
             </Text>
           </div>
 
@@ -317,10 +323,9 @@ export function TranslationModal({
           <div className="bg-blue-50 rounded-lg p-4 flex gap-3">
             <SparklesIcon className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
             <div>
-              <Text className="text-sm font-medium text-blue-900">KI-gestützte Übersetzung</Text>
+              <Text className="text-sm font-medium text-blue-900">{t("aiNotice.title")}</Text>
               <Text className="text-sm text-blue-700 mt-1">
-                Die Übersetzung wird von Gemini AI erstellt. HTML-Formatierungen, Eigennamen und
-                Glossar-Begriffe werden automatisch berücksichtigt.
+                {t("aiNotice.description")}
               </Text>
             </div>
           </div>
@@ -329,7 +334,7 @@ export function TranslationModal({
 
       <DialogActions>
         <Button plain onClick={onClose} disabled={isTranslating}>
-          Abbrechen
+          {t("cancel")}
         </Button>
         <Button
           color="primary"
@@ -339,17 +344,17 @@ export function TranslationModal({
           {isTranslating ? (
             <>
               <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-              Übersetze...
+              {t("translating")}
             </>
           ) : success ? (
             <>
               <CheckCircleIcon className="h-4 w-4 mr-2" />
-              Fertig
+              {t("done")}
             </>
           ) : (
             <>
               <LanguageIcon className="h-4 w-4 mr-2" />
-              Übersetzen
+              {t("translate")}
             </>
           )}
         </Button>

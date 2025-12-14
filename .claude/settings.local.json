@@ -83,7 +83,9 @@
       "Bash(python:*)",
       "Bash(del add_workflow_translations.py)",
       "Bash(powershell -Command:*)",
-      "Bash(del update-de-json.js update-en-json.js)"
+      "Bash(del update-de-json.js update-en-json.js)",
+      "Bash(timeout 5 tail:*)",
+      "Bash(del update-translations.py messagesde.json.backup messagesen.json.backup)"
     ]
   },
   "enableAllProjectMcpServers": true,

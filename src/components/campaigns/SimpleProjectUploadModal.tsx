@@ -75,7 +75,7 @@ export default function SimpleProjectUploadModal({
   clientId,
   organizationId
 }: SimpleProjectUploadModalProps) {
-  const t = useTranslations('campaigns.project');
+  const t = useTranslations('campaigns.projectUpload');
   const { user } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);

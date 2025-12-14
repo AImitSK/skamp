@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -45,6 +46,7 @@ export function TranslationList({
   onPreview,
   className = "",
 }: TranslationListProps) {
+  const t = useTranslations('campaigns.translationList');
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
   const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
@@ -147,7 +149,7 @@ export function TranslationList({
       return (
         <Badge color="amber" className="flex items-center gap-1">
           <ExclamationTriangleIcon className="h-3 w-3" />
-          Veraltet
+          {t('status.outdated')}
         </Badge>
       );
     }
@@ -157,21 +159,21 @@ export function TranslationList({
         return (
           <Badge color="blue" className="flex items-center gap-1">
             <EyeIcon className="h-3 w-3" />
-            Geprüft
+            {t('status.reviewed')}
           </Badge>
         );
       case "approved":
         return (
           <Badge color="green" className="flex items-center gap-1">
             <CheckCircleIcon className="h-3 w-3" />
-            Freigegeben
+            {t('status.approved')}
           </Badge>
         );
       default:
         return (
           <Badge color="zinc" className="flex items-center gap-1">
             <ClockIcon className="h-3 w-3" />
-            Generiert
+            {t('status.generated')}
           </Badge>
         );
     }
@@ -190,11 +192,11 @@ export function TranslationList({
       <div className={`bg-gray-50 rounded-lg p-6 text-center ${className}`}>
         <LanguageIcon className="h-10 w-10 text-gray-400 mx-auto mb-3" />
         <Text className="text-gray-600 mb-4">
-          Noch keine Übersetzungen vorhanden
+          {t('empty.message')}
         </Text>
         <Button color="primary" onClick={() => onTranslate()}>
           <LanguageIcon className="h-4 w-4 mr-2" />
-          Erste Übersetzung erstellen
+          {t('empty.createFirst')}
         </Button>
       </div>
     );
@@ -207,12 +209,12 @@ export function TranslationList({
         <div className="flex items-center gap-2">
           <LanguageIcon className="h-5 w-5 text-gray-500" />
           <Text className="font-medium">
-            Übersetzungen ({translations.length})
+            {t('header.title', { count: translations.length })}
           </Text>
         </div>
         <Button color="secondary" onClick={() => onTranslate()}>
           <LanguageIcon className="h-4 w-4 mr-2" />
-          Neue Übersetzung
+          {t('header.newTranslation')}
         </Button>
       </div>
 
@@ -237,7 +239,7 @@ export function TranslationList({
             {/* Meta-Infos */}
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <div className="hidden sm:block">
-                <span className="text-gray-400">Erstellt:</span>{" "}
+                <span className="text-gray-400">{t('meta.created')}:</span>{" "}
                 {formatDate(translation.generatedAt)}
               </div>
               {translation.modelUsed && (
@@ -266,20 +268,20 @@ export function TranslationList({
                     disabled={generatingPdfFor === translation.id}
                   >
                     <DocumentArrowDownIcon className="h-4 w-4" />
-                    {generatingPdfFor === translation.id ? 'Generiere PDF...' : 'Vorschau PDF'}
+                    {generatingPdfFor === translation.id ? t('actions.generatingPdf') : t('actions.previewPdf')}
                   </DropdownItem>
                   <DropdownItem onClick={() => setEditingTranslation(translation)}>
                     <PencilIcon className="h-4 w-4" />
-                    Bearbeiten
+                    {t('actions.edit')}
                   </DropdownItem>
                   <DropdownItem onClick={() => onTranslate(translation.language)}>
                     <ArrowPathIcon className="h-4 w-4" />
-                    Neu übersetzen
+                    {t('actions.retranslate')}
                   </DropdownItem>
                   <DropdownDivider />
                   <DropdownItem onClick={() => setDeleteConfirm(translation)}>
                     <TrashIcon className="h-4 w-4" />
-                    <span className="text-red-600">Löschen</span>
+                    <span className="text-red-600">{t('actions.delete')}</span>
                   </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
@@ -289,16 +291,15 @@ export function TranslationList({
       </div>
 
       {/* Outdated-Hinweis falls vorhanden */}
-      {translations.some((t) => t.isOutdated) && (
+      {translations.some((trans) => trans.isOutdated) && (
         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
           <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <Text className="text-sm font-medium text-amber-800">
-              Veraltete Übersetzungen
+              {t('outdatedNotice.title')}
             </Text>
             <Text className="text-sm text-amber-700 mt-1">
-              Das Original wurde geändert. Klicke auf den Aktualisieren-Button
-              bei der jeweiligen Sprache, um die Übersetzung zu erneuern.
+              {t('outdatedNotice.message')}
             </Text>
           </div>
         </div>
@@ -310,33 +311,31 @@ export function TranslationList({
         onClose={() => setDeleteConfirm(null)}
         size="sm"
       >
-        <DialogTitle>Übersetzung löschen?</DialogTitle>
+        <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
         <DialogBody>
           <Text className="text-gray-700">
-            Möchtest du die{" "}
-            <strong>
-              {deleteConfirm && LANGUAGE_NAMES[deleteConfirm.language]}
-            </strong>{" "}
-            Übersetzung wirklich löschen?
+            {t('deleteDialog.message', {
+              language: deleteConfirm ? LANGUAGE_NAMES[deleteConfirm.language] : ''
+            })}
           </Text>
           <Text className="text-sm text-gray-500 mt-2">
-            Diese Aktion kann nicht rückgängig gemacht werden.
+            {t('deleteDialog.warning')}
           </Text>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setDeleteConfirm(null)} disabled={isDeleting}>
-            Abbrechen
+            {t('deleteDialog.cancel')}
           </Button>
           <Button color="primary" className="!bg-red-600 hover:!bg-red-700" onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? (
               <>
                 <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-                Löschen...
+                {t('deleteDialog.deleting')}
               </>
             ) : (
               <>
                 <TrashIcon className="h-4 w-4 mr-2" />
-                Löschen
+                {t('deleteDialog.delete')}
               </>
             )}
           </Button>

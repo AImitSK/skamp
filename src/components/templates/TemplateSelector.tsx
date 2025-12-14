@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,16 +22,17 @@ import { Timestamp } from "firebase/firestore";
 
 // Einfacher Spinner als Ersatz für LoadingSpinner
 const LoadingSpinner = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
+  const t = useTranslations('templates.selector');
   const sizeClasses = {
     sm: "h-4 w-4",
-    md: "h-6 w-6", 
+    md: "h-6 w-6",
     lg: "h-8 w-8"
   };
-  
+
   return (
     <div className="flex items-center justify-center" role="status">
       <ArrowPathIcon className={`animate-spin text-gray-400 ${sizeClasses[size]}`} />
-      <span className="sr-only">Lädt...</span>
+      <span className="sr-only">{t('loading')}</span>
     </div>
   );
 };
@@ -78,6 +80,7 @@ function TemplateCategory({
   showPreview = true,
   defaultOpen = true
 }: TemplateCategoryProps) {
+  const t = useTranslations('templates.selector');
   const [isExpanded, setIsExpanded] = useState(defaultOpen);
 
   return (
@@ -124,7 +127,7 @@ function TemplateCategory({
           {templates.length === 0 && (
             <div className="col-span-full text-center py-6 text-gray-500">
               <PhotoIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Keine Templates in dieser Kategorie</p>
+              <p className="text-sm">{t('category.empty')}</p>
             </div>
           )}
         </div>
@@ -144,12 +147,13 @@ function TemplateCard({
   disabled = false,
   showPreview = true
 }: TemplateCardProps) {
+  const t = useTranslations('templates.selector');
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const handlePreview = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onPreview || disabled) return;
-    
+
     setPreviewLoading(true);
     try {
       await onPreview();
@@ -195,7 +199,7 @@ function TemplateCard({
           onSelect();
         }
       }}
-      aria-label={`Template auswählen: ${template.name}`}
+      aria-label={t('card.selectTemplate', { name: template.name })}
       aria-pressed={isSelected}
     >
       {/* Auswahl-Indikator */}
@@ -208,9 +212,9 @@ function TemplateCard({
       {/* Template-Vorschau-Thumbnail */}
       <div className="mb-3 aspect-[4/3] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
         {template.thumbnailUrl ? (
-          <img 
-            src={template.thumbnailUrl} 
-            alt={`Vorschau ${template.name}`}
+          <img
+            src={template.thumbnailUrl}
+            alt={t('card.previewAlt', { name: template.name })}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -219,7 +223,7 @@ function TemplateCard({
             <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-1" />
             <p className="text-xs text-gray-500">{template.name}</p>
             <div className="text-xs text-gray-400 mt-2">
-              Thumbnail wird generiert...
+              {t('card.thumbnailGenerating')}
             </div>
           </div>
         )}
@@ -272,12 +276,12 @@ function TemplateCard({
             {previewLoading ? (
               <>
                 <ArrowPathIcon className="h-3 w-3 mr-1 animate-spin" />
-                Lädt...
+                {t('loading')}
               </>
             ) : (
               <>
                 <EyeIcon className="h-3 w-3 mr-1" />
-                Vorschau
+                {t('card.preview')}
               </>
             )}
           </Button>
@@ -300,6 +304,7 @@ export function TemplateSelector({
   disabled = false,
   onPreviewError
 }: TemplateSelectorProps) {
+  const t = useTranslations('templates.selector');
   const { user } = useAuth();
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,8 +334,9 @@ export function TemplateSelector({
       
     } catch (err) {
       // Fehler beim Laden der Templates
-      setError(err instanceof Error ? err.message : 'Unbekannter Fehler beim Laden der Templates');
-      
+      const errorMessage = err instanceof Error ? err.message : t('errorMessages.unknownError');
+      setError(errorMessage);
+
       // Fallback: System-Templates laden
       try {
         const systemTemplates = await pdfTemplateService.getSystemTemplates();
@@ -338,11 +344,11 @@ export function TemplateSelector({
       } catch (fallbackErr) {
         // Auch System-Templates konnten nicht geladen werden
       }
-      
+
     } finally {
       setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, t]);
 
   /**
    * Templates beim ersten Laden laden
@@ -418,18 +424,18 @@ export function TemplateSelector({
       } else {
         // Popup-Blocker verhindert Vorschau-Fenster
         if (onPreviewError) {
-          onPreviewError('Vorschau konnte nicht geöffnet werden. Bitte erlauben Sie Popups für diese Seite.');
+          onPreviewError(t('errorMessages.popupBlocked'));
         }
       }
-      
+
     } catch (err) {
       // Fehler bei Template-Vorschau
-      const errorMessage = err instanceof Error ? err.message : 'Vorschau konnte nicht generiert werden';
+      const errorMessage = err instanceof Error ? err.message : t('errorMessages.previewFailed');
       if (onPreviewError) {
         onPreviewError(errorMessage);
       }
     }
-  }, [user, disabled, onPreviewError]);
+  }, [user, disabled, onPreviewError, t]);
 
   /**
    * Retry-Funktion
@@ -449,7 +455,7 @@ export function TemplateSelector({
       <div className={`flex items-center justify-center p-8 ${className}`}>
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="text-sm text-gray-600 mt-2">Templates werden geladen...</p>
+          <p className="text-sm text-gray-600 mt-2">{t('loadingTemplates')}</p>
         </div>
       </div>
     );
@@ -463,7 +469,7 @@ export function TemplateSelector({
           <ExclamationTriangleIcon className="h-6 w-6 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-red-800">
-              Templates konnten nicht geladen werden
+              {t('errorMessages.loadFailed')}
             </h3>
             <p className="text-sm text-red-700 mt-1">{error}</p>
             <div className="mt-3">
@@ -472,7 +478,7 @@ export function TemplateSelector({
                 color="secondary"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
-                Erneut versuchen
+                {t('retry')}
               </Button>
             </div>
           </div>
@@ -486,15 +492,15 @@ export function TemplateSelector({
     <div className={className}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          PDF-Template auswählen
+          {t('title')}
         </h3>
         <p className="text-sm text-gray-600">
-          Wählen Sie ein Template für Ihre PDF-Pressemitteilung. 
-          {templates.length > 0 && ` ${templates.length} Templates verfügbar.`}
+          {t('description')}
+          {templates.length > 0 && ` ${t('templatesAvailable', { count: templates.length })}`}
         </p>
         {error && (
           <div className="mt-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-            Warnung: {error}
+            {t('warning')}: {error}
           </div>
         )}
       </div>
@@ -503,7 +509,7 @@ export function TemplateSelector({
         {/* System-Templates */}
         {systemTemplates.length > 0 && (
           <TemplateCategory
-            title="System-Templates"
+            title={t('categories.system')}
             templates={systemTemplates}
             selectedTemplateId={selectedTemplateId}
             onTemplateSelect={handleTemplateSelect}
@@ -517,7 +523,7 @@ export function TemplateSelector({
         {/* Custom-Templates */}
         {customTemplates.length > 0 && (
           <TemplateCategory
-            title="Eigene Templates"
+            title={t('categories.custom')}
             templates={customTemplates}
             selectedTemplateId={selectedTemplateId}
             onTemplateSelect={handleTemplateSelect}
@@ -532,13 +538,13 @@ export function TemplateSelector({
         {templates.length === 0 && !loading && (
           <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
             <PhotoIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-            <p className="text-sm mb-3">Keine Templates verfügbar</p>
+            <p className="text-sm mb-3">{t('noTemplates')}</p>
             <Button
               onClick={handleRetry}
               color="secondary"
             >
               <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Aktualisieren
+              {t('refresh')}
             </Button>
           </div>
         )}

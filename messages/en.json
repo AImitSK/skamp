@@ -831,6 +831,11 @@
         "gridView": "Grid View"
       }
     },
+    "keywordInput": {
+      "placeholder": "Add keyword...",
+      "maxReached": "Maximum {max} keywords reached",
+      "add": "Add"
+    },
     "approvalSettings": {
       "customerApprovalRequired": "Customer approval required",
       "customerApprovalDescription": "Campaign must be approved by the customer",
@@ -896,6 +901,20 @@
         "distribution": "Distribution",
         "completed": "Completed"
       }
+    },
+    "projectUpload": {
+      "title": "Upload Media",
+      "uploadTarget": "Upload destination:",
+      "selectFiles": "Select files",
+      "dragAndDrop": "or drag files here",
+      "fileFormats": "Supported: PDF, JPG, PNG, GIF, MP4, MOV, AVI",
+      "selectedFiles": "{count, plural, =1 {1 file} other {# files}} selected",
+      "supportedFormats": "All common image, video, and document formats are supported.",
+      "cancel": "Cancel",
+      "uploadFiles": "Upload {count, plural, =1 {1 file} other {# files}}",
+      "uploading": "Uploading... ({current}/{total})",
+      "uploadSuccess": "{count, plural, =1 {1 file} other {# files}} uploaded successfully",
+      "uploadError": "Error uploading files"
     },
     "recipients": {
       "title": "Recipients",
@@ -1637,6 +1656,105 @@
       "aiAssistant": {
         "ctaTitle": "Quick Start with AI Assistant",
         "ctaDescription": "Create a complete draft with headline, lead paragraph, main text, and quote in seconds"
+      }
+    },
+    "translationModal": {
+      "title": "Translate Press Release",
+      "successTitle": "Translation Successful!",
+      "successMessage": "The press release has been successfully translated and saved.",
+      "errorTitle": "Error",
+      "error": "Translation error",
+      "sourceLanguage": "Source Language",
+      "targetLanguage": "Target Language",
+      "alreadyAvailable": "already available",
+      "alreadyTranslatedWarning": "This language has already been translated. A new translation will replace the existing one.",
+      "useGlossary": "Use Customer-Specific Glossary",
+      "glossaryEntries": "{count} entries",
+      "glossaryAvailableFor": "available for {source} → {target}",
+      "noGlossaryEntries": "No glossary entries available for this language combination.",
+      "tone": {
+        "label": "Tone",
+        "professional": "Professional (Default)",
+        "formal": "Formal",
+        "neutral": "Neutral",
+        "professionalDesc": "Business language, competent and serious but accessible.",
+        "formalDesc": "Formal, distant language. No colloquialisms.",
+        "neutralDesc": "Factual language without emotional coloring."
+      },
+      "aiNotice": {
+        "title": "AI-Powered Translation",
+        "description": "The translation is created by Gemini AI. HTML formatting, proper names, and glossary terms are automatically considered."
+      },
+      "cancel": "Cancel",
+      "translate": "Translate",
+      "translating": "Translating...",
+      "done": "Done"
+    },
+    "translationEdit": {
+      "title": "Edit Translation",
+      "aiGenerated": "AI-generated",
+      "sections": {
+        "titleLabel": "Title",
+        "mainContent": "Main Content",
+        "boilerplates": "Text Modules",
+        "original": "Original (DE)",
+        "translation": "Translation",
+        "titlePlaceholder": "Translated Title",
+        "noOriginalContent": "No original content available",
+        "noOriginalAvailable": "Original not available"
+      },
+      "boilerplateTypes": {
+        "lead": "Lead/Introduction",
+        "main": "Main Text",
+        "quote": "Quote",
+        "contact": "Contact",
+        "boilerplate": "Company Profile",
+        "default": "Text Module"
+      },
+      "boilerplateFallback": "Text Module {number}",
+      "hint": "This translation was generated with AI. Special formatting like <cta>CTA</cta>, <hashtags>#Hashtags</hashtags> and <quotes>quotes</quotes> are preserved when editing.",
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving..."
+      }
+    },
+    "translationList": {
+      "status": {
+        "outdated": "Outdated",
+        "reviewed": "Reviewed",
+        "approved": "Approved",
+        "generated": "Generated"
+      },
+      "empty": {
+        "message": "No translations yet",
+        "createFirst": "Create first translation"
+      },
+      "header": {
+        "title": "Translations ({count})",
+        "newTranslation": "New Translation"
+      },
+      "meta": {
+        "created": "Created"
+      },
+      "actions": {
+        "generatingPdf": "Generating PDF...",
+        "previewPdf": "Preview PDF",
+        "edit": "Edit",
+        "retranslate": "Re-translate",
+        "delete": "Delete"
+      },
+      "outdatedNotice": {
+        "title": "Outdated Translations",
+        "message": "The original has been modified. Click the update button for the respective language to refresh the translation."
+      },
+      "deleteDialog": {
+        "title": "Delete translation?",
+        "message": "Do you really want to delete the {language} translation?",
+        "warning": "This action cannot be undone.",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "deleting": "Deleting..."
       }
     }
   },
@@ -8264,6 +8382,11 @@
           "title": "Error Generating Preview",
           "retryButton": "Try Again"
         },
+        "errors": {
+          "generationFailed": "Preview generation failed: {status}",
+          "generationDefault": "Preview could not be generated",
+          "unknown": "Unknown error during preview generation"
+        },
         "status": {
           "ready": "Preview ready with {mockData}",
           "preparing": "Template preview is being prepared..."
@@ -8307,11 +8430,16 @@
         "preview": {
           "loadError": "Error loading",
           "retry": "Retry",
-          "iframeTitle": "Preview: {name}"
+          "iframeTitle": "Preview: {name}",
+          "generationFailed": "Preview generation failed: {status}",
+          "notGenerated": "Preview could not be generated"
         },
         "footer": {
           "info": "{count} templates in comparison • Mock data: {mockData}",
           "refreshAll": "Refresh all"
+        },
+        "errors": {
+          "unknownError": "Unknown error"
         }
       },
       "editor": {
@@ -8414,6 +8542,36 @@
         "preview": {
           "noPreview": "No preview available",
           "addHtml": "Add HTML content to see a preview"
+        }
+      },
+      "selector": {
+        "loading": "Loading...",
+        "loadingTemplates": "Loading templates...",
+        "title": "Select PDF Template",
+        "description": "Choose a template for your PDF press release.",
+        "templatesAvailable": "{count} templates available.",
+        "warning": "Warning",
+        "retry": "Retry",
+        "refresh": "Refresh",
+        "noTemplates": "No templates available",
+        "categories": {
+          "system": "System Templates",
+          "custom": "Custom Templates"
+        },
+        "category": {
+          "empty": "No templates in this category"
+        },
+        "card": {
+          "selectTemplate": "Select template: {name}",
+          "previewAlt": "Preview {name}",
+          "thumbnailGenerating": "Generating thumbnail...",
+          "preview": "Preview"
+        },
+        "errorMessages": {
+          "unknownError": "Unknown error loading templates",
+          "loadFailed": "Templates could not be loaded",
+          "popupBlocked": "Preview could not be opened. Please allow popups for this site.",
+          "previewFailed": "Preview could not be generated"
         }
       }
     },
