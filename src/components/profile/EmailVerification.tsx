@@ -2,17 +2,19 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
-import { 
-  CheckCircleIcon, 
+import {
+  CheckCircleIcon,
   ExclamationTriangleIcon,
-  EnvelopeIcon 
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 
 export function EmailVerification() {
+  const t = useTranslations('profile.emailVerification');
   const { user, sendVerificationEmail } = useAuth();
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -23,14 +25,14 @@ export function EmailVerification() {
 
     try {
       await sendVerificationEmail();
-      setMessage({ 
-        type: 'success', 
-        text: 'Verifizierungs-E-Mail wurde gesendet! Bitte überprüfe dein Postfach.' 
+      setMessage({
+        type: 'success',
+        text: t('successMessage')
       });
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : 'Fehler beim Senden der Verifizierungs-E-Mail' 
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : t('errorSending')
       });
     } finally {
       setSending(false);
@@ -57,23 +59,26 @@ export function EmailVerification() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h3 className="text-base font-medium text-gray-900">
-              E-Mail-Verifizierung
+              {t('title')}
             </h3>
             {user.emailVerified ? (
-              <Badge color="green">Verifiziert</Badge>
+              <Badge color="green">{t('status.verified')}</Badge>
             ) : (
-              <Badge color="yellow">Nicht verifiziert</Badge>
+              <Badge color="yellow">{t('status.notVerified')}</Badge>
             )}
           </div>
-          
+
           <Text className="mt-2 text-sm text-gray-600">
             {user.emailVerified ? (
-              <>Deine E-Mail-Adresse <strong>{user.email}</strong> wurde erfolgreich verifiziert.</>
+              t.rich('verifiedText', {
+                email: user.email || '',
+                strong: (chunks) => <strong>{chunks}</strong>
+              })
             ) : (
-              <>
-                Deine E-Mail-Adresse <strong>{user.email}</strong> ist noch nicht verifiziert. 
-                Verifiziere deine E-Mail-Adresse, um alle Funktionen nutzen zu können.
-              </>
+              t.rich('notVerifiedText', {
+                email: user.email || '',
+                strong: (chunks) => <strong>{chunks}</strong>
+              })
             )}
           </Text>
 
@@ -85,7 +90,7 @@ export function EmailVerification() {
                 disabled={sending}
               >
                 <EnvelopeIcon className="h-4 w-4 mr-2" />
-                {sending ? 'Sende...' : 'Verifizierungs-E-Mail senden'}
+                {sending ? t('sendButton.sending') : t('sendButton.label')}
               </Button>
             </div>
           )}

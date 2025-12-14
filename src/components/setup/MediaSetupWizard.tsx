@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ interface SetupStep {
 }
 
 export default function MediaSetupWizard({ onClose, onComplete, userId, organizationId }: MediaSetupWizardProps) {
+  const t = useTranslations('setup.mediaWizard');
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -48,33 +50,33 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
   const steps: SetupStep[] = [
     {
       id: 'overview',
-      title: 'Willkommen zum Presse-Setup',
-      description: 'Richte dein CRM für Pressearbeit ein',
+      title: t('steps.overview.title'),
+      description: t('steps.overview.description'),
       completed: false
     },
     {
       id: 'tags',
-      title: 'Presse-Tags erstellen',
-      description: 'Erstelle Tags zur Kategorisierung von Pressekontakten',
+      title: t('steps.tags.title'),
+      description: t('steps.tags.description'),
       completed: false
     },
     {
       id: 'sample-data',
-      title: 'Beispiel-Daten erstellen',
-      description: 'Erstelle Beispiel-Verlag und -Journalist zum Testen',
+      title: t('steps.sampleData.title'),
+      description: t('steps.sampleData.description'),
       completed: false,
       optional: true
     },
     {
       id: 'lists',
-      title: 'Presse-Listen erstellen',
-      description: 'Erstelle intelligente Verteilerlisten für deine PR-Kampagnen',
+      title: t('steps.lists.title'),
+      description: t('steps.lists.description'),
       completed: false
     },
     {
       id: 'complete',
-      title: 'Setup abgeschlossen',
-      description: 'Dein Presse-Setup ist bereit!',
+      title: t('steps.complete.title'),
+      description: t('steps.complete.description'),
       completed: false
     }
   ];
@@ -210,25 +212,25 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
         return (
           <div className="text-center py-8">
             <NewspaperIcon className="mx-auto h-16 w-16 text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Presse-Setup für CeleroPress</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('overview.heading')}</h3>
             <p className="text-gray-600 mb-6">
-              Dieser Assistent hilft dir dabei, dein CRM für professionelle Pressearbeit einzurichten.
+              {t('overview.intro')}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
               <div className="border rounded-lg p-4">
                 <TagIcon className="h-8 w-8 text-green-600 mb-2" />
-                <h4 className="font-medium">Presse-Tags</h4>
-                <p className="text-sm text-gray-600">Kategorisiere Journalisten und Medien</p>
+                <h4 className="font-medium">{t('overview.features.tags.title')}</h4>
+                <p className="text-sm text-gray-600">{t('overview.features.tags.description')}</p>
               </div>
               <div className="border rounded-lg p-4">
                 <UsersIcon className="h-8 w-8 text-purple-600 mb-2" />
-                <h4 className="font-medium">Beispiel-Daten</h4>
-                <p className="text-sm text-gray-600">Verlag und Journalist zum Testen</p>
+                <h4 className="font-medium">{t('overview.features.sampleData.title')}</h4>
+                <p className="text-sm text-gray-600">{t('overview.features.sampleData.description')}</p>
               </div>
               <div className="border rounded-lg p-4 md:col-span-2">
                 <QueueListIcon className="h-8 w-8 text-blue-600 mb-2" />
-                <h4 className="font-medium">Intelligente Listen</h4>
-                <p className="text-sm text-gray-600">Automatische Verteiler für PR-Kampagnen</p>
+                <h4 className="font-medium">{t('overview.features.lists.title')}</h4>
+                <p className="text-sm text-gray-600">{t('overview.features.lists.description')}</p>
               </div>
             </div>
           </div>
@@ -237,9 +239,9 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
       case 'tags':
         return (
           <div className="py-4">
-            <h3 className="text-lg font-semibold mb-4">Welche Presse-Tags möchtest du erstellen?</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('tagsStep.heading')}</h3>
             <p className="text-gray-600 mb-6">
-              Tags helfen dir dabei, Journalisten und Medien zu kategorisieren. Du kannst später weitere hinzufügen.
+              {t('tagsStep.description')}
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {STANDARD_PRESS_TAGS.map(tag => (
@@ -267,9 +269,9 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
       case 'sample-data':
         return (
           <div className="py-4">
-            <h3 className="text-lg font-semibold mb-4">Beispiel-Daten erstellen?</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('sampleDataStep.heading')}</h3>
             <p className="text-gray-600 mb-6">
-              Wir können Beispiel-Daten erstellen, damit du das System sofort testen kannst.
+              {t('sampleDataStep.description')}
             </p>
             <div className="space-y-4">
               <label className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
@@ -278,19 +280,19 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
                   onChange={setCreateSampleCompany}
                 />
                 <div>
-                  <div className="font-medium">Beispiel-Verlag erstellen</div>
-                  <div className="text-sm text-gray-600">&ldquo;Beispiel Verlag GmbH&rdquo; mit Medien-Informationen</div>
+                  <div className="font-medium">{t('sampleDataStep.options.company.title')}</div>
+                  <div className="text-sm text-gray-600">{t('sampleDataStep.options.company.description')}</div>
                 </div>
               </label>
-              
+
               <label className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                 <Checkbox
                   checked={createSampleContact}
                   onChange={setCreateSampleContact}
                 />
                 <div>
-                  <div className="font-medium">Beispiel-Journalist erstellen</div>
-                  <div className="text-sm text-gray-600">&ldquo;Max Mustermann&rdquo; als Tech-Redakteur</div>
+                  <div className="font-medium">{t('sampleDataStep.options.contact.title')}</div>
+                  <div className="text-sm text-gray-600">{t('sampleDataStep.options.contact.description')}</div>
                 </div>
               </label>
             </div>
@@ -300,9 +302,9 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
       case 'lists':
         return (
           <div className="py-4">
-            <h3 className="text-lg font-semibold mb-4">Welche Presse-Listen sollen erstellt werden?</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('listsStep.heading')}</h3>
             <p className="text-gray-600 mb-6">
-              Diese Listen werden automatisch mit passenden Kontakten befüllt, basierend auf deren Tags und Eigenschaften.
+              {t('listsStep.description')}
             </p>
             <div className="space-y-3">
               {/* KORREKTUR: Typ für 't' und 'template' hinzugefügt */}
@@ -338,21 +340,21 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
         return (
           <div className="text-center py-8">
             <CheckCircleIcon className="mx-auto h-16 w-16 text-green-600 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Setup erfolgreich abgeschlossen!</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('completeStep.heading')}</h3>
             <p className="text-gray-600 mb-6">
-              Dein CRM ist jetzt für professionelle Pressearbeit konfiguriert.
+              {t('completeStep.success')}
             </p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-green-800 mb-2">Was wurde erstellt:</h4>
+              <h4 className="font-medium text-green-800 mb-2">{t('completeStep.summary.title')}</h4>
               <ul className="text-sm text-green-700 space-y-1">
-                <li>✓ {selectedTags.length} Presse-Tags</li>
-                {createSampleCompany && <li>✓ Beispiel-Verlag</li>}
-                {createSampleContact && <li>✓ Beispiel-Journalist</li>}
-                <li>✓ {selectedLists.length} intelligente Listen</li>
+                <li>✓ {t('completeStep.summary.tags', { count: selectedTags.length })}</li>
+                {createSampleCompany && <li>✓ {t('completeStep.summary.samplePublisher')}</li>}
+                {createSampleContact && <li>✓ {t('completeStep.summary.sampleJournalist')}</li>}
+                <li>✓ {t('completeStep.summary.lists', { count: selectedLists.length })}</li>
               </ul>
             </div>
             <p className="text-sm text-gray-600">
-              Du findest alle erstellten Elemente in den entsprechenden Bereichen deines CRM.
+              {t('completeStep.location')}
             </p>
           </div>
         );
@@ -365,18 +367,18 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
       <DialogTitle className="px-6 py-4">
-        Presse-Setup - Schritt {currentStep + 1} von {steps.length}
+        {t('dialogTitle', { current: currentStep + 1, total: steps.length })}
       </DialogTitle>
 
       <DialogBody className="px-6 pb-4">
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-            <span>Fortschritt</span>
+            <span>{t('progress')}</span>
             <span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             ></div>
@@ -390,30 +392,30 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
       </DialogBody>
 
       <DialogActions className="px-6 py-4 flex justify-between">
-        <Button 
-          plain 
+        <Button
+          plain
           onClick={currentStep === 0 ? onClose : handlePrev}
           disabled={loading}
         >
-          {currentStep === 0 ? 'Abbrechen' : 'Zurück'}
+          {currentStep === 0 ? t('actions.cancel') : t('actions.back')}
         </Button>
-        
+
         <div className="flex gap-2">
           {currentStep === steps.length - 1 ? (
             <Button color="indigo" onClick={onComplete}>
-              Setup abschließen
+              {t('actions.finish')}
             </Button>
           ) : currentStep === steps.length - 2 ? (
-            <Button 
-              color="indigo" 
+            <Button
+              color="indigo"
               onClick={executeSetup}
               disabled={loading}
             >
-              {loading ? 'Erstelle...' : 'Setup ausführen'}
+              {loading ? t('actions.creating') : t('actions.execute')}
             </Button>
           ) : (
             <Button color="indigo" onClick={handleNext}>
-              Weiter
+              {t('actions.next')}
             </Button>
           )}
         </div>

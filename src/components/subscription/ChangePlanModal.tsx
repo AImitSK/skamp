@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from '@/config/subscription-limits';
 import { Button } from '@/components/ui/button';
 import { toastService } from '@/lib/utils/toast';
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSubscriptionId }: Props) {
+  const t = useTranslations('subscription.changePlan');
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(currentTier);
   const [loading, setLoading] = useState(false);
   const [violations, setViolations] = useState<string[]>([]);
@@ -101,10 +103,10 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
           <div className="flex items-center justify-between p-6 border-b border-zinc-200">
             <div>
               <DialogTitle className="text-2xl font-bold text-zinc-900">
-                Plan ändern
+                {t('title')}
               </DialogTitle>
               <p className="mt-1 text-sm text-zinc-600">
-                Aktueller Plan: <span className="font-semibold">{currentTier}</span>
+                {t('currentPlan')}: <span className="font-semibold">{currentTier}</span>
               </p>
             </div>
             <button
@@ -139,7 +141,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
                     {isCurrent && (
                       <div className="absolute top-4 right-4">
                         <span className="inline-flex items-center px-2.5 py-1 bg-[#005fab] text-white text-xs font-semibold rounded-md">
-                          Aktuell
+                          {t('badges.current')}
                         </span>
                       </div>
                     )}
@@ -163,34 +165,34 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
                       <span className="text-3xl font-bold text-zinc-900">
                         €{limits.price_monthly_eur}
                       </span>
-                      <span className="text-zinc-600">/Monat</span>
+                      <span className="text-zinc-600">{t('perMonth')}</span>
                     </div>
 
                     {/* Features */}
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
                         <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span>{limits.contacts.toLocaleString('de-DE')} Kontakte</span>
+                        <span>{t('features.contacts', { count: limits.contacts.toLocaleString('de-DE') })}</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span>{limits.emails_per_month.toLocaleString('de-DE')} Emails/Monat</span>
+                        <span>{t('features.emailsPerMonth', { count: limits.emails_per_month.toLocaleString('de-DE') })}</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
                         <span>
                           {limits.ai_words_per_month === -1
-                            ? 'Unlimited AI'
-                            : `${limits.ai_words_per_month.toLocaleString('de-DE')} AI-Wörter`}
+                            ? t('features.unlimitedAi')
+                            : t('features.aiWords', { count: limits.ai_words_per_month.toLocaleString('de-DE') })}
                         </span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span>{limits.users} Team-Mitglied{limits.users > 1 ? 'er' : ''}</span>
+                        <span>{t('features.teamMembers', { count: limits.users })}</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span>{(limits.storage_bytes / (1024 ** 3)).toFixed(0)} GB Storage</span>
+                        <span>{t('features.storage', { gb: (limits.storage_bytes / (1024 ** 3)).toFixed(0) })}</span>
                       </li>
                     </ul>
 
@@ -199,12 +201,12 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
                       <div className="mt-4 pt-4 border-t border-zinc-200">
                         {isUpgrade(tier) && (
                           <span className="text-xs font-semibold text-green-600">
-                            ⬆ Upgrade
+                            ⬆ {t('badges.upgrade')}
                           </span>
                         )}
                         {isDowngrade(tier) && (
                           <span className="text-xs font-semibold text-orange-600">
-                            ⬇ Downgrade
+                            ⬇ {t('badges.downgrade')}
                           </span>
                         )}
                       </div>
@@ -221,7 +223,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
                   <XMarkIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-red-900 mb-2">
-                      Downgrade nicht möglich - Bitte reduziere zuerst folgende Metriken:
+                      {t('violations.title')}
                     </p>
                     <ul className="space-y-1">
                       {violations.map((violation, idx) => (
@@ -239,8 +241,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
             {/* Info Box */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Hinweis:</strong> Bei einem Upgrade wird die Differenz sofort berechnet.
-                Bei einem Downgrade erhältst du eine Gutschrift für die verbleibende Zeit.
+                <strong>{t('info.label')}</strong> {t('info.message')}
               </p>
             </div>
           </div>
@@ -251,14 +252,14 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
               onClick={onClose}
               className="px-6 py-2 border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 rounded-lg font-medium transition"
             >
-              Abbrechen
+              {t('actions.cancel')}
             </Button>
             <Button
               onClick={handleChangePlan}
               disabled={loading || selectedTier === currentTier}
               className="px-6 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Wird geändert...' : 'Plan ändern'}
+              {loading ? t('actions.changing') : t('actions.changePlan')}
             </Button>
           </div>
         </DialogPanel>

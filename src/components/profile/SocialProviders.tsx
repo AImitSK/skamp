@@ -2,12 +2,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
-import { 
+import {
   GoogleAuthProvider,
   linkWithPopup,
   unlink,
@@ -23,6 +24,7 @@ interface ProviderInfo {
 }
 
 export function SocialProviders() {
+  const t = useTranslations('profile.socialProviders');
   const { user } = useAuth();
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,9 +151,9 @@ export function SocialProviders() {
   return (
     <div className="rounded-lg border bg-white p-6">
       <div className="mb-4">
-        <Subheading level={3}>Anmeldedienste</Subheading>
+        <Subheading level={3}>{t('title')}</Subheading>
         <Text className="text-sm text-gray-600 mt-1">
-          Verknüpfe externe Dienste für schnellere Anmeldung
+          {t('description')}
         </Text>
       </div>
 
@@ -169,7 +171,7 @@ export function SocialProviders() {
               </svg>
             </div>
             <div>
-              <Text className="font-medium">Google</Text>
+              <Text className="font-medium">{t('providers.google')}</Text>
               {googleProvider?.isLinked && googleProvider.email && (
                 <Text className="text-sm text-gray-500">{googleProvider.email}</Text>
               )}
@@ -179,13 +181,13 @@ export function SocialProviders() {
           <div className="flex items-center gap-3">
             {googleProvider?.isLinked ? (
               <>
-                <Badge color="green">Verknüpft</Badge>
+                <Badge color="green">{t('status.linked')}</Badge>
                 <Button
                   className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
                   onClick={handleUnlinkGoogle}
                   disabled={loading}
                 >
-                  Entfernen
+                  {t('actions.unlink')}
                 </Button>
               </>
             ) : (
@@ -194,7 +196,7 @@ export function SocialProviders() {
                 onClick={handleLinkGoogle}
                 disabled={loading}
               >
-                {loading ? 'Verknüpfe...' : 'Verknüpfen'}
+                {loading ? t('actions.linking') : t('actions.link')}
               </Button>
             )}
           </div>
@@ -216,8 +218,7 @@ export function SocialProviders() {
       {/* Info-Box */}
       <div className="mt-4 p-3 bg-blue-50 rounded-lg">
         <Text className="text-sm text-blue-700">
-          <strong>Hinweis:</strong> Du kannst mehrere Anmeldemethoden verknüpfen. 
-          Stelle sicher, dass mindestens eine Methode aktiv bleibt.
+          <strong>{t('notice.title')}</strong> {t('notice.message')}
         </Text>
       </div>
     </div>

@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { toastService } from '@/lib/utils/toast';
 
 interface Props {
@@ -25,6 +26,7 @@ export default function CancelSubscriptionModal({
   currentPeriodEnd,
   planName,
 }: Props) {
+  const t = useTranslations('subscription.cancelModal');
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async () => {
@@ -44,21 +46,21 @@ export default function CancelSubscriptionModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Fehler beim Kündigen');
+        throw new Error(errorData.error || t('errorCanceling'));
       }
 
       toastService.success('Subscription erfolgreich gekündigt');
       onSuccess();
     } catch (error: any) {
       console.error('Error canceling subscription:', error);
-      toastService.error(error.message || 'Fehler beim Kündigen');
+      toastService.error(error.message || t('errorCanceling'));
     } finally {
       setLoading(false);
     }
   };
 
   const formatEndDate = (date?: Date) => {
-    if (!date) return 'Ende der Billing Period';
+    if (!date) return t('endOfBillingPeriod');
     return new Date(date).toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'long',
@@ -93,7 +95,7 @@ export default function CancelSubscriptionModal({
               </div>
               <div>
                 <Dialog.Title className="text-lg font-semibold text-zinc-900">
-                  Subscription kündigen?
+                  {t('title')}
                 </Dialog.Title>
               </div>
             </div>
@@ -108,19 +110,19 @@ export default function CancelSubscriptionModal({
           {/* Content */}
           <div className="space-y-4">
             <p className="text-sm text-zinc-600">
-              Du bist dabei, deinen <span className="font-semibold">{planName}</span> Plan zu kündigen.
+              {t('description', { planName })}
             </p>
 
             {/* Restlaufzeit Info Box */}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
               <p className="text-sm font-semibold text-amber-900">
-                ⏰ Dein Zugriff bleibt aktiv
+                {t('accessRemainsTitle')}
               </p>
               <p className="text-sm text-amber-800">
-                Du kannst CeleroPress noch bis zum <span className="font-semibold">{formatEndDate(currentPeriodEnd)}</span> nutzen
+                {t('accessRemainsUntil', { date: formatEndDate(currentPeriodEnd) })}
                 {daysRemaining !== null && (
                   <span className="block mt-1">
-                    ({daysRemaining} {daysRemaining === 1 ? 'Tag' : 'Tage'} verbleibend)
+                    {t('daysRemaining', { count: daysRemaining })}
                   </span>
                 )}
               </p>
@@ -129,20 +131,20 @@ export default function CancelSubscriptionModal({
             {/* Was passiert */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-zinc-700 uppercase tracking-wide">
-                Was passiert jetzt?
+                {t('whatHappensTitle')}
               </p>
               <ul className="text-sm text-zinc-600 space-y-1">
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Voller Zugriff bis zum Ende der Billing Period</span>
+                  <span>{t('fullAccessUntilEnd')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-0.5">✓</span>
-                  <span>Keine weiteren Zahlungen</span>
+                  <span>{t('noMorePayments')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-600 mt-0.5">✗</span>
-                  <span>Danach kein Zugriff mehr auf deine Daten</span>
+                  <span>{t('noAccessAfter')}</span>
                 </li>
               </ul>
             </div>
@@ -150,7 +152,7 @@ export default function CancelSubscriptionModal({
             {/* Alternative */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800">
-                💡 <span className="font-semibold">Tipp:</span> Du kannst stattdessen auch auf einen günstigeren Plan downgraden.
+                {t('downgradeTip')}
               </p>
             </div>
           </div>
@@ -162,14 +164,14 @@ export default function CancelSubscriptionModal({
               disabled={loading}
               className="flex-1 px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg font-medium transition-colors disabled:opacity-50"
             >
-              Abbrechen
+              {t('cancelButton')}
             </button>
             <button
               onClick={handleCancel}
               disabled={loading}
               className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
-              {loading ? 'Wird gekündigt...' : 'Ja, kündigen'}
+              {loading ? t('canceling') : t('confirmButton')}
             </button>
           </div>
         </Dialog.Panel>

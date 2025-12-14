@@ -506,6 +506,21 @@
         }
       },
       "description": "Manage your personal information and settings",
+      "emailVerification": {
+        "errorSending": "Error sending verification email",
+        "notVerifiedText": "Your email address <strong>{email}</strong> is not yet verified. Verify your email address to use all features.",
+        "sendButton": {
+          "label": "Send Verification Email",
+          "sending": "Sending..."
+        },
+        "status": {
+          "notVerified": "Not Verified",
+          "verified": "Verified"
+        },
+        "successMessage": "Verification email has been sent! Please check your inbox.",
+        "title": "Email Verification",
+        "verifiedText": "Your email address <strong>{email}</strong> has been successfully verified."
+      },
       "passwordChange": {
         "cancel": "Cancel",
         "changePasswordButton": "Change Password",
@@ -544,6 +559,25 @@
         "saveSuccess": "Profile successfully saved!",
         "saving": "Saving...",
         "title": "Personal Information"
+      },
+      "socialProviders": {
+        "actions": {
+          "link": "Link",
+          "linking": "Linking...",
+          "unlink": "Remove"
+        },
+        "description": "Link external services for faster login",
+        "notice": {
+          "message": "You can link multiple authentication methods. Make sure at least one method remains active.",
+          "title": "Note:"
+        },
+        "providers": {
+          "google": "Google"
+        },
+        "status": {
+          "linked": "Linked"
+        },
+        "title": "Authentication Services"
       },
       "title": "Profile",
       "twoFactor": {
@@ -3323,6 +3357,22 @@
       "title": "No organization found"
     },
     "notifications": {
+      "dropdown": {
+        "actions": {
+          "delete": "Delete",
+          "markAllAsRead": "Mark all as read",
+          "markAsRead": "Mark as read"
+        },
+        "ariaLabel": "Notifications",
+        "empty": "No notifications",
+        "loading": "Loading...",
+        "newBadge": "New",
+        "recently": "Recently",
+        "title": "Notifications",
+        "unreadCount": "{count, plural, one {# new notification} other {# new notifications}}",
+        "viewAll": "View all notifications",
+        "viewAllMore": "({count} more)"
+      },
       "empty": "No notifications",
       "item": {
         "deleteAriaLabel": "Delete notification",
@@ -9871,6 +9921,47 @@
           "upload": "Upload Template"
         }
       }
+    },
+    "glossaryEntry": {
+      "title": {
+        "new": "New Glossary Entry",
+        "edit": "Edit Glossary Entry"
+      },
+      "fields": {
+        "customer": {
+          "label": "Customer *",
+          "placeholder": "Select customer..."
+        },
+        "germanTerm": {
+          "label": "Term (German) *",
+          "placeholder": "e.g. Spannwelle"
+        },
+        "translations": {
+          "label": "Translations",
+          "badge": "For AI Translation",
+          "placeholder": "Translation in {language}"
+        },
+        "context": {
+          "label": "Context (optional)",
+          "placeholder": "e.g. printing technology, web offset - helps AI with correct usage"
+        }
+      },
+      "addLanguage": {
+        "button": "Add Language",
+        "placeholder": "Select language..."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "create": "Create"
+      },
+      "errors": {
+        "customerRequired": "Please select a customer",
+        "termRequired": "The German term is required",
+        "saveFailed": "Failed to save"
+      },
+      "infoText": "Glossary entries are automatically considered in AI translations. The term will be translated exactly as defined here."
     }
   },
   "strategy": {
@@ -10102,7 +10193,36 @@
         "reactivateButton": "Reactivate Subscription",
         "reactivating": "Reactivating..."
       },
-      "changePlan": "Change Plan",
+      "changePlan": {
+        "actions": {
+          "cancel": "Cancel",
+          "changePlan": "Change Plan",
+          "changing": "Changing..."
+        },
+        "badges": {
+          "current": "Current",
+          "downgrade": "Downgrade",
+          "upgrade": "Upgrade"
+        },
+        "currentPlan": "Current Plan",
+        "features": {
+          "aiWords": "{count} AI words",
+          "contacts": "{count} Contacts",
+          "emailsPerMonth": "{count} Emails/month",
+          "storage": "{gb} GB Storage",
+          "teamMembers": "{count, plural, =1 {# Team Member} other {# Team Members}}",
+          "unlimitedAi": "Unlimited AI"
+        },
+        "info": {
+          "label": "Note:",
+          "message": "For an upgrade, the difference is calculated immediately. For a downgrade, you'll receive a credit for the remaining time."
+        },
+        "perMonth": "/month",
+        "title": "Change Plan",
+        "violations": {
+          "title": "Downgrade not possible - Please reduce the following metrics first:"
+        }
+      },
       "endOfBillingPeriod": "End of Billing Period",
       "features": {
         "aiWords": "{count} AI words",
@@ -10138,6 +10258,23 @@
         "title": "Current Usage",
         "unlimited": "Unlimited ∞"
       }
+    },
+    "cancelModal": {
+      "title": "Cancel Subscription?",
+      "description": "You are about to cancel your {planName} plan.",
+      "accessRemainsTitle": "⏰ Your access remains active",
+      "accessRemainsUntil": "You can continue using CeleroPress until {date}",
+      "daysRemaining": "({count, plural, =1 {# day} other {# days}} remaining)",
+      "whatHappensTitle": "What happens now?",
+      "fullAccessUntilEnd": "Full access until the end of the billing period",
+      "noMorePayments": "No further payments",
+      "noAccessAfter": "No access to your data after that",
+      "downgradeTip": "💡 Tip: You can also downgrade to a cheaper plan instead.",
+      "cancelButton": "Cancel",
+      "confirmButton": "Yes, cancel",
+      "canceling": "Canceling...",
+      "errorCanceling": "Error canceling subscription",
+      "endOfBillingPeriod": "End of Billing Period"
     }
   },
   "superadmin": {
@@ -10547,5 +10684,93 @@
     "testEmailSent": "Test email sent to {email}",
     "updated": "Successfully updated",
     "usageSynced": "Usage synchronized"
+  },
+  "setup": {
+    "mediaWizard": {
+      "dialogTitle": "Press Setup - Step {current} of {total}",
+      "progress": "Progress",
+      "steps": {
+        "overview": {
+          "title": "Welcome to Press Setup",
+          "description": "Set up your CRM for press relations"
+        },
+        "tags": {
+          "title": "Create Press Tags",
+          "description": "Create tags to categorize press contacts"
+        },
+        "sampleData": {
+          "title": "Create Sample Data",
+          "description": "Create sample publisher and journalist for testing"
+        },
+        "lists": {
+          "title": "Create Press Lists",
+          "description": "Create smart distribution lists for your PR campaigns"
+        },
+        "complete": {
+          "title": "Setup Complete",
+          "description": "Your press setup is ready!"
+        }
+      },
+      "overview": {
+        "heading": "Press Setup for CeleroPress",
+        "intro": "This wizard helps you set up your CRM for professional press relations.",
+        "features": {
+          "tags": {
+            "title": "Press Tags",
+            "description": "Categorize journalists and media"
+          },
+          "sampleData": {
+            "title": "Sample Data",
+            "description": "Publisher and journalist for testing"
+          },
+          "lists": {
+            "title": "Smart Lists",
+            "description": "Automatic distribution lists for PR campaigns"
+          }
+        }
+      },
+      "tagsStep": {
+        "heading": "Which press tags do you want to create?",
+        "description": "Tags help you categorize journalists and media. You can add more later."
+      },
+      "sampleDataStep": {
+        "heading": "Create sample data?",
+        "description": "We can create sample data so you can test the system right away.",
+        "options": {
+          "company": {
+            "title": "Create sample publisher",
+            "description": "\"Example Publisher Ltd\" with media information"
+          },
+          "contact": {
+            "title": "Create sample journalist",
+            "description": "\"John Doe\" as tech editor"
+          }
+        }
+      },
+      "listsStep": {
+        "heading": "Which press lists should be created?",
+        "description": "These lists will be automatically populated with matching contacts based on their tags and properties."
+      },
+      "completeStep": {
+        "heading": "Setup successfully completed!",
+        "success": "Your CRM is now configured for professional press relations.",
+        "summary": {
+          "title": "What was created:",
+          "tags": "{count, plural, one {# press tag} other {# press tags}}",
+          "samplePublisher": "Sample publisher",
+          "sampleJournalist": "Sample journalist",
+          "lists": "{count, plural, one {# smart list} other {# smart lists}}"
+        },
+        "location": "You can find all created elements in the corresponding areas of your CRM."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "back": "Back",
+        "next": "Next",
+        "execute": "Execute setup",
+        "creating": "Creating...",
+        "finish": "Finish setup"
+      }
+    }
   }
 }

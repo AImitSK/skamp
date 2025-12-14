@@ -506,6 +506,21 @@
         }
       },
       "description": "Verwalte deine persönlichen Informationen und Einstellungen",
+      "emailVerification": {
+        "errorSending": "Fehler beim Senden der Verifizierungs-E-Mail",
+        "notVerifiedText": "Deine E-Mail-Adresse <strong>{email}</strong> ist noch nicht verifiziert. Verifiziere deine E-Mail-Adresse, um alle Funktionen nutzen zu können.",
+        "sendButton": {
+          "label": "Verifizierungs-E-Mail senden",
+          "sending": "Sende..."
+        },
+        "status": {
+          "notVerified": "Nicht verifiziert",
+          "verified": "Verifiziert"
+        },
+        "successMessage": "Verifizierungs-E-Mail wurde gesendet! Bitte überprüfe dein Postfach.",
+        "title": "E-Mail-Verifizierung",
+        "verifiedText": "Deine E-Mail-Adresse <strong>{email}</strong> wurde erfolgreich verifiziert."
+      },
       "passwordChange": {
         "cancel": "Abbrechen",
         "changePasswordButton": "Passwort ändern",
@@ -544,6 +559,25 @@
         "saveSuccess": "Profil erfolgreich gespeichert!",
         "saving": "Speichere...",
         "title": "Persönliche Informationen"
+      },
+      "socialProviders": {
+        "actions": {
+          "link": "Verknüpfen",
+          "linking": "Verknüpfe...",
+          "unlink": "Entfernen"
+        },
+        "description": "Verknüpfe externe Dienste für schnellere Anmeldung",
+        "notice": {
+          "message": "Du kannst mehrere Anmeldemethoden verknüpfen. Stelle sicher, dass mindestens eine Methode aktiv bleibt.",
+          "title": "Hinweis:"
+        },
+        "providers": {
+          "google": "Google"
+        },
+        "status": {
+          "linked": "Verknüpft"
+        },
+        "title": "Anmeldedienste"
       },
       "title": "Profil",
       "twoFactor": {
@@ -3318,6 +3352,22 @@
       "title": "Keine Organisation gefunden"
     },
     "notifications": {
+      "dropdown": {
+        "actions": {
+          "delete": "Löschen",
+          "markAllAsRead": "Alle als gelesen",
+          "markAsRead": "Als gelesen markieren"
+        },
+        "ariaLabel": "Benachrichtigungen",
+        "empty": "Keine Benachrichtigungen",
+        "loading": "Laden...",
+        "newBadge": "Neu",
+        "recently": "Kürzlich",
+        "title": "Benachrichtigungen",
+        "unreadCount": "{count, plural, one {# neue Benachrichtigung} other {# neue Benachrichtigungen}}",
+        "viewAll": "Alle Benachrichtigungen anzeigen",
+        "viewAllMore": "({count} weitere)"
+      },
       "empty": "Keine Benachrichtigungen",
       "item": {
         "deleteAriaLabel": "Benachrichtigung löschen",
@@ -9905,6 +9955,47 @@
           "upload": "Template hochladen"
         }
       }
+    },
+    "glossaryEntry": {
+      "title": {
+        "new": "Neuer Glossar-Eintrag",
+        "edit": "Glossar-Eintrag bearbeiten"
+      },
+      "fields": {
+        "customer": {
+          "label": "Kunde *",
+          "placeholder": "Kunde auswählen..."
+        },
+        "germanTerm": {
+          "label": "Begriff (Deutsch) *",
+          "placeholder": "z.B. Spannwelle"
+        },
+        "translations": {
+          "label": "Übersetzungen",
+          "badge": "Für KI-Übersetzung",
+          "placeholder": "Übersetzung auf {language}"
+        },
+        "context": {
+          "label": "Kontext (optional)",
+          "placeholder": "z.B. Drucktechnik, Rollenoffset - hilft der KI bei der korrekten Verwendung"
+        }
+      },
+      "addLanguage": {
+        "button": "Sprache hinzufügen",
+        "placeholder": "Sprache auswählen..."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "saving": "Speichern...",
+        "create": "Erstellen"
+      },
+      "errors": {
+        "customerRequired": "Bitte wählen Sie einen Kunden aus",
+        "termRequired": "Der deutsche Begriff ist erforderlich",
+        "saveFailed": "Fehler beim Speichern"
+      },
+      "infoText": "Glossar-Einträge werden bei KI-Übersetzungen automatisch berücksichtigt. Der Begriff wird exakt so übersetzt, wie hier definiert."
     }
   },
   "strategy": {
@@ -10136,7 +10227,36 @@
         "reactivateButton": "Subscription reaktivieren",
         "reactivating": "Wird reaktiviert..."
       },
-      "changePlan": "Plan ändern",
+      "changePlan": {
+        "actions": {
+          "cancel": "Abbrechen",
+          "changePlan": "Plan ändern",
+          "changing": "Wird geändert..."
+        },
+        "badges": {
+          "current": "Aktuell",
+          "downgrade": "Downgrade",
+          "upgrade": "Upgrade"
+        },
+        "currentPlan": "Aktueller Plan",
+        "features": {
+          "aiWords": "{count} AI-Wörter",
+          "contacts": "{count} Kontakte",
+          "emailsPerMonth": "{count} Emails/Monat",
+          "storage": "{gb} GB Storage",
+          "teamMembers": "{count, plural, =1 {# Team-Mitglied} other {# Team-Mitglieder}}",
+          "unlimitedAi": "Unlimited AI"
+        },
+        "info": {
+          "label": "Hinweis:",
+          "message": "Bei einem Upgrade wird die Differenz sofort berechnet. Bei einem Downgrade erhältst du eine Gutschrift für die verbleibende Zeit."
+        },
+        "perMonth": "/Monat",
+        "title": "Plan ändern",
+        "violations": {
+          "title": "Downgrade nicht möglich - Bitte reduziere zuerst folgende Metriken:"
+        }
+      },
       "endOfBillingPeriod": "Ende der Billing Period",
       "features": {
         "aiWords": "{count} AI-Wörter",
@@ -10172,6 +10292,23 @@
         "title": "Aktuelle Nutzung",
         "unlimited": "Unlimited ∞"
       }
+    },
+    "cancelModal": {
+      "title": "Subscription kündigen?",
+      "description": "Du bist dabei, deinen {planName} Plan zu kündigen.",
+      "accessRemainsTitle": "⏰ Dein Zugriff bleibt aktiv",
+      "accessRemainsUntil": "Du kannst CeleroPress noch bis zum {date} nutzen",
+      "daysRemaining": "({count, plural, =1 {# Tag} other {# Tage}} verbleibend)",
+      "whatHappensTitle": "Was passiert jetzt?",
+      "fullAccessUntilEnd": "Voller Zugriff bis zum Ende der Billing Period",
+      "noMorePayments": "Keine weiteren Zahlungen",
+      "noAccessAfter": "Danach kein Zugriff mehr auf deine Daten",
+      "downgradeTip": "💡 Tipp: Du kannst stattdessen auch auf einen günstigeren Plan downgraden.",
+      "cancelButton": "Abbrechen",
+      "confirmButton": "Ja, kündigen",
+      "canceling": "Wird gekündigt...",
+      "errorCanceling": "Fehler beim Kündigen",
+      "endOfBillingPeriod": "Ende der Billing Period"
     }
   },
   "superadmin": {
@@ -10581,5 +10718,93 @@
     "testEmailSent": "Test-Email an {email} versendet",
     "updated": "Erfolgreich aktualisiert",
     "usageSynced": "Usage synchronisiert"
+  },
+  "setup": {
+    "mediaWizard": {
+      "dialogTitle": "Presse-Setup - Schritt {current} von {total}",
+      "progress": "Fortschritt",
+      "steps": {
+        "overview": {
+          "title": "Willkommen zum Presse-Setup",
+          "description": "Richte dein CRM für Pressearbeit ein"
+        },
+        "tags": {
+          "title": "Presse-Tags erstellen",
+          "description": "Erstelle Tags zur Kategorisierung von Pressekontakten"
+        },
+        "sampleData": {
+          "title": "Beispiel-Daten erstellen",
+          "description": "Erstelle Beispiel-Verlag und -Journalist zum Testen"
+        },
+        "lists": {
+          "title": "Presse-Listen erstellen",
+          "description": "Erstelle intelligente Verteilerlisten für deine PR-Kampagnen"
+        },
+        "complete": {
+          "title": "Setup abgeschlossen",
+          "description": "Dein Presse-Setup ist bereit!"
+        }
+      },
+      "overview": {
+        "heading": "Presse-Setup für CeleroPress",
+        "intro": "Dieser Assistent hilft dir dabei, dein CRM für professionelle Pressearbeit einzurichten.",
+        "features": {
+          "tags": {
+            "title": "Presse-Tags",
+            "description": "Kategorisiere Journalisten und Medien"
+          },
+          "sampleData": {
+            "title": "Beispiel-Daten",
+            "description": "Verlag und Journalist zum Testen"
+          },
+          "lists": {
+            "title": "Intelligente Listen",
+            "description": "Automatische Verteiler für PR-Kampagnen"
+          }
+        }
+      },
+      "tagsStep": {
+        "heading": "Welche Presse-Tags möchtest du erstellen?",
+        "description": "Tags helfen dir dabei, Journalisten und Medien zu kategorisieren. Du kannst später weitere hinzufügen."
+      },
+      "sampleDataStep": {
+        "heading": "Beispiel-Daten erstellen?",
+        "description": "Wir können Beispiel-Daten erstellen, damit du das System sofort testen kannst.",
+        "options": {
+          "company": {
+            "title": "Beispiel-Verlag erstellen",
+            "description": "\"Beispiel Verlag GmbH\" mit Medien-Informationen"
+          },
+          "contact": {
+            "title": "Beispiel-Journalist erstellen",
+            "description": "\"Max Mustermann\" als Tech-Redakteur"
+          }
+        }
+      },
+      "listsStep": {
+        "heading": "Welche Presse-Listen sollen erstellt werden?",
+        "description": "Diese Listen werden automatisch mit passenden Kontakten befüllt, basierend auf deren Tags und Eigenschaften."
+      },
+      "completeStep": {
+        "heading": "Setup erfolgreich abgeschlossen!",
+        "success": "Dein CRM ist jetzt für professionelle Pressearbeit konfiguriert.",
+        "summary": {
+          "title": "Was wurde erstellt:",
+          "tags": "{count, plural, one {# Presse-Tag} other {# Presse-Tags}}",
+          "samplePublisher": "Beispiel-Verlag",
+          "sampleJournalist": "Beispiel-Journalist",
+          "lists": "{count, plural, one {# intelligente Liste} other {# intelligente Listen}}"
+        },
+        "location": "Du findest alle erstellten Elemente in den entsprechenden Bereichen deines CRM."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "back": "Zurück",
+        "next": "Weiter",
+        "execute": "Setup ausführen",
+        "creating": "Erstelle...",
+        "finish": "Setup abschließen"
+      }
+    }
   }
 }
