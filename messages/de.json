@@ -7683,6 +7683,42 @@
           "updateProject": "Projekt erfolgreich aktualisiert"
         },
         "title": "Projekt bearbeiten"
+      },
+      "steps": {
+        "project": {
+          "title": "Projekt-Titel *",
+          "titlePlaceholder": "z.B. Produktlaunch Q2 2024",
+          "description": "Beschreibung",
+          "descriptionPlaceholder": "Kurze Beschreibung des Projekts...",
+          "status": "Status",
+          "statusOptions": {
+            "active": "Aktiv",
+            "on_hold": "Pausiert",
+            "completed": "Abgeschlossen",
+            "cancelled": "Abgebrochen"
+          },
+          "pipelinePhase": "Pipeline-Phase",
+          "pipelineOptions": {
+            "ideas_planning": "Ideen & Planung",
+            "creation": "Content und Materialien",
+            "approval": "Freigabe",
+            "distribution": "Verteilung",
+            "monitoring": "Monitoring",
+            "completed": "Abgeschlossen"
+          },
+          "tags": "Tags"
+        },
+        "client": {
+          "label": "Kunde auswählen",
+          "description": "Wählen Sie den Kunden aus, für den dieses Projekt durchgeführt wird.",
+          "loading": "Lade Kunden..."
+        },
+        "team": {
+          "teamMembers": "Team-Mitglieder",
+          "projectManager": "Projekt-Manager / Besitzer",
+          "selectPlaceholder": "-- Bitte wählen --",
+          "currentUserSuffix": "(Sie)"
+        }
       }
     },
     "empty": {

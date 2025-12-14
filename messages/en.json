@@ -7652,6 +7652,62 @@
         "title": "Linked Campaigns",
         "unknownError": "Unknown error",
         "viewButton": "View"
+      },
+      "wizard": {
+        "actions": {
+          "saveChanges": "Save changes"
+        },
+        "errors": {
+          "noOrganization": "Organization not found",
+          "saveProject": "Error saving project: {error}",
+          "unknown": "Unknown error"
+        },
+        "steps": {
+          "campaigns": "Campaigns",
+          "client": "Client",
+          "project": "Project",
+          "team": "Team"
+        },
+        "success": {
+          "updateProject": "Project successfully updated"
+        },
+        "title": "Edit Project"
+      },
+      "steps": {
+        "project": {
+          "title": "Project Title *",
+          "titlePlaceholder": "e.g. Product Launch Q2 2024",
+          "description": "Description",
+          "descriptionPlaceholder": "Short description of the project...",
+          "status": "Status",
+          "statusOptions": {
+            "active": "Active",
+            "on_hold": "On Hold",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          },
+          "pipelinePhase": "Pipeline Phase",
+          "pipelineOptions": {
+            "ideas_planning": "Ideas & Planning",
+            "creation": "Content and Materials",
+            "approval": "Approval",
+            "distribution": "Distribution",
+            "monitoring": "Monitoring",
+            "completed": "Completed"
+          },
+          "tags": "Tags"
+        },
+        "client": {
+          "label": "Select Client",
+          "description": "Select the client for whom this project is being conducted.",
+          "loading": "Loading clients..."
+        },
+        "team": {
+          "teamMembers": "Team Members",
+          "projectManager": "Project Manager / Owner",
+          "selectPlaceholder": "-- Please select --",
+          "currentUserSuffix": "(You)"
+        }
       }
     },
     "empty": {

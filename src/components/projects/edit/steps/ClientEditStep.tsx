@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
 import { ClientSelector } from '../../creation/ClientSelector';
@@ -12,12 +13,14 @@ export default function ClientEditStep({
   onUpdate,
   creationOptions
 }: BaseEditStepProps) {
+  const t = useTranslations('projects.edit.steps.client');
+
   return (
     <FieldGroup>
       <Field>
-        <Label>Kunde auswählen</Label>
+        <Label>{t('label')}</Label>
         <Text className="text-sm text-gray-600 mt-1 mb-4">
-          Wählen Sie den Kunden aus, für den dieses Projekt durchgeführt wird.
+          {t('description')}
         </Text>
 
         {creationOptions?.availableClients && (
@@ -30,7 +33,7 @@ export default function ClientEditStep({
 
         {!creationOptions?.availableClients && (
           <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">Lade Kunden...</p>
+            <p className="text-sm">{t('loading')}</p>
           </div>
         )}
       </Field>

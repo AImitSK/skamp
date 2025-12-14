@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
 import { TeamMemberMultiSelect } from '../../creation/TeamMemberMultiSelect';
@@ -14,6 +15,7 @@ export default function TeamEditStep({
   creationOptions
 }: BaseEditStepProps) {
   const { user } = useAuth();
+  const t = useTranslations('projects.edit.steps.team');
 
   const handleTeamMemberChange = (members: string[]) => {
     onUpdate({ assignedTeamMembers: members });
@@ -36,7 +38,7 @@ export default function TeamEditStep({
     <FieldGroup>
       {/* Team-Mitglieder */}
       <Field>
-        <Label>Team-Mitglieder</Label>
+        <Label>{t('teamMembers')}</Label>
         <TeamMemberMultiSelect
           teamMembers={creationOptions?.availableTeamMembers || []}
           selectedMembers={formData.assignedTeamMembers}
@@ -47,16 +49,16 @@ export default function TeamEditStep({
       {/* Projekt-Manager / Besitzer */}
       {formData.assignedTeamMembers.length > 0 && (
         <Field>
-          <Label>Projekt-Manager / Besitzer</Label>
+          <Label>{t('projectManager')}</Label>
           <Select
             value={formData.projectManager}
             onChange={(e) => onUpdate({ projectManager: e.target.value })}
           >
-            <option value="">-- Bitte wählen --</option>
+            <option value="">{t('selectPlaceholder')}</option>
             {filteredMembers.map((member: any) => (
               <option key={member.id} value={member.id}>
                 {member.displayName} ({member.role})
-                {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
+                {user?.uid && member.id.includes(user.uid) ? ` ${t('currentUserSuffix')}` : ''}
               </option>
             ))}
           </Select>
