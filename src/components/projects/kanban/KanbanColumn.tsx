@@ -55,6 +55,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   const t = useTranslations('projects.kanban');
   const stageConfig = getStageConfig(stage);
   const stageColors = getStageColor(stage);
+
+  // Translate stage name
+  const stageName = t(getStageName(stage));
   
   // Drop Zone Hook
   const { isOver, canDrop, drop } = useDropZone(stage);
@@ -89,15 +92,15 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className={`font-semibold ${stageColors.text}`}>
-              {getStageName(stage)}
+              {stageName}
             </h3>
-            <span 
+            <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${stageColors.count}`}
             >
               {projects.length}
             </span>
           </div>
-          
+
         </div>
       </div>
 
@@ -116,9 +119,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
           // Empty State
           <div className={`text-center py-8 ${stageColors.text} opacity-50`}>
             <ClipboardDocumentListIcon className="mx-auto h-12 w-12 mb-2" />
-            <p className="text-sm">Keine Projekte</p>
+            <p className="text-sm">{t('empty.title')}</p>
             <p className="text-xs">
-              Ziehe Projekte hierher oder erstelle ein neues
+              {t('empty.description')}
             </p>
           </div>
         ) : (
@@ -151,7 +154,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             }
           `}>
             {canDrop
-              ? t('column.dropHere', { stage: getStageName(stage) })
+              ? t('column.dropHere', { stage: stageName })
               : t('column.transitionNotAllowed')
             }
           </div>

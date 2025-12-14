@@ -410,7 +410,7 @@ describe('useDragAndDrop', () => {
 
       // Assert
       expect(feedback.dropZoneClass).toBe('');
-      expect(feedback.message).toBe('');
+      expect(feedback.messageKey).toBe('');
       expect(feedback.canDropHere).toBe(false);
     });
 
@@ -420,7 +420,8 @@ describe('useDragAndDrop', () => {
 
       // Assert
       expect(feedback.dropZoneClass).toBe('bg-green-100 border-2 border-green-300 border-dashed');
-      expect(feedback.message).toBe('Hier ablegen für Content und Materialien');
+      expect(feedback.messageKey).toBe('dragDrop.dropHereFor');
+      expect(feedback.stageNameKey).toBe('stages.creation');
       expect(feedback.canDropHere).toBe(true);
     });
 
@@ -430,11 +431,11 @@ describe('useDragAndDrop', () => {
 
       // Assert
       expect(feedback.dropZoneClass).toBe('bg-red-100 border-2 border-red-300 border-dashed');
-      expect(feedback.message).toBe('Übergang nicht erlaubt');
+      expect(feedback.messageKey).toBe('dragDrop.transitionNotAllowed');
       expect(feedback.canDropHere).toBe(false);
     });
 
-    it('sollte korrekte Stage-Namen in Feedback verwenden', () => {
+    it('sollte korrekte Stage-Name-Keys in Feedback verwenden', () => {
       // Act
       const feedbacks = [
         getFeedback(true, true, 'ideas_planning'),
@@ -445,13 +446,13 @@ describe('useDragAndDrop', () => {
         getFeedback(true, true, 'completed')
       ];
 
-      // Assert
-      expect(feedbacks[0].message).toContain('Ideen & Planung');
-      expect(feedbacks[1].message).toContain('Content und Materialien');
-      expect(feedbacks[2].message).toContain('Freigabe');
-      expect(feedbacks[3].message).toContain('Verteilung');
-      expect(feedbacks[4].message).toContain('Monitoring');
-      expect(feedbacks[5].message).toContain('Abgeschlossen');
+      // Assert - prüft jetzt i18n-Keys
+      expect(feedbacks[0].stageNameKey).toBe('stages.ideas_planning');
+      expect(feedbacks[1].stageNameKey).toBe('stages.creation');
+      expect(feedbacks[2].stageNameKey).toBe('stages.approval');
+      expect(feedbacks[3].stageNameKey).toBe('stages.distribution');
+      expect(feedbacks[4].stageNameKey).toBe('stages.monitoring');
+      expect(feedbacks[5].stageNameKey).toBe('stages.completed');
     });
   });
 
@@ -463,13 +464,13 @@ describe('useDragAndDrop', () => {
     const { result } = renderHook(() => useDragAndDrop(mockOnProjectMove));
     const getStageName = result.current.getStageName;
 
-    it('sollte korrekte deutsche Stage-Namen zurückgeben', () => {
-      expect(getStageName('ideas_planning')).toBe('Ideen & Planung');
-      expect(getStageName('creation')).toBe('Content und Materialien');
-      expect(getStageName('approval')).toBe('Freigabe');
-      expect(getStageName('distribution')).toBe('Verteilung');
-      expect(getStageName('monitoring')).toBe('Monitoring');
-      expect(getStageName('completed')).toBe('Abgeschlossen');
+    it('sollte korrekte i18n-Keys für Stage-Namen zurückgeben', () => {
+      expect(getStageName('ideas_planning')).toBe('stages.ideas_planning');
+      expect(getStageName('creation')).toBe('stages.creation');
+      expect(getStageName('approval')).toBe('stages.approval');
+      expect(getStageName('distribution')).toBe('stages.distribution');
+      expect(getStageName('monitoring')).toBe('stages.monitoring');
+      expect(getStageName('completed')).toBe('stages.completed');
     });
 
     it('sollte unbekannte Stages als Original-String zurückgeben', () => {
@@ -477,7 +478,7 @@ describe('useDragAndDrop', () => {
       expect(getStageName(unknownStage)).toBe('unknown_stage');
     });
 
-    it('sollte konsistente Namen für UI-Verwendung liefern', () => {
+    it('sollte konsistente Keys für UI-Verwendung liefern', () => {
       const allStages: PipelineStage[] = [
         'ideas_planning',
         'creation',
@@ -488,11 +489,11 @@ describe('useDragAndDrop', () => {
       ];
 
       allStages.forEach(stage => {
-        const stageName = getStageName(stage);
-        expect(typeof stageName).toBe('string');
-        expect(stageName.length).toBeGreaterThan(0);
-        // Sollte deutsche Sonderzeichen unterstützen
-        expect(stageName).toMatch(/^[a-zA-ZäöüßÄÖÜ\s&-]+$/);
+        const stageKey = getStageName(stage);
+        expect(typeof stageKey).toBe('string');
+        expect(stageKey.length).toBeGreaterThan(0);
+        // Sollte i18n-Key Format sein (stages.xxx)
+        expect(stageKey).toMatch(/^stages\.[a-z_]+$/);
       });
     });
   });
@@ -523,7 +524,7 @@ describe('useDragAndDrop', () => {
       // Step 5: Get feedback for valid drop
       const feedback = result.current.getDragFeedback(true, true, toStage);
       expect(feedback.canDropHere).toBe(true);
-      expect(feedback.message).toContain('Freigabe');
+      expect(feedback.stageNameKey).toBe('stages.approval');
     });
 
     it('sollte ungültigen Drag & Drop Workflow ablehnen', () => {
@@ -543,7 +544,7 @@ describe('useDragAndDrop', () => {
       // Feedback should be negative
       const feedback = result.current.getDragFeedback(true, false, toStage);
       expect(feedback.canDropHere).toBe(false);
-      expect(feedback.message).toBe('Übergang nicht erlaubt');
+      expect(feedback.messageKey).toBe('dragDrop.transitionNotAllowed');
     });
 
     it('sollte User-Permissions korrekt mit Stage-Validierung kombinieren', () => {

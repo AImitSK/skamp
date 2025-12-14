@@ -7704,6 +7704,41 @@
         "scheduleMeeting": "Meeting planen",
         "view": "Projekt anzeigen",
         "viewReports": "Reports anzeigen"
+      },
+      "stages": {
+        "ideas_planning": "Ideen & Planung",
+        "ideas_planningShort": "Planung",
+        "creation": "Content und Materialien",
+        "creationShort": "Erstellung",
+        "approval": "Freigabe",
+        "approvalShort": "Freigabe",
+        "distribution": "Verteilung",
+        "distributionShort": "Verteilung",
+        "monitoring": "Monitoring",
+        "monitoringShort": "Monitoring",
+        "completed": "Abgeschlossen",
+        "completedShort": "Fertig"
+      },
+      "empty": {
+        "title": "Keine Projekte",
+        "description": "Ziehe Projekte hierher oder erstelle ein neues",
+        "noProjectsFound": "Keine Projekte gefunden",
+        "createFirst": "Erstelle dein erstes Projekt, um loszulegen.",
+        "noProjectsInCategory": "Keine Projekte in dieser Kategorie gefunden.",
+        "noProjectsInStage": "Keine Projekte in {stage}"
+      },
+      "loading": "Board wird geladen...",
+      "mobile": {
+        "title": "Projekt-Stages",
+        "collapseAll": "Alle zuklappen",
+        "expandAll": "Alle öffnen",
+        "moveHereOrCreate": "Projekte hierhin verschieben oder neue erstellen",
+        "projectCount": "{count, plural, one {1 Projekt} other {{count} Projekte}}",
+        "tip": "💡 Tipp: Tippe auf Stage-Namen um sie zu öffnen/schließen"
+      },
+      "dragDrop": {
+        "dropHereFor": "Hier ablegen für {stage}",
+        "transitionNotAllowed": "Übergang nicht erlaubt"
       }
     },
     "loadError": "Fehler beim Laden",

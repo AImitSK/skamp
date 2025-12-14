@@ -62,6 +62,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
   triggerRef
 }) => {
   const t = useTranslations('projects.kanban.quickActions');
+  const tKanban = useTranslations('projects.kanban');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -138,7 +139,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
           {project.title}
         </p>
         <p className="text-xs text-gray-500">
-          {getStageConfig(project.currentStage).name}
+          {tKanban(getStageConfig(project.currentStage).nameKey)}
         </p>
       </div>
 
@@ -180,7 +181,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
             >
               <ArrowsRightLeftIcon className="h-4 w-4" />
-              <span>{getStageName(targetStage)}</span>
+              <span>{tKanban(getStageName(targetStage))}</span>
             </button>
           ))}
         </div>

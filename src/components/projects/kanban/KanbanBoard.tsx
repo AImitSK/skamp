@@ -7,6 +7,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { Project, PipelineStage } from '@/types/project';
 import { TeamMember } from '@/types/international';
@@ -65,6 +66,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   teamMembers = [],
   tags = []
 }) => {
+  const t = useTranslations('projects.kanban');
+
   // Window Size für Responsive Design
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
   
@@ -143,7 +146,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       <MobileKanbanAccordion
         sections={allStages.map(stage => ({
           stage,
-          title: getStageName(stage),
+          title: t(getStageName(stage)),
           count: projects[stage]?.length || 0,
           projects: projects[stage] || []
         }))}
@@ -174,7 +177,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600">Board wird geladen...</span>
+              <span className="text-gray-600">{t('loading')}</span>
             </div>
           </div>
         )}
@@ -192,9 +195,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {!loading && totalProjects === 0 && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-lg font-medium mb-2">Keine Projekte gefunden</h3>
+            <h3 className="text-lg font-medium mb-2">{t('empty.noProjectsFound')}</h3>
             <p className="text-sm">
-              Erstelle dein erstes Projekt, um loszulegen.
+              {t('empty.createFirst')}
             </p>
           </div>
         )}

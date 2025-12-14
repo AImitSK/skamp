@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageColor, getStageConfig } from './kanban-constants';
 import { ProjectCard } from './ProjectCard';
@@ -35,6 +36,8 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
   onProjectSelect,
   loading
 }) => {
+  const t = useTranslations('projects.kanban');
+
   // Expanded Sections State
   const [expandedSections, setExpandedSections] = useState<Set<PipelineStage>>(
     new Set<PipelineStage>(['ideas_planning', 'creation', 'approval']) // Default expanded
@@ -72,19 +75,19 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
     <div className="mobile-kanban-accordion p-4 space-y-4">
       {/* Expand/Collapse Controls */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Projekt-Stages</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('mobile.title')}</h2>
         <div className="flex items-center space-x-2">
           <button
             onClick={collapseAll}
             className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
           >
-            Alle zuklappen
+            {t('mobile.collapseAll')}
           </button>
           <button
             onClick={expandAll}
             className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded hover:bg-blue-200"
           >
-            Alle öffnen
+            {t('mobile.expandAll')}
           </button>
         </div>
       </div>
@@ -168,9 +171,9 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
                   // Empty State
                   <div className={`text-center py-6 ${stageColors.text} opacity-60`}>
                     <div className="text-lg mb-1">📋</div>
-                    <p className="text-sm">Keine Projekte in {section.title}</p>
+                    <p className="text-sm">{t('empty.noProjectsInStage', { stage: section.title })}</p>
                     <p className="text-xs mt-1">
-                      Projekte hierhin verschieben oder neue erstellen
+                      {t('mobile.moveHereOrCreate')}
                     </p>
                   </div>
                 ) : (
@@ -196,7 +199,7 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
                                 hover:opacity-80 transition-opacity
                               `}
                             >
-                              → {getStageConfig(targetStage).shortName}
+                              → {t(getStageConfig(targetStage).shortNameKey)}
                             </button>
                           ))}
                         </div>
@@ -210,7 +213,7 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
                   <div className={`mt-4 pt-3 border-t ${stageColors.border} text-xs ${stageColors.text} opacity-75`}>
                     <div className="text-center">
                       <span>
-                        {section.projects.length === 1 ? '1 Projekt' : `${section.projects.length} Projekte`}
+                        {t('mobile.projectCount', { count: section.projects.length })}
                       </span>
                     </div>
                   </div>
@@ -223,7 +226,7 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
 
       {/* Mobile Swipe Hint */}
       <div className="text-center py-4 text-xs text-gray-500">
-        💡 Tipp: Tippe auf Stage-Namen um sie zu öffnen/schließen
+        {t('mobile.tip')}
       </div>
     </div>
   );

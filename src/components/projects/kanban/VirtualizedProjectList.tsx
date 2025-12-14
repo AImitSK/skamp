@@ -2,6 +2,7 @@
 'use client';
 
 import React, { memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 // TODO: react-window Package Installation erforderlich
 // import { FixedSizeList as List } from 'react-window';
 import { Project } from '@/types/project';
@@ -115,6 +116,8 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   teamMembers = [],
   tags = []
 }) => {
+  const t = useTranslations('projects.kanban');
+
   // Memoized data object for list items
   const itemData = useMemo(() => ({
     projects,
@@ -150,9 +153,9 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-500">
         <div className="text-4xl mb-3">📋</div>
-        <h4 className="text-lg font-medium mb-2">Keine Projekte</h4>
+        <h4 className="text-lg font-medium mb-2">{t('empty.title')}</h4>
         <p className="text-sm text-center">
-          Keine Projekte in dieser Kategorie gefunden.
+          {t('empty.noProjectsInCategory')}
         </p>
       </div>
     );

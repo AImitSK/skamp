@@ -7668,6 +7668,41 @@
         "scheduleMeeting": "Schedule meeting",
         "view": "View project",
         "viewReports": "View reports"
+      },
+      "stages": {
+        "ideas_planning": "Ideas & Planning",
+        "ideas_planningShort": "Planning",
+        "creation": "Content & Materials",
+        "creationShort": "Creation",
+        "approval": "Approval",
+        "approvalShort": "Approval",
+        "distribution": "Distribution",
+        "distributionShort": "Distribution",
+        "monitoring": "Monitoring",
+        "monitoringShort": "Monitoring",
+        "completed": "Completed",
+        "completedShort": "Done"
+      },
+      "empty": {
+        "title": "No Projects",
+        "description": "Drag projects here or create a new one",
+        "noProjectsFound": "No projects found",
+        "createFirst": "Create your first project to get started.",
+        "noProjectsInCategory": "No projects in this category found.",
+        "noProjectsInStage": "No projects in {stage}"
+      },
+      "loading": "Loading board...",
+      "mobile": {
+        "title": "Project Stages",
+        "collapseAll": "Collapse all",
+        "expandAll": "Expand all",
+        "moveHereOrCreate": "Move projects here or create new ones",
+        "projectCount": "{count, plural, one {1 project} other {{count} projects}}",
+        "tip": "💡 Tip: Tap on stage names to expand/collapse"
+      },
+      "dragDrop": {
+        "dropHereFor": "Drop here for {stage}",
+        "transitionNotAllowed": "Transition not allowed"
       }
     },
     "loadError": "Error loading",

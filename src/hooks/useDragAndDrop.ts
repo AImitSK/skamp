@@ -151,13 +151,15 @@ export const useDragAndDrop = (
     targetStage: PipelineStage
   ): {
     dropZoneClass: string;
-    message: string;
+    messageKey: string;
+    stageNameKey: string;
     canDropHere: boolean;
   } => {
     if (!isOver) {
       return {
         dropZoneClass: '',
-        message: '',
+        messageKey: '',
+        stageNameKey: '',
         canDropHere: false
       };
     }
@@ -165,30 +167,32 @@ export const useDragAndDrop = (
     if (canDrop) {
       return {
         dropZoneClass: 'bg-green-100 border-2 border-green-300 border-dashed',
-        message: `Hier ablegen für ${getStageName(targetStage)}`,
+        messageKey: 'dragDrop.dropHereFor',
+        stageNameKey: getStageName(targetStage),
         canDropHere: true
       };
     } else {
       return {
         dropZoneClass: 'bg-red-100 border-2 border-red-300 border-dashed',
-        message: 'Übergang nicht erlaubt',
+        messageKey: 'dragDrop.transitionNotAllowed',
+        stageNameKey: '',
         canDropHere: false
       };
     }
   }, []);
 
-  // Stage-Namen für UI
+  // Stage-Namen Keys für i18n
   const getStageName = useCallback((stage: PipelineStage): string => {
-    const stageNames: Record<PipelineStage, string> = {
-      'ideas_planning': 'Ideen & Planung',
-      'creation': 'Content und Materialien',
-      'approval': 'Freigabe',
-      'distribution': 'Verteilung',
-      'monitoring': 'Monitoring',
-      'completed': 'Abgeschlossen'
+    const stageNameKeys: Record<PipelineStage, string> = {
+      'ideas_planning': 'stages.ideas_planning',
+      'creation': 'stages.creation',
+      'approval': 'stages.approval',
+      'distribution': 'stages.distribution',
+      'monitoring': 'stages.monitoring',
+      'completed': 'stages.completed'
     };
 
-    return stageNames[stage] || stage;
+    return stageNameKeys[stage] || stage;
   }, []);
 
   return { 

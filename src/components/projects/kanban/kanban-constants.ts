@@ -99,44 +99,44 @@ export const RESPONSIVE_CONFIG = {
 // ========================================
 
 export const STAGE_CONFIG: Record<PipelineStage, {
-  name: string;
-  shortName: string;
+  nameKey: string;
+  shortNameKey: string;
   icon: string;
   order: number;
 }> = {
   'ideas_planning': {
-    name: 'Ideen & Planung',
-    shortName: 'Planung',
+    nameKey: 'stages.ideas_planning',
+    shortNameKey: 'stages.ideas_planningShort',
     icon: 'LightBulbIcon',
     order: 1
   },
   'creation': {
-    name: 'Content und Materialien',
-    shortName: 'Erstellung',
+    nameKey: 'stages.creation',
+    shortNameKey: 'stages.creationShort',
     icon: 'PencilIcon',
     order: 2
   },
   'approval': {
-    name: 'Freigabe',
-    shortName: 'Freigabe',
+    nameKey: 'stages.approval',
+    shortNameKey: 'stages.approvalShort',
     icon: 'CheckCircleIcon',
     order: 3
   },
   'distribution': {
-    name: 'Verteilung',
-    shortName: 'Verteilung',
+    nameKey: 'stages.distribution',
+    shortNameKey: 'stages.distributionShort',
     icon: 'PaperAirplaneIcon',
     order: 4
   },
   'monitoring': {
-    name: 'Monitoring',
-    shortName: 'Monitoring',
+    nameKey: 'stages.monitoring',
+    shortNameKey: 'stages.monitoringShort',
     icon: 'ChartBarIcon',
     order: 5
   },
   'completed': {
-    name: 'Abgeschlossen',
-    shortName: 'Fertig',
+    nameKey: 'stages.completed',
+    shortNameKey: 'stages.completedShort',
     icon: 'CheckBadgeIcon',
     order: 6
   }
