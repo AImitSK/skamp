@@ -4422,6 +4422,87 @@
         "send": "Send"
       }
     },
+    "step3": {
+      "assetLinkGenerated": "Download link for {count} attachments was automatically created",
+      "close": "Close",
+      "common": {
+        "cancel": "Cancel"
+      },
+      "dialog": {
+        "attachmentInfo": "{count, plural, =1 {1 attachment} other {# attachments}} will be sent",
+        "confirmNow": "Send now",
+        "confirmScheduled": "Schedule",
+        "irreversible": "This action cannot be undone.",
+        "messageSendNow": "You are about to send this email to {count, plural, =1 {1 recipient} other {# recipients}}.",
+        "messageScheduled": "You are about to schedule this email for {count, plural, =1 {1 recipient} other {# recipients}}.",
+        "processing": "Processing...",
+        "scheduledTime": "Scheduled for: {dateTime}",
+        "titleNow": "Send email now?",
+        "titleScheduled": "Schedule email?"
+      },
+      "errors": {
+        "dateTimeRequired": "Please select date and time",
+        "noAuthentication": "No authentication available",
+        "noSenderEmail": "No sender email selected",
+        "schedulingFailed": "Scheduling failed",
+        "sendFailed": "Send failed: {reason}",
+        "unknownError": "Unknown error"
+      },
+      "finalSend": {
+        "dateLabel": "Date",
+        "minTimeHint": "At least 15 minutes in the future",
+        "schedule": "Send later (schedule)",
+        "scheduleButton": "Schedule email",
+        "sendNow": "Send immediately",
+        "sendNowButton": "Send to {count, plural, =1 {1 recipient} other {# recipients}}",
+        "timeLabel": "Time",
+        "timing": "Send timing",
+        "title": "Final Send"
+      },
+      "preview": {
+        "attachments": "Attachments:",
+        "desktopView": "Desktop view",
+        "file": "file",
+        "files": "files",
+        "from": "From:",
+        "iframeTitle": "Email preview",
+        "mobileView": "Mobile view",
+        "notSelected": "Not selected",
+        "preheader": "Preview:",
+        "recipients": "recipients",
+        "subject": "Subject:",
+        "title": "Email Preview",
+        "to": "To:"
+      },
+      "scheduling": {
+        "scheduled": "Email was scheduled for {dateTime}",
+        "scheduledToast": "Email scheduled for {dateTime}"
+      },
+      "sending": {
+        "sent": "Email sent to {count, plural, =1 {1 recipient} other {# recipients}}",
+        "sentAlert": "Email was sent to {count, plural, =1 {1 recipient} other {# recipients}}",
+        "sentPipelineTransition": "Email sent to {count, plural, =1 {1 recipient} other {# recipients}}. Project is being moved to monitoring phase.",
+        "sentWithPipelineAlert": "Email was sent to {count, plural, =1 {1 recipient} other {# recipients}}. Project is moving to monitoring phase."
+      },
+      "status": {
+        "alreadyScheduled": "This campaign has already been scheduled",
+        "alreadySent": "This campaign has already been sent",
+        "sending": "This campaign is currently being sent..."
+      },
+      "testSend": {
+        "description": "Send a test email to yourself to check the result",
+        "label": "Test email address",
+        "placeholder": "your@email.com",
+        "send": "Send test",
+        "sending": "Sending...",
+        "success": "Test email was sent!",
+        "title": "Test Send"
+      },
+      "validation": {
+        "emailInvalid": "Invalid email address",
+        "emailRequired": "Email address required"
+      }
+    },
     "translationLanguageSelector": {
       "aiTranslation": "AI Translation",
       "deselectAll": "Deselect all",

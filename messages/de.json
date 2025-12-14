@@ -4417,6 +4417,87 @@
         "send": "Versand"
       }
     },
+    "step3": {
+      "assetLinkGenerated": "Download-Link für {count} Anhänge wurde automatisch erstellt",
+      "close": "Schließen",
+      "common": {
+        "cancel": "Abbrechen"
+      },
+      "dialog": {
+        "attachmentInfo": "{count, plural, =1 {1 Anhang} other {# Anhänge}} werden mitgesendet",
+        "confirmNow": "Jetzt senden",
+        "confirmScheduled": "Planen",
+        "irreversible": "Dieser Vorgang kann nicht rückgängig gemacht werden.",
+        "messageSendNow": "Sie sind dabei, diese E-Mail an {count, plural, =1 {1 Empfänger} other {# Empfänger}} zu senden.",
+        "messageScheduled": "Sie sind dabei, diese E-Mail an {count, plural, =1 {1 Empfänger} other {# Empfänger}} zu planen.",
+        "processing": "Wird verarbeitet...",
+        "scheduledTime": "Geplanter Versand: {dateTime}",
+        "titleNow": "E-Mail jetzt senden?",
+        "titleScheduled": "E-Mail planen?"
+      },
+      "errors": {
+        "dateTimeRequired": "Bitte wählen Sie Datum und Uhrzeit aus",
+        "noAuthentication": "Keine Authentifizierung vorhanden",
+        "noSenderEmail": "Keine Absender-E-Mail ausgewählt",
+        "schedulingFailed": "Planung fehlgeschlagen",
+        "sendFailed": "Versand fehlgeschlagen: {reason}",
+        "unknownError": "Unbekannter Fehler"
+      },
+      "finalSend": {
+        "dateLabel": "Datum",
+        "minTimeHint": "Mindestens 15 Minuten in der Zukunft",
+        "schedule": "Später senden (planen)",
+        "scheduleButton": "E-Mail planen",
+        "sendNow": "Sofort senden",
+        "sendNowButton": "An {count, plural, =1 {1 Empfänger} other {# Empfänger}} senden",
+        "timeLabel": "Uhrzeit",
+        "timing": "Versandzeitpunkt",
+        "title": "Finaler Versand"
+      },
+      "preview": {
+        "attachments": "Anhänge:",
+        "desktopView": "Desktop-Ansicht",
+        "file": "Datei",
+        "files": "Dateien",
+        "from": "Von:",
+        "iframeTitle": "E-Mail-Vorschau",
+        "mobileView": "Mobile Ansicht",
+        "notSelected": "Nicht ausgewählt",
+        "preheader": "Vorschau:",
+        "recipients": "Empfänger",
+        "subject": "Betreff:",
+        "title": "E-Mail-Vorschau",
+        "to": "An:"
+      },
+      "scheduling": {
+        "scheduled": "E-Mail wurde für {dateTime} geplant",
+        "scheduledToast": "E-Mail geplant für {dateTime}"
+      },
+      "sending": {
+        "sent": "E-Mail an {count, plural, =1 {1 Empfänger} other {# Empfänger}} versendet",
+        "sentAlert": "E-Mail wurde an {count, plural, =1 {1 Empfänger} other {# Empfänger}} versendet",
+        "sentPipelineTransition": "E-Mail an {count, plural, =1 {1 Empfänger} other {# Empfänger}} versendet. Projekt wird zur Monitoring-Phase weitergeleitet.",
+        "sentWithPipelineAlert": "E-Mail wurde an {count, plural, =1 {1 Empfänger} other {# Empfänger}} versendet. Projekt geht in Monitoring-Phase."
+      },
+      "status": {
+        "alreadyScheduled": "Diese Kampagne wurde bereits geplant",
+        "alreadySent": "Diese Kampagne wurde bereits versendet",
+        "sending": "Diese Kampagne wird gerade versendet..."
+      },
+      "testSend": {
+        "description": "Senden Sie eine Test-E-Mail an sich selbst, um das Ergebnis zu überprüfen",
+        "label": "Test-E-Mail-Adresse",
+        "placeholder": "ihre@email.de",
+        "send": "Test senden",
+        "sending": "Sende...",
+        "success": "Test-E-Mail wurde gesendet!",
+        "title": "Test-Versand"
+      },
+      "validation": {
+        "emailInvalid": "Ungültige E-Mail-Adresse",
+        "emailRequired": "E-Mail-Adresse erforderlich"
+      }
+    },
     "translationLanguageSelector": {
       "aiTranslation": "KI Übersetzung",
       "deselectAll": "Alle abwählen",

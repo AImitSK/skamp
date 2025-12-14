@@ -45,7 +45,7 @@ export default function EmailEditor({
   minHeight = '400px',
   error
 }: EmailEditorProps) {
-  const t = useTranslations('pr.email.editor');
+  const t = useTranslations('email.editor');
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
 
