@@ -8431,6 +8431,77 @@
             "title": "Strategie-Dokumente erstellen"
           }
         }
+      },
+      "list": {
+        "empty": {
+          "title": "Keine Tasks gefunden",
+          "descriptionFiltered": "Versuche andere Filter oder erstelle eine neue Task.",
+          "descriptionInitial": "Erstelle die erste Task für dieses Projekt.",
+          "createButton": "Task erstellen"
+        },
+        "columns": {
+          "task": "Task",
+          "assignee": "Zugewiesen",
+          "progress": "Fortschritt",
+          "dueDate": "Fälligkeit"
+        }
+      },
+      "manager": {
+        "title": "Projekt-Tasks",
+        "taskCount": "{count, plural, =0 {0 Tasks} one {# Task} other {# Tasks}}",
+        "badges": {
+          "myTasks": "Meine Tasks",
+          "dueToday": "Heute fällig",
+          "overdue": "Überfällig",
+          "future": "Zukünftig",
+          "noDate": "Kein Datum",
+          "open": "Offen",
+          "completed": "Erledigt"
+        },
+        "createTask": "Task erstellen",
+        "deleteDialog": {
+          "title": "Task löschen",
+          "message": "Möchten Sie \"{taskTitle}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        }
+      },
+      "filterPanel": {
+        "viewMode": {
+          "all": "Alle Tasks",
+          "mine": "Meine Tasks"
+        },
+        "quickFilters": {
+          "dueToday": "Heute fällig",
+          "overdue": "Überfällig"
+        },
+        "dueDateFilter": {
+          "label": "Fälligkeit",
+          "options": {
+            "today": "Heute fällig",
+            "overdue": "Überfällig",
+            "future": "Alle zukünftigen",
+            "noDate": "Kein Datum"
+          }
+        },
+        "sortBy": {
+          "label": "Sortierung",
+          "options": {
+            "dueDate": "Nach Fälligkeit",
+            "createdAt": "Nach Erstellung",
+            "title": "Alphabetisch"
+          }
+        },
+        "statusFilter": {
+          "label": "Status",
+          "options": {
+            "pending": "Offen",
+            "inProgress": "In Bearbeitung",
+            "completed": "Erledigt"
+          }
+        },
+        "assigneeFilter": {
+          "label": "Zuständige Mitglieder"
+        },
+        "reset": "Zurücksetzen"
       }
     },
     "title": "Projekte",

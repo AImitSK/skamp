@@ -22,6 +22,7 @@ import { TaskEditModal } from './TaskEditModal';
 import { ConfirmDialog } from '@/app/dashboard/contacts/crm/components/shared';
 import { Timestamp } from 'firebase/firestore';
 import { toastService } from '@/lib/utils/toast';
+import { useTranslations } from 'next-intl';
 
 interface ProjectTaskManagerProps {
   projectId: string;
@@ -42,6 +43,7 @@ export function ProjectTaskManager({
 }: ProjectTaskManagerProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const t = useTranslations('projects.tasks.manager');
 
   // React Query Hook für Task-Loading
   const { tasks, isLoading } = useProjectTasks(projectId, organizationId);
@@ -200,8 +202,8 @@ export function ProjectTaskManager({
   const handleDeleteTask = useCallback((taskId: string, taskTitle: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Task löschen',
-      message: `Möchten Sie "${taskTitle}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      title: t('deleteDialog.title'),
+      message: t('deleteDialog.message', { taskTitle }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -214,7 +216,7 @@ export function ProjectTaskManager({
         }
       }
     });
-  }, [invalidateTasks]);
+  }, [invalidateTasks, t]);
 
 
   // Handle progress click - in 10%-Schritten
@@ -274,31 +276,31 @@ export function ProjectTaskManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Heading level={2}>Projekt-Tasks</Heading>
+          <Heading level={2}>{t('title')}</Heading>
           <div className="flex items-center gap-2 flex-wrap mt-1">
             <Text className="text-gray-600">
-              {filteredAndSortedTasks.length} {filteredAndSortedTasks.length === 1 ? 'Task' : 'Tasks'}
+              {t('taskCount', { count: filteredAndSortedTasks.length })}
             </Text>
             {viewMode === 'mine' && (
-              <Badge color="blue" className="text-xs">Meine Tasks</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.myTasks')}</Badge>
             )}
             {selectedDueDateFilters.includes('today') && (
-              <Badge color="blue" className="text-xs">Heute fällig</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.dueToday')}</Badge>
             )}
             {selectedDueDateFilters.includes('overdue') && (
-              <Badge color="blue" className="text-xs">Überfällig</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.overdue')}</Badge>
             )}
             {selectedDueDateFilters.includes('future') && (
-              <Badge color="blue" className="text-xs">Zukünftig</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.future')}</Badge>
             )}
             {selectedDueDateFilters.includes('no-date') && (
-              <Badge color="blue" className="text-xs">Kein Datum</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.noDate')}</Badge>
             )}
             {selectedStatusFilters.includes('pending') && (
-              <Badge color="blue" className="text-xs">Offen</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.open')}</Badge>
             )}
             {selectedStatusFilters.includes('completed') && (
-              <Badge color="blue" className="text-xs">Erledigt</Badge>
+              <Badge color="blue" className="text-xs">{t('badges.completed')}</Badge>
             )}
           </div>
         </div>
@@ -307,7 +309,7 @@ export function ProjectTaskManager({
           className="bg-[#005fab] hover:bg-[#004a8c] text-white"
         >
           <PlusIcon className="w-4 h-4" />
-          Task erstellen
+          {t('createTask')}
         </Button>
       </div>
 

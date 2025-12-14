@@ -8395,6 +8395,77 @@
             "title": "Create Strategy Documents"
           }
         }
+      },
+      "list": {
+        "empty": {
+          "title": "No tasks found",
+          "descriptionFiltered": "Try different filters or create a new task.",
+          "descriptionInitial": "Create the first task for this project.",
+          "createButton": "Create task"
+        },
+        "columns": {
+          "task": "Task",
+          "assignee": "Assigned",
+          "progress": "Progress",
+          "dueDate": "Due date"
+        }
+      },
+      "manager": {
+        "title": "Project Tasks",
+        "taskCount": "{count, plural, =0 {0 Tasks} one {# Task} other {# Tasks}}",
+        "badges": {
+          "myTasks": "My Tasks",
+          "dueToday": "Due Today",
+          "overdue": "Overdue",
+          "future": "Future",
+          "noDate": "No Date",
+          "open": "Open",
+          "completed": "Completed"
+        },
+        "createTask": "Create Task",
+        "deleteDialog": {
+          "title": "Delete Task",
+          "message": "Do you really want to delete \"{taskTitle}\"? This action cannot be undone."
+        }
+      },
+      "filterPanel": {
+        "viewMode": {
+          "all": "All Tasks",
+          "mine": "My Tasks"
+        },
+        "quickFilters": {
+          "dueToday": "Due Today",
+          "overdue": "Overdue"
+        },
+        "dueDateFilter": {
+          "label": "Due Date",
+          "options": {
+            "today": "Due Today",
+            "overdue": "Overdue",
+            "future": "All Future",
+            "noDate": "No Date"
+          }
+        },
+        "sortBy": {
+          "label": "Sort By",
+          "options": {
+            "dueDate": "By Due Date",
+            "createdAt": "By Creation Date",
+            "title": "Alphabetically"
+          }
+        },
+        "statusFilter": {
+          "label": "Status",
+          "options": {
+            "pending": "Open",
+            "inProgress": "In Progress",
+            "completed": "Completed"
+          }
+        },
+        "assigneeFilter": {
+          "label": "Assigned Members"
+        },
+        "reset": "Reset"
       }
     },
     "title": "Projects",

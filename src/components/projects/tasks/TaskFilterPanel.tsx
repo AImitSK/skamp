@@ -24,6 +24,7 @@ import {
   CalendarDaysIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 interface TaskFilterPanelProps {
   viewMode: 'all' | 'mine';
@@ -60,6 +61,8 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
   onSortByChange,
   onResetFilters
 }: TaskFilterPanelProps) {
+  const t = useTranslations('projects.tasks.filterPanel');
+
   // Toggle-Helper für Quick-Filter
   const toggleDueDateFilter = (filterValue: string) => {
     const isActive = selectedDueDateFilters.includes(filterValue);
@@ -81,8 +84,8 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                    focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
                    hover:bg-zinc-50 transition-colors"
       >
-        <option value="all">Alle Tasks</option>
-        <option value="mine">Meine Tasks</option>
+        <option value="all">{t('viewMode.all')}</option>
+        <option value="mine">{t('viewMode.mine')}</option>
       </select>
 
       {/* Quick Filter: Heute fällig */}
@@ -96,7 +99,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                    }`}
       >
         <CalendarDaysIcon className="w-4 h-4" />
-        Heute fällig
+        {t('quickFilters.dueToday')}
       </button>
 
       {/* Quick Filter: Überfällig */}
@@ -110,7 +113,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                    }`}
       >
         <ExclamationTriangleIcon className="w-4 h-4" />
-        Überfällig
+        {t('quickFilters.overdue')}
       </button>
 
       {/* Filter Popover */}
@@ -148,14 +151,14 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                   {/* Fälligkeit Filter */}
                   <div className="mb-[10px]">
                     <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                      Fälligkeit
+                      {t('dueDateFilter.label')}
                     </label>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {[
-                        { value: 'today', label: 'Heute fällig' },
-                        { value: 'overdue', label: 'Überfällig' },
-                        { value: 'future', label: 'Alle zukünftigen' },
-                        { value: 'no-date', label: 'Kein Datum' }
+                        { value: 'today', labelKey: 'dueDateFilter.options.today' },
+                        { value: 'overdue', labelKey: 'dueDateFilter.options.overdue' },
+                        { value: 'future', labelKey: 'dueDateFilter.options.future' },
+                        { value: 'no-date', labelKey: 'dueDateFilter.options.noDate' }
                       ].map((option) => (
                         <label
                           key={option.value}
@@ -173,7 +176,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                             className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
                           />
                           <span className="text-sm text-zinc-700">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                         </label>
                       ))}
@@ -183,13 +186,13 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                   {/* Sortierung */}
                   <div className="mb-[10px]">
                     <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                      Sortierung
+                      {t('sortBy.label')}
                     </label>
                     <div className="space-y-2">
                       {[
-                        { value: 'dueDate', label: 'Nach Fälligkeit' },
-                        { value: 'createdAt', label: 'Nach Erstellung' },
-                        { value: 'title', label: 'Alphabetisch' }
+                        { value: 'dueDate', labelKey: 'sortBy.options.dueDate' },
+                        { value: 'createdAt', labelKey: 'sortBy.options.createdAt' },
+                        { value: 'title', labelKey: 'sortBy.options.title' }
                       ].map((option) => (
                         <label
                           key={option.value}
@@ -203,7 +206,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                             className="h-4 w-4 border-gray-300 text-[#005fab] focus:ring-[#005fab]"
                           />
                           <span className="text-sm text-zinc-700">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                         </label>
                       ))}
@@ -216,13 +219,13 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                   {/* Status Filter */}
                   <div className="mb-[10px]">
                     <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                      Status
+                      {t('statusFilter.label')}
                     </label>
                     <div className="space-y-2">
                       {[
-                        { value: 'pending', label: 'Offen' },
-                        { value: 'in_progress', label: 'In Bearbeitung' },
-                        { value: 'completed', label: 'Erledigt' }
+                        { value: 'pending', labelKey: 'statusFilter.options.pending' },
+                        { value: 'in_progress', labelKey: 'statusFilter.options.inProgress' },
+                        { value: 'completed', labelKey: 'statusFilter.options.completed' }
                       ].map((option) => (
                         <label
                           key={option.value}
@@ -240,7 +243,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                             className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
                           />
                           <span className="text-sm text-zinc-700">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                         </label>
                       ))}
@@ -251,7 +254,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                   {teamMembers.length > 0 && (
                     <div className="mb-[10px]">
                       <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                        Zuständige Mitglieder
+                        {t('assigneeFilter.label')}
                       </label>
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {teamMembers.map((member) => (
@@ -289,7 +292,7 @@ export const TaskFilterPanel = React.memo(function TaskFilterPanel({
                     onClick={onResetFilters}
                     className="text-sm text-zinc-500 hover:text-zinc-700 underline"
                   >
-                    Zurücksetzen
+                    {t('reset')}
                   </button>
                 </div>
               )}

@@ -14,6 +14,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,6 +68,8 @@ export const TaskList = React.memo(function TaskList({
   onTasksInvalidate,
   formatDate
 }: TaskListProps) {
+  const t = useTranslations('projects.tasks.list');
+
   const getTeamMember = (assignedUserId: string) => {
     if (!assignedUserId) return undefined;
     // Suche primär nach id (userId), dann nach docId als Fallback
@@ -113,18 +116,18 @@ export const TaskList = React.memo(function TaskList({
       <div className="bg-white rounded-lg border p-8 text-center">
         <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">
-          Keine Tasks gefunden
+          {t('empty.title')}
         </h3>
         <p className="mt-1 text-sm text-gray-500">
           {(activeFiltersCount > 0 || viewMode === 'mine')
-            ? 'Versuche andere Filter oder erstelle eine neue Task.'
-            : 'Erstelle die erste Task für dieses Projekt.'
+            ? t('empty.descriptionFiltered')
+            : t('empty.descriptionInitial')
           }
         </p>
         <div className="mt-6 flex items-center justify-center gap-3">
           <Button onClick={onCreateClick}>
             <PlusIcon className="w-4 h-4" />
-            Task erstellen
+            {t('empty.createButton')}
           </Button>
           <TaskTemplateButton
             projectId={projectId}
@@ -145,16 +148,16 @@ export const TaskList = React.memo(function TaskList({
       <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
         <div className="grid grid-cols-12 gap-4 items-center">
           <div className="col-span-6 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            Task
+            {t('columns.task')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            Zugewiesen
+            {t('columns.assignee')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            Fortschritt
+            {t('columns.progress')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            Fälligkeit
+            {t('columns.dueDate')}
           </div>
         </div>
       </div>
