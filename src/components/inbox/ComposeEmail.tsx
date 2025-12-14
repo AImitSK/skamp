@@ -148,7 +148,10 @@ export function ComposeEmail({
       const quote = `
 <br><br>
 <div style="border-left: 2px solid #ccc; padding-left: 10px; margin-left: 10px; color: #666;">
-  <p>Am ${new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE')} schrieb ${replyToEmail.from.name || replyToEmail.from.email}:</p>
+  <p>${t('quoteHeader', {
+    date: new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE'),
+    sender: replyToEmail.from.name || replyToEmail.from.email
+  })}</p>
   ${responsiveQuotedHtml}
 </div>`;
       setContent(quote);
@@ -165,11 +168,11 @@ export function ComposeEmail({
 
       const forward = `
 <br><br>
----------- Weitergeleitete Nachricht ----------<br>
-Von: ${replyToEmail.from.name || replyToEmail.from.email} &lt;${replyToEmail.from.email}&gt;<br>
-Datum: ${new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE')}<br>
-Betreff: ${replyToEmail.subject}<br>
-An: ${replyToEmail.to.map(t => `${t.name || t.email} <${t.email}>`).join(', ')}<br>
+${t('forwardHeader')}<br>
+${t('forwardFrom')}: ${replyToEmail.from.name || replyToEmail.from.email} &lt;${replyToEmail.from.email}&gt;<br>
+${t('forwardDate')}: ${new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE')}<br>
+${t('forwardSubject')}: ${replyToEmail.subject}<br>
+${t('forwardTo')}: ${replyToEmail.to.map(t => `${t.name || t.email} <${t.email}>`).join(', ')}<br>
 <br>
 ${responsiveForwardedHtml}`;
       setContent(forward);
@@ -181,7 +184,7 @@ ${responsiveForwardedHtml}`;
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
-      toastService.error('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse');
+      toastService.error(t('errors.requiredFields'));
       return;
     }
 
@@ -191,7 +194,7 @@ ${responsiveForwardedHtml}`;
       // Get selected email address
       const fromAddress = emailAddresses.find(addr => addr.id === selectedEmailAddressId);
       if (!fromAddress) {
-        throw new Error('Keine Absender-Adresse ausgewählt');
+        throw new Error(t('errors.noFromAddress'));
       }
 
       console.log('📧 From address:', fromAddress.email);
@@ -282,7 +285,7 @@ ${responsiveForwardedHtml}`;
       });
 
       // Success Toast
-      toastService.success('E-Mail erfolgreich versendet');
+      toastService.success(t('success.sent'));
 
       // Call parent onSend callback
       onSend({
@@ -295,7 +298,9 @@ ${responsiveForwardedHtml}`;
       onClose();
     } catch (error) {
       console.error('Failed to send email:', error);
-      toastService.error(`Fehler beim Senden: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      toastService.error(t('errors.sendFailed', {
+        error: error instanceof Error ? error.message : t('errors.unknown')
+      }));
     } finally {
       setSending(false);
     }

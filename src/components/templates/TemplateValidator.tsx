@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { 
-  ExclamationTriangleIcon, 
-  CheckCircleIcon, 
+import { useTranslations } from 'next-intl';
+import {
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
   InformationCircleIcon,
-  XMarkIcon 
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 export interface ValidationError {
@@ -29,38 +30,119 @@ interface TemplateValidatorProps {
   className?: string;
 }
 
+// Translation helper type
+type TranslationFunction = (key: string, values?: Record<string, any>) => string;
+
+// Default German translations for server-side usage
+const defaultTranslations: Record<string, any> = {
+  'html.empty.message': 'HTML-Inhalt darf nicht leer sein',
+  'html.empty.fix': 'Fügen Sie HTML-Inhalt hinzu',
+  'html.noDoctype.message': 'DOCTYPE-Deklaration fehlt',
+  'html.noDoctype.fix': 'Fügen Sie <!DOCTYPE html> am Anfang hinzu',
+  'html.noHtmlTag.message': '<html>-Tag fehlt',
+  'html.noHtmlTag.fix': 'Fügen Sie <html>-Tag hinzu',
+  'html.noHeadTag.message': '<head>-Tag fehlt',
+  'html.noHeadTag.fix': 'Fügen Sie <head>-Section hinzu',
+  'html.noBodyTag.message': '<body>-Tag fehlt',
+  'html.noBodyTag.fix': 'Fügen Sie <body>-Section hinzu',
+  'html.unclosedTag.message': 'Nicht geschlossener Tag: <{tag}>',
+  'html.unclosedTag.fix': 'Fügen Sie </{tag}> hinzu',
+  'html.security.risk': 'Sicherheitsrisiko: {detail}',
+  'html.security.fix': 'Entfernen Sie unsichere Inhalte',
+  'html.security.scriptFound': 'JavaScript-Code gefunden',
+  'html.security.javascriptUrl': 'JavaScript-URL gefunden',
+  'html.security.eventHandler': 'Event-Handler gefunden',
+  'html.noCharset.message': 'Charset-Deklaration fehlt',
+  'html.noCharset.fix': 'Fügen Sie <meta charset="UTF-8"> hinzu',
+  'css.empty.message': 'CSS-Inhalt ist leer',
+  'css.empty.fix': 'Fügen Sie CSS-Styles für bessere Darstellung hinzu',
+  'css.unbalancedBraces.message': 'Ungleiche Anzahl von öffnenden und schließenden geschweiften Klammern',
+  'css.unbalancedBraces.fix': 'Prüfen Sie CSS-Syntax auf fehlende Klammern',
+  'css.pdfProblematic.message': 'Problematisch für PDF: {property}',
+  'css.pdfProblematic.fix': 'Verwenden Sie PDF-kompatible CSS-Properties',
+  'css.noPrintStyles.message': 'Keine Print-spezifischen Styles definiert',
+  'css.noPrintStyles.fix': 'Fügen Sie @media print { ... } für bessere PDF-Darstellung hinzu',
+  'css.onlyAbsoluteUnits.message': 'Nur absolute Einheiten (px) verwendet',
+  'css.onlyAbsoluteUnits.fix': 'Verwenden Sie relative Einheiten (em, rem, %) für bessere Skalierung',
+  'variables.undefined.message': "Variable '{variableName}' ist nicht definiert",
+  'variables.undefined.fix': "Definieren Sie die Variable '{variableName}' oder entfernen Sie sie aus dem HTML",
+  'variables.requiredUnused.message': "Erforderliche Variable '{variableName}' wird nicht verwendet",
+  'variables.requiredUnused.fix': "Verwenden Sie {{{{variableName}}}} im HTML oder markieren Sie die Variable als optional",
+  'variables.duplicate.message': "Doppelte Variable-Definition: '{name}'",
+  'variables.duplicate.fix': "Entfernen Sie eine der '{name}' Variable-Definitionen",
+  'variables.namingConvention.message': "Variable '{variableName}' folgt nicht der Namenskonvention",
+  'variables.namingConvention.fix': 'Verwenden Sie nur Buchstaben und Zahlen, beginnend mit einem Buchstaben',
+  'structure.missingElement.message': 'Empfohlenes Element fehlt: <{element}>',
+  'structure.titleElement.fix': 'Titel-Element für bessere Dokumentstruktur',
+  'structure.viewportMeta.fix': 'Viewport-Meta-Tag für responsive Design',
+  'structure.noVariables.message': 'Keine Template-Variablen gefunden',
+  'structure.noVariables.fix': 'Fügen Sie {{variableName}} für dynamische Inhalte hinzu',
+  'structure.noSemanticLayout.message': 'Keine semantischen Layout-Elemente gefunden',
+  'structure.noSemanticLayout.fix': 'Verwenden Sie <header>, <main>, <footer> für bessere Dokumentstruktur',
+};
+
+// Helper function to interpolate variables in translation strings
+function interpolate(template: string, values?: Record<string, any>): string {
+  if (!values) return template;
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value)),
+    template
+  );
+}
+
 export class TemplateValidationService {
+  // Overload signatures
   static validateTemplate(
-    htmlContent: string, 
-    cssContent: string, 
+    htmlContent: string,
+    cssContent: string,
     variables: Array<{ name: string; required: boolean; type: string }>
+  ): ValidationError[];
+  static validateTemplate(
+    htmlContent: string,
+    cssContent: string,
+    variables: Array<{ name: string; required: boolean; type: string }>,
+    t: TranslationFunction
+  ): ValidationError[];
+
+  // Implementation
+  static validateTemplate(
+    htmlContent: string,
+    cssContent: string,
+    variables: Array<{ name: string; required: boolean; type: string }>,
+    t?: TranslationFunction
   ): ValidationError[] {
+    // Use default translations if no translation function is provided
+    const translate: TranslationFunction = t || ((key: string, values?: Record<string, any>) => {
+      const template = defaultTranslations[key] || key;
+      return interpolate(template, values);
+    });
+
     const errors: ValidationError[] = [];
 
     // HTML Validation
-    errors.push(...this.validateHTML(htmlContent));
-    
-    // CSS Validation  
-    errors.push(...this.validateCSS(cssContent));
-    
+    errors.push(...this.validateHTML(htmlContent, translate));
+
+    // CSS Validation
+    errors.push(...this.validateCSS(cssContent, translate));
+
     // Variable Validation
-    errors.push(...this.validateVariables(htmlContent, variables));
-    
+    errors.push(...this.validateVariables(htmlContent, variables, translate));
+
     // Template Structure Validation
-    errors.push(...this.validateTemplateStructure(htmlContent));
-    
+    errors.push(...this.validateTemplateStructure(htmlContent, translate));
+
     return errors;
   }
 
-  private static validateHTML(htmlContent: string): ValidationError[] {
+  private static validateHTML(htmlContent: string, t: TranslationFunction): ValidationError[] {
     const errors: ValidationError[] = [];
 
     if (!htmlContent || !htmlContent.trim()) {
       errors.push({
         type: 'error',
         code: 'HTML_EMPTY',
-        message: 'HTML-Inhalt darf nicht leer sein',
-        fix: 'Fügen Sie HTML-Inhalt hinzu'
+        message: t('html.empty.message'),
+        fix: t('html.empty.fix')
       });
       return errors;
     }
@@ -70,8 +152,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'warning',
         code: 'HTML_NO_DOCTYPE',
-        message: 'DOCTYPE-Deklaration fehlt',
-        fix: 'Fügen Sie <!DOCTYPE html> am Anfang hinzu'
+        message: t('html.noDoctype.message'),
+        fix: t('html.noDoctype.fix')
       });
     }
 
@@ -80,8 +162,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'error',
         code: 'HTML_NO_HTML_TAG',
-        message: '<html>-Tag fehlt',
-        fix: 'Fügen Sie <html>-Tag hinzu'
+        message: t('html.noHtmlTag.message'),
+        fix: t('html.noHtmlTag.fix')
       });
     }
 
@@ -89,8 +171,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'error',
         code: 'HTML_NO_HEAD_TAG',
-        message: '<head>-Tag fehlt',
-        fix: 'Fügen Sie <head>-Section hinzu'
+        message: t('html.noHeadTag.message'),
+        fix: t('html.noHeadTag.fix')
       });
     }
 
@@ -98,8 +180,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'error',
         code: 'HTML_NO_BODY_TAG',
-        message: '<body>-Tag fehlt',
-        fix: 'Fügen Sie <body>-Section hinzu'
+        message: t('html.noBodyTag.message'),
+        fix: t('html.noBodyTag.fix')
       });
     }
 
@@ -109,25 +191,25 @@ export class TemplateValidationService {
       errors.push({
         type: 'error',
         code: 'HTML_UNCLOSED_TAG',
-        message: `Nicht geschlossener Tag: <${tag}>`,
-        fix: `Fügen Sie </${tag}> hinzu`
+        message: t('html.unclosedTag.message', { tag }),
+        fix: t('html.unclosedTag.fix', { tag })
       });
     });
 
     // Prüfe auf gefährliche Inhalte
     const dangerousPatterns = [
-      { pattern: /<script/i, message: 'JavaScript-Code gefunden', type: 'error' as const },
-      { pattern: /javascript:/i, message: 'JavaScript-URL gefunden', type: 'error' as const },
-      { pattern: /on\w+\s*=/i, message: 'Event-Handler gefunden', type: 'warning' as const },
+      { pattern: /<script/i, messageKey: 'html.security.scriptFound', type: 'error' as const },
+      { pattern: /javascript:/i, messageKey: 'html.security.javascriptUrl', type: 'error' as const },
+      { pattern: /on\w+\s*=/i, messageKey: 'html.security.eventHandler', type: 'warning' as const },
     ];
 
-    dangerousPatterns.forEach(({ pattern, message, type }) => {
+    dangerousPatterns.forEach(({ pattern, messageKey, type }) => {
       if (pattern.test(htmlContent)) {
         errors.push({
           type,
           code: 'HTML_SECURITY_RISK',
-          message: `Sicherheitsrisiko: ${message}`,
-          fix: 'Entfernen Sie unsichere Inhalte'
+          message: t('html.security.risk', { detail: t(messageKey) }),
+          fix: t('html.security.fix')
         });
       }
     });
@@ -137,23 +219,23 @@ export class TemplateValidationService {
       errors.push({
         type: 'warning',
         code: 'HTML_NO_CHARSET',
-        message: 'Charset-Deklaration fehlt',
-        fix: 'Fügen Sie <meta charset="UTF-8"> hinzu'
+        message: t('html.noCharset.message'),
+        fix: t('html.noCharset.fix')
       });
     }
 
     return errors;
   }
 
-  private static validateCSS(cssContent: string): ValidationError[] {
+  private static validateCSS(cssContent: string, t: TranslationFunction): ValidationError[] {
     const errors: ValidationError[] = [];
 
     if (!cssContent || !cssContent.trim()) {
       errors.push({
         type: 'info',
         code: 'CSS_EMPTY',
-        message: 'CSS-Inhalt ist leer',
-        fix: 'Fügen Sie CSS-Styles für bessere Darstellung hinzu'
+        message: t('css.empty.message'),
+        fix: t('css.empty.fix')
       });
       return errors;
     }
@@ -161,20 +243,20 @@ export class TemplateValidationService {
     // Prüfe grundlegende CSS-Syntax
     const openBraces = (cssContent.match(/\{/g) || []).length;
     const closeBraces = (cssContent.match(/\}/g) || []).length;
-    
+
     if (openBraces !== closeBraces) {
       errors.push({
         type: 'error',
         code: 'CSS_UNBALANCED_BRACES',
-        message: 'Ungleiche Anzahl von öffnenden und schließenden geschweiften Klammern',
-        fix: 'Prüfen Sie CSS-Syntax auf fehlende Klammern'
+        message: t('css.unbalancedBraces.message'),
+        fix: t('css.unbalancedBraces.fix')
       });
     }
 
     // Prüfe auf problematische CSS-Properties für PDF
     const problematicProperties = [
       'position: fixed',
-      'position: sticky', 
+      'position: sticky',
       'transform:',
       'animation:',
       '@keyframes'
@@ -185,8 +267,8 @@ export class TemplateValidationService {
         errors.push({
           type: 'warning',
           code: 'CSS_PDF_PROBLEMATIC',
-          message: `Problematisch für PDF: ${property}`,
-          fix: 'Verwenden Sie PDF-kompatible CSS-Properties'
+          message: t('css.pdfProblematic.message', { property }),
+          fix: t('css.pdfProblematic.fix')
         });
       }
     });
@@ -196,14 +278,14 @@ export class TemplateValidationService {
       errors.push({
         type: 'info',
         code: 'CSS_NO_PRINT_STYLES',
-        message: 'Keine Print-spezifischen Styles definiert',
-        fix: 'Fügen Sie @media print { ... } für bessere PDF-Darstellung hinzu'
+        message: t('css.noPrintStyles.message'),
+        fix: t('css.noPrintStyles.fix')
       });
     }
 
     // Prüfe auf absolute Einheiten
     const relativeUnits = ['em', 'rem', '%', 'vh', 'vw'];
-    const hasOnlyAbsoluteUnits = !relativeUnits.some(unit => 
+    const hasOnlyAbsoluteUnits = !relativeUnits.some(unit =>
       cssContent.includes(unit)
     );
 
@@ -211,8 +293,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'warning',
         code: 'CSS_ONLY_ABSOLUTE_UNITS',
-        message: 'Nur absolute Einheiten (px) verwendet',
-        fix: 'Verwenden Sie relative Einheiten (em, rem, %) für bessere Skalierung'
+        message: t('css.onlyAbsoluteUnits.message'),
+        fix: t('css.onlyAbsoluteUnits.fix')
       });
     }
 
@@ -220,8 +302,9 @@ export class TemplateValidationService {
   }
 
   private static validateVariables(
-    htmlContent: string, 
-    variables: Array<{ name: string; required: boolean; type: string }>
+    htmlContent: string,
+    variables: Array<{ name: string; required: boolean; type: string }>,
+    t: TranslationFunction
   ): ValidationError[] {
     const errors: ValidationError[] = [];
 
@@ -235,8 +318,8 @@ export class TemplateValidationService {
         errors.push({
           type: 'error',
           code: 'VAR_UNDEFINED',
-          message: `Variable '${variableName}' ist nicht definiert`,
-          fix: `Definieren Sie die Variable '${variableName}' oder entfernen Sie sie aus dem HTML`
+          message: t('variables.undefined.message', { variableName }),
+          fix: t('variables.undefined.fix', { variableName })
         });
       }
     });
@@ -247,23 +330,23 @@ export class TemplateValidationService {
         errors.push({
           type: 'warning',
           code: 'VAR_REQUIRED_UNUSED',
-          message: `Erforderliche Variable '${variable.name}' wird nicht verwendet`,
-          fix: `Verwenden Sie {{${variable.name}}} im HTML oder markieren Sie die Variable als optional`
+          message: t('variables.requiredUnused.message', { variableName: variable.name }),
+          fix: t('variables.requiredUnused.fix', { variableName: variable.name })
         });
       }
     });
 
     // Prüfe auf doppelte Variable-Definitionen
-    const duplicateNames = definedVariableNames.filter((name, index) => 
+    const duplicateNames = definedVariableNames.filter((name, index) =>
       definedVariableNames.indexOf(name) !== index
     );
-    
+
     [...new Set(duplicateNames)].forEach(name => {
       errors.push({
         type: 'error',
         code: 'VAR_DUPLICATE',
-        message: `Doppelte Variable-Definition: '${name}'`,
-        fix: `Entfernen Sie eine der '${name}' Variable-Definitionen`
+        message: t('variables.duplicate.message', { name }),
+        fix: t('variables.duplicate.fix', { name })
       });
     });
 
@@ -273,8 +356,8 @@ export class TemplateValidationService {
         errors.push({
           type: 'warning',
           code: 'VAR_NAMING_CONVENTION',
-          message: `Variable '${variable.name}' folgt nicht der Namenskonvention`,
-          fix: 'Verwenden Sie nur Buchstaben und Zahlen, beginnend mit einem Buchstaben'
+          message: t('variables.namingConvention.message', { variableName: variable.name }),
+          fix: t('variables.namingConvention.fix')
         });
       }
     });
@@ -282,22 +365,22 @@ export class TemplateValidationService {
     return errors;
   }
 
-  private static validateTemplateStructure(htmlContent: string): ValidationError[] {
+  private static validateTemplateStructure(htmlContent: string, t: TranslationFunction): ValidationError[] {
     const errors: ValidationError[] = [];
 
     // Prüfe auf grundlegende Template-Elemente
     const recommendedElements = [
-      { element: 'title', message: 'Titel-Element für bessere Dokumentstruktur' },
-      { element: 'meta name="viewport"', message: 'Viewport-Meta-Tag für responsive Design' },
+      { element: 'title', fixKey: 'structure.titleElement.fix' },
+      { element: 'meta name="viewport"', fixKey: 'structure.viewportMeta.fix' },
     ];
 
-    recommendedElements.forEach(({ element, message }) => {
+    recommendedElements.forEach(({ element, fixKey }) => {
       if (!htmlContent.includes(`<${element}`)) {
         errors.push({
           type: 'info',
           code: 'TEMPLATE_MISSING_ELEMENT',
-          message: `Empfohlenes Element fehlt: <${element}>`,
-          fix: message
+          message: t('structure.missingElement.message', { element }),
+          fix: t(fixKey)
         });
       }
     });
@@ -307,14 +390,14 @@ export class TemplateValidationService {
       errors.push({
         type: 'warning',
         code: 'TEMPLATE_NO_VARIABLES',
-        message: 'Keine Template-Variablen gefunden',
-        fix: 'Fügen Sie {{variableName}} für dynamische Inhalte hinzu'
+        message: t('structure.noVariables.message'),
+        fix: t('structure.noVariables.fix')
       });
     }
 
     // Prüfe auf sinnvolle Seitenlayout-Struktur
     const layoutElements = ['header', 'main', 'footer', 'section', 'article'];
-    const hasLayoutElements = layoutElements.some(element => 
+    const hasLayoutElements = layoutElements.some(element =>
       htmlContent.includes(`<${element}`)
     );
 
@@ -322,8 +405,8 @@ export class TemplateValidationService {
       errors.push({
         type: 'info',
         code: 'TEMPLATE_NO_SEMANTIC_LAYOUT',
-        message: 'Keine semantischen Layout-Elemente gefunden',
-        fix: 'Verwenden Sie <header>, <main>, <footer> für bessere Dokumentstruktur'
+        message: t('structure.noSemanticLayout.message'),
+        fix: t('structure.noSemanticLayout.fix')
       });
     }
 
@@ -386,28 +469,30 @@ export class TemplateValidationService {
   }
 }
 
-export default function TemplateValidator({ 
-  htmlContent, 
-  cssContent, 
-  variables, 
-  onValidationChange, 
-  className = '' 
+export default function TemplateValidator({
+  htmlContent,
+  cssContent,
+  variables,
+  onValidationChange,
+  className = ''
 }: TemplateValidatorProps) {
+  const t = useTranslations('templates.validator');
   const [errors, setErrors] = React.useState<ValidationError[]>([]);
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   React.useEffect(() => {
     const validationErrors = TemplateValidationService.validateTemplate(
-      htmlContent, 
-      cssContent, 
-      variables
+      htmlContent,
+      cssContent,
+      variables,
+      t
     );
-    
+
     setErrors(validationErrors);
-    
+
     const hasErrors = validationErrors.some(error => error.type === 'error');
     onValidationChange(validationErrors, !hasErrors);
-  }, [htmlContent, cssContent, variables, onValidationChange]);
+  }, [htmlContent, cssContent, variables, onValidationChange, t]);
 
   const errorCount = errors.filter(e => e.type === 'error').length;
   const warningCount = errors.filter(e => e.type === 'warning').length;
@@ -440,10 +525,10 @@ export default function TemplateValidator({
       <div className={`p-4 bg-green-50 border border-green-200 rounded-lg ${className}`}>
         <div className="flex items-center">
           <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-          <span className="text-green-700 font-medium">Template ist gültig</span>
+          <span className="text-green-700 font-medium">{t('ui.valid')}</span>
         </div>
         <p className="text-green-600 text-sm mt-1">
-          Keine Fehler oder Warnungen gefunden
+          {t('ui.noIssues')}
         </p>
       </div>
     );
@@ -462,19 +547,19 @@ export default function TemplateValidator({
               {errorCount > 0 && (
                 <span className="flex items-center text-red-600 text-sm font-medium">
                   <XMarkIcon className="h-4 w-4 mr-1" />
-                  {errorCount} Fehler
+                  {t('ui.errorCount', { count: errorCount })}
                 </span>
               )}
               {warningCount > 0 && (
                 <span className="flex items-center text-yellow-600 text-sm font-medium">
                   <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-                  {warningCount} Warnungen
+                  {t('ui.warningCount', { count: warningCount })}
                 </span>
               )}
               {infoCount > 0 && (
                 <span className="flex items-center text-blue-600 text-sm font-medium">
                   <InformationCircleIcon className="h-4 w-4 mr-1" />
-                  {infoCount} Infos
+                  {t('ui.infoCount', { count: infoCount })}
                 </span>
               )}
             </div>
@@ -519,12 +604,12 @@ export default function TemplateValidator({
                     </div>
                     {error.line && (
                       <p className="text-sm mt-1">
-                        Zeile {error.line}{error.column && `, Spalte ${error.column}`}
+                        {t('ui.line', { line: error.line })}{error.column && `, ${t('ui.column', { column: error.column })}`}
                       </p>
                     )}
                     {error.fix && (
                       <p className="text-sm mt-2 font-medium">
-                        Lösung: {error.fix}
+                        {t('ui.solution')}: {error.fix}
                       </p>
                     )}
                   </div>

@@ -94,7 +94,7 @@ export default memo(function CustomerPDFViewer({
   className = ""
 }: CustomerPDFViewerProps) {
 
-  const t = useTranslations('freigabe.pdf');
+  const t = useTranslations('freigabe.customerPdfViewer');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const config = useMemo(() => getPDFStatusConfig(version.status, t), [version.status, t]);
   

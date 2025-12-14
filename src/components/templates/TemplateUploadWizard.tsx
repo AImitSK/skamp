@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
@@ -12,31 +13,8 @@ interface TemplateUploadWizardProps {
   onTemplateUploaded: (templateId: string) => void;
 }
 
-interface UploadStep {
-  id: number;
-  title: string;
-  description: string;
-}
-
-const steps: UploadStep[] = [
-  {
-    id: 1,
-    title: 'Template-Datei auswählen',
-    description: 'Wählen Sie eine HTML-, CSS- oder ZIP-Datei mit Ihrem Template aus'
-  },
-  {
-    id: 2,
-    title: 'Template-Details',
-    description: 'Geben Sie Name und Beschreibung für Ihr Template ein'
-  },
-  {
-    id: 3,
-    title: 'Validierung & Vorschau',
-    description: 'Überprüfen Sie Ihr Template vor dem Hochladen'
-  }
-];
-
 export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUploaded }: TemplateUploadWizardProps) {
+  const t = useTranslations('templates.uploadWizard');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,13 +43,13 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
                        allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
     
     if (!isValidType) {
-      setError('Nur HTML-, CSS- oder ZIP-Dateien sind erlaubt');
+      setError(t('errors.invalidFileType'));
       return;
     }
 
     // Validiere Dateigröße (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError('Die Datei darf nicht größer als 10MB sein');
+      setError(t('errors.fileTooLarge'));
       return;
     }
 
@@ -121,14 +99,14 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
       // HTML-Validation
       if (selectedFile.type === 'text/html' || selectedFile.name.endsWith('.html')) {
         if (!fileContent.includes('<!DOCTYPE') && !fileContent.includes('<html')) {
-          errors.push('HTML-Datei muss eine gültige HTML-Struktur haben');
+          errors.push(t('validation.invalidHtmlStructure'));
         }
-        
+
         // Prüfe auf erforderliche Template-Variablen
         const requiredVariables = ['{{companyName}}', '{{content}}'];
         requiredVariables.forEach(variable => {
           if (!fileContent.includes(variable)) {
-            errors.push(`Template-Variable ${variable} fehlt`);
+            errors.push(t('validation.missingVariable', { variable }));
           }
         });
       }
@@ -137,7 +115,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
       if (selectedFile.type === 'text/css' || selectedFile.name.endsWith('.css')) {
         // Grundlegende CSS-Syntax-Prüfung
         if (!fileContent.includes('{') || !fileContent.includes('}')) {
-          errors.push('CSS-Datei enthält keine gültigen CSS-Regeln');
+          errors.push(t('validation.invalidCssRules'));
         }
       }
 
@@ -151,11 +129,11 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
       
       return errors.length === 0;
     } catch (error) {
-      errors.push('Fehler beim Lesen der Datei');
+      errors.push(t('validation.fileReadError'));
       setValidationErrors(errors);
       return false;
     }
-  }, [selectedFile]);
+  }, [selectedFile, t]);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile || !currentOrganization?.id) return;
@@ -194,11 +172,11 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
       
     } catch (error) {
       console.error('Template-Upload Fehler:', error);
-      setError('Fehler beim Hochladen des Templates');
+      setError(t('errors.uploadFailed'));
     } finally {
       setIsUploading(false);
     }
-  }, [selectedFile, user, currentOrganization, templateName, templateDescription, templateCategory, onTemplateUploaded, onClose]);
+  }, [selectedFile, user, currentOrganization, templateName, templateDescription, templateCategory, onTemplateUploaded, onClose, t]);
 
   const handleNext = useCallback(async () => {
     if (currentStep === 1 && selectedFile) {
@@ -226,31 +204,31 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Custom Template hochladen
+              {t('title')}
             </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <span className="sr-only">Schließen</span>
+              <span className="sr-only">{t('close')}</span>
               ✕
             </button>
           </div>
-          
+
           {/* Progress Steps */}
           <div className="mt-4 flex items-center">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
+            {[1, 2, 3].map((stepId, index) => (
+              <div key={stepId} className="flex items-center">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                  step.id <= currentStep 
-                    ? 'bg-blue-600 text-white' 
+                  stepId <= currentStep
+                    ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 text-gray-600'
                 }`}>
-                  {step.id}
+                  {stepId}
                 </div>
-                {index < steps.length - 1 && (
+                {index < 2 && (
                   <div className={`h-1 w-16 mx-2 ${
-                    step.id < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                    stepId < currentStep ? 'bg-blue-600' : 'bg-gray-200'
                   }`} />
                 )}
               </div>
@@ -274,9 +252,9 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {steps[0].title}
+                  {t('steps.1.title')}
                 </h3>
-                <p className="text-gray-600 mb-4">{steps[0].description}</p>
+                <p className="text-gray-600 mb-4">{t('steps.1.description')}</p>
               </div>
 
               <div
@@ -284,20 +262,20 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragOver 
-                    ? 'border-blue-400 bg-blue-50' 
+                  dragOver
+                    ? 'border-blue-400 bg-blue-50'
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
               >
                 <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <div className="space-y-2">
                   <p className="text-lg font-medium text-gray-900">
-                    Template-Datei hier ablegen
+                    {t('dropZone.dropHere')}
                   </p>
-                  <p className="text-gray-600">oder</p>
+                  <p className="text-gray-600">{t('dropZone.or')}</p>
                   <label className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
                     <DocumentPlusIcon className="h-4 w-4 mr-2" />
-                    Datei auswählen
+                    {t('dropZone.selectFile')}
                     <input
                       type="file"
                       className="sr-only"
@@ -307,7 +285,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
                   </label>
                 </div>
                 <p className="text-xs text-gray-500 mt-4">
-                  Unterstützte Formate: HTML, CSS, ZIP (max. 10MB)
+                  {t('dropZone.supportedFormats')}
                 </p>
               </div>
 
@@ -332,50 +310,50 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {steps[1].title}
+                  {t('steps.2.title')}
                 </h3>
-                <p className="text-gray-600 mb-4">{steps[1].description}</p>
+                <p className="text-gray-600 mb-4">{t('steps.2.description')}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Template-Name *
+                  {t('form.templateName')}
                 </label>
                 <input
                   type="text"
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mein Custom Template"
+                  placeholder={t('form.templateNamePlaceholder')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Beschreibung
+                  {t('form.description')}
                 </label>
                 <textarea
                   value={templateDescription}
                   onChange={(e) => setTemplateDescription(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Beschreiben Sie Ihr Template..."
+                  placeholder={t('form.descriptionPlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategorie
+                  {t('form.category')}
                 </label>
                 <select
                   value={templateCategory}
                   onChange={(e) => setTemplateCategory(e.target.value as 'standard' | 'premium' | 'custom')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="custom">Custom Template</option>
-                  <option value="standard">Standard Template</option>
-                  <option value="premium">Premium Template</option>
+                  <option value="custom">{t('categories.custom')}</option>
+                  <option value="standard">{t('categories.standard')}</option>
+                  <option value="premium">{t('categories.premium')}</option>
                 </select>
               </div>
             </div>
@@ -386,14 +364,14 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {steps[2].title}
+                  {t('steps.3.title')}
                 </h3>
-                <p className="text-gray-600 mb-4">{steps[2].description}</p>
+                <p className="text-gray-600 mb-4">{t('steps.3.description')}</p>
               </div>
 
               {validationErrors.length > 0 && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-                  <h4 className="font-medium text-red-900 mb-2">Validierungsfehler:</h4>
+                  <h4 className="font-medium text-red-900 mb-2">{t('preview.validationErrorsTitle')}</h4>
                   <ul className="text-sm text-red-700 space-y-1">
                     {validationErrors.map((error, index) => (
                       <li key={index}>• {error}</li>
@@ -404,7 +382,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
 
               {templatePreview && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Template-Vorschau:</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">{t('preview.templatePreview')}</h4>
                   <pre className="text-xs text-gray-600 bg-gray-50 p-4 rounded-lg overflow-x-auto">
                     {templatePreview}
                   </pre>
@@ -412,18 +390,18 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
               )}
 
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
-                <h4 className="font-medium text-blue-900 mb-2">Template-Details:</h4>
+                <h4 className="font-medium text-blue-900 mb-2">{t('preview.templateDetails')}</h4>
                 <dl className="text-sm space-y-1">
                   <div className="flex justify-between">
-                    <dt className="text-blue-700">Name:</dt>
+                    <dt className="text-blue-700">{t('preview.name')}</dt>
                     <dd className="text-blue-900 font-medium">{templateName}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-blue-700">Kategorie:</dt>
+                    <dt className="text-blue-700">{t('preview.category')}</dt>
                     <dd className="text-blue-900">{templateCategory}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-blue-700">Dateigröße:</dt>
+                    <dt className="text-blue-700">{t('preview.fileSize')}</dt>
                     <dd className="text-blue-900">{selectedFile && (selectedFile.size / 1024).toFixed(1)} KB</dd>
                   </div>
                 </dl>
@@ -439,7 +417,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
             disabled={currentStep === 1}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Zurück
+            {t('buttons.back')}
           </button>
 
           <div className="flex items-center space-x-3">
@@ -449,17 +427,17 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
                 disabled={(currentStep === 1 && !selectedFile) || (currentStep === 2 && !templateName.trim())}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Weiter
+                {t('buttons.next')}
               </button>
             )}
-            
+
             {currentStep === 3 && (
               <button
                 onClick={handleUpload}
                 disabled={isUploading || validationErrors.length > 0}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUploading ? 'Wird hochgeladen...' : 'Template hochladen'}
+                {isUploading ? t('buttons.uploading') : t('buttons.upload')}
               </button>
             )}
           </div>

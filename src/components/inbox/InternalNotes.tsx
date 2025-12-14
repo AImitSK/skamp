@@ -67,7 +67,7 @@ export function InternalNotes({
   teamMembers = []
 }: InternalNotesProps) {
   const { user } = useAuth();
-  const t = useTranslations('inbox.notes');
+  const t = useTranslations('inbox.internalNotes');
   const searchParams = useSearchParams();
   const [notes, setNotes] = useState<InternalNote[]>([]);
   const [newNote, setNewNote] = useState('');
@@ -327,7 +327,7 @@ export function InternalNotes({
               linkId: threadId,
               metadata: {
                 projectId: threadId, // threadId als projectId verwenden für Kompatibilität
-                projectTitle: 'Email-Thread',
+                projectTitle: t('emailThread'),
                 messageContent: newNote.substring(0, 200),
                 mentionedBy: user.uid,
                 mentionedByName: userName
@@ -335,7 +335,7 @@ export function InternalNotes({
               isRead: false
             } as any);
           } catch (error) {
-            console.error('Fehler beim Erstellen der Benachrichtigung:', error);
+            console.error('Error creating notification:', error);
           }
         }
       }
@@ -544,7 +544,7 @@ export function InternalNotes({
             <span className="text-xs text-gray-500">
               {notes[0].userName} • {notes[0].createdAt?.toDate?.()
                 ? format(notes[0].createdAt.toDate(), 'HH:mm')
-                : 'neu'}
+                : t('new')}
             </span>
           )}
           {isExpanded ? (

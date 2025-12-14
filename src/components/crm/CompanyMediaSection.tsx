@@ -51,7 +51,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
       setRecentAssets(assets.slice(0, 6)); // Nur die letzten 6 für Vorschau
       setTotalCount(totalCount);
     } catch (error) {
-      console.error("Fehler beim Laden der Kunden-Medien:", error);
+      // Error handling - silent fail for now
     } finally {
       setLoading(false);
     }

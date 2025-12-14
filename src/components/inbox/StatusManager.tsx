@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import clsx from 'clsx';
 import { toastService } from '@/lib/utils/toast';
-import { 
+import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationCircleIcon,
@@ -33,105 +34,106 @@ type ThreadStatus = 'active' | 'waiting' | 'resolved' | 'archived';
 type ThreadPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 interface StatusConfig {
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
   color: string;
   bgClass: string;
   textClass: string;
   borderClass: string;
-  description: string;
+  descriptionKey: string;
 }
 
 interface PriorityConfig {
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
   color: string;
   bgClass: string;
   textClass: string;
-  description: string;
+  descriptionKey: string;
 }
 
 const STATUS_CONFIG: Record<ThreadStatus, StatusConfig> = {
   active: {
-    label: 'Aktiv',
+    labelKey: 'statuses.active.label',
     icon: ExclamationCircleIcon,
     color: 'blue',
     bgClass: 'bg-blue-50',
     textClass: 'text-blue-700',
     borderClass: 'border-blue-200',
-    description: 'Thread wird aktiv bearbeitet'
+    descriptionKey: 'statuses.active.description'
   },
   waiting: {
-    label: 'Wartet',
+    labelKey: 'statuses.waiting.label',
     icon: ClockIcon,
     color: 'yellow',
     bgClass: 'bg-yellow-50',
     textClass: 'text-yellow-700',
     borderClass: 'border-yellow-200',
-    description: 'Warten auf Kundenantwort oder externe Aktion'
+    descriptionKey: 'statuses.waiting.description'
   },
   resolved: {
-    label: 'Erledigt',
+    labelKey: 'statuses.resolved.label',
     icon: CheckCircleIcon,
     color: 'green',
     bgClass: 'bg-green-50',
     textClass: 'text-green-700',
     borderClass: 'border-green-200',
-    description: 'Thread ist abgeschlossen'
+    descriptionKey: 'statuses.resolved.description'
   },
   archived: {
-    label: 'Archiviert',
+    labelKey: 'statuses.archived.label',
     icon: ArchiveBoxIcon,
     color: 'gray',
     bgClass: 'bg-gray-50',
     textClass: 'text-gray-700',
     borderClass: 'border-gray-200',
-    description: 'Thread ist archiviert und nicht mehr aktiv'
+    descriptionKey: 'statuses.archived.description'
   }
 };
 
 const PRIORITY_CONFIG: Record<ThreadPriority, PriorityConfig> = {
   low: {
-    label: 'Niedrig',
+    labelKey: 'priorities.low.label',
     icon: ChartBarIcon,
     color: 'gray',
     bgClass: 'bg-gray-50',
     textClass: 'text-gray-600',
-    description: 'Niedrige Priorität, kann später bearbeitet werden'
+    descriptionKey: 'priorities.low.description'
   },
   normal: {
-    label: 'Normal',
+    labelKey: 'priorities.normal.label',
     icon: ChartBarIcon,
     color: 'blue',
     bgClass: 'bg-blue-50',
     textClass: 'text-blue-600',
-    description: 'Normale Priorität'
+    descriptionKey: 'priorities.normal.description'
   },
   high: {
-    label: 'Hoch',
+    labelKey: 'priorities.high.label',
     icon: ExclamationTriangleIcon,
     color: 'orange',
     bgClass: 'bg-orange-50',
     textClass: 'text-orange-600',
-    description: 'Hohe Priorität, zeitnah bearbeiten'
+    descriptionKey: 'priorities.high.description'
   },
   urgent: {
-    label: 'Dringend',
+    labelKey: 'priorities.urgent.label',
     icon: FireIcon,
     color: 'red',
     bgClass: 'bg-red-50',
     textClass: 'text-red-600',
-    description: 'Dringend! Sofort bearbeiten'
+    descriptionKey: 'priorities.urgent.description'
   }
 };
 
-export function StatusManager({ 
-  thread, 
+export function StatusManager({
+  thread,
   onStatusChange,
   compact = false,
   showSLA = true,
   showTimers = true
 }: StatusManagerProps) {
+  const t = useTranslations('inbox.statusManager');
   const [updating, setUpdating] = useState(false);
   const [slaInfo, setSlaInfo] = useState<{
     responseTime?: number;
@@ -244,7 +246,7 @@ export function StatusManager({
   if (compact) {
     return (
       <div className="flex items-center gap-1">
-        <Badge 
+        <Badge
           color={statusInfo.color as any}
           className={clsx(
             'flex items-center gap-1 text-xs',
@@ -253,11 +255,11 @@ export function StatusManager({
           )}
         >
           <statusInfo.icon className="h-3 w-3" />
-          {statusInfo.label}
+          {t(statusInfo.labelKey)}
         </Badge>
-        
+
         {currentPriority !== 'normal' && (
-          <Badge 
+          <Badge
             color={priorityInfo.color as any}
             className={clsx(
               'flex items-center gap-1 text-xs',
@@ -268,13 +270,13 @@ export function StatusManager({
             <priorityInfo.icon className="h-3 w-3" />
           </Badge>
         )}
-        
+
         {slaInfo && (
-          <Badge 
-            color={slaInfo.isOverdue ? "red" : "green"} 
+          <Badge
+            color={slaInfo.isOverdue ? "red" : "green"}
             className={clsx("text-xs", slaInfo.isOverdue && "animate-pulse")}
           >
-            {slaInfo.isOverdue ? "Überfällig" : `${slaInfo.responseTime}h/${slaInfo.targetResponseTime}h`}
+            {slaInfo.isOverdue ? t('sla.overdue') : `${slaInfo.responseTime}h/${slaInfo.targetResponseTime}h`}
           </Badge>
         )}
       </div>
@@ -287,7 +289,7 @@ export function StatusManager({
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <ChartBarIcon className="h-4 w-4" />
-          Status & Priorität
+          {t('header')}
         </h4>
         {updating && (
           <ArrowPathIcon className="h-4 w-4 animate-spin text-blue-600" />
@@ -297,9 +299,9 @@ export function StatusManager({
       {/* Current Status & Priority */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">Status</label>
+          <label className="block text-xs font-medium text-gray-600 mb-2">{t('statusLabel')}</label>
           <Dropdown>
-            <DropdownButton 
+            <DropdownButton
               className={clsx(
                 'w-full justify-between border',
                 statusInfo.bgClass,
@@ -310,16 +312,16 @@ export function StatusManager({
             >
               <div className="flex items-center gap-2">
                 <statusInfo.icon className="h-4 w-4" />
-                {statusInfo.label}
+                {t(statusInfo.labelKey)}
               </div>
             </DropdownButton>
             <DropdownMenu>
               {Object.entries(STATUS_CONFIG).map(([status, config]) => {
                 const Icon = config.icon;
                 const isActive = currentStatus === status;
-                
+
                 return (
-                  <DropdownItem 
+                  <DropdownItem
                     key={status}
                     onClick={() => handleStatusChange(status as ThreadStatus)}
                   >
@@ -327,9 +329,9 @@ export function StatusManager({
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4" />
                         <div>
-                          <span className="block text-sm">{config.label}</span>
+                          <span className="block text-sm">{t(config.labelKey)}</span>
                           <span className="block text-xs text-gray-500">
-                            {config.description}
+                            {t(config.descriptionKey)}
                           </span>
                         </div>
                       </div>
@@ -345,9 +347,9 @@ export function StatusManager({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">Priorität</label>
+          <label className="block text-xs font-medium text-gray-600 mb-2">{t('priorityLabel')}</label>
           <Dropdown>
-            <DropdownButton 
+            <DropdownButton
               className={clsx(
                 'w-full justify-between border',
                 priorityInfo.bgClass,
@@ -357,16 +359,16 @@ export function StatusManager({
             >
               <div className="flex items-center gap-2">
                 <priorityInfo.icon className="h-4 w-4" />
-                {priorityInfo.label}
+                {t(priorityInfo.labelKey)}
               </div>
             </DropdownButton>
             <DropdownMenu>
               {Object.entries(PRIORITY_CONFIG).map(([priority, config]) => {
                 const Icon = config.icon;
                 const isActive = currentPriority === priority;
-                
+
                 return (
-                  <DropdownItem 
+                  <DropdownItem
                     key={priority}
                     onClick={() => handlePriorityChange(priority as ThreadPriority)}
                   >
@@ -374,9 +376,9 @@ export function StatusManager({
                       <div className="flex items-center gap-2">
                         <Icon className="h-4 w-4" />
                         <div>
-                          <span className="block text-sm">{config.label}</span>
+                          <span className="block text-sm">{t(config.labelKey)}</span>
                           <span className="block text-xs text-gray-500">
-                            {config.description}
+                            {t(config.descriptionKey)}
                           </span>
                         </div>
                       </div>
@@ -396,17 +398,17 @@ export function StatusManager({
       {showSLA && slaInfo && (
         <div className="bg-white border rounded-lg p-3 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-600">SLA-Status</span>
+            <span className="text-xs font-medium text-gray-600">{t('sla.title')}</span>
             {slaInfo.isOverdue && (
               <Badge color="red" className="text-xs animate-pulse">
-                Überfällig
+                {t('sla.overdue')}
               </Badge>
             )}
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="block text-gray-500">Antwortzeit</span>
+              <span className="block text-gray-500">{t('sla.responseTime')}</span>
               <span className={clsx(
                 "block font-medium",
                 slaInfo.isOverdue ? "text-red-600" : "text-gray-900"
@@ -414,10 +416,10 @@ export function StatusManager({
                 {slaInfo.responseTime}h / {slaInfo.targetResponseTime}h
               </span>
             </div>
-            
+
             {slaInfo.resolutionTime && (
               <div>
-                <span className="block text-gray-500">Lösungszeit</span>
+                <span className="block text-gray-500">{t('sla.resolutionTime')}</span>
                 <span className={clsx(
                   "block font-medium",
                   slaInfo.resolutionTime > slaInfo.targetResolutionTime ? "text-red-600" : "text-green-600"
@@ -439,10 +441,10 @@ export function StatusManager({
             className="flex-1 bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200"
           >
             <PauseIcon className="h-4 w-4 mr-1" />
-            Warten
+            {t('actions.wait')}
           </Button>
         )}
-        
+
         {(currentStatus === 'active' || currentStatus === 'waiting') && (
           <Button
             onClick={() => handleStatusChange('resolved')}
@@ -450,10 +452,10 @@ export function StatusManager({
             className="flex-1 bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
           >
             <CheckCircleIcon className="h-4 w-4 mr-1" />
-            Erledigen
+            {t('actions.resolve')}
           </Button>
         )}
-        
+
         {currentStatus === 'waiting' && (
           <Button
             onClick={() => handleStatusChange('active')}
@@ -461,7 +463,7 @@ export function StatusManager({
             className="flex-1 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
           >
             <PlayIcon className="h-4 w-4 mr-1" />
-            Fortsetzen
+            {t('actions.continue')}
           </Button>
         )}
       </div>
