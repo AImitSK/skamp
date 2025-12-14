@@ -6304,6 +6304,25 @@
         "projectNotFound": "Projekt nicht gefunden",
         "moveFailed": "Verschieben fehlgeschlagen",
         "moveError": "Move-Fehler"
+      },
+      "header": {
+        "title": "Projekt-Board",
+        "projectCount": "{count, plural, one {Projekt} other {Projekte}}",
+        "usersOnline": "{count} online",
+        "viewModeBoard": "Board-Ansicht",
+        "viewModeList": "Listen-Ansicht",
+        "newProject": "Neues Projekt"
+      },
+      "filter": {
+        "projectsFound": "{count, plural, one {# Projekt gefunden} other {# Projekte gefunden}}"
+      },
+      "column": {
+        "transitionNotAllowed": "Übergang nicht erlaubt",
+        "dropHere": "Hier ablegen für {stage}",
+        "projectCount": "{count, plural, one {1 Projekt} other {# Projekte}}"
+      },
+      "presence": {
+        "nowActive": "Jetzt aktiv"
       }
     },
     "tabs": {

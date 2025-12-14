@@ -11,6 +11,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { ProjectPriority } from '@/types/project';
@@ -36,6 +37,8 @@ export const BoardFilterPanel: React.FC<BoardFilterPanelProps> = ({
   onClose,
   projectCount
 }) => {
+  const t = useTranslations('projects.kanban');
+
   // Local State für Form Fields
   const [localFilters, setLocalFilters] = useState<BoardFilters>(filters);
 
@@ -199,10 +202,7 @@ export const BoardFilterPanel: React.FC<BoardFilterPanelProps> = ({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="ml-2 text-sm text-gray-600 capitalize">
-                    {priority === 'urgent' ? 'Dringend' :
-                     priority === 'high' ? 'Hoch' :
-                     priority === 'medium' ? 'Mittel' :
-                     priority === 'low' ? 'Niedrig' : priority}
+                    {t(`card.priority.${priority}`)}
                   </span>
                 </label>
               ))}
@@ -294,7 +294,7 @@ export const BoardFilterPanel: React.FC<BoardFilterPanelProps> = ({
         {/* Actions */}
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
           <div className="text-sm text-gray-600">
-            {projectCount} {projectCount === 1 ? 'Projekt' : 'Projekte'} gefunden
+            {t('filter.projectsFound', { count: projectCount })}
           </div>
           
           <div className="flex items-center space-x-3">

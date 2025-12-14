@@ -8,6 +8,7 @@ import {
   PlusIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 
 // ========================================
@@ -39,6 +40,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   onViewModeChange,
   onNewProject
 }) => {
+  const t = useTranslations('projects.kanban');
 
   return (
     <div className="board-header bg-white px-6 py-4">
@@ -48,17 +50,17 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           <div className="flex items-center space-x-2">
             <Squares2X2Icon className="h-6 w-6 text-gray-600" />
             <h1 className="text-xl font-semibold text-gray-900">
-              Projekt-Board
+              {t('header.title')}
             </h1>
           </div>
-          
+
           {/* Project Count */}
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
               {totalProjects}
             </span>
             <span>
-              {totalProjects === 1 ? 'Projekt' : 'Projekte'}
+              {t('header.projectCount', { count: totalProjects })}
             </span>
           </div>
 
@@ -66,7 +68,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           {activeUsers.length > 0 && (
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <UserGroupIcon className="h-4 w-4" />
-              <span>{activeUsers.length} online</span>
+              <span>{t('header.usersOnline', { count: activeUsers.length })}</span>
               
               {/* User Avatars */}
               <div className="flex -space-x-2">
@@ -111,14 +113,14 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               <button
                 onClick={() => onViewModeChange('board')}
                 className={`p-2 rounded transition-colors ${viewMode === 'board' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
-                title="Board-Ansicht"
+                title={t('header.viewModeBoard')}
               >
                 <Squares2X2Icon className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onViewModeChange('list')}
                 className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
-                title="Listen-Ansicht"
+                title={t('header.viewModeList')}
               >
                 <ListBulletIcon className="h-4 w-4" />
               </button>
@@ -127,12 +129,12 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 
           {/* New Project Button */}
           {onNewProject && (
-            <Button 
+            <Button
               onClick={onNewProject}
               className="flex items-center space-x-2"
             >
               <PlusIcon className="w-4 h-4" />
-              <span>Neues Projekt</span>
+              <span>{t('header.newProject')}</span>
             </Button>
           )}
         </div>

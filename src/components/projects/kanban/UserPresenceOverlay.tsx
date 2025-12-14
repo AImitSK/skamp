@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useTranslations } from 'next-intl';
 
 // ========================================
 // INTERFACES
@@ -28,6 +29,7 @@ export interface UserPresenceOverlayProps {
 export const UserPresenceOverlay: React.FC<UserPresenceOverlayProps> = ({
   activeUsers
 }) => {
+  const t = useTranslations('projects.kanban');
   const [showDetails, setShowDetails] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -178,7 +180,7 @@ export const UserPresenceOverlay: React.FC<UserPresenceOverlayProps> = ({
                                 'bg-gray-100 text-gray-800'
                               }
                             `}>
-                              {isVeryRecent ? 'Jetzt aktiv' : lastSeenDate.toLocaleTimeString('de-DE')}
+                              {isVeryRecent ? t('presence.nowActive') : lastSeenDate.toLocaleTimeString('de-DE')}
                             </span>
                           </div>
                           

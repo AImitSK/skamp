@@ -6210,6 +6210,25 @@
         "projectNotFound": "Project not found",
         "moveFailed": "Move failed",
         "moveError": "Move error"
+      },
+      "header": {
+        "title": "Project Board",
+        "projectCount": "{count, plural, one {Project} other {Projects}}",
+        "usersOnline": "{count} online",
+        "viewModeBoard": "Board view",
+        "viewModeList": "List view",
+        "newProject": "New Project"
+      },
+      "filter": {
+        "projectsFound": "{count, plural, one {# project found} other {# projects found}}"
+      },
+      "column": {
+        "transitionNotAllowed": "Transition not allowed",
+        "dropHere": "Drop here for {stage}",
+        "projectCount": "{count, plural, one {1 project} other {# projects}}"
+      },
+      "presence": {
+        "nowActive": "Active now"
       }
     },
     "tabs": {
