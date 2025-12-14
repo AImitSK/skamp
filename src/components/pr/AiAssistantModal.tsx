@@ -3,15 +3,16 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { 
-  XMarkIcon, 
-  SparklesIcon, 
+import {
+  XMarkIcon,
+  SparklesIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   ArrowUpIcon
 } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,12 +37,13 @@ interface Template {
  * Sie bleibt für Rückwärtskompatibilität bestehen, aber neue Implementierungen
  * sollten das neue strukturierte Modal verwenden.
  */
-export default function AiAssistantModal({ 
-  onClose, 
-  onGenerate, 
-  existingContent 
+export default function AiAssistantModal({
+  onClose,
+  onGenerate,
+  existingContent
 }: AiAssistantModalProps) {
   const { user } = useAuth();
+  const t = useTranslations('pr.aiAssistant');
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedText, setGeneratedText] = useState('');
@@ -85,12 +87,12 @@ export default function AiAssistantModal({
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError('Bitte gib eine Beschreibung ein.');
+      setError(t('errors.promptRequired'));
       return;
     }
 
     if (!user) {
-      setError('Du musst angemeldet sein, um den KI-Assistenten zu nutzen.');
+      setError(t('errors.authRequired'));
       return;
     }
 
@@ -136,12 +138,12 @@ export default function AiAssistantModal({
           <DialogPanel className="mx-auto max-w-md bg-white rounded-lg shadow-xl p-6">
             <div className="text-center">
               <ExclamationTriangleIcon className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Anmeldung erforderlich</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('auth.title')}</h3>
               <p className="text-gray-600 mb-6">
-                Du musst angemeldet sein, um den KI-Assistenten zu nutzen.
+                {t('auth.message')}
               </p>
               <Button onClick={onClose} className="w-full">
-                Verstanden
+                {t('auth.button')}
               </Button>
             </div>
           </DialogPanel>
@@ -161,10 +163,10 @@ export default function AiAssistantModal({
             <div className="flex items-center gap-3">
               <SparklesIcon className="h-6 w-6 text-indigo-600" />
               <DialogTitle className="text-lg font-semibold">
-                KI-Assistent (Legacy Version)
+                {t('title')}
               </DialogTitle>
               {isHealthy && (
-                <CheckCircleIcon className="h-5 w-5 text-green-500" title="Service läuft" />
+                <CheckCircleIcon className="h-5 w-5 text-green-500" title={t('serviceRunning')} />
               )}
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -180,24 +182,23 @@ export default function AiAssistantModal({
                   <ArrowUpIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-blue-900">
-                      🚀 Neue strukturierte KI-Generierung verfügbar!
+                      {t('upgradeNotice.title')}
                     </h3>
                     <p className="mt-1 text-sm text-blue-700">
-                      Das neue strukturierte Modal bietet getrennte Felder für Headline und Content, 
-                      bessere Templates und professionelle journalistische Standards.
+                      {t('upgradeNotice.message')}
                     </p>
                     <div className="mt-2 flex gap-2">
                       <button
                         onClick={() => window.location.reload()} // Placeholder für Upgrade
                         className="text-sm text-blue-600 hover:text-blue-500 font-medium"
                       >
-                        Zum neuen Modal wechseln →
+                        {t('upgradeNotice.switchButton')}
                       </button>
                       <button
                         onClick={() => setShowUpgradeNotice(false)}
                         className="text-sm text-blue-600 hover:text-blue-500"
                       >
-                        Ausblenden
+                        {t('upgradeNotice.hideButton')}
                       </button>
                     </div>
                   </div>
@@ -212,10 +213,10 @@ export default function AiAssistantModal({
                   <ExclamationTriangleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3" />
                   <div>
                     <h3 className="text-sm font-medium text-orange-800">
-                      KI-Service nicht verfügbar
+                      {t('serviceWarning.title')}
                     </h3>
                     <p className="mt-1 text-sm text-orange-700">
-                      Der KI-Assistent ist momentan nicht erreichbar. Bitte versuche es später erneut.
+                      {t('serviceWarning.message')}
                     </p>
                   </div>
                 </div>
@@ -231,14 +232,14 @@ export default function AiAssistantModal({
                     className={mode === 'generate' ? 'bg-indigo-100 text-indigo-700' : ''}
                     onClick={() => setMode('generate')}
                   >
-                    Neu generieren
+                    {t('modes.generate')}
                   </Button>
                   <Button
                     plain
                     className={mode === 'improve' ? 'bg-indigo-100 text-indigo-700' : ''}
                     onClick={() => setMode('improve')}
                   >
-                    Bestehenden Text verbessern
+                    {t('modes.improve')}
                   </Button>
                 </div>
               </div>
@@ -249,7 +250,7 @@ export default function AiAssistantModal({
               <div className="space-y-4">
                 <Field>
                   <Label className="text-base font-medium">
-                    {mode === 'improve' ? 'Wie soll der Text verbessert werden?' : 'Was soll in der Pressemitteilung stehen?'}
+                    {mode === 'improve' ? t('input.labelImprove') : t('input.labelGenerate')}
                   </Label>
                   <Textarea
                     rows={6}
@@ -259,9 +260,9 @@ export default function AiAssistantModal({
                       setError(null);
                     }}
                     placeholder={
-                      mode === 'improve' 
-                        ? 'z.B. "Mache den Ton professioneller", "Füge mehr Details hinzu", "Kürze den Text auf 200 Wörter"'
-                        : 'Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter, desto besser wird das Ergebnis...'
+                      mode === 'improve'
+                        ? t('input.placeholderImprove')
+                        : t('input.placeholderGenerate')
                     }
                     className={error ? 'border-red-300' : ''}
                   />
@@ -273,7 +274,7 @@ export default function AiAssistantModal({
                 {/* Template Prompts */}
                 {mode === 'generate' && templates.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Oder wähle eine Vorlage:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">{t('templates.label')}</p>
                     <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
                       {templates.map((template, index) => (
                         <button
@@ -299,12 +300,12 @@ export default function AiAssistantModal({
                   {isGenerating ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Gemini arbeitet...
+                      {t('buttons.generating')}
                     </>
                   ) : (
                     <>
                       <SparklesIcon className="h-4 w-4 mr-2" />
-                      {mode === 'improve' ? 'Mit Gemini verbessern' : 'Mit Gemini generieren'}
+                      {mode === 'improve' ? t('buttons.improveWithGemini') : t('buttons.generateWithGemini')}
                     </>
                   )}
                 </Button>
@@ -314,10 +315,9 @@ export default function AiAssistantModal({
                   <div className="flex items-start">
                     <InformationCircleIcon className="h-4 w-4 text-yellow-600 mt-0.5 mr-2" />
                     <div className="text-xs text-yellow-700">
-                      <p className="font-medium">Legacy-Version</p>
+                      <p className="font-medium">{t('legacyNotice.title')}</p>
                       <p className="mt-1">
-                        Dies ist die alte Version des KI-Assistenten. 
-                        Für bessere Ergebnisse verwende das neue strukturierte Modal.
+                        {t('legacyNotice.message')}
                       </p>
                     </div>
                   </div>
@@ -326,18 +326,18 @@ export default function AiAssistantModal({
 
               {/* Output Seite */}
               <div className="space-y-4">
-                <p className="text-base font-medium text-gray-700">Generierter Text:</p>
+                <p className="text-base font-medium text-gray-700">{t('output.label')}</p>
                 <div className="border rounded-lg bg-gray-50 min-h-[400px] max-h-[500px] overflow-y-auto">
                   {isGenerating ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                        <p className="text-gray-600 text-sm">Google Gemini erstellt deine Pressemitteilung...</p>
+                        <p className="text-gray-600 text-sm">{t('output.generatingMessage')}</p>
                       </div>
                     </div>
                   ) : generatedText ? (
                     <div className="p-4">
-                      <div 
+                      <div
                         className="prose prose-sm max-w-none text-gray-900"
                         dangerouslySetInnerHTML={{ __html: generatedText }}
                       />
@@ -346,7 +346,7 @@ export default function AiAssistantModal({
                     <div className="text-center text-gray-500 h-32 flex items-center justify-center">
                       <div>
                         <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                        <p>Der generierte Text wird hier angezeigt</p>
+                        <p>{t('output.emptyPlaceholder')}</p>
                       </div>
                     </div>
                   )}
@@ -355,10 +355,10 @@ export default function AiAssistantModal({
                 {generatedText && (
                   <div className="flex gap-2">
                     <Button onClick={handleUseGenerated} className="flex-1">
-                      Text verwenden
+                      {t('buttons.useText')}
                     </Button>
                     <Button plain onClick={() => setGeneratedText('')}>
-                      Löschen
+                      {t('buttons.delete')}
                     </Button>
                   </div>
                 )}
@@ -369,10 +369,9 @@ export default function AiAssistantModal({
                     <div className="flex items-start">
                       <InformationCircleIcon className="h-4 w-4 text-amber-600 mt-0.5 mr-2" />
                       <div className="text-xs text-amber-700">
-                        <p className="font-medium">💡 Tipp für bessere Qualität</p>
+                        <p className="font-medium">{t('qualityNotice.title')}</p>
                         <p className="mt-1">
-                          Das neue strukturierte Modal bietet bessere journalistische Standards,
-                          getrennte Headline/Content-Generierung und optimierte Prompts.
+                          {t('qualityNotice.message')}
                         </p>
                       </div>
                     </div>
@@ -386,12 +385,12 @@ export default function AiAssistantModal({
               <div className="flex items-start">
                 <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
                 <div className="text-sm text-blue-700">
-                  <p className="font-medium">🤖 Powered by Google Gemini (Legacy Mode)</p>
+                  <p className="font-medium">{t('infoBox.title')}</p>
                   <ul className="mt-1 list-disc list-inside space-y-1">
-                    <li>Einfache Text-Generierung ohne Struktur</li>
-                    <li>Basis-Templates für schnelle Erstellung</li>
-                    <li>Für bessere Ergebnisse: Neues strukturiertes Modal nutzen</li>
-                    <li>Sichere Verarbeitung über Firebase Functions</li>
+                    <li>{t('infoBox.features.simpleGeneration')}</li>
+                    <li>{t('infoBox.features.basicTemplates')}</li>
+                    <li>{t('infoBox.features.upgradeRecommendation')}</li>
+                    <li>{t('infoBox.features.secureProcessing')}</li>
                   </ul>
                 </div>
               </div>
@@ -401,11 +400,11 @@ export default function AiAssistantModal({
           {/* Footer */}
           <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
             <Button plain onClick={onClose}>
-              Abbrechen
+              {t('buttons.cancel')}
             </Button>
             {generatedText && (
               <Button onClick={handleUseGenerated}>
-                Text verwenden
+                {t('buttons.useText')}
               </Button>
             )}
           </div>

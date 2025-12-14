@@ -831,6 +831,18 @@
         "gridView": "Grid View"
       }
     },
+    "approvalSettings": {
+      "customerApprovalRequired": "Customer approval required",
+      "customerApprovalDescription": "Campaign must be approved by the customer",
+      "contactRequired": "Contact required",
+      "contactRequiredDescription": "Please select a contact. The campaign can only be saved once an approval contact has been selected.",
+      "selectClientFirst": "Please select a client first to set contacts for approval.",
+      "newMessageLabel": "New message to the customer (optional)",
+      "newMessagePlaceholder": "New message for the re-approval request...",
+      "messageHint": "This message will be displayed first in the feedback chat.",
+      "showChatHistory": "Show chat history",
+      "chatHistory": "Chat History"
+    },
     "prSeo": {
       "title": "PR-SEO Analysis",
       "refreshAnalysis": "Refresh AI analysis",
@@ -1124,6 +1136,16 @@
       "keywordsLabel": "Keywords:",
       "attachments": "Attachments",
       "more": "more"
+    },
+    "previewRenderer": {
+      "header": "Campaign Preview",
+      "label": "Press Release",
+      "defaultTitle": "Press Release Title",
+      "generating": "Content is being generated...",
+      "keywords": "Keywords",
+      "more": "more",
+      "textModules": "Text Modules",
+      "media": "Media"
     },
     "new": {
       "title": "New PR Campaign",
@@ -1519,7 +1541,8 @@
       "nameNotAvailable": "Name not available",
       "notificationInfo": "This contact will be notified via email about the approval request and can review and approve the campaign through a secure link.",
       "hint": "Note:",
-      "hintDescription": "Select the main contact person at the customer who is responsible for approving press releases."
+      "hintDescription": "Select the main contact person at the customer who is responsible for approving press releases.",
+      "loadErrorConsole": "Error loading customer contacts:"
     },
     "edit": {
       "error": {
@@ -9670,6 +9693,72 @@
         }
       }
     },
+    "aiAssistant": {
+      "title": "AI Assistant (Legacy Version)",
+      "serviceRunning": "Service running",
+      "auth": {
+        "title": "Login Required",
+        "message": "You must be logged in to use the AI assistant.",
+        "button": "Understood"
+      },
+      "upgradeNotice": {
+        "title": "🚀 New Structured AI Generation Available!",
+        "message": "The new structured modal offers separate fields for headline and content, better templates, and professional journalistic standards.",
+        "switchButton": "Switch to new modal →",
+        "hideButton": "Hide"
+      },
+      "serviceWarning": {
+        "title": "AI Service Unavailable",
+        "message": "The AI assistant is currently unavailable. Please try again later."
+      },
+      "modes": {
+        "generate": "Generate new",
+        "improve": "Improve existing text"
+      },
+      "input": {
+        "labelImprove": "How should the text be improved?",
+        "labelGenerate": "What should the press release be about?",
+        "placeholderImprove": "e.g. \"Make the tone more professional\", \"Add more details\", \"Shorten the text to 200 words\"",
+        "placeholderGenerate": "Describe your company, product, announcement, or event. The more detailed, the better the result..."
+      },
+      "templates": {
+        "label": "Or choose a template:"
+      },
+      "buttons": {
+        "generating": "Gemini is working...",
+        "improveWithGemini": "Improve with Gemini",
+        "generateWithGemini": "Generate with Gemini",
+        "useText": "Use text",
+        "delete": "Delete",
+        "cancel": "Cancel"
+      },
+      "legacyNotice": {
+        "title": "Legacy Version",
+        "message": "This is the old version of the AI assistant. For better results, use the new structured modal."
+      },
+      "output": {
+        "label": "Generated Text:",
+        "generatingMessage": "Google Gemini is creating your press release...",
+        "emptyPlaceholder": "The generated text will appear here"
+      },
+      "qualityNotice": {
+        "title": "💡 Tip for Better Quality",
+        "message": "The new structured modal offers better journalistic standards, separate headline/content generation, and optimized prompts."
+      },
+      "infoBox": {
+        "title": "🤖 Powered by Google Gemini (Legacy Mode)",
+        "features": {
+          "simpleGeneration": "Simple text generation without structure",
+          "basicTemplates": "Basic templates for quick creation",
+          "upgradeRecommendation": "For better results: Use new structured modal",
+          "secureProcessing": "Secure processing via Firebase Functions"
+        }
+      },
+      "errors": {
+        "promptRequired": "Please provide a description.",
+        "authRequired": "You must be logged in to use the AI assistant."
+      }
+    },
     "email": {
       "senderSelector": {
         "senderType": "Sender Type",
@@ -9719,6 +9808,52 @@
         "saveHereButton": "Save here",
         "noSubfolders": "No subfolders available",
         "cancel": "Cancel"
+      }
+    },
+    "modernCustomerSelector": {
+      "loading": "Loading customers...",
+      "placeholder": {
+        "search": "Search customer...",
+        "select": "Select customer..."
+      },
+      "createNew": "Create new customer",
+      "emptyState": {
+        "noResults": "No results found",
+        "noCustomers": "No customers available",
+        "tryDifferentSearch": "Try a different search term",
+        "createFirst": "Please create a customer first"
+      },
+      "errors": {
+        "noCustomersFound": "No customers found. Please create a customer first.",
+        "loadError": "Error loading customers"
+      },
+      "requiredField": "* Required field"
+    },
+    "listSelector": {
+      "label": "Select Distribution List",
+      "placeholder": "Choose list...",
+      "searchPlaceholder": "Search list...",
+      "contactCount": "{count} Contacts",
+      "dynamicBadge": "Dynamic",
+      "staticBadge": "Static",
+      "quickAdd": {
+        "button": "Create New List",
+        "prompt": "Name for the new list:",
+        "descriptionTemplate": "Created on {date}",
+        "error": "Error creating list. Please try again."
+      },
+      "emptyState": {
+        "noResults": "No lists found",
+        "noLists": "No lists available"
+      },
+      "stats": {
+        "available": "{count} lists available",
+        "search": "Search: \"{query}\""
+      },
+      "selectedInfo": {
+        "recipients": "{count} Recipients",
+        "autoUpdate": "This list is automatically updated",
+        "viewList": "View list →"
       }
     }
   }

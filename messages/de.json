@@ -831,6 +831,18 @@
         "gridView": "Kachel-Ansicht"
       }
     },
+    "approvalSettings": {
+      "customerApprovalRequired": "Kundenfreigabe erforderlich",
+      "customerApprovalDescription": "Kampagne muss vom Kunden freigegeben werden",
+      "contactRequired": "Kontakt erforderlich",
+      "contactRequiredDescription": "Bitte wählen Sie einen Kontakt aus. Die Kampagne kann erst gespeichert werden, wenn ein Freigabe-Kontakt ausgewählt wurde.",
+      "selectClientFirst": "Bitte wählen Sie zuerst einen Kunden aus, um Kontakte für die Freigabe festzulegen.",
+      "newMessageLabel": "Neue Nachricht an den Kunden (optional)",
+      "newMessagePlaceholder": "Neue Nachricht für die erneute Freigabe-Anfrage...",
+      "messageHint": "Diese Nachricht wird als erste im Feedback-Chat angezeigt.",
+      "showChatHistory": "Chat-Verlauf anzeigen",
+      "chatHistory": "Chat-Verlauf"
+    },
     "prSeo": {
       "title": "PR-SEO Analyse",
       "refreshAnalysis": "KI-Analyse aktualisieren",
@@ -1124,6 +1136,16 @@
       "keywordsLabel": "Keywords:",
       "attachments": "Anhänge",
       "more": "weitere"
+    },
+    "previewRenderer": {
+      "header": "Kampagnen-Vorschau",
+      "label": "Pressemitteilung",
+      "defaultTitle": "Titel der Pressemitteilung",
+      "generating": "Inhalt wird generiert...",
+      "keywords": "Keywords",
+      "more": "weitere",
+      "textModules": "Textbausteine",
+      "media": "Medien"
     },
     "new": {
       "title": "Neue PR-Kampagne",
@@ -1519,7 +1541,8 @@
       "nameNotAvailable": "Name nicht verfügbar",
       "notificationInfo": "Dieser Kontakt wird per E-Mail über die Freigabe-Anfrage benachrichtigt und kann über einen sicheren Link die Kampagne prüfen und freigeben.",
       "hint": "Hinweis:",
-      "hintDescription": "Wählen Sie den Hauptansprechpartner beim Kunden aus, der für die Freigabe von Pressemitteilungen zuständig ist."
+      "hintDescription": "Wählen Sie den Hauptansprechpartner beim Kunden aus, der für die Freigabe von Pressemitteilungen zuständig ist.",
+      "loadErrorConsole": "Fehler beim Laden der Kunden-Kontakte:"
     },
     "edit": {
       "loading": {
@@ -9692,6 +9715,72 @@
         }
       }
     },
+    "aiAssistant": {
+      "title": "KI-Assistent (Legacy Version)",
+      "serviceRunning": "Service läuft",
+      "auth": {
+        "title": "Anmeldung erforderlich",
+        "message": "Du musst angemeldet sein, um den KI-Assistenten zu nutzen.",
+        "button": "Verstanden"
+      },
+      "upgradeNotice": {
+        "title": "🚀 Neue strukturierte KI-Generierung verfügbar!",
+        "message": "Das neue strukturierte Modal bietet getrennte Felder für Headline und Content, bessere Templates und professionelle journalistische Standards.",
+        "switchButton": "Zum neuen Modal wechseln →",
+        "hideButton": "Ausblenden"
+      },
+      "serviceWarning": {
+        "title": "KI-Service nicht verfügbar",
+        "message": "Der KI-Assistent ist momentan nicht erreichbar. Bitte versuche es später erneut."
+      },
+      "modes": {
+        "generate": "Neu generieren",
+        "improve": "Bestehenden Text verbessern"
+      },
+      "input": {
+        "labelImprove": "Wie soll der Text verbessert werden?",
+        "labelGenerate": "Was soll in der Pressemitteilung stehen?",
+        "placeholderImprove": "z.B. \"Mache den Ton professioneller\", \"Füge mehr Details hinzu\", \"Kürze den Text auf 200 Wörter\"",
+        "placeholderGenerate": "Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter, desto besser wird das Ergebnis..."
+      },
+      "templates": {
+        "label": "Oder wähle eine Vorlage:"
+      },
+      "buttons": {
+        "generating": "Gemini arbeitet...",
+        "improveWithGemini": "Mit Gemini verbessern",
+        "generateWithGemini": "Mit Gemini generieren",
+        "useText": "Text verwenden",
+        "delete": "Löschen",
+        "cancel": "Abbrechen"
+      },
+      "legacyNotice": {
+        "title": "Legacy-Version",
+        "message": "Dies ist die alte Version des KI-Assistenten. Für bessere Ergebnisse verwende das neue strukturierte Modal."
+      },
+      "output": {
+        "label": "Generierter Text:",
+        "generatingMessage": "Google Gemini erstellt deine Pressemitteilung...",
+        "emptyPlaceholder": "Der generierte Text wird hier angezeigt"
+      },
+      "qualityNotice": {
+        "title": "💡 Tipp für bessere Qualität",
+        "message": "Das neue strukturierte Modal bietet bessere journalistische Standards, getrennte Headline/Content-Generierung und optimierte Prompts."
+      },
+      "infoBox": {
+        "title": "🤖 Powered by Google Gemini (Legacy Mode)",
+        "features": {
+          "simpleGeneration": "Einfache Text-Generierung ohne Struktur",
+          "basicTemplates": "Basis-Templates für schnelle Erstellung",
+          "upgradeRecommendation": "Für bessere Ergebnisse: Neues strukturiertes Modal nutzen",
+          "secureProcessing": "Sichere Verarbeitung über Firebase Functions"
+        }
+      },
+      "errors": {
+        "promptRequired": "Bitte gib eine Beschreibung ein.",
+        "authRequired": "Du musst angemeldet sein, um den KI-Assistenten zu nutzen."
+      }
+    },
     "email": {
       "senderSelector": {
         "senderType": "Absender-Typ",
@@ -9731,6 +9820,18 @@
         }
       }
     },
+    "customerSelector": {
+      "label": "Kunde",
+      "loadingCustomers": "Lade Kunden...",
+      "selectCustomer": "Kunde auswählen...",
+      "createNewCustomer": "Neuen Kunden anlegen",
+      "emptyStateTitle": "Keine Kunden gefunden",
+      "emptyStateDescription": "Bitte legen Sie zuerst einen Kunden an",
+      "noCustomersPlaceholder": "⚠️ Keine Kunden vorhanden - Bitte erst anlegen",
+      "pleaseCreateCustomer": "Bitte Kunden anlegen",
+      "noCustomersFound": "Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.",
+      "loadError": "Fehler beim Laden der Kunden"
+    },
     "campaign": {
       "folderSelector": {
         "title": "PDF Speicherort auswählen",
@@ -9741,6 +9842,52 @@
         "saveHereButton": "Hier speichern",
         "noSubfolders": "Keine Unterordner vorhanden",
         "cancel": "Abbrechen"
+      }
+    },
+    "modernCustomerSelector": {
+      "loading": "Lade Kunden...",
+      "placeholder": {
+        "search": "Kunde suchen...",
+        "select": "Kunde auswählen..."
+      },
+      "createNew": "Neuen Kunden anlegen",
+      "emptyState": {
+        "noResults": "Keine Treffer gefunden",
+        "noCustomers": "Keine Kunden vorhanden",
+        "tryDifferentSearch": "Versuchen Sie einen anderen Suchbegriff",
+        "createFirst": "Bitte legen Sie zuerst einen Kunden an"
+      },
+      "errors": {
+        "noCustomersFound": "Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.",
+        "loadError": "Fehler beim Laden der Kunden"
+      },
+      "requiredField": "* Pflichtfeld"
+    },
+    "listSelector": {
+      "label": "Verteiler auswählen",
+      "placeholder": "Verteiler wählen...",
+      "searchPlaceholder": "Liste suchen...",
+      "contactCount": "{count} Kontakte",
+      "dynamicBadge": "Dynamisch",
+      "staticBadge": "Statisch",
+      "quickAdd": {
+        "button": "Neue Liste erstellen",
+        "prompt": "Name für die neue Liste:",
+        "descriptionTemplate": "Erstellt am {date}",
+        "error": "Fehler beim Erstellen der Liste. Bitte versuchen Sie es erneut."
+      },
+      "emptyState": {
+        "noResults": "Keine Listen gefunden",
+        "noLists": "Keine Listen vorhanden"
+      },
+      "stats": {
+        "available": "{count} Listen verfügbar",
+        "search": "Suche: \"{query}\""
+      },
+      "selectedInfo": {
+        "recipients": "{count} Empfänger",
+        "autoUpdate": "Diese Liste wird automatisch aktualisiert",
+        "viewList": "Liste ansehen →"
       }
     }
   }

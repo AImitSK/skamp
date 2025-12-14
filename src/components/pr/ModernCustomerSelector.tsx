@@ -2,12 +2,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
-import { 
-  BuildingOfficeIcon, 
+import {
+  BuildingOfficeIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   CheckIcon,
@@ -36,6 +37,7 @@ export function ModernCustomerSelector({
   disabled = false,
   className
 }: ModernCustomerSelectorProps) {
+  const t = useTranslations('pr.modernCustomerSelector');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
@@ -59,7 +61,7 @@ export function ModernCustomerSelector({
       
       if (companiesData.length === 0) {
         setCompanies([]);
-        setError('Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.');
+        setError(t('errors.noCustomersFound'));
       } else {
         setCompanies(companiesData.map(company => ({
           id: company.id!,
@@ -71,7 +73,7 @@ export function ModernCustomerSelector({
       }
     } catch (error) {
       console.error('CustomerSelector: Error loading companies:', error);
-      setError('Fehler beim Laden der Kunden');
+      setError(t('errors.loadError'));
       setCompanies([]);
     } finally {
       setLoading(false);
@@ -168,17 +170,17 @@ export function ModernCustomerSelector({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}
-                placeholder="Kunde suchen..."
+                placeholder={t('placeholder.search')}
                 className="flex-1 border-none outline-none bg-transparent text-sm"
                 disabled={disabled || loading}
               />
             ) : (
               <span className="block truncate text-sm text-gray-900">
-                {loading 
-                  ? 'Lade Kunden...' 
-                  : selectedCompany 
-                    ? selectedCompany.name 
-                    : 'Kunde auswählen...'
+                {loading
+                  ? t('loading')
+                  : selectedCompany
+                    ? selectedCompany.name
+                    : t('placeholder.select')
                 }
               </span>
             )}
@@ -202,7 +204,7 @@ export function ModernCustomerSelector({
               className="flex items-center gap-2 text-sm font-medium text-[#005fab] hover:text-[#004a8c] transition-colors w-full text-left"
             >
               <PlusIcon className="h-4 w-4" />
-              Neuen Kunden anlegen
+              {t('createNew')}
             </button>
           </div>
 
@@ -212,10 +214,10 @@ export function ModernCustomerSelector({
               <div className="py-8 px-4 text-center">
                 <BuildingOfficeIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-600 font-medium mb-1">
-                  {searchQuery ? 'Keine Treffer gefunden' : 'Keine Kunden vorhanden'}
+                  {searchQuery ? t('emptyState.noResults') : t('emptyState.noCustomers')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {searchQuery ? 'Versuchen Sie einen anderen Suchbegriff' : 'Bitte legen Sie zuerst einen Kunden an'}
+                  {searchQuery ? t('emptyState.tryDifferentSearch') : t('emptyState.createFirst')}
                 </p>
               </div>
             ) : (
@@ -260,7 +262,7 @@ export function ModernCustomerSelector({
       {/* Required Indicator */}
       {required && !selectedCompany && (
         <p className="mt-1 text-xs text-gray-500">
-          * Pflichtfeld
+          {t('requiredField')}
         </p>
       )}
       

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Field, Label, Description } from '@/components/ui/fieldset';
@@ -43,14 +44,15 @@ export function ListSelector({
   lists: externalLists,
   loading = false,
   required = true,
-  label = "Verteiler auswählen",
-  placeholder = "Verteiler wählen...",
+  label,
+  placeholder,
   className,
   error,
   disabled = false,
   showStats = true,
   showQuickAdd = true
 }: ListSelectorProps) {
+  const t = useTranslations('pr.listSelector');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [internalLists, setInternalLists] = useState<DistributionList[]>([]);
@@ -140,14 +142,16 @@ export function ListSelector({
   // Quick Add Handler (Placeholder)
   const handleQuickAdd = useCallback(async () => {
     if (!organizationId || !user) return;
-    
-    const listName = prompt('Name für die neue Liste:');
+
+    const listName = prompt(t('quickAdd.prompt'));
     if (!listName?.trim()) return;
-    
+
     try {
       const newListData = {
         name: listName.trim(),
-        description: `Erstellt am ${new Date().toLocaleDateString()}`,
+        description: t('quickAdd.descriptionTemplate', {
+          date: new Date().toLocaleDateString()
+        }),
         type: 'static' as const,
         category: 'custom' as const,
         color: 'blue' as const,
@@ -155,25 +159,25 @@ export function ListSelector({
         userId: user.uid, // Backward compatibility
         contactIds: []
       };
-      
+
       const newListId = await listsService.create(newListData);
       console.log('✅ New list created:', newListId);
-      
+
       // Aktualisiere Liste wenn intern geladen
       if (!externalLists) {
         const updatedLists = await listsService.getAll(organizationId, user.uid);
         setInternalLists(updatedLists);
       }
-      
+
       // Wähle die neue Liste aus
       onChangeRef.current(newListId, listName.trim(), 0);
       setShowDropdown(false);
-      
+
     } catch (error) {
       console.error('Error creating list:', error);
-      alert('Fehler beim Erstellen der Liste. Bitte versuchen Sie es erneut.');
+      alert(t('quickAdd.error'));
     }
-  }, [organizationId, user, externalLists]);
+  }, [organizationId, user, externalLists, t]);
 
   // Toggle dropdown handler
   const handleToggleDropdown = useCallback(() => {
@@ -187,7 +191,7 @@ export function ListSelector({
     return (
       <Field className={className}>
         <Label>
-          {label}
+          {label || t('label')}
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>
         <div className="animate-pulse">
@@ -200,7 +204,7 @@ export function ListSelector({
   return (
     <Field className={className}>
       <Label>
-        {label}
+        {label || t('label')}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
 
@@ -228,12 +232,12 @@ export function ListSelector({
                     {selectedList.name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {selectedList.contactCount} Kontakte
-                    {selectedList.type === 'dynamic' && ' • Dynamisch'}
+                    {t('contactCount', { count: selectedList.contactCount })}
+                    {selectedList.type === 'dynamic' && ` • ${t('dynamicBadge')}`}
                   </div>
                 </div>
               ) : (
-                <span className="text-gray-500">{placeholder}</span>
+                <span className="text-gray-500">{placeholder || t('placeholder')}</span>
               )}
             </div>
             {value && (
@@ -261,7 +265,7 @@ export function ListSelector({
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Liste suchen..."
+                    placeholder={t('searchPlaceholder')}
                     className="pl-9 pr-3 py-2"
                     autoFocus
                   />
@@ -278,7 +282,7 @@ export function ListSelector({
                     className="w-full justify-center text-indigo-600 hover:bg-indigo-50"
                   >
                     <PlusIcon className="h-4 w-4 mr-2" />
-                    Neue Liste erstellen
+                    {t('quickAdd.button')}
                   </Button>
                 </div>
               )}
@@ -287,7 +291,7 @@ export function ListSelector({
               <div className="max-h-64 overflow-y-auto">
                 {filteredLists.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    {searchTerm ? 'Keine Listen gefunden' : 'Keine Listen vorhanden'}
+                    {searchTerm ? t('emptyState.noResults') : t('emptyState.noLists')}
                   </div>
                 ) : (
                   <ul className="py-1">
@@ -314,16 +318,16 @@ export function ListSelector({
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className="text-xs text-gray-500">
-                                    {list.contactCount} Kontakte
+                                    {t('contactCount', { count: list.contactCount })}
                                   </span>
                                   {list.type === 'dynamic' && (
                                     <Badge color="blue" className="text-xs">
-                                      Dynamisch
+                                      {t('dynamicBadge')}
                                     </Badge>
                                   )}
                                   {list.type === 'static' && (
                                     <Badge color="zinc" className="text-xs">
-                                      Statisch
+                                      {t('staticBadge')}
                                     </Badge>
                                   )}
                                   {list.description && (
@@ -348,8 +352,8 @@ export function ListSelector({
               {/* Stats Footer */}
               {showStats && filteredLists.length > 0 && (
                 <div className="p-2 border-t bg-gray-50 text-xs text-gray-500">
-                  {filteredLists.length} Listen verfügbar
-                  {searchTerm && ` • Suche: "${searchTerm}"`}
+                  {t('stats.available', { count: filteredLists.length })}
+                  {searchTerm && ` • ${t('stats.search', { query: searchTerm })}`}
                 </div>
               )}
             </div>
@@ -372,8 +376,8 @@ export function ListSelector({
             <div className="text-sm">
               <p className="font-medium text-gray-900">{selectedList.name}</p>
               <p className="text-gray-600 mt-1">
-                {selectedList.contactCount} Empfänger
-                {selectedList.type === 'dynamic' && ' • Diese Liste wird automatisch aktualisiert'}
+                {t('selectedInfo.recipients', { count: selectedList.contactCount })}
+                {selectedList.type === 'dynamic' && ` • ${t('selectedInfo.autoUpdate')}`}
               </p>
               {selectedList.description && (
                 <p className="text-gray-500 mt-1">{selectedList.description}</p>
@@ -386,7 +390,7 @@ export function ListSelector({
                 rel="noopener noreferrer"
                 className="text-xs text-indigo-600 hover:text-indigo-500"
               >
-                Liste ansehen →
+                {t('selectedInfo.viewList')}
               </a>
             </div>
           </div>

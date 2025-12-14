@@ -75,7 +75,7 @@ export function CustomerContactSelector({
       
       setContacts(customerContacts);
     } catch (error) {
-      console.error('Fehler beim Laden der Kunden-Kontakte:', error);
+      console.error(t('loadErrorConsole'), error);
       setError(t('loadError'));
     } finally {
       setLoading(false);

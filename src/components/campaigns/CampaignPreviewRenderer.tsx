@@ -51,7 +51,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
   className = ""
 }: CampaignPreviewRendererProps) {
 
-  const t = useTranslations('campaigns.preview');
+  const t = useTranslations('campaigns.previewRenderer');
 
   const formattedDate = useMemo(() => {
     if (!createdAt) return '';

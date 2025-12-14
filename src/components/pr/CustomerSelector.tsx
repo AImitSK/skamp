@@ -2,13 +2,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Field, Label, Description } from '@/components/ui/fieldset';
 import { Button } from '@/components/ui/button';
 import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
-import { 
-  BuildingOfficeIcon, 
+import {
+  BuildingOfficeIcon,
   PlusIcon,
   MagnifyingGlassIcon,
   CheckIcon,
@@ -39,12 +40,13 @@ export function CustomerSelector({
   value,
   onChange,
   required = false,
-  label = "Kunde",
+  label,
   description,
   error,
   disabled = false,
   className
 }: CustomerSelectorProps) {
+  const t = useTranslations('pr.customerSelector');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
@@ -83,11 +85,11 @@ export function CustomerSelector({
             console.log('CustomerSelector: No companies found, showing placeholder');
             setCompanies([{
               id: 'temp-no-company',
-              name: '⚠️ Keine Kunden vorhanden - Bitte erst anlegen',
-              industry: 'Bitte Kunden anlegen',
+              name: t('noCustomersPlaceholder'),
+              industry: t('pleaseCreateCustomer'),
               website: undefined,
             }]);
-            setInternalError('Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.');
+            setInternalError(t('noCustomersFound'));
           } else {
             setCompanies(companiesData.map(company => ({
               id: company.id!,
@@ -101,7 +103,7 @@ export function CustomerSelector({
       } catch (error) {
         console.error('CustomerSelector: Error loading companies:', error);
         if (mounted) {
-          setInternalError('Fehler beim Laden der Kunden');
+          setInternalError(t('loadError'));
           setCompanies([]);
         }
       } finally {
@@ -116,7 +118,7 @@ export function CustomerSelector({
     return () => {
       mounted = false;
     };
-  }, [user, currentOrganization]);
+  }, [user, currentOrganization, t]);
 
   // Get selected company
   const selectedCompany = useMemo(() => 
@@ -140,11 +142,11 @@ export function CustomerSelector({
   return (
     <Field className={className}>
       <Label>
-        {label}
+        {label || t('label')}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
       {description && <Description>{description}</Description>}
-      
+
       <div className="mt-2">
         <Combobox
           value={value}
@@ -162,13 +164,13 @@ export function CustomerSelector({
                   return company?.name || '';
                 }}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={loading ? "Lade Kunden..." : "Kunde auswählen..."}
+                placeholder={loading ? t('loadingCustomers') : t('selectCustomer')}
               />
               <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
               </Combobox.Button>
             </div>
-            
+
             <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
               {/* Link to create new company */}
               <div className="border-b border-gray-200 p-3">
@@ -179,20 +181,20 @@ export function CustomerSelector({
                   className="flex items-center gap-2 text-sm font-medium text-[#005fab] hover:text-[#004a8c]"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  Neuen Kunden anlegen
+                  {t('createNewCustomer')}
                 </a>
               </div>
-              
+
               {loading ? (
                 <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                  Lade Kunden...
+                  {t('loadingCustomers')}
                 </div>
               ) : filteredCompanies.length === 0 ? (
                 <div className="relative cursor-default select-none py-4 px-4 text-center">
                   <BuildingOfficeIcon className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-700 font-medium">Keine Kunden gefunden</p>
+                  <p className="text-gray-700 font-medium">{t('emptyStateTitle')}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    Bitte legen Sie zuerst einen Kunden an
+                    {t('emptyStateDescription')}
                   </p>
                 </div>
               ) : (

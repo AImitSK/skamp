@@ -44,7 +44,7 @@ export function ApprovalSettings({
   currentApproval
 }: SimplifiedApprovalSettingsProps) {
 
-  const t = useTranslations('campaigns.new.approval');
+  const t = useTranslations('campaigns.approvalSettings');
   const [localData, setLocalData] = useState<SimplifiedApprovalData>(value);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
