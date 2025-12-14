@@ -5,6 +5,7 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -23,11 +24,14 @@ export default function ConfirmDialog({
   message,
   type = 'warning',
   confirmLabel,
-  cancelLabel = 'Abbrechen',
+  cancelLabel,
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
-  const defaultConfirmLabel = type === 'danger' ? 'Löschen' : 'Bestätigen';
+  const t = useTranslations('mediathek.confirmDialog');
+
+  const defaultCancelLabel = cancelLabel || t('cancel');
+  const defaultConfirmLabel = confirmLabel || (type === 'danger' ? t('delete') : t('confirm'));
 
   return (
     <Dialog open={isOpen} onClose={onCancel} size="sm">
@@ -52,13 +56,13 @@ export default function ConfirmDialog({
             plain
             onClick={onCancel}
           >
-            {cancelLabel}
+            {defaultCancelLabel}
           </Button>
           <Button
             color="zinc"
             onClick={onConfirm}
           >
-            {confirmLabel || defaultConfirmLabel}
+            {defaultConfirmLabel}
           </Button>
         </DialogActions>
       </div>

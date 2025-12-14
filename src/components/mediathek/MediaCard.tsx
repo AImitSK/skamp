@@ -2,6 +2,7 @@
 "use client";
 
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import { MediaAsset } from "@/types/media";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +70,7 @@ const MediaCard = memo(function MediaCard({
   onShare,
   onDelete,
 }: MediaCardProps) {
+  const t = useTranslations('mediathek.mediaCard');
   const FileIcon = getFileIcon(asset.fileType);
 
   return (
@@ -151,7 +153,7 @@ const MediaCard = memo(function MediaCard({
                   className="hover:bg-gray-50"
                 >
                   <PencilIcon className="h-4 w-4 text-gray-500" />
-                  Details bearbeiten
+                  {t('editDetails')}
                 </DropdownItem>
                 <DropdownItem
                   onClick={(e: React.MouseEvent) => {
@@ -161,7 +163,7 @@ const MediaCard = memo(function MediaCard({
                   className="hover:bg-gray-50"
                 >
                   <ShareIcon className="h-4 w-4 text-gray-500" />
-                  Teilen
+                  {t('share')}
                 </DropdownItem>
                 <DropdownDivider />
                 <DropdownItem
@@ -172,7 +174,7 @@ const MediaCard = memo(function MediaCard({
                   className="hover:bg-red-50"
                 >
                   <TrashIcon className="h-4 w-4 text-red-500" />
-                  <span className="text-red-600">Löschen</span>
+                  <span className="text-red-600">{t('delete')}</span>
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

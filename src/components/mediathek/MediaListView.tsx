@@ -1,6 +1,7 @@
 // src/components/mediathek/MediaListView.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
@@ -84,6 +85,8 @@ export default function MediaListView({
   handleShareAsset,
   handleDeleteAsset,
 }: MediaListViewProps) {
+  const t = useTranslations('mediathek.listView');
+
   return (
     <Table>
       <TableHead>
@@ -101,12 +104,12 @@ export default function MediaListView({
               }}
             />
           </TableHeader>
-          <TableHeader>Name</TableHeader>
-          <TableHeader>Typ</TableHeader>
-          <TableHeader>Größe</TableHeader>
-          <TableHeader>Erstellt am</TableHeader>
+          <TableHeader>{t('columns.name')}</TableHeader>
+          <TableHeader>{t('columns.type')}</TableHeader>
+          <TableHeader>{t('columns.size')}</TableHeader>
+          <TableHeader>{t('columns.created')}</TableHeader>
           <TableHeader>
-            <span className="sr-only">Aktionen</span>
+            <span className="sr-only">{t('columns.actions')}</span>
           </TableHeader>
         </TableRow>
       </TableHead>
@@ -129,7 +132,7 @@ export default function MediaListView({
                   </div>
                 </div>
               </TableCell>
-              <TableCell>Ordner</TableCell>
+              <TableCell>{t('folder')}</TableCell>
               <TableCell>—</TableCell>
               <TableCell>
                 {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
@@ -142,16 +145,16 @@ export default function MediaListView({
                   <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
                     <DropdownItem onClick={() => handleEditFolder(folder)} className="hover:bg-gray-50">
                       <PencilIcon className="h-4 w-4 text-gray-500" />
-                      Bearbeiten
+                      {t('actions.edit')}
                     </DropdownItem>
                     <DropdownItem onClick={() => handleShareFolder(folder)} className="hover:bg-gray-50">
                       <ShareIcon className="h-4 w-4 text-gray-500" />
-                      Teilen
+                      {t('actions.share')}
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={() => handleDeleteFolder(folder)} className="hover:bg-red-50">
                       <TrashIcon className="h-4 w-4 text-red-500" />
-                      <span className="text-red-600">Löschen</span>
+                      <span className="text-red-600">{t('actions.delete')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
@@ -190,7 +193,7 @@ export default function MediaListView({
                 </div>
               </TableCell>
               <TableCell>
-                <Text>{asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
+                <Text>{asset.fileType?.split('/')[1]?.toUpperCase() || t('file')}</Text>
               </TableCell>
               <TableCell>
                 <Text>{formatFileSize(asset.metadata?.fileSize)}</Text>
@@ -206,20 +209,20 @@ export default function MediaListView({
                   <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
                     <DropdownItem href={asset.downloadUrl} target="_blank" className="hover:bg-gray-50">
                       <EyeIcon className="h-4 w-4 text-gray-500" />
-                      Ansehen
+                      {t('actions.view')}
                     </DropdownItem>
                     <DropdownItem onClick={() => handleEditAsset(asset)} className="hover:bg-gray-50">
                       <PencilIcon className="h-4 w-4 text-gray-500" />
-                      Details bearbeiten
+                      {t('actions.editDetails')}
                     </DropdownItem>
                     <DropdownItem onClick={() => handleShareAsset(asset)} className="hover:bg-gray-50">
                       <ShareIcon className="h-4 w-4 text-gray-500" />
-                      Teilen
+                      {t('actions.share')}
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={() => handleDeleteAsset(asset)} className="hover:bg-red-50">
                       <TrashIcon className="h-4 w-4 text-red-500" />
-                      <span className="text-red-600">Löschen</span>
+                      <span className="text-red-600">{t('actions.delete')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>

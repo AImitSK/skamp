@@ -89,13 +89,13 @@ export default function ShareModal({
       });
 
       if (!response.ok) {
-        throw new Error('API-Fehler beim Erstellen des Share-Links');
+        throw new Error(t('errors.apiError'));
       }
 
       const result = await response.json();
 
       if (!result.shareId) {
-        throw new Error('Keine gültige shareId erhalten');
+        throw new Error(t('errors.noShareId'));
       }
 
       // Erstelle ein lokales Objekt für die Anzeige

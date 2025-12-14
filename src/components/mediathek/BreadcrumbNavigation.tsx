@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { FolderBreadcrumb } from "@/types/media";
 import { HomeIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export default function BreadcrumbNavigation({
   onNavigate,
   onBreadcrumbDrop
 }: BreadcrumbNavigationProps) {
+  const t = useTranslations('mediathek');
   const [dragOverBreadcrumb, setDragOverBreadcrumb] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent, folderId: string | undefined) => {
@@ -68,7 +70,7 @@ export default function BreadcrumbNavigation({
           className="flex items-center space-x-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
         >
           <HomeIcon className="h-4 w-4" />
-          <span>Mediathek</span>
+          <span>{t('breadcrumb.root')}</span>
         </Button>
       </div>
 

@@ -4764,6 +4764,33 @@
       }
     }
   },
+  "journalist": {
+    "importDialog": {
+      "title": "Add as Reference",
+      "subtitle": "Global journalist will be imported as reference",
+      "atCompany": " at ",
+      "globalJournalistBadge": "🌐 Global Journalist",
+      "infoBox": {
+        "title": "What is a reference?",
+        "benefit1": "✅ Journalist appears in your contacts list",
+        "benefit2": "✅ Data stays always up-to-date (maintained by SuperAdmin)",
+        "benefit3": "✅ You can add local notes and tags",
+        "benefit4": "✅ Usable for distribution lists and campaigns",
+        "limitation": "❌ Global data cannot be edited"
+      },
+      "notes": {
+        "label": "Local Notes (optional)",
+        "placeholder": "Personal notes about this journalist...",
+        "hint": "These notes are only visible to your organization."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating reference...",
+        "addAsReference": "Add as Reference"
+      },
+      "defaultNote": "Added as reference on {date}"
+    }
+  },
   "inbox": {
     "aiInsights": {
       "actionRequired": "Action required",
@@ -5703,6 +5730,11 @@
       "saveError": "Error saving:",
       "title": "Edit Asset Details"
     },
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete"
+    },
     "folderModal": {
       "cancel": "Cancel",
       "colorLabel": "Folder Color",
@@ -5761,6 +5793,50 @@
         "message": "Link successfully created!",
         "subtitle": "Share this link with your clients:",
         "title": "Share Link Created"
+      },
+      "errors": {
+        "apiError": "API error while creating share link",
+        "noShareId": "No valid shareId received"
+      }
+    },
+    "mediaCard": {
+      "editDetails": "Edit Details",
+      "share": "Share",
+      "delete": "Delete"
+    },
+    "folderCard": {
+      "actions": {
+        "edit": "Edit",
+        "share": "Share",
+        "delete": "Delete"
+      },
+      "dragDrop": {
+        "dropHere": "Drop here",
+        "moving": "Moving..."
+      },
+      "tooltip": {
+        "description": "Description"
+      }
+    },
+    "breadcrumb": {
+      "root": "Media Library"
+    },
+    "listView": {
+      "columns": {
+        "name": "Name",
+        "type": "Type",
+        "size": "Size",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "folder": "Folder",
+      "file": "File",
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "editDetails": "Edit Details",
+        "share": "Share",
+        "delete": "Delete"
       }
     }
   },
@@ -6087,7 +6163,64 @@
       "emailPerformance": "Email Performance",
       "recipientsAndPublications": "Recipients & Publications"
     },
-    "title": "PR Monitoring & Send History"
+    "title": "PR Monitoring & Send History",
+    "suggestionsTable": {
+      "loading": "Loading suggestions...",
+      "sections": {
+        "pending": "For Review ({count})",
+        "autoImported": "Automatically Imported ({count})"
+      },
+      "table": {
+        "article": "Article",
+        "sources": "Sources",
+        "confidence": "Confidence",
+        "actions": "Actions",
+        "status": "Status"
+      },
+      "confidence": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "very_high": "Very High"
+      },
+      "status": {
+        "pending": "Pending",
+        "auto_confirmed": "Auto-Import",
+        "confirmed": "Confirmed",
+        "spam": "Spam"
+      },
+      "foundAgo": "Found {time}",
+      "importedAgo": "Imported {time}",
+      "matchScores": "Avg {avg}% | Max {max}%",
+      "actions": {
+        "accept": "Accept",
+        "spam": "Spam"
+      },
+      "empty": {
+        "title": "No automatically found articles",
+        "description": "Once the crawler is active, suggestions will be displayed here"
+      },
+      "confirmDialog": {
+        "title": "Accept Clipping",
+        "unknownSource": "Unknown Source",
+        "checkingDuplicate": "Checking for duplicates...",
+        "sentiment": "Sentiment",
+        "sentimentOptions": {
+          "positive": "Positive",
+          "neutral": "Neutral",
+          "negative": "Negative"
+        },
+        "duplicateWarning": {
+          "title": "Possible Duplicate Found",
+          "description": "A clipping with this URL already exists:",
+          "manuallyRecorded": "Manually Recorded",
+          "alreadyImported": "Already Imported",
+          "reach": "Reach: {reach}",
+          "consequence": "If you continue, a second clipping will be created. The reach will then be counted twice."
+        },
+        "createClipping": "Create Clipping"
+      }
+    }
   },
   "navigation": {
     "analytics": "Analytics",

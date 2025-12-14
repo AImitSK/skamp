@@ -2,6 +2,7 @@
 "use client";
 
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import { MediaFolder } from "@/types/media";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +61,7 @@ const FolderCard = memo(function FolderCard({
   onFolderDragStart,
   onFolderDragEnd
 }: FolderCardProps) {
+  const t = useTranslations('mediathek.folderCard');
 
   const folderColor = folder.color || '#6366f1'; // Default Indigo
 
@@ -125,7 +127,7 @@ const FolderCard = memo(function FolderCard({
   const getTooltipText = () => {
     let tooltip = folder.name;
     if (folder.description) {
-      tooltip += `\n\nBeschreibung: ${folder.description}`;
+      tooltip += `\n\n${t('tooltip.description')}: ${folder.description}`;
     }
     return tooltip;
   };
@@ -172,7 +174,7 @@ const FolderCard = memo(function FolderCard({
             <div className="text-center">
               <div className="text-2xl mb-1">📁</div>
               <div className="text-xs font-medium text-blue-800">
-                Hier ablegen
+                {t('dragDrop.dropHere')}
               </div>
             </div>
           </div>
@@ -184,7 +186,7 @@ const FolderCard = memo(function FolderCard({
             <div className="text-center">
               <div className="text-lg mb-1">↗️</div>
               <div className="text-xs font-medium text-gray-700">
-                Wird bewegt...
+                {t('dragDrop.moving')}
               </div>
             </div>
           </div>
@@ -210,20 +212,20 @@ const FolderCard = memo(function FolderCard({
               <DropdownMenu anchor="bottom end">
                 <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(folder); }}>
                   <PencilIcon className="h-4 w-4 mr-2" />
-                  Bearbeiten
+                  {t('actions.edit')}
                 </DropdownItem>
                 {onShare && (
                   <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); onShare(folder); }}>
                     <ShareIcon className="h-4 w-4 mr-2" />
-                    Teilen
+                    {t('actions.share')}
                   </DropdownItem>
                 )}
-                <DropdownItem 
+                <DropdownItem
                   onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(folder); }}
                   className="text-red-600"
                 >
                   <TrashIcon className="h-4 w-4 mr-2" />
-                  Löschen
+                  {t('actions.delete')}
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

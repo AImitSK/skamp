@@ -4759,6 +4759,33 @@
       }
     }
   },
+  "journalist": {
+    "importDialog": {
+      "title": "Als Verweis hinzufügen",
+      "subtitle": "Globaler Journalist wird als Verweis importiert",
+      "atCompany": " bei ",
+      "globalJournalistBadge": "🌐 Globaler Journalist",
+      "infoBox": {
+        "title": "Was ist ein Verweis?",
+        "benefit1": "✅ Journalist erscheint in Ihrer Kontakte-Liste",
+        "benefit2": "✅ Daten bleiben immer aktuell (vom SuperAdmin gepflegt)",
+        "benefit3": "✅ Sie können lokale Notizen und Tags hinzufügen",
+        "benefit4": "✅ Nutzbar für Verteilerlisten und Kampagnen",
+        "limitation": "❌ Globale Daten können nicht bearbeitet werden"
+      },
+      "notes": {
+        "label": "Lokale Notizen (optional)",
+        "placeholder": "Persönliche Notizen zu diesem Journalisten...",
+        "hint": "Diese Notizen sind nur für Ihre Organisation sichtbar."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "creating": "Erstelle Verweis...",
+        "addAsReference": "Als Verweis hinzufügen"
+      },
+      "defaultNote": "Als Verweis hinzugefügt am {date}"
+    }
+  },
   "inbox": {
     "aiInsights": {
       "actionRequired": "Aktion erforderlich",
@@ -5707,6 +5734,11 @@
       "saveError": "Fehler beim Speichern:",
       "title": "Asset-Details bearbeiten"
     },
+    "confirmDialog": {
+      "cancel": "Abbrechen",
+      "confirm": "Bestätigen",
+      "delete": "Löschen"
+    },
     "folderModal": {
       "cancel": "Abbrechen",
       "colorLabel": "Ordnerfarbe",
@@ -5765,6 +5797,50 @@
         "message": "Link erfolgreich erstellt!",
         "subtitle": "Teilen Sie diesen Link mit Ihren Kunden:",
         "title": "Share-Link erstellt"
+      },
+      "errors": {
+        "apiError": "API-Fehler beim Erstellen des Share-Links",
+        "noShareId": "Keine gültige shareId erhalten"
+      }
+    },
+    "mediaCard": {
+      "editDetails": "Details bearbeiten",
+      "share": "Teilen",
+      "delete": "Löschen"
+    },
+    "folderCard": {
+      "actions": {
+        "edit": "Bearbeiten",
+        "share": "Teilen",
+        "delete": "Löschen"
+      },
+      "dragDrop": {
+        "dropHere": "Hier ablegen",
+        "moving": "Wird bewegt..."
+      },
+      "tooltip": {
+        "description": "Beschreibung"
+      }
+    },
+    "breadcrumb": {
+      "root": "Mediathek"
+    },
+    "listView": {
+      "columns": {
+        "name": "Name",
+        "type": "Typ",
+        "size": "Größe",
+        "created": "Erstellt am",
+        "actions": "Aktionen"
+      },
+      "folder": "Ordner",
+      "file": "Datei",
+      "actions": {
+        "view": "Ansehen",
+        "edit": "Bearbeiten",
+        "editDetails": "Details bearbeiten",
+        "share": "Teilen",
+        "delete": "Löschen"
       }
     }
   },
@@ -6091,7 +6167,64 @@
       "emailPerformance": "E-Mail Performance",
       "recipientsAndPublications": "Empfänger & Veröffentlichungen"
     },
-    "title": "PR-Monitoring & Versandhistorie"
+    "title": "PR-Monitoring & Versandhistorie",
+    "suggestionsTable": {
+      "loading": "Lade Vorschläge...",
+      "sections": {
+        "pending": "Zur Überprüfung ({count})",
+        "autoImported": "Automatisch importiert ({count})"
+      },
+      "table": {
+        "article": "Artikel",
+        "sources": "Quellen",
+        "confidence": "Confidence",
+        "actions": "Aktionen",
+        "status": "Status"
+      },
+      "confidence": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "very_high": "Sehr Hoch"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "auto_confirmed": "Auto-Import",
+        "confirmed": "Bestätigt",
+        "spam": "Spam"
+      },
+      "foundAgo": "Gefunden {time}",
+      "importedAgo": "Importiert {time}",
+      "matchScores": "Ø {avg}% | Max {max}%",
+      "actions": {
+        "accept": "Übernehmen",
+        "spam": "Spam"
+      },
+      "empty": {
+        "title": "Keine automatisch gefundenen Artikel",
+        "description": "Sobald der Crawler aktiv ist, werden hier Vorschläge angezeigt"
+      },
+      "confirmDialog": {
+        "title": "Clipping übernehmen",
+        "unknownSource": "Unbekannte Quelle",
+        "checkingDuplicate": "Prüfe auf Duplikate...",
+        "sentiment": "Sentiment",
+        "sentimentOptions": {
+          "positive": "Positiv",
+          "neutral": "Neutral",
+          "negative": "Negativ"
+        },
+        "duplicateWarning": {
+          "title": "Mögliches Duplikat gefunden",
+          "description": "Ein Clipping mit dieser URL existiert bereits:",
+          "manuallyRecorded": "Manuell erfasst",
+          "alreadyImported": "Bereits importiert",
+          "reach": "Reichweite: {reach}",
+          "consequence": "Wenn Sie fortfahren, wird ein zweites Clipping erstellt. Die Reichweite wird dann doppelt gezählt."
+        },
+        "createClipping": "Clipping erstellen"
+      }
+    }
   },
   "navigation": {
     "analytics": "Analysen",

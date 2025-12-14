@@ -88,7 +88,7 @@ export function MonitoringSuggestionsTable({
   onMarkSpam,
   loading
 }: Props) {
-  const t = useTranslations('monitoring.suggestions');
+  const t = useTranslations('monitoring.suggestionsTable');
   const tCommon = useTranslations('common');
 
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -170,29 +170,18 @@ export function MonitoringSuggestionsTable({
       very_high: 'blue'
     } as const;
 
-    const labels = {
-      low: 'Niedrig',
-      medium: 'Mittel',
-      high: 'Hoch',
-      very_high: 'Sehr Hoch'
-    };
-
-    return <Badge color={colorMap[confidence] as any}>{labels[confidence]}</Badge>;
+    return <Badge color={colorMap[confidence] as any}>{t(`confidence.${confidence}`)}</Badge>;
   };
 
   const getStatusBadge = (status: MonitoringSuggestion['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Badge color="yellow">Ausstehend</Badge>;
-      case 'auto_confirmed':
-        return <Badge color="green">Auto-Import</Badge>;
-      case 'confirmed':
-        return <Badge color="green">Bestätigt</Badge>;
-      case 'spam':
-        return <Badge color="red">Spam</Badge>;
-      default:
-        return <Badge color="zinc">{status}</Badge>;
-    }
+    const statusMap: Record<MonitoringSuggestion['status'], string> = {
+      pending: 'yellow',
+      auto_confirmed: 'green',
+      confirmed: 'green',
+      spam: 'red'
+    };
+
+    return <Badge color={(statusMap[status] || 'zinc') as any}>{t(`status.${status}`)}</Badge>;
   };
 
   // Gruppiere nach Status
@@ -203,7 +192,7 @@ export function MonitoringSuggestionsTable({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Lade Vorschläge...</Text>
+        <Text className="ml-3">{t('loading')}</Text>
       </div>
     );
   }
@@ -216,7 +205,7 @@ export function MonitoringSuggestionsTable({
           <div className="flex items-center gap-2 mb-4">
             <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
             <Text className="font-semibold text-gray-900">
-              Zur Überprüfung ({pendingSuggestions.length})
+              {t('sections.pending', { count: pendingSuggestions.length })}
             </Text>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -224,16 +213,16 @@ export function MonitoringSuggestionsTable({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Artikel
+                    {t('table.article')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quellen
+                    {t('table.sources')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Confidence
+                    {t('table.confidence')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aktionen
+                    {t('table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -256,7 +245,7 @@ export function MonitoringSuggestionsTable({
                           </p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
-                          Gefunden {formatDistanceToNow(suggestion.createdAt.toDate(), { locale: de, addSuffix: true })}
+                          {t('foundAgo', { time: formatDistanceToNow(suggestion.createdAt.toDate(), { locale: de, addSuffix: true }) })}
                         </p>
                       </div>
                     </td>
@@ -274,7 +263,7 @@ export function MonitoringSuggestionsTable({
                           ))}
                         </div>
                         <Text className="text-xs text-gray-500">
-                          Ø {suggestion.avgMatchScore.toFixed(0)}% | Max {suggestion.highestMatchScore}%
+                          {t('matchScores', { avg: suggestion.avgMatchScore.toFixed(0), max: suggestion.highestMatchScore })}
                         </Text>
                       </div>
                     </td>
@@ -289,7 +278,7 @@ export function MonitoringSuggestionsTable({
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CheckCircleIcon className="size-4" />
-                          Übernehmen
+                          {t('actions.accept')}
                         </Button>
                         <Button
                           onClick={() => handleMarkSpam(suggestion)}
@@ -297,7 +286,7 @@ export function MonitoringSuggestionsTable({
                           className="bg-red-600 hover:bg-red-700 text-white"
                         >
                           <ExclamationTriangleIcon className="size-4" />
-                          Spam
+                          {t('actions.spam')}
                         </Button>
                       </div>
                     </td>
@@ -315,7 +304,7 @@ export function MonitoringSuggestionsTable({
           <div className="flex items-center gap-2 mb-4">
             <SparklesIcon className="h-5 w-5 text-green-600" />
             <Text className="font-semibold text-gray-900">
-              Automatisch importiert ({autoConfirmedSuggestions.length})
+              {t('sections.autoImported', { count: autoConfirmedSuggestions.length })}
             </Text>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -323,13 +312,13 @@ export function MonitoringSuggestionsTable({
               <thead className="bg-green-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Artikel
+                    {t('table.article')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quellen
+                    {t('table.sources')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('table.status')}
                   </th>
                 </tr>
               </thead>
@@ -352,7 +341,7 @@ export function MonitoringSuggestionsTable({
                           </p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
-                          Importiert {suggestion.autoConfirmedAt && formatDistanceToNow(suggestion.autoConfirmedAt.toDate(), { locale: de, addSuffix: true })}
+                          {suggestion.autoConfirmedAt && t('importedAgo', { time: formatDistanceToNow(suggestion.autoConfirmedAt.toDate(), { locale: de, addSuffix: true }) })}
                         </p>
                       </div>
                     </td>
@@ -384,30 +373,30 @@ export function MonitoringSuggestionsTable({
       {suggestions.length === 0 && !loading && (
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
           <SparklesIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <Text className="text-gray-500 font-medium">Keine automatisch gefundenen Artikel</Text>
+          <Text className="text-gray-500 font-medium">{t('empty.title')}</Text>
           <Text className="text-sm text-gray-400 mt-2">
-            Sobald der Crawler aktiv ist, werden hier Vorschläge angezeigt
+            {t('empty.description')}
           </Text>
         </div>
       )}
 
       {/* Bestätigungs-Dialog mit Sentiment-Auswahl */}
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Clipping übernehmen</DialogTitle>
+        <DialogTitle>{t('confirmDialog.title')}</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             {selectedSuggestion && (
               <div>
                 <Text className="font-medium text-gray-900">{selectedSuggestion.articleTitle}</Text>
                 <Text className="text-sm text-gray-500 mt-1">
-                  {selectedSuggestion.sources[0]?.sourceName || 'Unbekannte Quelle'}
+                  {selectedSuggestion.sources[0]?.sourceName || t('confirmDialog.unknownSource')}
                 </Text>
               </div>
             )}
 
             {/* Duplikat-Prüfung Status */}
             {checkingDuplicate && (
-              <Text className="text-sm text-gray-500">Prüfe auf Duplikate...</Text>
+              <Text className="text-sm text-gray-500">{t('confirmDialog.checkingDuplicate')}</Text>
             )}
 
             {/* Duplikat-Warnung */}
@@ -417,10 +406,10 @@ export function MonitoringSuggestionsTable({
                   <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <Text className="font-medium text-amber-800">
-                      Mögliches Duplikat gefunden
+                      {t('confirmDialog.duplicateWarning.title')}
                     </Text>
                     <Text className="text-sm text-amber-700 mt-1">
-                      Ein Clipping mit dieser URL existiert bereits:
+                      {t('confirmDialog.duplicateWarning.description')}
                     </Text>
                     <div className="mt-2 bg-white rounded border border-amber-200 p-3">
                       <Text className="font-medium text-gray-900">
@@ -432,19 +421,18 @@ export function MonitoringSuggestionsTable({
                         </Text>
                         <Badge color="blue">
                           {duplicateCheck.existingClipping.detectionMethod === 'manual'
-                            ? 'Manuell erfasst'
-                            : 'Bereits importiert'}
+                            ? t('confirmDialog.duplicateWarning.manuallyRecorded')
+                            : t('confirmDialog.duplicateWarning.alreadyImported')}
                         </Badge>
                         {duplicateCheck.existingClipping.reach && (
                           <Text className="text-sm text-gray-500">
-                            Reichweite: {duplicateCheck.existingClipping.reach.toLocaleString('de-DE')}
+                            {t('confirmDialog.duplicateWarning.reach', { reach: duplicateCheck.existingClipping.reach.toLocaleString('de-DE') })}
                           </Text>
                         )}
                       </div>
                     </div>
                     <Text className="text-xs text-amber-600 mt-2">
-                      Wenn Sie fortfahren, wird ein zweites Clipping erstellt.
-                      Die Reichweite wird dann doppelt gezählt.
+                      {t('confirmDialog.duplicateWarning.consequence')}
                     </Text>
                   </div>
                 </div>
@@ -478,14 +466,14 @@ export function MonitoringSuggestionsTable({
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setConfirmDialogOpen(false)}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
           <Button
             onClick={handleConfirmWithSentiment}
             disabled={processingId !== null || checkingDuplicate}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
-            Clipping erstellen
+            {t('confirmDialog.createClipping')}
           </Button>
         </DialogActions>
       </Dialog>

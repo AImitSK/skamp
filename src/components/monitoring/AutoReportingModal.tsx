@@ -56,7 +56,8 @@ export function AutoReportingModal({
   onDeleted
 }: AutoReportingModalProps) {
   const { user } = useAuth();
-  const t = useTranslations('reporting.modal');
+  const t = useTranslations('monitoring.autoReporting');
+  const tCommon = useTranslations('common');
 
   // Form State
   const [selectedRecipients, setSelectedRecipients] = useState<AutoReportingRecipient[]>([]);
@@ -239,7 +240,7 @@ export function AutoReportingModal({
   const handleDelete = async () => {
     if (!existingReporting?.id || !user) return;
 
-    if (!confirm('Auto-Reporting wirklich löschen?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
 
     try {
       setIsDeleting(true);
@@ -287,7 +288,7 @@ export function AutoReportingModal({
             {/* Empfänger-Auswahl */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('recipients.label', { max: MAX_RECIPIENTS })}
+                {t('recipients', { max: MAX_RECIPIENTS })}
               </label>
 
               {/* Ausgewählte Empfänger als Chips */}
@@ -322,15 +323,15 @@ export function AutoReportingModal({
                 >
                   <option value="">
                     {availableContacts.length === 0
-                      ? t('recipients.noMoreAvailable')
-                      : t('recipients.addContact')}
+                      ? t('noMoreContacts')
+                      : t('addRecipient')}
                   </option>
                   {availableContacts.map(contact => {
                     const email = contact.emails?.find(e => e.isPrimary)?.email || contact.emails?.[0]?.email;
                     const name = `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim();
                     return (
                       <option key={contact.id} value={contact.id} disabled={!email}>
-                        {name || t('recipients.unknown')} {email ? `(${email})` : t('recipients.noEmail')}
+                        {name || t('unknown')} {email ? `(${email})` : t('noEmailWarning')}
                       </option>
                     );
                   })}
@@ -342,7 +343,7 @@ export function AutoReportingModal({
                   <div className="flex items-start gap-2">
                     <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
                     <Text className="text-sm text-yellow-800">
-                      {t('recipients.noContactsWarning')}
+                      {t('noContactsWarning')}
                     </Text>
                   </div>
                 </div>
@@ -352,7 +353,7 @@ export function AutoReportingModal({
             {/* Frequenz-Auswahl */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {t('frequency.label')}
+                {t('frequency')}
               </label>
 
               <div className="flex gap-4">
@@ -385,7 +386,7 @@ export function AutoReportingModal({
               {frequency === 'weekly' && (
                 <div className="mt-3">
                   <label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">
-                    {t('frequency.sendEvery')}
+                    {t('sendEvery')}
                   </label>
                   <Select
                     value={dayOfWeek.toString()}
@@ -402,7 +403,7 @@ export function AutoReportingModal({
               {/* Info bei monthly */}
               {frequency === 'monthly' && (
                 <Text className="text-sm text-zinc-500">
-                  {t('frequency.monthlyInfo')}
+                  {t('monthlyInfo')}
                 </Text>
               )}
             </div>
@@ -413,7 +414,7 @@ export function AutoReportingModal({
                 <div className="flex items-start gap-2">
                   <InformationCircleIcon className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <Text className="text-sm text-blue-800">
-                    {t('monitoring.endInfo', { date: formatShortDate(monitoringEndDate) })}
+                    {t('monitoringEndInfo', { date: formatShortDate(monitoringEndDate) })}
                   </Text>
                 </div>
               </div>
@@ -424,7 +425,7 @@ export function AutoReportingModal({
                 <div className="flex items-start gap-2">
                   <ExclamationTriangleIcon className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                   <Text className="text-sm text-red-800">
-                    {t('monitoring.noActiveWarning')}
+                    {t('noMonitoringWarning')}
                   </Text>
                 </div>
               </div>
@@ -443,12 +444,12 @@ export function AutoReportingModal({
             className="mr-auto text-red-600 hover:text-red-700"
           >
             <TrashIcon className="h-4 w-4 mr-1" />
-            {isDeleting ? t('actions.deleting') : t('actions.delete')}
+            {isDeleting ? t('deleting') : t('delete')}
           </Button>
         )}
 
         <Button plain onClick={onClose} disabled={isSaving || isDeleting}>
-          {t('actions.cancel')}
+          {tCommon('cancel')}
         </Button>
 
         <Button
@@ -463,10 +464,10 @@ export function AutoReportingModal({
           }
         >
           {isSaving
-            ? t('actions.saving')
+            ? t('saving')
             : isEditing
-              ? t('actions.save')
-              : t('actions.activate')}
+              ? t('save')
+              : t('activate')}
         </Button>
       </DialogActions>
     </Dialog>
