@@ -194,6 +194,7 @@ function InfoCard({
 export default function CompanyDetailPage() {
   const t = useTranslations('companies.detail');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -241,9 +242,9 @@ export default function CompanyDetailPage() {
 
       setCompany({ ...company, internalNotes: notesValue });
       setEditingNotes(false);
-      toastService.success(t('notes.saved'));
+      toastService.success(tToast('saved'));
     } catch (error) {
-      toastService.error(t('notes.saveError'));
+      toastService.error(tToast('saveError'));
     } finally {
       setSavingNotes(false);
     }
@@ -1028,7 +1029,7 @@ export default function CompanyDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            toastService.success(tCommon('updated'));
+            toastService.success(tToast('companies.updated'));
           }}
         />
       )}

@@ -42,6 +42,7 @@ export default function ProjectTable({
   onDelete
 }: ProjectTableProps) {
   const t = useTranslations('projects.table');
+  const tToast = useTranslations('toasts');
 
   // Hilfsfunktionen
   const getProjectStatusColor = (status: string) => {
@@ -255,9 +256,9 @@ export default function ProjectTable({
                           onClick={async () => {
                             try {
                               await onUnarchive(project.id!);
-                              toastService.success(`Projekt "${project.title}" reaktiviert`);
+                              toastService.success(tToast('projectUnarchived', { name: project.title }));
                             } catch (error) {
-                              toastService.error('Projekt konnte nicht reaktiviert werden');
+                              toastService.error(tToast('unarchiveError'));
                             }
                           }}
                         >
@@ -269,9 +270,9 @@ export default function ProjectTable({
                           onClick={async () => {
                             try {
                               await onArchive(project.id!);
-                              toastService.success(`Projekt "${project.title}" archiviert`);
+                              toastService.success(tToast('projectArchived'));
                             } catch (error) {
-                              toastService.error('Projekt konnte nicht archiviert werden');
+                              toastService.error(tToast('archiveError'));
                             }
                           }}
                         >
@@ -286,9 +287,9 @@ export default function ProjectTable({
                             try {
                               const projectTitle = project.title;
                               await onDelete(project.id!);
-                              toastService.success(`Projekt "${projectTitle}" erfolgreich gelöscht`);
+                              toastService.success(tToast('projectDeletedWithName', { name: projectTitle }));
                             } catch (error) {
-                              toastService.error('Projekt konnte nicht gelöscht werden');
+                              toastService.error(tToast('deleteError'));
                             }
                           }
                         }}

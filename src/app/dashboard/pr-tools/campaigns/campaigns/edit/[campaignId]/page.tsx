@@ -125,6 +125,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const t = useTranslations('campaigns');
+  const tToast = useTranslations('toasts');
 
   // Campaign Context - Phase 3.5: Alle Campaign-States aus Context
   const {
@@ -542,7 +543,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     try {
       await loadData();
     } catch (error) {
-      toastService.error(t('error.loadFailed'));
+      toastService.error(tToast('loadError'));
     } finally {
       setIsLoadingCampaign(false);
     }
@@ -706,11 +707,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       }
 
     } catch (error) {
-      toastService.error(t('error.loadFailed'));
+      toastService.error(tToast('loadError'));
     } finally {
       setIsLoadingCampaign(false);
     }
-  }, [user, currentOrganization, existingCampaign, t]);
+  }, [user, currentOrganization, existingCampaign, t, tToast]);
 
   // 🆕 ENHANCED SUBMIT HANDLER mit vollständiger Edit-Lock Integration
   const handleSubmit = async (e: React.FormEvent) => {
@@ -724,7 +725,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     // 🆕 CRITICAL: Edit-Lock Prüfung vor Speicherung
     if (editLockStatus.isLocked) {
       const lockReason = editLockStatus.reason || t('validation.unknownReason');
-      toastService.warning(t('validation.cannotSave', { reason: lockReason }));
+      toastService.warning(tToast('editLocked'));
       return;
     }
 
@@ -824,9 +825,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
-        toastService.success(t('success.savedWithApproval'));
+        toastService.success(tToast('savedWithApproval'));
       } else {
-        toastService.success(t('success.saved'));
+        toastService.success(tToast('saved'));
       }
       
       // Navigation zurück zum Projekt (nicht mehr zu pr-tools)
@@ -916,7 +917,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   const handleGeneratePdf = async (forApproval: boolean = false) => {
     if (!user || !currentOrganization || !campaignTitle.trim()) {
-      toastService.error(t('validation.fillRequiredFields'));
+      toastService.error(tToast('validationError'));
       return;
     }
 
@@ -938,7 +939,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     }
 
     if (!campaignId) {
-      toastService.error(t('validation.campaignIdNotFound'));
+      toastService.error(tToast('validationError'));
       return;
     }
 
@@ -981,7 +982,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         reason
       );
 
-      toastService.success(t('approval.grantSuccess'));
+      toastService.success(tToast('approvalGranted'));
 
       // Context neu laden
       await reloadCampaign();
@@ -1031,7 +1032,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         reason
       );
 
-      toastService.success(t('approval.changesRequestSuccess'));
+      toastService.success(tToast('changesRequested'));
 
       // Context neu laden
       await reloadCampaign();
@@ -1480,13 +1481,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             // Zeige Erfolgs-Message
             if (result.successCount > 0) {
               toastService.success(
-                t('migration.successMessage', { count: result.successCount })
+                tToast('migrationSuccess', { count: result.successCount })
               );
             }
 
             if (result.errors && result.errors.length > 0) {
               toastService.error(
-                t('migration.errorMessage', { count: result.errors.length })
+                tToast('migrationError', { count: result.errors.length })
               );
             }
 
@@ -1495,7 +1496,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            toastService.error(t('migration.failed', { message: errorMessage }));
+            toastService.error(tToast('migrationFailed', { message: errorMessage }));
           } finally {
             setIsMigrating(false);
             setShowMigrationDialog(false);

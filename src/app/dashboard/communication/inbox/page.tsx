@@ -51,6 +51,7 @@ import { toastService } from '@/lib/utils/toast';
 export default function InboxPage() {
   const t = useTranslations('inbox');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
@@ -234,8 +235,8 @@ export default function InboxPage() {
 
     } catch (error: any) {
       console.error('Setup error:', error);
-      toastService.error('Fehler beim Einrichten der Echtzeit-Updates');
-      setError('Fehler beim Einrichten der Echtzeit-Updates');
+      toastService.error(tToast('inbox.realtimeSetupError'));
+      setError(tToast('inbox.realtimeSetupError'));
       setLoading(false);
     }
   };
@@ -317,8 +318,8 @@ export default function InboxPage() {
       },
       (error) => {
         console.error('Thread load error:', error);
-        toastService.error('Fehler beim Laden der E-Mail-Threads');
-        setError('Fehler beim Laden der E-Mail-Threads');
+        toastService.error(tToast('inbox.threadsLoadError'));
+        setError(tToast('inbox.threadsLoadError'));
         setLoading(false);
       }
     );
@@ -366,8 +367,8 @@ export default function InboxPage() {
       },
       (error) => {
         console.error('Messages load error:', error);
-        toastService.error('Fehler beim Laden der E-Mails');
-        setError('Fehler beim Laden der E-Mails');
+        toastService.error(tToast('inbox.messagesLoadError'));
+        setError(tToast('inbox.messagesLoadError'));
         setLoading(false);
       }
     );
@@ -422,10 +423,10 @@ export default function InboxPage() {
     setResolvingThreads(true);
     try {
       const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
-      toastService.success(`${resolvedCount} Threads wurden erstellt`);
+      toastService.success(tToast('inbox.threadsCreated', { count: resolvedCount }));
     } catch (error) {
       console.error('Error resolving threads:', error);
-      toastService.error('Fehler beim Erstellen der Threads');
+      toastService.error(tToast('inbox.threadsCreateError'));
     } finally {
       setResolvingThreads(false);
     }
@@ -450,7 +451,7 @@ export default function InboxPage() {
   // Create test email for development
   const createTestEmail = async () => {
     if (!emailAddresses.length) {
-      toastService.error('Keine E-Mail-Adressen konfiguriert');
+      toastService.error(tToast('inbox.noEmailAddressesConfigured'));
       return;
     }
 
@@ -518,10 +519,10 @@ export default function InboxPage() {
       const testMessage = await emailMessageService.create(testMessageData);
 
 
-      toastService.success('Test-E-Mail wurde erstellt');
+      toastService.success(tToast('inbox.testEmailCreated'));
     } catch (error: any) {
 
-      toastService.error(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
+      toastService.error(tToast('inbox.testEmailCreateError', { error: error.message }));
     }
   };
 
@@ -577,7 +578,7 @@ export default function InboxPage() {
       }
     } catch (error) {
       console.error('Fehler beim Laden der Thread-Nachrichten:', error);
-      const errorMsg = 'Fehler beim Laden der Thread-Nachrichten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
+      const errorMsg = tToast('inbox.threadMessagesLoadError') + ': ' + (error instanceof Error ? error.message : tToast('error'));
       toastService.error(errorMsg);
       setError(errorMsg);
     }
@@ -610,7 +611,7 @@ export default function InboxPage() {
       await emailMessageService.archive(emailId);
 
       // Success Toast
-      toastService.success('E-Mail archiviert');
+      toastService.success(tToast('inbox.emailArchived'));
 
       // Wenn die archivierte E-Mail die ausgewählte war
       if (currentEmailId === emailId) {
@@ -634,7 +635,7 @@ export default function InboxPage() {
 
     } catch (error) {
       console.error('Archive error:', error);
-      toastService.error('Fehler beim Archivieren der E-Mail');
+      toastService.error(tToast('archiveError'));
     } finally {
       setActionLoading(false);
     }
@@ -655,7 +656,7 @@ export default function InboxPage() {
       await emailMessageService.delete(emailId);
 
       // Success Toast
-      toastService.success('E-Mail gelöscht');
+      toastService.success(tToast('inbox.emailDeleted'));
 
       // Wenn die gelöschte E-Mail die ausgewählte war
       if (currentEmailId === emailId) {
@@ -698,7 +699,7 @@ export default function InboxPage() {
 
     } catch (error) {
       console.error('Delete error:', error);
-      toastService.error('Fehler beim Löschen der E-Mail');
+      toastService.error(tToast('inbox.emailDeleteError'));
     } finally {
       setActionLoading(false);
     }
@@ -709,7 +710,7 @@ export default function InboxPage() {
       await emailMessageService.toggleStar(emailId);
 
       // Success Toast (kurz und kompakt)
-      toastService.success(starred ? 'Markiert' : 'Markierung entfernt');
+      toastService.success(starred ? tToast('inbox.emailStarred') : tToast('inbox.emailUnstarred'));
 
       // Update thread isStarred wenn mindestens eine Email im Thread starred ist
       if (selectedThread?.id) {
@@ -721,7 +722,7 @@ export default function InboxPage() {
       }
     } catch (error) {
       console.error('Error toggling star:', error);
-      toastService.error('Fehler beim Markieren');
+      toastService.error(tToast('inbox.emailStarError'));
     }
   };
 
@@ -738,13 +739,7 @@ export default function InboxPage() {
       await threadMatcherService.updateThreadStatus(threadId, status);
 
       // Success Toast
-      const statusLabels = {
-        active: 'Aktiv',
-        waiting: 'Wartend',
-        resolved: 'Gelöst',
-        archived: 'Archiviert'
-      };
-      toastService.success(`Status geändert: ${statusLabels[status]}`);
+      toastService.success(tToast('inbox.threadStatusChanged', { status: t(`thread.status.${status}`) }));
 
       // Bei Archivierung: Thread aus der Liste entfernen
       if (status === 'archived') {
@@ -753,7 +748,7 @@ export default function InboxPage() {
       }
     } catch (error) {
       console.error('Status change error:', error);
-      toastService.error('Fehler beim Ändern des Thread-Status');
+      toastService.error(tToast('inbox.threadStatusChangeError'));
     }
   };
 

@@ -252,6 +252,7 @@ function InfoCard({
 
 export default function ContactDetailPage() {
   const t = useTranslations('contacts.detail');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -297,9 +298,9 @@ export default function ContactDetailPage() {
 
       setContact({ ...contact, internalNotes: notesValue });
       setEditingNotes(false);
-      toastService.success(t('save'));
+      toastService.success(tToast('saved'));
     } catch (error) {
-      toastService.error(t('errorLoading'));
+      toastService.error(tToast('saveError'));
     } finally {
       setSavingNotes(false);
     }

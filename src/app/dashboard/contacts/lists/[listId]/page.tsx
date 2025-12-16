@@ -102,6 +102,7 @@ function formatContactName(contact: Contact | ContactEnhanced): string {
 export default function ListDetailPage() {
   const t = useTranslations('lists');
   const tCategories = useTranslations('lists.categories');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const params = useParams();
@@ -157,12 +158,12 @@ export default function ListDetailPage() {
     setRefreshing(true);
     try {
       await listsService.refreshDynamicList(list.id!);
-      toastService.success(t('detail.toasts.refreshSuccess'));
+      toastService.success(tToast('listRefreshed'));
       // Invalidiere die Listen-Queries um aktualisierte Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['list', list.id] });
       queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
-      toastService.error(t('detail.toasts.refreshError'));
+      toastService.error(tToast('listRefreshError'));
     } finally {
       setRefreshing(false);
     }
@@ -179,11 +180,11 @@ export default function ListDetailPage() {
       },
       {
         onSuccess: () => {
-          toastService.success(t('detail.toasts.updateSuccess'));
+          toastService.success(tToast('listUpdated'));
           setShowEditModal(false);
         },
         onError: () => {
-          toastService.error(t('detail.toasts.updateError'));
+          toastService.error(tToast('listUpdateError'));
         },
       }
     );

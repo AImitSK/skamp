@@ -72,6 +72,7 @@ export default function BoilerplateModal({
   userId
 }: BoilerplateModalProps) {
   const t = useTranslations('boilerplates.modal');
+  const tToast = useTranslations('boilerplates.toasts');
   const [companies, setCompanies] = useState<any[]>([]);
 
   // React Query Mutations
@@ -211,7 +212,7 @@ export default function BoilerplateModal({
           userId,
           boilerplateData
         });
-        toastService.success(`"${formData.name}" erfolgreich aktualisiert`);
+        toastService.success(tToast('updated', { name: formData.name }));
       } else {
         // Create mit React Query Mutation
         await createBoilerplateMutation.mutateAsync({
@@ -219,7 +220,7 @@ export default function BoilerplateModal({
           userId,
           boilerplateData
         });
-        toastService.success(`"${formData.name}" erfolgreich erstellt`);
+        toastService.success(tToast('created', { name: formData.name }));
       }
 
       onSave();
@@ -227,8 +228,8 @@ export default function BoilerplateModal({
     } catch (error) {
       toastService.error(
         error instanceof Error
-          ? `Fehler beim Speichern: ${error.message}`
-          : 'Fehler beim Speichern des Textbausteins'
+          ? tToast('saveError', { message: error.message })
+          : tToast('saveErrorGeneric')
       );
     }
   };

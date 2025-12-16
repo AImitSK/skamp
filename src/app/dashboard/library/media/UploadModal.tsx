@@ -34,6 +34,7 @@ export default function UploadModal({
   userId,
 }: UploadModalProps) {
   const t = useTranslations('media.uploadModal');
+  const tToast = useTranslations('toasts');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
@@ -116,17 +117,17 @@ export default function UploadModal({
 
       // Success-Handling
       if (errorCount === 0) {
-        toastService.success(`${successCount} ${successCount === 1 ? 'Datei' : 'Dateien'} erfolgreich hochgeladen`);
+        toastService.success(tToast('media.filesUploaded', { count: successCount }));
         await onUploadSuccess();
         onClose();
       } else if (successCount > 0) {
-        toastService.warning(`${successCount} Dateien hochgeladen, ${errorCount} fehlgeschlagen`);
+        toastService.warning(tToast('media.uploadPartialSuccess', { success: successCount, failed: errorCount }));
         await onUploadSuccess();
       } else {
-        toastService.error(`Alle Uploads fehlgeschlagen (${errorCount} Dateien)`);
+        toastService.error(tToast('media.uploadAllFailed', { count: errorCount }));
       }
     } catch (error) {
-      toastService.error('Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut');
+      toastService.error(tToast('media.uploadError'));
     } finally {
       setUploading(false);
     }
