@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import { toastService } from '@/lib/utils/toast';
+import { useTranslations } from 'next-intl';
 import Papa from 'papaparse';
 
 // Helper: Kontaktname formatieren
@@ -21,6 +22,8 @@ function formatContactName(contact: ContactEnhanced): string {
 
 // Hook: Liste als CSV exportieren
 export function useExportList() {
+  const tToast = useTranslations('toasts');
+
   return useMutation({
     mutationFn: async (data: {
       projectList: ProjectDistributionList;
@@ -69,10 +72,10 @@ export function useExportList() {
       return { success: true, contactCount: contacts.length };
     },
     onSuccess: (result) => {
-      toastService.success(`Liste erfolgreich exportiert (${result.contactCount} Kontakte)`);
+      toastService.success(tToast('listExportSuccess', { count: result.contactCount }));
     },
     onError: (error: Error) => {
-      toastService.error(error.message || 'Fehler beim Exportieren der Liste');
+      toastService.error(error.message || tToast('listExportError'));
     },
   });
 }

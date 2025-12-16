@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useTranslations } from 'next-intl';
 import { db } from '@/lib/firebase/client-init';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { prService } from '@/lib/firebase/pr-service';
@@ -67,6 +68,7 @@ export interface UpdateClippingInput {
  */
 export function useMarkAsPublished() {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (input: MarkAsPublishedInput) => {
@@ -148,11 +150,11 @@ export function useMarkAsPublished() {
       queryClient.invalidateQueries({ queryKey: ['monitoring'] });
 
       // Success-Toast
-      toastService.success('Erfolgreich als veröffentlicht markiert');
+      toastService.success(tToast('markedPublished'));
     },
     onError: (error: Error) => {
       console.error('Fehler beim Markieren als veröffentlicht:', error);
-      toastService.error(error.message || 'Fehler beim Speichern');
+      toastService.error(error.message || tToast('saveError'));
     }
   });
 }
@@ -166,6 +168,7 @@ export function useMarkAsPublished() {
  */
 export function useUpdateClipping() {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (input: UpdateClippingInput) => {
@@ -225,11 +228,11 @@ export function useUpdateClipping() {
       queryClient.invalidateQueries({ queryKey: ['monitoring'] });
 
       // Success-Toast
-      toastService.success('Veröffentlichung erfolgreich aktualisiert');
+      toastService.success(tToast('clippingUpdated'));
     },
     onError: (error: Error) => {
       console.error('Fehler beim Aktualisieren:', error);
-      toastService.error(error.message || 'Fehler beim Speichern');
+      toastService.error(error.message || tToast('saveError'));
     }
   });
 }

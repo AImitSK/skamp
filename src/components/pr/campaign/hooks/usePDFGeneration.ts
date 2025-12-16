@@ -1,5 +1,6 @@
 // src/components/pr/campaign/hooks/usePDFGeneration.ts
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { toastService } from '@/lib/utils/toast';
 
 /**
@@ -41,6 +42,7 @@ import { toastService } from '@/lib/utils/toast';
  * ```
  */
 export function usePDFGeneration() {
+  const tToast = useTranslations('toasts');
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [showFolderSelector, setShowFolderSelector] = useState(false);
@@ -66,13 +68,13 @@ export function usePDFGeneration() {
     //   });
     //   const { downloadUrl } = await response.json();
     //   setPdfDownloadUrl(downloadUrl);
-    //   toastService.success('PDF erfolgreich erstellt');
+    //   toastService.success(tToast('pdfCreated'));
     // } catch (error) {
-    //   toastService.error('Fehler beim Erstellen der PDF');
+    //   toastService.error(tToast('pdfCreateError'));
     // } finally {
     //   setGeneratingPdf(false);
     // }
-  }, []);
+  }, [tToast]);
 
   /**
    * Handler für PDF-Export Button
@@ -84,11 +86,11 @@ export function usePDFGeneration() {
    */
   const handlePdfExport = useCallback((title: string) => {
     if (!title) {
-      toastService.error('Bitte geben Sie einen Titel für die Pressemitteilung ein.');
+      toastService.error(tToast('pressReleaseTitleRequired'));
       return;
     }
     setShowFolderSelector(true);
-  }, []);
+  }, [tToast]);
 
   return {
     generatingPdf,

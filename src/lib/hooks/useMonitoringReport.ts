@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { toastService } from '@/lib/utils/toast';
 
@@ -37,12 +38,13 @@ export interface PDFReportResult {
  */
 export function usePDFReportGenerator() {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   // Success Handler mit useCallback für Performance-Optimierung
   const handleSuccess = useCallback(
     (result: PDFReportResult, params: PDFReportParams) => {
       // Success Toast
-      toastService.success('PDF-Report erfolgreich generiert');
+      toastService.success(tToast('pdfReportGenerated'));
 
       // Auto-Download in neuem Tab
       window.open(result.pdfUrl, '_blank');
@@ -52,14 +54,14 @@ export function usePDFReportGenerator() {
         queryKey: ['analysisPDFs', params.campaignId]
       });
     },
-    [queryClient]
+    [queryClient, tToast]
   );
 
   // Error Handler mit useCallback für Performance-Optimierung
   const handleError = useCallback((error: Error) => {
     console.error('PDF-Generation fehlgeschlagen:', error);
-    toastService.error('PDF-Export fehlgeschlagen');
-  }, []);
+    toastService.error(tToast('pdfError'));
+  }, [tToast]);
 
   return useMutation<PDFReportResult, Error, PDFReportParams>({
     mutationFn: async (params: PDFReportParams) => {

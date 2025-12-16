@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { mediaService } from '@/lib/firebase/media-service';
 import { toastService } from '@/lib/utils/toast';
 
@@ -17,6 +18,7 @@ export function usePDFDeleteMutation(
   projectId: string | undefined
 ) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (pdf: any) => {
@@ -28,11 +30,11 @@ export function usePDFDeleteMutation(
       queryClient.invalidateQueries({
         queryKey: ['analysisPDFs', campaignId, organizationId, projectId],
       });
-      toastService.success('PDF erfolgreich gelöscht');
+      toastService.success(tToast('pdfDeleted'));
     },
     onError: (error) => {
       console.error('Fehler beim Löschen des PDFs:', error);
-      toastService.error('Fehler beim Löschen des PDFs');
+      toastService.error(tToast('pdfDeleteError'));
     },
   });
 }

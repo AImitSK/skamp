@@ -1,5 +1,6 @@
 // src/hooks/useListLinking.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { projectListsService } from '@/lib/firebase/project-lists-service';
 import { toastService } from '@/lib/utils/toast';
 import { projectListsKeys } from './useProjectLists';
@@ -8,6 +9,7 @@ import { masterListsKeys } from './useMasterLists';
 // Hook: Master-Liste mit Projekt verknüpfen
 export function useLinkMasterList(projectId: string, organizationId: string) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (data: {
@@ -25,10 +27,10 @@ export function useLinkMasterList(projectId: string, organizationId: string) {
       // Invalidate betroffene Queries
       queryClient.invalidateQueries({ queryKey: projectListsKeys.byProject(projectId) });
       queryClient.invalidateQueries({ queryKey: masterListsKeys.details([variables.masterListId]) });
-      toastService.success('Liste erfolgreich verknüpft');
+      toastService.success(tToast('listLinked'));
     },
     onError: (error: Error) => {
-      toastService.error(error.message || 'Fehler beim Verknüpfen der Liste');
+      toastService.error(error.message || tToast('listLinkError'));
     },
   });
 }
@@ -36,6 +38,7 @@ export function useLinkMasterList(projectId: string, organizationId: string) {
 // Hook: Liste-Verknüpfung entfernen
 export function useUnlinkList(projectId: string) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (listId: string) => {
@@ -44,10 +47,10 @@ export function useUnlinkList(projectId: string) {
     onSuccess: () => {
       // Invalidate Project Lists
       queryClient.invalidateQueries({ queryKey: projectListsKeys.byProject(projectId) });
-      toastService.success('Verknüpfung erfolgreich entfernt');
+      toastService.success(tToast('listUnlinked'));
     },
     onError: (error: Error) => {
-      toastService.error(error.message || 'Fehler beim Entfernen der Verknüpfung');
+      toastService.error(error.message || tToast('listUnlinkError'));
     },
   });
 }

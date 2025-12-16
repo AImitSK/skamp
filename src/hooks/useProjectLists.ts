@@ -4,6 +4,7 @@ import { projectListsService, ProjectDistributionList } from '@/lib/firebase/pro
 import { DistributionList } from '@/types/lists';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import { toastService } from '@/lib/utils/toast';
+import { useTranslations } from 'next-intl';
 
 // Query Keys
 export const projectListsKeys = {
@@ -25,6 +26,7 @@ export function useProjectLists(projectId: string) {
 // Hook: Projekt-Liste erstellen
 export function useCreateProjectList(projectId: string, organizationId: string) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (data: {
@@ -48,10 +50,10 @@ export function useCreateProjectList(projectId: string, organizationId: string) 
     onSuccess: () => {
       // Invalidate und refetch
       queryClient.invalidateQueries({ queryKey: projectListsKeys.byProject(projectId) });
-      toastService.success('Liste erfolgreich erstellt');
+      toastService.success(tToast('listCreated'));
     },
     onError: (error: Error) => {
-      toastService.error(error.message || 'Fehler beim Erstellen der Liste');
+      toastService.error(error.message || tToast('listCreateError'));
     },
   });
 }
@@ -59,6 +61,7 @@ export function useCreateProjectList(projectId: string, organizationId: string) 
 // Hook: Projekt-Liste aktualisieren
 export function useUpdateProjectList(projectId: string) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (data: {
@@ -96,10 +99,10 @@ export function useUpdateProjectList(projectId: string) {
           context.previousLists
         );
       }
-      toastService.error(error.message || 'Fehler beim Aktualisieren der Liste');
+      toastService.error(error.message || tToast('listUpdateError'));
     },
     onSuccess: () => {
-      toastService.success('Liste erfolgreich aktualisiert');
+      toastService.success(tToast('listUpdated'));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: projectListsKeys.byProject(projectId) });
@@ -110,6 +113,7 @@ export function useUpdateProjectList(projectId: string) {
 // Hook: Projekt-Liste löschen
 export function useDeleteProjectList(projectId: string) {
   const queryClient = useQueryClient();
+  const tToast = useTranslations('toasts');
 
   return useMutation({
     mutationFn: async (listId: string) => {
@@ -142,10 +146,10 @@ export function useDeleteProjectList(projectId: string) {
           context.previousLists
         );
       }
-      toastService.error(error.message || 'Fehler beim Löschen der Liste');
+      toastService.error(error.message || tToast('listDeleteError'));
     },
     onSuccess: () => {
-      toastService.success('Liste erfolgreich gelöscht');
+      toastService.success(tToast('listDeleted'));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: projectListsKeys.byProject(projectId) });
