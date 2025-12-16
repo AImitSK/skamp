@@ -65,6 +65,7 @@ export default function DocumentEditorModal({
 }: DocumentEditorModalProps) {
   const { user } = useAuth();
   const t = useTranslations('projects.documentEditor');
+  const tToast = useTranslations('toasts');
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -281,7 +282,7 @@ export default function DocumentEditorModal({
       handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      toastService.error('Dokument konnte nicht gespeichert werden');
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }

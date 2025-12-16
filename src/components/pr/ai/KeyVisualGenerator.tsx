@@ -75,6 +75,7 @@ export function KeyVisualGenerator({
   disabled = false
 }: KeyVisualGeneratorProps) {
   const t = useTranslations('pr.ai.keyVisualGenerator');
+  const tToast = useTranslations('toasts');
   const [state, setState] = useState<GeneratorState>('idle');
   const [suggestions, setSuggestions] = useState<ImagePromptSuggestion[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<ImagePromptSuggestion | null>(null);
@@ -87,12 +88,12 @@ export function KeyVisualGenerator({
     // Validierung
     const contentToAnalyze = content.trim();
     if (contentToAnalyze.length < 100) {
-      toastService.error('Bitte geben Sie zuerst mehr Inhalt in die Pressemitteilung ein (mind. 100 Zeichen), damit die KI passende Bildideen entwickeln kann.');
+      toastService.error(tToast('ai.contentTooShortForImageIdeas'));
       return;
     }
 
     if (!projectId || !projectName) {
-      toastService.error('Bitte wählen Sie zuerst ein Projekt aus, damit das Bild korrekt gespeichert werden kann.');
+      toastService.error(tToast('ai.selectProjectFirst'));
       return;
     }
 
@@ -108,7 +109,7 @@ export function KeyVisualGenerator({
         setSuggestions(data.suggestions);
         setState('selecting');
       } else {
-        toastService.error('Keine Bildideen konnten generiert werden. Bitte versuchen Sie es erneut.');
+        toastService.error(tToast('ai.noImageIdeasGenerated'));
         setState('idle');
       }
     } catch (error: any) {
@@ -118,7 +119,7 @@ export function KeyVisualGenerator({
       if (error.message?.includes('AI-Limit')) {
         toastService.error(error.message);
       } else {
-        toastService.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+        toastService.error(tToast('error'));
       }
       setState('idle');
     }
@@ -143,7 +144,7 @@ export function KeyVisualGenerator({
       });
 
       if (data.success && data.downloadUrl) {
-        toastService.success('Bild erfolgreich generiert und gespeichert!');
+        toastService.success(tToast('ai.imageGeneratedAndSaved'));
 
         // Callback aufrufen
         onImageGenerated({
@@ -156,7 +157,7 @@ export function KeyVisualGenerator({
         setSuggestions([]);
         setSelectedPrompt(null);
       } else {
-        toastService.error('Das Bild konnte nicht generiert werden. Bitte versuchen Sie es erneut.');
+        toastService.error(tToast('ai.imageGenerationFailed'));
         setState('selecting');
       }
     } catch (error: any) {
@@ -166,9 +167,9 @@ export function KeyVisualGenerator({
       if (error.message?.includes('AI-Limit')) {
         toastService.error(error.message);
       } else if (error.message?.includes('Richtlinien')) {
-        toastService.error('Das Bild konnte nicht generiert werden, da der Inhalt gegen die Richtlinien verstößt. Bitte wählen Sie einen anderen Bildvorschlag.');
+        toastService.error(tToast('ai.imageGenerationPolicyViolation'));
       } else {
-        toastService.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+        toastService.error(tToast('error'));
       }
 
       setState('selecting');

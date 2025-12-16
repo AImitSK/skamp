@@ -37,6 +37,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const router = useRouter();
   const { currentOrganization } = useOrganization();
   const t = useTranslations('projects.kanban.card');
+  const tToast = useTranslations('toasts');
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -110,7 +111,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   const confirmDelete = useCallback(async () => {
     if (!currentOrganization?.id) {
-      toastService.error('Keine Organisation gefunden');
+      toastService.error(tToast('noOrganization'));
       return;
     }
 
@@ -120,16 +121,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         organizationId: currentOrganization.id
       });
 
-      toastService.success('Projekt gelöscht');
+      toastService.success(tToast('projectDeleted'));
       setShowDeleteDialog(false);
 
       if (onProjectDeleted) {
         onProjectDeleted();
       }
     } catch (error) {
-      toastService.error('Fehler beim Löschen des Projekts');
+      toastService.error(tToast('deleteError'));
     }
-  }, [currentOrganization?.id, deleteProjectMutation, project.id, onProjectDeleted]);
+  }, [currentOrganization?.id, deleteProjectMutation, project.id, onProjectDeleted, tToast]);
 
   const handleMoveToStage = useCallback(async (projectId: string, stage: PipelineStage) => {
     if (onProjectMove) {
@@ -139,7 +140,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   const handleArchiveProject = useCallback(async (projectId: string) => {
     if (!currentOrganization?.id) {
-      toastService.error('Keine Organisation gefunden');
+      toastService.error(tToast('noOrganization'));
       return;
     }
 
@@ -150,15 +151,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         userId: project.userId
       });
 
-      toastService.success('Projekt archiviert');
+      toastService.success(tToast('projectArchived'));
 
       if (onProjectArchived) {
         onProjectArchived();
       }
     } catch (error) {
-      toastService.error('Fehler beim Archivieren');
+      toastService.error(tToast('archiveError'));
     }
-  }, [currentOrganization?.id, project.userId, archiveProjectMutation, onProjectArchived]);
+  }, [currentOrganization?.id, project.userId, archiveProjectMutation, onProjectArchived, tToast]);
 
   const handleEditSuccess = useCallback((updatedProject: Project) => {
     if (onProjectUpdated) {

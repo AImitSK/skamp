@@ -100,6 +100,7 @@ export function TranslationEditModal({
   onSaved,
 }: TranslationEditModalProps) {
   const t = useTranslations('campaigns.translationEdit');
+  const tToast = useTranslations('toasts');
 
   // Campaign für Original-Daten
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
@@ -211,12 +212,12 @@ export function TranslationEditModal({
       },
       {
         onSuccess: () => {
-          toastService.success("Übersetzung gespeichert");
+          toastService.success(tToast('saved'));
           onSaved?.();
           onClose();
         },
         onError: (error) => {
-          toastService.error(`Fehler beim Speichern: ${error.message}`);
+          toastService.error(tToast('saveError'));
         },
       }
     );

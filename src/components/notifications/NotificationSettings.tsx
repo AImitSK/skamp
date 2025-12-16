@@ -49,6 +49,7 @@ interface NotificationSettingsState {
 
 export function NotificationSettings() {
   const t = useTranslations('settings.notifications');
+  const tToast = useTranslations('toasts');
   const { settings, loading, error, updateSettings } = useNotificationSettings();
   const [localSettings, setLocalSettings] = useState<NotificationSettingsState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -201,9 +202,9 @@ export function NotificationSettings() {
     try {
       await updateSettings(localSettings);
       setHasChanges(false);
-      toastService.success('Einstellungen gespeichert');
+      toastService.success(tToast('settingsSaved'));
     } catch (err) {
-      toastService.error('Fehler beim Speichern der Einstellungen');
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }

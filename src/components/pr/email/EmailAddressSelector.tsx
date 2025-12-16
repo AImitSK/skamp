@@ -19,6 +19,7 @@ export default function EmailAddressSelector({
   organizationId
 }: EmailAddressSelectorProps) {
   const t = useTranslations('email.addressSelector');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +78,7 @@ export default function EmailAddressSelector({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('errors.loadFailed');
       setError(errorMessage);
-      toastService.error(errorMessage);
+      toastService.error(tToast('loadError'));
     } finally {
       setIsLoading(false);
     }

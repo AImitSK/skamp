@@ -68,6 +68,7 @@ export function InternalNotes({
 }: InternalNotesProps) {
   const { user } = useAuth();
   const t = useTranslations('inbox.internalNotes');
+  const tToast = useTranslations('toasts');
   const searchParams = useSearchParams();
   const [notes, setNotes] = useState<InternalNote[]>([]);
   const [newNote, setNewNote] = useState('');
@@ -341,10 +342,10 @@ export function InternalNotes({
       }
       
       setNewNote('');
-      toastService.success('Notiz gespeichert');
+      toastService.success(tToast('saved'));
     } catch (error) {
       console.error('Error adding note:', error);
-      toastService.error('Fehler beim Speichern der Notiz');
+      toastService.error(tToast('saveError'));
     }
   };
 

@@ -40,6 +40,7 @@ export default function RecipientManager({
   recipientCount
 }: RecipientManagerProps) {
   const t = useTranslations('email.recipientManager');
+  const tToast = useTranslations('email.recipientManager');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [campaignLists, setCampaignLists] = useState<DistributionList[]>([]);
@@ -109,7 +110,7 @@ export default function RecipientManager({
         setCampaignLists(loadedLists);
       } catch (error) {
         console.error('❌ RecipientManager: Fehler beim Laden:', error);
-        toastService.error(t('loadListsError'));
+        toastService.error(tToast('loadListsError'));
       } finally {
         setLoading(false);
       }
@@ -245,6 +246,7 @@ function AddRecipientModal({
   onAdd: (recipient: Omit<ManualRecipient, 'id'>) => void;
 }) {
   const t = useTranslations('email.recipientManager');
+  const tToast = useTranslations('email.recipientManager');
   const [formData, setFormData] = useState({
     salutation: '',
     title: '',
@@ -283,7 +285,7 @@ function AddRecipientModal({
         ...formData,
         isValid: true
       });
-      toastService.success(t('recipientAdded', { firstName: formData.firstName, lastName: formData.lastName }));
+      toastService.success(tToast('recipientAdded', { firstName: formData.firstName, lastName: formData.lastName }));
       onClose();
       // Reset form
       setFormData({

@@ -115,6 +115,7 @@ export default function Step3Preview({
   onPipelineComplete
 }: Step3PreviewProps) {
   const t = useTranslations('email.step3');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -394,14 +395,14 @@ export default function Step3Preview({
       if (result.success) {
         setTestSent(true);
         setTimeout(() => setTestSent(false), 5000);
-        toastService.success(`Test-Email an ${testEmail} versendet`);
+        toastService.success(tToast('testEmailSent', { email: testEmail }));
         emailLogger.info('Test email sent successfully', {
           campaignId: campaign.id,
           messageId: result.messageId,
           recipientEmail: testEmail
         });
       } else {
-        const errorMsg = result.error || 'Test-Versand fehlgeschlagen';
+        const errorMsg = result.error || tToast('testEmailError');
         setTestEmailError(errorMsg);
         toastService.error(errorMsg);
       }
@@ -411,7 +412,7 @@ export default function Step3Preview({
         error: error.message,
         recipientEmail: testEmail
       });
-      const errorMsg = error.message || 'Test-Versand fehlgeschlagen';
+      const errorMsg = error.message || tToast('testEmailError');
       setTestEmailError(errorMsg);
       toastService.error(errorMsg);
     } finally {

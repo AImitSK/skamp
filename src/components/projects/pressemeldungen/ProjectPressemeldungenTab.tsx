@@ -30,6 +30,7 @@ export default function ProjectPressemeldungenTab({
   organizationId
 }: Props) {
   const t = useTranslations('projects.pressemeldungen.tab');
+  const tToast = useTranslations('toasts');
   const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -108,7 +109,7 @@ export default function ProjectPressemeldungenTab({
       throw new Error(error.error || t('errors.translationFailed'));
     }
 
-    toastService.success('Übersetzung erfolgreich erstellt');
+    toastService.success(tToast('translationCreated'));
     // Invalidiere Translation-Queries damit die Liste aktualisiert wird
     queryClient.invalidateQueries({
       queryKey: translationKeys.list(organizationId, projectId),
@@ -144,7 +145,7 @@ export default function ProjectPressemeldungenTab({
       );
 
       if (result.campaignCreated && result.campaignId) {
-        toastService.success('Pressemeldung erfolgreich erstellt');
+        toastService.success(tToast('pressReleaseCreated'));
         setShowConfirmDialog(false);
         // Weiterleitung zur Edit-Seite
         router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${result.campaignId}`);
@@ -152,7 +153,7 @@ export default function ProjectPressemeldungenTab({
         throw new Error(t('errors.campaignCreationFailed'));
       }
     } catch (error) {
-      toastService.error('Fehler beim Erstellen der Pressemeldung');
+      toastService.error(tToast('pressReleaseCreateError'));
     } finally {
       setIsCreating(false);
     }

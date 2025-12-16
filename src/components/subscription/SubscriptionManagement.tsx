@@ -20,6 +20,7 @@ interface Props {
 
 export default function SubscriptionManagement({ organization, onUpgrade }: Props) {
   const t = useTranslations('subscription.management');
+  const tToast = useTranslations('toasts');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [reactivateLoading, setReactivateLoading] = useState(false);
@@ -93,7 +94,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Error opening customer portal:', error);
-      toastService.error(error.message || 'Fehler beim Öffnen des Portals');
+      toastService.error(error.message || t('payment.portalError'));
       setPortalLoading(false);
     }
   };
@@ -123,11 +124,11 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
         throw new Error(errorData.error || t('cancellation.reactivateError'));
       }
 
-      toastService.success('Subscription erfolgreich reaktiviert');
+      toastService.success(tToast('subscriptionReactivated'));
       window.location.reload();
     } catch (error: any) {
       console.error('Error reactivating subscription:', error);
-      toastService.error(error.message || 'Fehler beim Reaktivieren');
+      toastService.error(error.message || tToast('reactivateError'));
       setReactivateLoading(false);
     }
   };

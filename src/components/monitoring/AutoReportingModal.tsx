@@ -58,6 +58,7 @@ export function AutoReportingModal({
   const { user } = useAuth();
   const t = useTranslations('monitoring.autoReporting');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
 
   // Form State
   const [selectedRecipients, setSelectedRecipients] = useState<AutoReportingRecipient[]>([]);
@@ -105,7 +106,7 @@ export function AutoReportingModal({
       setContacts(result);
     } catch (error) {
       console.error('Fehler beim Laden der Kontakte:', error);
-      toastService.error('Kontakte konnten nicht geladen werden');
+      toastService.error(tToast('contactsLoadError'));
     } finally {
       setIsLoadingContacts(false);
     }
@@ -131,7 +132,7 @@ export function AutoReportingModal({
 
   const handleAddRecipient = (contactId: string) => {
     if (selectedRecipients.length >= MAX_RECIPIENTS) {
-      toastService.warning(`Maximal ${MAX_RECIPIENTS} Empfänger erlaubt`);
+      toastService.warning(tToast('maxRecipientsReached', { max: MAX_RECIPIENTS }));
       return;
     }
 
@@ -140,14 +141,14 @@ export function AutoReportingModal({
 
     // Prüfe ob bereits hinzugefügt
     if (selectedRecipients.some(r => r.contactId === contactId)) {
-      toastService.warning('Kontakt bereits hinzugefügt');
+      toastService.warning(tToast('recipientAlreadyAdded'));
       return;
     }
 
     // E-Mail extrahieren
     const email = contact.emails?.find(e => e.isPrimary)?.email || contact.emails?.[0]?.email;
     if (!email) {
-      toastService.error('Kontakt hat keine E-Mail-Adresse');
+      toastService.error(tToast('contactNoEmail'));
       return;
     }
 
@@ -172,12 +173,12 @@ export function AutoReportingModal({
 
     // Validierung
     if (selectedRecipients.length === 0) {
-      toastService.error('Bitte mindestens einen Empfänger auswählen');
+      toastService.error(tToast('selectRecipient'));
       return;
     }
 
     if (!monitoringEndDate) {
-      toastService.error('Kein aktives Monitoring gefunden');
+      toastService.error(tToast('noActiveMonitoring'));
       return;
     }
 
@@ -199,7 +200,7 @@ export function AutoReportingModal({
           context
         );
 
-        toastService.success('Einstellungen gespeichert');
+        toastService.success(tToast('settingsSaved'));
 
         // Lade aktualisierte Daten
         const updated = await autoReportingService.getAutoReportingById(existingReporting.id, context);
@@ -221,7 +222,7 @@ export function AutoReportingModal({
           context
         );
 
-        toastService.success('Auto-Reporting aktiviert');
+        toastService.success(tToast('autoReportingActivated'));
 
         // Lade neu erstellte Daten
         const created = await autoReportingService.getAutoReportingById(id, context);
@@ -231,7 +232,7 @@ export function AutoReportingModal({
       }
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      toastService.error('Fehler beim Speichern');
+      toastService.error(tToast('saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -248,11 +249,11 @@ export function AutoReportingModal({
         existingReporting.id,
         { organizationId, userId: user.uid }
       );
-      toastService.success('Auto-Reporting gelöscht');
+      toastService.success(tToast('autoReportingDeleted'));
       onDeleted();
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
-      toastService.error('Fehler beim Löschen');
+      toastService.error(tToast('deleteError'));
     } finally {
       setIsDeleting(false);
     }

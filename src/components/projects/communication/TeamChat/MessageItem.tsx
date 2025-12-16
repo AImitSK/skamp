@@ -54,6 +54,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   onShowTooltip
 }) {
   const t = useTranslations('projects.communication.messageItem');
+  const tToast = useTranslations('toasts');
   const isOwnMessage = message.authorId === userId;
 
   // Edit/Delete States
@@ -255,7 +256,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   // Handler: Edit speichern
   const handleSaveEdit = async () => {
     if (!editedContent.trim()) {
-      toastService.error('Nachricht darf nicht leer sein');
+      toastService.error(tToast('messageEmptyError'));
       return;
     }
 
@@ -271,9 +272,9 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
         newContent: editedContent
       });
       setIsEditing(false);
-      toastService.success('Nachricht wurde bearbeitet');
+      toastService.success(tToast('messageEdited'));
     } catch (err: any) {
-      toastService.error(err.message || 'Fehler beim Bearbeiten der Nachricht');
+      toastService.error(err.message || tToast('messageEditError'));
     }
   };
 
@@ -290,9 +291,9 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
         messageId: message.id
       });
       setShowDeleteDialog(false);
-      toastService.success('Nachricht wurde gelöscht');
+      toastService.success(tToast('messageDeleted'));
     } catch (err: any) {
-      toastService.error(err.message || 'Fehler beim Löschen der Nachricht');
+      toastService.error(err.message || tToast('messageDeleteError'));
     }
   };
 

@@ -44,6 +44,7 @@ export function ProjectTaskManager({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const t = useTranslations('projects.tasks.manager');
+  const tToast = useTranslations('toasts.tasks');
 
   // React Query Hook für Task-Loading
   const { tasks, isLoading } = useProjectTasks(projectId, organizationId);
@@ -179,24 +180,24 @@ export function ProjectTaskManager({
     try {
       await taskService.markAsCompleted(taskId);
       invalidateTasks();
-      toastService.success(`"${taskTitle}" als erledigt markiert`);
+      toastService.success(tToast('completedWithTitle', { title: taskTitle }));
     } catch (error) {
       console.error('Error completing task:', error);
-      toastService.error('Task konnte nicht aktualisiert werden');
+      toastService.error(tToast('completeError'));
     }
-  }, [invalidateTasks]);
+  }, [invalidateTasks, tToast]);
 
   // Handle task reopen (wieder öffnen)
   const handleReopenTask = useCallback(async (taskId: string, taskTitle: string) => {
     try {
       await taskService.update(taskId, { status: 'pending', progress: 0 });
       invalidateTasks();
-      toastService.success(`"${taskTitle}" wieder geöffnet`);
+      toastService.success(tToast('reopenedWithTitle', { title: taskTitle }));
     } catch (error) {
       console.error('Error reopening task:', error);
-      toastService.error('Task konnte nicht wieder geöffnet werden');
+      toastService.error(tToast('reopenError'));
     }
-  }, [invalidateTasks]);
+  }, [invalidateTasks, tToast]);
 
   // Handle task deletion
   const handleDeleteTask = useCallback((taskId: string, taskTitle: string) => {
@@ -209,14 +210,14 @@ export function ProjectTaskManager({
         try {
           await taskService.delete(taskId);
           invalidateTasks();
-          toastService.success(`"${taskTitle}" erfolgreich gelöscht`);
+          toastService.success(tToast('deletedWithTitle', { title: taskTitle }));
         } catch (error) {
           console.error('Error deleting task:', error);
-          toastService.error('Task konnte nicht gelöscht werden');
+          toastService.error(tToast('deleteError'));
         }
       }
     });
-  }, [invalidateTasks, t]);
+  }, [invalidateTasks, t, tToast]);
 
 
   // Handle progress click - in 10%-Schritten

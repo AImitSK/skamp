@@ -22,6 +22,7 @@ interface Props {
 
 export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSubscriptionId }: Props) {
   const t = useTranslations('subscription.changePlan');
+  const tToast = useTranslations('toasts');
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(currentTier);
   const [loading, setLoading] = useState(false);
   const [violations, setViolations] = useState<string[]>([]);
@@ -30,7 +31,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
 
   const handleChangePlan = async () => {
     if (selectedTier === currentTier) {
-      toastService.error('Bitte wähle einen anderen Plan aus');
+      toastService.error(tToast('subscription.selectDifferentPlan'));
       return;
     }
 
@@ -61,16 +62,16 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
         // Check if it's a downgrade violation error
         if (errorData.violations) {
           setViolations(errorData.violations);
-          toastService.error('Downgrade nicht möglich - siehe Details unten');
+          toastService.error(tToast('subscription.downgradeNotPossible'));
           setLoading(false);
           return;
         }
 
-        throw new Error(errorData.error || 'Fehler beim Plan-Wechsel');
+        throw new Error(errorData.error || tToast('subscription.planChangeError'));
       }
 
       const data = await response.json();
-      toastService.success(`Plan erfolgreich zu ${selectedTier} geändert!`);
+      toastService.success(tToast('subscription.planChanged', { tier: selectedTier }));
 
       // Reload page to show updated subscription
       setTimeout(() => {
@@ -78,7 +79,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
       }, 1500);
     } catch (error: any) {
       console.error('Error changing plan:', error);
-      toastService.error(error.message || 'Fehler beim Plan-Wechsel');
+      toastService.error(error.message || tToast('subscription.planChangeError'));
       setLoading(false);
     }
   };

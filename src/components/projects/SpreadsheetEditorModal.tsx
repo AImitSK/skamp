@@ -43,6 +43,7 @@ export default function SpreadsheetEditorModal({
 }: SpreadsheetEditorModalProps) {
   const { user } = useAuth();
   const t = useTranslations('projects.spreadsheetEditor');
+  const tToast = useTranslations('toasts');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData | null>(null);
@@ -135,7 +136,7 @@ export default function SpreadsheetEditorModal({
       handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern der Tabelle:', error);
-      toastService.error('Tabelle konnte nicht gespeichert werden');
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }

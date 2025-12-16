@@ -40,6 +40,7 @@ interface Props {
 
 export default function ProjectDistributionLists({ projectId, organizationId }: Props) {
   const t = useTranslations('projects.distribution.lists');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
 
   // React Query Hooks
@@ -141,11 +142,11 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toastService.success('Liste erfolgreich exportiert');
+      toastService.success(tToast('exportSuccess'));
     } catch (error) {
-      toastService.error('Fehler beim Exportieren der Liste');
+      toastService.error(tToast('exportError'));
     }
-  }, []);
+  }, [tToast]);
 
   const handleViewDetails = useCallback((list: ProjectDistributionList) => {
     setSelectedList(list);

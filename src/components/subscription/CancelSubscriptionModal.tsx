@@ -27,6 +27,7 @@ export default function CancelSubscriptionModal({
   planName,
 }: Props) {
   const t = useTranslations('subscription.cancelModal');
+  const tToast = useTranslations('toasts');
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async () => {
@@ -49,7 +50,7 @@ export default function CancelSubscriptionModal({
         throw new Error(errorData.error || t('errorCanceling'));
       }
 
-      toastService.success('Subscription erfolgreich gekündigt');
+      toastService.success(tToast('subscriptionCanceled'));
       onSuccess();
     } catch (error: any) {
       console.error('Error canceling subscription:', error);

@@ -38,6 +38,7 @@ export function ComposeEmail({
 }: ComposeEmailProps) {
   const t = useTranslations('inbox.compose');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
@@ -184,7 +185,7 @@ ${responsiveForwardedHtml}`;
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
-      toastService.error(t('errors.requiredFields'));
+      toastService.error(tToast('inbox.compose.requiredFields'));
       return;
     }
 
@@ -194,7 +195,7 @@ ${responsiveForwardedHtml}`;
       // Get selected email address
       const fromAddress = emailAddresses.find(addr => addr.id === selectedEmailAddressId);
       if (!fromAddress) {
-        throw new Error(t('errors.noFromAddress'));
+        throw new Error(tToast('inbox.compose.noFromAddress'));
       }
 
       console.log('📧 From address:', fromAddress.email);
@@ -285,7 +286,7 @@ ${responsiveForwardedHtml}`;
       });
 
       // Success Toast
-      toastService.success(t('success.sent'));
+      toastService.success(tToast('emailSent'));
 
       // Call parent onSend callback
       onSend({
@@ -298,8 +299,8 @@ ${responsiveForwardedHtml}`;
       onClose();
     } catch (error) {
       console.error('Failed to send email:', error);
-      toastService.error(t('errors.sendFailed', {
-        error: error instanceof Error ? error.message : t('errors.unknown')
+      toastService.error(tToast('inbox.compose.sendFailed', {
+        error: error instanceof Error ? error.message : tToast('error')
       }));
     } finally {
       setSending(false);

@@ -29,6 +29,7 @@ interface ProjectMonitoringTabProps {
 
 export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const t = useTranslations('projects.detail.monitoringTab');
+  const tToast = useTranslations('toasts');
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
   const router = useRouter();
@@ -73,7 +74,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     sentiment?: 'positive' | 'neutral' | 'negative'
   ) => {
     if (!user || !currentOrganization) {
-      toastService.error('Authentifizierung erforderlich');
+      toastService.error(tToast('authRequired'));
       return;
     }
 
@@ -84,16 +85,16 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         organizationId: currentOrganization.id,
         sentiment: sentiment || 'neutral'
       });
-      toastService.success('Vorschlag bestätigt und Clipping erstellt');
+      toastService.success(tToast('monitoring.suggestionConfirmed'));
     } catch (error) {
       console.error('Fehler beim Bestätigen des Vorschlags:', error);
-      toastService.error('Fehler beim Bestätigen des Vorschlags');
+      toastService.error(tToast('monitoring.suggestionConfirmError'));
     }
-  }, [confirmSuggestion, user, currentOrganization]);
+  }, [confirmSuggestion, user, currentOrganization, tToast]);
 
   const handleRejectSuggestion = useCallback(async (suggestionId: string) => {
     if (!user || !currentOrganization) {
-      toastService.error('Authentifizierung erforderlich');
+      toastService.error(tToast('authRequired'));
       return;
     }
 
@@ -103,12 +104,12 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         userId: user.uid,
         organizationId: currentOrganization.id
       });
-      toastService.success('Vorschlag abgelehnt');
+      toastService.success(tToast('monitoring.suggestionRejected'));
     } catch (error) {
       console.error('Fehler beim Ablehnen des Vorschlags:', error);
-      toastService.error('Fehler beim Ablehnen des Vorschlags');
+      toastService.error(tToast('monitoring.suggestionRejectError'));
     }
-  }, [rejectSuggestion, user, currentOrganization]);
+  }, [rejectSuggestion, user, currentOrganization, tToast]);
 
   const handleViewAllClippings = useCallback(() => {
     setActiveView('clippings');
@@ -121,7 +122,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   // Tracker Handlers
   const handleToggleMonitoring = useCallback(async (enabled: boolean) => {
     if (!tracker?.id || !currentOrganization) {
-      toastService.error('Tracker nicht verfügbar');
+      toastService.error(tToast('monitoring.trackerUnavailable'));
       return;
     }
 
@@ -131,16 +132,16 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         isActive: enabled,
         organizationId: currentOrganization.id
       });
-      toastService.success(enabled ? 'Monitoring aktiviert' : 'Monitoring deaktiviert');
+      toastService.success(tToast(enabled ? 'monitoring.activated' : 'monitoring.deactivated'));
     } catch (error) {
       console.error('Fehler beim Ändern des Monitoring-Status:', error);
-      toastService.error('Fehler beim Ändern des Monitoring-Status');
+      toastService.error(tToast('monitoring.statusChangeError'));
     }
-  }, [tracker?.id, currentOrganization, toggleMonitoring]);
+  }, [tracker?.id, currentOrganization, toggleMonitoring, tToast]);
 
   const handleExtendMonitoring = useCallback(async (days: 30 | 60 | 90) => {
     if (!tracker?.id || !currentOrganization) {
-      toastService.error('Tracker nicht verfügbar');
+      toastService.error(tToast('monitoring.trackerUnavailable'));
       return;
     }
 
@@ -150,12 +151,12 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         additionalDays: days,
         organizationId: currentOrganization.id
       });
-      toastService.success(`Monitoring um ${days} Tage verlängert`);
+      toastService.success(tToast('monitoring.extended', { days }));
     } catch (error) {
       console.error('Fehler beim Verlängern des Monitorings:', error);
-      toastService.error('Fehler beim Verlängern des Monitorings');
+      toastService.error(tToast('monitoring.extendError'));
     }
-  }, [tracker?.id, currentOrganization, extendMonitoring]);
+  }, [tracker?.id, currentOrganization, extendMonitoring, tToast]);
 
   if (isLoading) {
     return <LoadingState message={t('loading')} />;

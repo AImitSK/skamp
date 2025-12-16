@@ -47,6 +47,7 @@ export function TranslationList({
   className = "",
 }: TranslationListProps) {
   const t = useTranslations('campaigns.translationList');
+  const tToast = useTranslations('toasts');
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
   const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
@@ -84,13 +85,13 @@ export function TranslationList({
 
       if (result.pdfUrl) {
         window.open(result.pdfUrl, '_blank');
-        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
+        toastService.success(tToast('translation.pdfOpened', { language: LANGUAGE_NAMES[translation.language] }));
       } else {
         throw new Error('Keine PDF-URL erhalten');
       }
     } catch (error: any) {
       console.error('PDF-Generierung fehlgeschlagen:', error);
-      toastService.error(error.message || 'PDF-Generierung fehlgeschlagen');
+      toastService.error(error.message || tToast('translation.pdfError'));
     } finally {
       setGeneratingPdfFor(null);
     }
@@ -108,12 +109,12 @@ export function TranslationList({
       },
       {
         onSuccess: () => {
-          toastService.success(`Übersetzung (${LANGUAGE_NAMES[deleteConfirm.language]}) gelöscht`);
+          toastService.success(tToast('translation.deleted', { language: LANGUAGE_NAMES[deleteConfirm.language] }));
           setDeleteConfirm(null);
           refetch();
         },
         onError: (error) => {
-          toastService.error(`Fehler beim Löschen: ${error.message}`);
+          toastService.error(tToast('deleteError', { message: error.message }));
         },
       }
     );

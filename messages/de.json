@@ -11027,6 +11027,7 @@
     }
   },
   "toasts": {
+    "authRequired": "Authentifizierung erforderlich",
     "archiveError": "Fehler beim Archivieren",
     "autoReportingActivated": "Auto-Reporting aktiviert",
     "autoReportingDeleted": "Auto-Reporting gelöscht",
@@ -11036,6 +11037,7 @@
     "clippingLoadError": "Clipping konnte nicht geladen werden",
     "contactCreated": "Kontakt erfolgreich erstellt",
     "contactDeletedWithName": "{name} erfolgreich gelöscht",
+    "contactNoEmail": "Kontakt hat keine E-Mail-Adresse",
     "contactsDeleted": "{count} Kontakte erfolgreich gelöscht",
     "contactsDeleteError": "Kontakte konnten nicht gelöscht werden",
     "contactsExportSuccess": "Export erfolgreich: kontakte-export.csv",
@@ -11086,12 +11088,21 @@
     "emailScheduled": "E-Mail für {datetime} geplant",
     "emailSent": "E-Mail wurde versendet",
     "error": "Ein Fehler ist aufgetreten",
+    "testEmailSent": "Test-Email an {email} versendet",
+    "testEmailError": "Test-Versand fehlgeschlagen",
     "exportError": "Export fehlgeschlagen",
     "exportNoData": "Keine Daten zum Exportieren",
     "exportSuccess": "Export erfolgreich",
     "glossaryCreated": "Glossar-Eintrag erstellt",
     "glossaryDeleted": "Glossar-Eintrag gelöscht",
     "glossaryUpdated": "Glossar-Eintrag aktualisiert",
+    "inbox": {
+      "compose": {
+        "noFromAddress": "Keine Absender-Adresse ausgewählt",
+        "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse",
+        "sendFailed": "Fehler beim Senden: {error}"
+      }
+    },
     "importSuccess": "Import erfolgreich abgeschlossen",
     "invitationCreatedEmailFailed": "Einladung erstellt, aber E-Mail konnte nicht versendet werden",
     "invitationResendError": "Fehler beim erneuten Versenden der Einladung",
@@ -11117,9 +11128,16 @@
     "refreshAllStarted": "Aktualisierung gestartet - alle dynamischen Listen werden neu berechnet...",
     "refreshAllSuccess": "Alle dynamischen Listen erfolgreich aktualisiert",
     "loadError": "Fehler beim Laden",
+    "maxRecipientsReached": "Maximal {max} Empfänger erlaubt",
     "mediumNotFound": "Medium konnte nicht gefunden werden",
     "memberRemoveError": "Fehler beim Entfernen des Mitglieds",
     "memberRemoved": "Mitglied wurde entfernt",
+    "messageDeleted": "Nachricht wurde gelöscht",
+    "messageDeleteError": "Fehler beim Löschen der Nachricht",
+    "messageEdited": "Nachricht wurde bearbeitet",
+    "messageEditError": "Fehler beim Bearbeiten der Nachricht",
+    "messageEmptyError": "Nachricht darf nicht leer sein",
+    "noActiveMonitoring": "Kein aktives Monitoring gefunden",
     "noOrganization": "Keine Organisation gefunden",
     "notAuthenticated": "Nicht angemeldet",
     "organizationUpdated": "Organization erfolgreich aktualisiert",
@@ -11127,6 +11145,8 @@
     "ownerTransferError": "Fehler beim Übertragen der Owner-Rolle",
     "ownerTransferred": "{name} ist jetzt der neue Owner",
     "pipelinePdfGenerated": "Pipeline-PDF erfolgreich generiert",
+    "pressReleaseCreateError": "Fehler beim Erstellen der Pressemeldung",
+    "pressReleaseCreated": "Pressemeldung erfolgreich erstellt",
     "projectArchived": "Projekt archiviert",
     "projectCreated": "Projekt \"{title}\" erfolgreich erstellt",
     "projectDeleted": "Projekt gelöscht",
@@ -11139,6 +11159,7 @@
     "publicationsDeleted": "{count} Publikationen gelöscht",
     "publicationUpdated": "Publikation aktualisiert",
     "recipientAdded": "{name} hinzugefügt",
+    "recipientAlreadyAdded": "Kontakt bereits hinzugefügt",
     "reportSendError": "Report konnte nicht gesendet werden",
     "reportSending": "Report wird gesendet...",
     "reportSent": "Report wurde versendet",
@@ -11154,6 +11175,7 @@
     },
     "saveError": "Fehler beim Speichern",
     "saved": "Erfolgreich gespeichert",
+    "selectRecipient": "Bitte mindestens einen Empfänger auswählen",
     "settingsError": "Fehler beim Speichern der Einstellungen",
     "settingsSaved": "Einstellungen gespeichert",
     "signatureCreated": "Signatur erfolgreich erstellt",
@@ -11174,11 +11196,20 @@
       "patternToggleError": "Fehler beim Aktivieren/Deaktivieren"
     },
     "subscriptionCanceled": "Subscription erfolgreich gekündigt",
+    "subscriptionReactivated": "Subscription erfolgreich reaktiviert",
     "subscriptionUpdated": "Plan erfolgreich geändert",
+    "subscription": {
+      "planChanged": "Plan erfolgreich zu {tier} geändert",
+      "planChangeError": "Fehler beim Plan-Wechsel",
+      "selectDifferentPlan": "Bitte wähle einen anderen Plan aus",
+      "downgradeNotPossible": "Downgrade nicht möglich - siehe Details unten"
+    },
+    "reactivateError": "Fehler beim Reaktivieren",
     "syncError": "Fehler beim Synchronisieren",
     "teamMemberRemoveOnlyOwner": "Nur der Owner kann Mitglieder entfernen",
     "teamMembersLoadError": "Fehler beim Laden der Team-Mitglieder",
     "testEmailSent": "Test-Email an {email} versendet",
+    "translationCreated": "Übersetzung erfolgreich erstellt",
     "updateError": "Fehler beim Aktualisieren",
     "updated": "Erfolgreich aktualisiert",
     "usageSynced": "Usage synchronisiert",
@@ -11203,6 +11234,13 @@
       "folderMoveError": "Der Ordner konnte nicht verschoben werden",
       "folderUpdated": "Ordner aktualisiert"
     },
+    "keyVisual": {
+      "fileTooLarge": "Datei zu groß (max 10MB)",
+      "imageFileOnly": "Nur Bilddateien sind erlaubt",
+      "imageLoadError": "Fehler beim Laden des Bildes",
+      "uploadError": "Fehler beim Hochladen des Key Visuals",
+      "uploaded": "Key Visual erfolgreich hochgeladen"
+    },
     "branding": {
       "fileTooLarge": "Die Datei darf maximal 5MB groß sein",
       "invalidFileType": "Bitte wählen Sie eine Bilddatei aus",
@@ -11218,8 +11256,45 @@
       "suggestionSavedAsClipping": "Vorschlag erfolgreich als Clipping gespeichert",
       "suggestionConfirmError": "Fehler beim Übernehmen des Vorschlags",
       "suggestionMarkedAsSpam": "Vorschlag als Spam markiert",
-      "suggestionMarkSpamError": "Fehler beim Markieren als Spam"
-    }
+      "suggestionMarkSpamError": "Fehler beim Markieren als Spam",
+      "suggestionConfirmed": "Vorschlag bestätigt und Clipping erstellt",
+      "suggestionRejected": "Vorschlag abgelehnt",
+      "suggestionRejectError": "Fehler beim Ablehnen des Vorschlags",
+      "trackerUnavailable": "Tracker nicht verfügbar",
+      "activated": "Monitoring aktiviert",
+      "deactivated": "Monitoring deaktiviert",
+      "statusChangeError": "Fehler beim Ändern des Monitoring-Status",
+      "extended": "Monitoring um {days} Tage verlängert",
+      "extendError": "Fehler beim Verlängern des Monitorings"
+    },
+    "campaigns": {
+      "approvalLinkSendError": "Fehler beim Versenden des Freigabe-Links",
+      "approvalLinkSent": "Freigabe-Link erfolgreich versendet",
+      "deleteError": "Fehler beim Löschen der Kampagne",
+      "deleted": "Kampagne erfolgreich gelöscht"
+    },
+    "translation": {
+      "deleted": "Übersetzung ({language}) gelöscht",
+      "pdfOpened": "PDF für {language} geöffnet",
+      "pdfError": "PDF-Generierung fehlgeschlagen"
+    },
+    "tasks": {
+      "completedWithTitle": "\"{title}\" als erledigt markiert",
+      "completeError": "Task konnte nicht aktualisiert werden",
+      "reopenedWithTitle": "\"{title}\" wieder geöffnet",
+      "reopenError": "Task konnte nicht wieder geöffnet werden",
+      "deletedWithTitle": "\"{title}\" erfolgreich gelöscht",
+      "deleteError": "Task konnte nicht gelöscht werden"
+    },
+    "ai": {
+      "contentTooShortForImageIdeas": "Bitte geben Sie zuerst mehr Inhalt in die Pressemitteilung ein (mind. 100 Zeichen), damit die KI passende Bildideen entwickeln kann.",
+      "selectProjectFirst": "Bitte wählen Sie zuerst ein Projekt aus, damit das Bild korrekt gespeichert werden kann.",
+      "noImageIdeasGenerated": "Keine Bildideen konnten generiert werden. Bitte versuchen Sie es erneut.",
+      "imageGeneratedAndSaved": "Bild erfolgreich generiert und gespeichert!",
+      "imageGenerationFailed": "Das Bild konnte nicht generiert werden. Bitte versuchen Sie es erneut.",
+      "imageGenerationPolicyViolation": "Das Bild konnte nicht generiert werden, da der Inhalt gegen die Richtlinien verstößt. Bitte wählen Sie einen anderen Bildvorschlag."
+    },
+    "copyError": "Fehler beim Kopieren"
   },
   "setup": {
     "mediaWizard": {

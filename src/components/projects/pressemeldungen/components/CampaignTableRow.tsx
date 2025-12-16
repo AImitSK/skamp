@@ -39,6 +39,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
   const router = useRouter();
   const { user } = useAuth();
   const t = useTranslations('projects.pressemeldungen.tableRow');
+  const tToast = useTranslations('toasts');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -92,10 +93,10 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     setIsDeleting(true);
     try {
       await prService.delete(campaign.id!);
-      toastService.success('Kampagne erfolgreich gelöscht');
+      toastService.success(tToast('campaigns.deleted'));
       onRefresh();
     } catch (error) {
-      toastService.error('Fehler beim Löschen der Kampagne');
+      toastService.error(tToast('campaigns.deleteError'));
     } finally {
       setIsDeleting(false);
     }
@@ -124,10 +125,10 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         campaignApproval,
         're-request'
       );
-      toastService.success('Freigabe-Link erfolgreich versendet');
+      toastService.success(tToast('campaigns.approvalLinkSent'));
     } catch (error) {
       console.error('Error resending approval link:', error);
-      toastService.error('Fehler beim Versenden des Freigabe-Links');
+      toastService.error(tToast('campaigns.approvalLinkSendError'));
     } finally {
       setIsResending(false);
     }
@@ -139,10 +140,10 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     const approvalUrl = `${window.location.origin}/freigabe/${campaignApproval.shareId}`;
     try {
       await navigator.clipboard.writeText(approvalUrl);
-      toastService.success('Freigabe-Link kopiert');
+      toastService.success(tToast('copied'));
     } catch (error) {
       console.error('Error copying to clipboard:', error);
-      toastService.error('Fehler beim Kopieren des Links');
+      toastService.error(tToast('copyError'));
     }
   };
 

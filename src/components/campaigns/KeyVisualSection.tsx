@@ -67,6 +67,7 @@ export function KeyVisualSection({
   pressReleaseContent
 }: KeyVisualSectionProps) {
   const t = useTranslations('campaigns.keyVisual');
+  const tToast = useTranslations('toasts.keyVisual');
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
@@ -112,12 +113,12 @@ export function KeyVisualSection({
 
     // Validierung
     if (!file.type.startsWith('image/')) {
-      toastService.error('Nur Bilddateien sind erlaubt');
+      toastService.error(tToast('imageFileOnly'));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toastService.error('Datei zu groß (max 10MB)');
+      toastService.error(tToast('fileTooLarge'));
       return;
     }
 
@@ -197,12 +198,12 @@ export function KeyVisualSection({
         cropData: cropData
       });
 
-      toastService.success('Key Visual erfolgreich hochgeladen');
+      toastService.success(tToast('uploaded'));
       setShowCropper(false);
       setSelectedImageSrc('');
     } catch (error) {
       console.error('Campaign KeyVisual Upload-Fehler:', error);
-      toastService.error('Fehler beim Hochladen des Key Visuals');
+      toastService.error(tToast('uploadError'));
       setUploadingWithSmartRouter(false);
     } finally {
       setIsProcessing(false);
@@ -243,7 +244,7 @@ export function KeyVisualSection({
 
       } catch (error) {
         console.error('Campaign KeyVisual CORS-Fehler beim Asset-Loading:', error);
-        toastService.error('Fehler beim Laden des Bildes');
+        toastService.error(tToast('imageLoadError'));
         setIsLoadingCropper(false);
       }
     }
@@ -282,7 +283,7 @@ export function KeyVisualSection({
 
       } catch (error) {
         console.error('Campaign KeyVisual CORS-Fehler beim Asset-Loading:', error);
-        toastService.error('Fehler beim Laden des Bildes');
+        toastService.error(tToast('imageLoadError'));
         setIsLoadingCropper(false);
       }
     }

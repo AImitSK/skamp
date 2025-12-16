@@ -11013,6 +11013,7 @@
     }
   },
   "toasts": {
+    "authRequired": "Authentication required",
     "archiveError": "Error archiving",
     "autoReportingActivated": "Auto-reporting activated",
     "autoReportingDeleted": "Auto-reporting deleted",
@@ -11022,6 +11023,7 @@
     "clippingLoadError": "Clipping could not be loaded",
     "contactCreated": "Contact successfully created",
     "contactDeletedWithName": "{name} successfully deleted",
+    "contactNoEmail": "Contact has no email address",
     "contactsDeleted": "{count} contacts successfully deleted",
     "contactsDeleteError": "Contacts could not be deleted",
     "contactsExportSuccess": "Export successful: kontakte-export.csv",
@@ -11072,12 +11074,21 @@
     "emailScheduled": "Email scheduled for {datetime}",
     "emailSent": "Email sent",
     "error": "An error occurred",
+    "testEmailSent": "Test email sent to {email}",
+    "testEmailError": "Test email failed",
     "exportError": "Export failed",
     "exportNoData": "No data to export",
     "exportSuccess": "Export successful",
     "glossaryCreated": "Glossary entry created",
     "glossaryDeleted": "Glossary entry deleted",
     "glossaryUpdated": "Glossary entry updated",
+    "inbox": {
+      "compose": {
+        "noFromAddress": "No sender address selected",
+        "requiredFields": "Please fill in all required fields and select a sender address",
+        "sendFailed": "Send failed: {error}"
+      }
+    },
     "importSuccess": "Import successfully completed",
     "invitationCreatedEmailFailed": "Invitation created, but email could not be sent",
     "invitationResendError": "Error resending invitation",
@@ -11103,9 +11114,16 @@
     "refreshAllStarted": "Update started - recalculating all dynamic lists...",
     "refreshAllSuccess": "All dynamic lists successfully updated",
     "loadError": "Error loading",
+    "maxRecipientsReached": "Maximum {max} recipients allowed",
     "mediumNotFound": "Medium could not be found",
     "memberRemoveError": "Error removing member",
     "memberRemoved": "Member removed",
+    "messageDeleted": "Message deleted",
+    "messageDeleteError": "Error deleting message",
+    "messageEdited": "Message edited",
+    "messageEditError": "Error editing message",
+    "messageEmptyError": "Message cannot be empty",
+    "noActiveMonitoring": "No active monitoring found",
     "noOrganization": "No organization found",
     "notAuthenticated": "Not authenticated",
     "organizationUpdated": "Organization successfully updated",
@@ -11113,6 +11131,8 @@
     "ownerTransferError": "Error transferring owner role",
     "ownerTransferred": "{name} is now the new owner",
     "pipelinePdfGenerated": "Pipeline PDF successfully generated",
+    "pressReleaseCreateError": "Error creating press release",
+    "pressReleaseCreated": "Press release successfully created",
     "projectArchived": "Project archived",
     "projectCreated": "Project \"{title}\" successfully created",
     "projectDeleted": "Project deleted",
@@ -11125,6 +11145,7 @@
     "publicationsDeleted": "{count} publications deleted",
     "publicationUpdated": "Publication updated",
     "recipientAdded": "{name} added",
+    "recipientAlreadyAdded": "Contact already added",
     "reportSendError": "Report could not be sent",
     "reportSending": "Sending report...",
     "reportSent": "Report sent",
@@ -11140,6 +11161,7 @@
     },
     "saveError": "Error saving",
     "saved": "Successfully saved",
+    "selectRecipient": "Please select at least one recipient",
     "settingsError": "Error saving settings",
     "settingsSaved": "Settings saved",
     "signatureCreated": "Signature successfully created",
@@ -11160,11 +11182,20 @@
       "patternToggleError": "Error activating/deactivating"
     },
     "subscriptionCanceled": "Subscription successfully canceled",
+    "subscriptionReactivated": "Subscription successfully reactivated",
     "subscriptionUpdated": "Plan successfully changed",
+    "subscription": {
+      "planChanged": "Plan successfully changed to {tier}",
+      "planChangeError": "Error changing plan",
+      "selectDifferentPlan": "Please select a different plan",
+      "downgradeNotPossible": "Downgrade not possible - see details below"
+    },
+    "reactivateError": "Error reactivating",
     "syncError": "Error synchronizing",
     "teamMemberRemoveOnlyOwner": "Only the owner can remove members",
     "teamMembersLoadError": "Error loading team members",
     "testEmailSent": "Test email sent to {email}",
+    "translationCreated": "Translation successfully created",
     "updateError": "Error updating",
     "updated": "Successfully updated",
     "usageSynced": "Usage synchronized",
@@ -11189,6 +11220,13 @@
       "folderMoveError": "The folder could not be moved",
       "folderUpdated": "Folder updated"
     },
+    "keyVisual": {
+      "fileTooLarge": "File too large (max 10MB)",
+      "imageFileOnly": "Only image files are allowed",
+      "imageLoadError": "Error loading image",
+      "uploadError": "Error uploading key visual",
+      "uploaded": "Key visual successfully uploaded"
+    },
     "branding": {
       "fileTooLarge": "File must not exceed 5MB",
       "invalidFileType": "Please select an image file",
@@ -11204,8 +11242,45 @@
       "suggestionSavedAsClipping": "Suggestion successfully saved as clipping",
       "suggestionConfirmError": "Error accepting suggestion",
       "suggestionMarkedAsSpam": "Suggestion marked as spam",
-      "suggestionMarkSpamError": "Error marking as spam"
-    }
+      "suggestionMarkSpamError": "Error marking as spam",
+      "suggestionConfirmed": "Suggestion confirmed and clipping created",
+      "suggestionRejected": "Suggestion rejected",
+      "suggestionRejectError": "Error rejecting suggestion",
+      "trackerUnavailable": "Tracker not available",
+      "activated": "Monitoring activated",
+      "deactivated": "Monitoring deactivated",
+      "statusChangeError": "Error changing monitoring status",
+      "extended": "Monitoring extended by {days} days",
+      "extendError": "Error extending monitoring"
+    },
+    "campaigns": {
+      "approvalLinkSendError": "Error sending approval link",
+      "approvalLinkSent": "Approval link successfully sent",
+      "deleteError": "Error deleting campaign",
+      "deleted": "Campaign successfully deleted"
+    },
+    "tasks": {
+      "completedWithTitle": "\"{title}\" marked as completed",
+      "completeError": "Task could not be updated",
+      "reopenedWithTitle": "\"{title}\" reopened",
+      "reopenError": "Task could not be reopened",
+      "deletedWithTitle": "\"{title}\" successfully deleted",
+      "deleteError": "Task could not be deleted"
+    },
+    "translation": {
+      "deleted": "Translation ({language}) deleted",
+      "pdfOpened": "PDF for {language} opened",
+      "pdfError": "PDF generation failed"
+    },
+    "ai": {
+      "contentTooShortForImageIdeas": "Please enter more content in the press release (min. 100 characters) so the AI can develop suitable image ideas.",
+      "selectProjectFirst": "Please select a project first so the image can be saved correctly.",
+      "noImageIdeasGenerated": "No image ideas could be generated. Please try again.",
+      "imageGeneratedAndSaved": "Image successfully generated and saved!",
+      "imageGenerationFailed": "The image could not be generated. Please try again.",
+      "imageGenerationPolicyViolation": "The image could not be generated because the content violates the guidelines. Please choose a different image suggestion."
+    },
+    "copyError": "Error copying"
   },
   "setup": {
     "mediaWizard": {
