@@ -30,6 +30,7 @@ import clsx from 'clsx';
  */
 export default function ContactsPage() {
   const t = useTranslations('contacts');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -161,10 +162,10 @@ export default function ContactsPage() {
           { ids: [id], organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              toastService.success(`${name} erfolgreich gelöscht`);
+              toastService.success(tToast('contactDeletedWithName', { name }));
             },
             onError: () => {
-              toastService.error('Kontakt konnte nicht gelöscht werden');
+              toastService.error(tToast('deleteError'));
             },
           }
         );
@@ -186,11 +187,11 @@ export default function ContactsPage() {
           { ids, organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              toastService.success(`${ids.length} Kontakte erfolgreich gelöscht`);
+              toastService.success(tToast('contactsDeleted', { count: ids.length }));
               setSelectedIds(new Set());
             },
             onError: () => {
-              toastService.error('Kontakte konnten nicht gelöscht werden');
+              toastService.error(tToast('contactsDeleteError'));
             },
           }
         );
@@ -207,14 +208,14 @@ export default function ContactsPage() {
       });
 
       if (!csvContent || filteredContacts.length === 0) {
-        toastService.warning('Keine Daten zum Exportieren');
+        toastService.warning(tToast('exportNoData'));
         return;
       }
 
       downloadCSV(csvContent, 'kontakte-export.csv');
-      toastService.success('Export erfolgreich: kontakte-export.csv');
+      toastService.success(tToast('contactsExportSuccess'));
     } catch (error) {
-      toastService.error('Export fehlgeschlagen - bitte Konsole prüfen');
+      toastService.error(tToast('exportError'));
     }
   };
 
@@ -386,7 +387,7 @@ export default function ContactsPage() {
           }}
           onSave={() => {
             // React Query automatically refetches after mutations
-            toastService.success(selectedContact ? 'Kontakt erfolgreich aktualisiert' : 'Kontakt erfolgreich erstellt');
+            toastService.success(selectedContact ? tToast('contactUpdated') : tToast('contactCreated'));
             setShowContactModal(false);
             setSelectedContact(null);
           }}
@@ -401,7 +402,7 @@ export default function ContactsPage() {
           onImportSuccess={() => {
             setShowImportModal(false);
             // React Query automatically refetches after mutations
-            toastService.success('Import erfolgreich abgeschlossen');
+            toastService.success(tToast('importSuccess'));
           }}
         />
       )}

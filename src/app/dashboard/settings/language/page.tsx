@@ -41,6 +41,7 @@ const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 export default function LanguageSettingsPage() {
   const t = useTranslations('settings.language');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
 
@@ -122,7 +123,7 @@ export default function LanguageSettingsPage() {
 
   const handleUiLanguageChange = async (newLanguage: UILanguage) => {
     if (!user?.uid) {
-      toastService.error('Nicht angemeldet');
+      toastService.error(tToast('notAuthenticated'));
       return;
     }
 
@@ -137,7 +138,7 @@ export default function LanguageSettingsPage() {
       // 3. State aktualisieren
       setUiLanguage(newLanguage);
 
-      toastService.success('UI-Sprache geändert - Seite wird neu geladen');
+      toastService.success(tToast('languageChangedReloading'));
 
       // 4. Seite neu laden damit next-intl die neue Sprache verwendet
       setTimeout(() => {
@@ -145,7 +146,7 @@ export default function LanguageSettingsPage() {
       }, 500);
     } catch (error) {
       console.error('Fehler beim Speichern der Sprache:', error);
-      toastService.error('Fehler beim Speichern');
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }
@@ -167,7 +168,7 @@ export default function LanguageSettingsPage() {
           context: input.context,
         },
       });
-      toastService.success('Glossar-Eintrag aktualisiert');
+      toastService.success(tToast('glossaryUpdated'));
     } else {
       // Neu erstellen
       await createEntry({
@@ -175,7 +176,7 @@ export default function LanguageSettingsPage() {
         userId: user.uid,
         input,
       });
-      toastService.success('Glossar-Eintrag erstellt');
+      toastService.success(tToast('glossaryCreated'));
     }
   };
 
@@ -192,9 +193,9 @@ export default function LanguageSettingsPage() {
         organizationId,
         entryId: entry.id,
       });
-      toastService.success('Glossar-Eintrag gelöscht');
+      toastService.success(tToast('glossaryDeleted'));
     } catch (error) {
-      toastService.error('Fehler beim Löschen');
+      toastService.error(tToast('deleteError'));
     }
   };
 

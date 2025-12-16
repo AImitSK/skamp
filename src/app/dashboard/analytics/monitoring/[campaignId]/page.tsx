@@ -30,6 +30,7 @@ import { ErrorState } from './components/ErrorState';
 
 function MonitoringContent() {
   const t = useTranslations('monitoring');
+  const tToast = useTranslations('toasts');
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -108,11 +109,11 @@ function MonitoringContent() {
         }
       );
 
-      toastService.success('Vorschlag erfolgreich als Clipping gespeichert');
+      toastService.success(tToast('monitoring.suggestionSavedAsClipping'));
       await reloadData();
     } catch (error) {
       console.error('Fehler beim Bestätigen:', error);
-      toastService.error('Fehler beim Übernehmen des Vorschlags');
+      toastService.error(tToast('monitoring.suggestionConfirmError'));
     }
   }, [user?.uid, currentOrganization?.id, reloadData]);
 
@@ -132,11 +133,11 @@ function MonitoringContent() {
         }
       );
 
-      toastService.success('Vorschlag als Spam markiert');
+      toastService.success(tToast('monitoring.suggestionMarkedAsSpam'));
       await reloadData();
     } catch (error) {
       console.error('Fehler beim Spam-Markieren:', error);
-      toastService.error('Fehler beim Markieren als Spam');
+      toastService.error(tToast('monitoring.suggestionMarkSpamError'));
     }
   }, [user?.uid, currentOrganization?.id, reloadData]);
 

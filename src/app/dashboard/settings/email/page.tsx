@@ -47,6 +47,7 @@ type TabType = 'addresses' | 'signatures';
 export default function EmailSettingsPage() {
   const t = useTranslations('settings.email');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
@@ -105,8 +106,8 @@ export default function EmailSettingsPage() {
       const activeMembers = members.filter(m => m.status === 'active');
       setTeamMembers(activeMembers);
     } catch (error) {
-      toastService.error('Fehler beim Laden der Team-Mitglieder');
-      
+      toastService.error(tToast('teamMembersLoadError'));
+
       // Fallback: Erstelle das erste Team-Mitglied (Owner) wenn keines existiert
       if (user) {
         try {
@@ -150,7 +151,7 @@ export default function EmailSettingsPage() {
 
       setDomains(emailDomains);
     } catch (error) {
-      toastService.error('Fehler beim Laden der Domains');
+      toastService.error(tToast('domainsLoadError'));
     } finally {
       setLoadingDomains(false);
     }
@@ -166,7 +167,7 @@ export default function EmailSettingsPage() {
       );
       setEmailAddresses(addresses);
     } catch (error) {
-      toastService.error('Fehler beim Laden der E-Mail-Adressen');
+      toastService.error(tToast('emailAddressesLoadError'));
     } finally {
       setLoading(false);
     }
@@ -179,7 +180,7 @@ export default function EmailSettingsPage() {
       const sigs = await emailSignatureService.getByOrganization(organizationId);
       setSignatures(sigs);
     } catch (error) {
-      toastService.error('Fehler beim Laden der Signaturen');
+      toastService.error(tToast('signaturesLoadError'));
     } finally {
       setLoadingSignatures(false);
     }
@@ -233,10 +234,10 @@ export default function EmailSettingsPage() {
       
       if (showAddModal) {
         await emailAddressService.create(formData, organizationId, user?.uid || '');
-        toastService.success('E-Mail-Adresse erfolgreich erstellt');
+        toastService.success(tToast('emailAddressCreated'));
       } else if (showEditModal && selectedAddress?.id) {
         await emailAddressService.update(selectedAddress.id, formData, user?.uid || '');
-        toastService.success('E-Mail-Adresse erfolgreich aktualisiert');
+        toastService.success(tToast('emailAddressUpdated'));
       }
       
       await loadEmailAddresses();
@@ -247,7 +248,7 @@ export default function EmailSettingsPage() {
       if (error instanceof Error) {
         toastService.error(error.message);
       } else {
-        toastService.error('Fehler beim Speichern der E-Mail-Adresse');
+        toastService.error(tToast('emailAddressSaveError'));
       }
     } finally {
       setSaving(false);
@@ -260,7 +261,7 @@ export default function EmailSettingsPage() {
     try {
       setSaving(true);
       await emailAddressService.delete(selectedAddress.id, user?.uid || '');
-      toastService.success('E-Mail-Adresse erfolgreich gelöscht');
+      toastService.success(tToast('emailAddressDeleted'));
       await loadEmailAddresses();
       setShowDeleteModal(false);
       setSelectedAddress(null);
@@ -268,7 +269,7 @@ export default function EmailSettingsPage() {
       if (error instanceof Error) {
         toastService.error(error.message);
       } else {
-        toastService.error('Fehler beim Löschen der E-Mail-Adresse');
+        toastService.error(tToast('emailAddressDeleteError'));
       }
     } finally {
       setSaving(false);
@@ -280,10 +281,10 @@ export default function EmailSettingsPage() {
 
     try {
       await emailAddressService.setAsDefault(address.id, organizationId);
-      toastService.success('E-Mail-Adresse als Standard gesetzt');
+      toastService.success(tToast('emailAddressSetAsDefault'));
       await loadEmailAddresses();
     } catch (error) {
-      toastService.error('Fehler beim Setzen als Standard');
+      toastService.error(tToast('emailAddressSetAsDefaultError'));
     }
   };
 
@@ -292,10 +293,10 @@ export default function EmailSettingsPage() {
     try {
       if (id) {
         await emailSignatureService.update(id, signature, user?.uid || '');
-        toastService.success('Signatur erfolgreich aktualisiert');
+        toastService.success(tToast('signatureUpdated'));
       } else {
         await emailSignatureService.create(signature, organizationId, user?.uid || '');
-        toastService.success('Signatur erfolgreich erstellt');
+        toastService.success(tToast('signatureCreated'));
       }
       await loadSignatures();
     } catch (error) {
@@ -306,13 +307,13 @@ export default function EmailSettingsPage() {
   const handleDeleteSignature = async (id: string) => {
     try {
       await emailSignatureService.delete(id);
-      toastService.success('Signatur erfolgreich gelöscht');
+      toastService.success(tToast('signatureDeleted'));
       await loadSignatures();
     } catch (error) {
       if (error instanceof Error) {
         toastService.error(error.message);
       } else {
-        toastService.error('Fehler beim Löschen der Signatur');
+        toastService.error(tToast('signatureDeleteError'));
       }
     }
   };
@@ -320,10 +321,10 @@ export default function EmailSettingsPage() {
   const handleDuplicateSignature = async (id: string) => {
     try {
       await emailSignatureService.duplicate(id, user?.uid || '');
-      toastService.success('Signatur erfolgreich dupliziert');
+      toastService.success(tToast('signatureDuplicated'));
       await loadSignatures();
     } catch (error) {
-      toastService.error('Fehler beim Duplizieren der Signatur');
+      toastService.error(tToast('signatureDuplicateError'));
     }
   };
 

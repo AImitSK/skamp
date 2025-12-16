@@ -38,6 +38,7 @@ import { toastService } from '@/lib/utils/toast';
 
 export default function ListsPage() {
   const t = useTranslations('lists');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
@@ -101,11 +102,11 @@ export default function ListsPage() {
       },
       {
         onSuccess: () => {
-          toastService.success('Liste erfolgreich erstellt');
+          toastService.success(tToast('listCreated'));
           setShowCreateModal(false);
         },
         onError: () => {
-          toastService.error('Liste konnte nicht erstellt werden');
+          toastService.error(tToast('listCreateError'));
         },
       }
     );
@@ -122,11 +123,11 @@ export default function ListsPage() {
       },
       {
         onSuccess: () => {
-          toastService.success('Liste erfolgreich aktualisiert');
+          toastService.success(tToast('listUpdated'));
           setEditingList(null);
         },
         onError: () => {
-          toastService.error('Liste konnte nicht aktualisiert werden');
+          toastService.error(tToast('listUpdateError'));
         },
       }
     );
@@ -148,10 +149,10 @@ export default function ListsPage() {
           },
           {
             onSuccess: () => {
-              toastService.success(`"${listName}" erfolgreich gelöscht`);
+              toastService.success(tToast('listDeleted', { name: listName }));
             },
             onError: () => {
-              toastService.error('Liste konnte nicht gelöscht werden');
+              toastService.error(tToast('listDeleteError'));
             },
           }
         );
@@ -176,11 +177,11 @@ export default function ListsPage() {
           },
           {
             onSuccess: () => {
-              toastService.success(`${count} Listen erfolgreich gelöscht`);
+              toastService.success(tToast('listsDeleted', { count }));
               setSelectedListIds(new Set());
             },
             onError: () => {
-              toastService.error('Listen konnten nicht gelöscht werden');
+              toastService.error(tToast('listsDeleteError'));
             },
           }
         );
@@ -193,11 +194,11 @@ export default function ListsPage() {
 
     try {
       await listsService.refreshDynamicList(listId);
-      toastService.success('Dynamische Liste erfolgreich aktualisiert');
+      toastService.success(tToast('listRefreshed'));
       // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
     } catch (error) {
-      toastService.error('Liste konnte nicht aktualisiert werden');
+      toastService.error(tToast('listRefreshError'));
     }
   };
 
@@ -211,13 +212,13 @@ export default function ListsPage() {
       type: 'warning',
       onConfirm: async () => {
         try {
-          toastService.info('Aktualisierung gestartet - alle dynamischen Listen werden neu berechnet...');
+          toastService.info(tToast('refreshAllStarted'));
           await listsService.refreshAllDynamicLists(currentOrganization.id);
-          toastService.success('Alle dynamischen Listen erfolgreich aktualisiert');
+          toastService.success(tToast('refreshAllSuccess'));
           // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
           queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
         } catch (error) {
-          toastService.error('Listen konnten nicht aktualisiert werden');
+          toastService.error(tToast('refreshAllError'));
         }
       }
     });
@@ -249,9 +250,9 @@ export default function ListsPage() {
       link.click();
       document.body.removeChild(link);
 
-      toastService.success('Kontakte erfolgreich exportiert');
+      toastService.success(tToast('exportSuccess'));
     } catch (error) {
-      toastService.error('Liste konnte nicht exportiert werden');
+      toastService.error(tToast('exportError'));
     }
   };
 

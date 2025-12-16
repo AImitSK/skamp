@@ -73,6 +73,7 @@ export default function ProjectsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('projects');
+  const tToast = useTranslations('toasts');
 
   // React Query Hook für Projekte
   const { data: allProjects = [], isLoading } = useProjects(currentOrganization?.id);
@@ -169,7 +170,7 @@ export default function ProjectsPage() {
   };
 
   const handleWizardSuccess = (result: ProjectCreationResult) => {
-    toastService.success(`Projekt "${result.project.title}" erfolgreich erstellt`);
+    toastService.success(tToast('projectCreated', { title: result.project.title }));
     // React Query invalidiert automatisch den Cache
   };
 
@@ -179,7 +180,7 @@ export default function ProjectsPage() {
   };
 
   const handleEditSuccess = (updatedProject: Project) => {
-    toastService.success(`Projekt "${updatedProject.title}" erfolgreich aktualisiert`);
+    toastService.success(tToast('projectUpdated', { title: updatedProject.title }));
     // React Query invalidiert automatisch den Cache
   };
 
@@ -236,9 +237,9 @@ export default function ProjectsPage() {
         organizationId: currentOrganization.id
       });
 
-      toastService.success(`Projekt "${projectTitle}" erfolgreich verschoben`);
+      toastService.success(tToast('projectMoved', { title: projectTitle }));
     } catch (error: any) {
-      toastService.error('Projekt konnte nicht verschoben werden');
+      toastService.error(tToast('projectMoveError'));
     }
   };
 

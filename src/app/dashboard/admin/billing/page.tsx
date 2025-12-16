@@ -19,6 +19,7 @@ import clsx from 'clsx';
 export default function BillingPage() {
   const { user } = useAuth();
   const t = useTranslations('admin.billing');
+  const tToast = useTranslations('toasts');
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [fixLoading, setFixLoading] = useState(false);
@@ -69,13 +70,13 @@ export default function BillingPage() {
       const data = await response.json();
 
       if (data.success) {
-        toastService.success('Organization erfolgreich aktualisiert!');
+        toastService.success(tToast('organizationUpdated'));
         fetchOrganization(); // Reload
       } else {
-        toastService.error(data.error || 'Fehler beim Aktualisieren');
+        toastService.error(data.error || tToast('updateError'));
       }
     } catch (error: any) {
-      toastService.error(error.message || 'Fehler beim Aktualisieren');
+      toastService.error(error.message || tToast('updateError'));
     } finally {
       setFixLoading(false);
     }
@@ -98,14 +99,17 @@ export default function BillingPage() {
 
       if (data.success) {
         console.log('[Billing] Usage Sync erfolgreich:', data.usage);
-        toastService.success(`Usage synchronisiert: ${data.usage.contacts} Kontakte, ${data.usage.teamMembers} Team-Mitglieder`);
+        toastService.success(tToast('usageSyncedWithDetails', {
+          contacts: data.usage.contacts,
+          teamMembers: data.usage.teamMembers
+        }));
         fetchOrganization(); // Reload
       } else {
         console.error('[Billing] Usage Sync fehlgeschlagen:', data.error);
-        toastService.error(data.error || 'Fehler beim Synchronisieren');
+        toastService.error(data.error || tToast('syncError'));
       }
     } catch (error: any) {
-      toastService.error(error.message || 'Fehler beim Synchronisieren');
+      toastService.error(error.message || tToast('syncError'));
     } finally {
       setSyncLoading(false);
     }

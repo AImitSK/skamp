@@ -45,6 +45,7 @@ type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const t = useTranslations('media');
+  const tToast = useTranslations('toasts.media');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
@@ -180,10 +181,10 @@ export default function MediathekPage() {
         organizationId
       });
 
-      toastService.success('Ordner verschoben');
+      toastService.success(tToast('folderMoved'));
 
     } catch (error) {
-      toastService.error('Der Ordner konnte nicht verschoben werden');
+      toastService.error(tToast('folderMoveError'));
     } finally {
       setMoving(false);
       setDraggedFolder(null);
@@ -248,9 +249,9 @@ export default function MediathekPage() {
           });
 
           clearSelection();
-          toastService.success(`${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
+          toastService.success(tToast('filesDeleted', { count }));
         } catch (error) {
-          toastService.error('Die Dateien konnten nicht gelöscht werden');
+          toastService.error(tToast('filesDeleteError'));
         } finally {
           setMoving(false);
         }
@@ -276,9 +277,9 @@ export default function MediathekPage() {
       );
 
       clearSelection();
-      toastService.success('Dateien verschoben');
+      toastService.success(tToast('filesMoved'));
     } catch (error) {
-      toastService.error('Die Dateien konnten nicht verschoben werden');
+      toastService.error(tToast('filesMoveError'));
     } finally {
       setMoving(false);
     }
@@ -391,11 +392,11 @@ export default function MediathekPage() {
           newFolderId: targetFolder.id,
           organizationId
         });
-        toastService.success('Datei verschoben');
+        toastService.success(tToast('fileMoved'));
       }
 
     } catch (error) {
-      toastService.error('Die Dateien konnten nicht verschoben werden');
+      toastService.error(tToast('filesMoveError'));
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -422,10 +423,10 @@ export default function MediathekPage() {
           organizationId: organizationId!
         });
 
-        toastService.success('Ordner in Root verschoben');
+        toastService.success(tToast('folderMovedToRoot'));
 
       } catch (error) {
-        toastService.error('Der Ordner konnte nicht verschoben werden');
+        toastService.error(tToast('folderMoveError'));
       } finally {
         setMoving(false);
         setDraggedFolder(null);
@@ -474,10 +475,10 @@ export default function MediathekPage() {
         });
       }
 
-      toastService.success(`${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
+      toastService.success(tToast('filesMovedToRoot', { count }));
 
     } catch (error) {
-      toastService.error('Die Dateien konnten nicht verschoben werden');
+      toastService.error(tToast('filesMoveError'));
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -507,10 +508,10 @@ export default function MediathekPage() {
         const targetName = targetFolderId
           ? allFolders.find(f => f.id === targetFolderId)?.name || 'Ordner'
           : 'Root';
-        toastService.success(`Ordner nach "${targetName}" verschoben`);
+        toastService.success(tToast('folderMovedTo', { target: targetName }));
 
       } catch (error) {
-        toastService.error('Der Ordner konnte nicht verschoben werden');
+        toastService.error(tToast('folderMoveError'));
       } finally {
         setMoving(false);
         setDraggedFolder(null);
@@ -546,11 +547,11 @@ export default function MediathekPage() {
         const targetName = targetFolderId
           ? allFolders.find(f => f.id === targetFolderId)?.name || 'Ordner'
           : 'Root';
-        toastService.success(`Datei nach "${targetName}" verschoben`);
+        toastService.success(tToast('fileMovedTo', { target: targetName }));
       }
 
     } catch (error) {
-      toastService.error('Die Dateien konnten nicht verschoben werden');
+      toastService.error(tToast('filesMoveError'));
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -593,7 +594,7 @@ export default function MediathekPage() {
           }
         });
       }
-      toastService.success(editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
+      toastService.success(editingFolder ? tToast('folderUpdated') : tToast('folderCreated'));
     } catch (error) {
       throw error;
     }
@@ -612,9 +613,9 @@ export default function MediathekPage() {
             folderId: folder.id!,
             organizationId: organizationId ?? undefined
           });
-          toastService.success('Ordner gelöscht');
+          toastService.success(tToast('folderDeleted'));
         } catch (error) {
-          toastService.error('Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist');
+          toastService.error(tToast('folderDeleteError'));
         }
       }
     });
@@ -658,9 +659,9 @@ export default function MediathekPage() {
             asset,
             organizationId: organizationId ?? undefined
           });
-          toastService.success('Datei gelöscht');
+          toastService.success(tToast('fileDeleted'));
         } catch(error) {
-          toastService.error('Die Datei konnte nicht gelöscht werden');
+          toastService.error(tToast('fileDeleteError'));
         }
       }
     });

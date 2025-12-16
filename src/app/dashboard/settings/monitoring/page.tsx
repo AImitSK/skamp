@@ -16,6 +16,7 @@ import { toastService } from '@/lib/utils/toast';
 
 export default function MonitoringSettingsPage() {
   const t = useTranslations('settings.monitoring');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -55,7 +56,7 @@ export default function MonitoringSettingsPage() {
       });
     } catch (error) {
       console.error('Fehler beim Laden der AVE-Einstellungen:', error);
-      toastService.error('Fehler beim Laden der Einstellungen');
+      toastService.error(tToast('loadError'));
     } finally {
       setLoading(false);
     }
@@ -87,14 +88,10 @@ export default function MonitoringSettingsPage() {
       );
 
       await loadSettings();
-      toastService.success('AVE-Einstellungen gespeichert');
+      toastService.success(tToast('aveSettingsSaved'));
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      toastService.error(
-        error instanceof Error
-          ? `Fehler beim Speichern: ${error.message}`
-          : 'Fehler beim Speichern der Einstellungen'
-      );
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }

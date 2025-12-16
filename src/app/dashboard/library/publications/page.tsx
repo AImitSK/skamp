@@ -57,6 +57,7 @@ import { toastService } from '@/lib/utils/toast';
 
 export default function PublicationsPage() {
   const t = useTranslations('publications');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -167,9 +168,9 @@ export default function PublicationsPage() {
             organizationId: currentOrganization?.id || '',
             userId: user?.uid || ''
           });
-          toastService.success(`${title} wurde gelöscht`);
+          toastService.success(tToast('publicationDeleted'));
         } catch (error) {
-          toastService.error('Fehler beim Löschen');
+          toastService.error(tToast('deleteError'));
         }
       }
     });
@@ -193,10 +194,10 @@ export default function PublicationsPage() {
               userId: user?.uid || ''
             })
           ));
-          toastService.success(`${count} Publikationen gelöscht`);
+          toastService.success(tToast('publicationsDeleted', { count }));
           setSelectedPubIds(new Set());
         } catch (error) {
-          toastService.error('Fehler beim Löschen');
+          toastService.error(tToast('deleteError'));
         }
       }
     });
@@ -205,7 +206,7 @@ export default function PublicationsPage() {
   // Export Function
   const handleExport = () => {
     if (filteredPublications.length === 0) {
-      toastService.warning('Keine Daten zum Exportieren');
+      toastService.warning(tToast('exportNoData'));
       return;
     }
 
@@ -236,9 +237,9 @@ export default function PublicationsPage() {
       link.click();
       document.body.removeChild(link);
 
-      toastService.success('Export erfolgreich');
+      toastService.success(tToast('exportSuccess'));
     } catch (error) {
-      toastService.error('Export fehlgeschlagen');
+      toastService.error(tToast('exportError'));
     }
   };
 
@@ -820,7 +821,7 @@ export default function PublicationsPage() {
           onSuccess={() => {
             setShowPublicationModal(false);
             setSelectedPublication(null);
-            toastService.success(selectedPublication ? 'Publikation aktualisiert' : 'Publikation erstellt');
+            toastService.success(selectedPublication ? tToast('publicationUpdated') : tToast('publicationCreated'));
           }}
         />
       )}
@@ -831,7 +832,7 @@ export default function PublicationsPage() {
           onClose={() => setShowImportModal(false)}
           onImportSuccess={() => {
             setShowImportModal(false);
-            toastService.success('Import erfolgreich abgeschlossen');
+            toastService.success(tToast('importSuccess'));
           }}
         />
       )}

@@ -44,6 +44,7 @@ function InfoAlert({ children }: { children: React.ReactNode }) {
 
 export default function DomainsPage() {
   const t = useTranslations('settings.domain');
+  const tToast = useTranslations('toasts');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const [domains, setDomains] = useState<EmailDomainEnhanced[]>([]);
@@ -70,7 +71,7 @@ export default function DomainsPage() {
       setDomains(data);
     } catch (error: any) {
       console.error('Domain loading error:', error);
-      toastService.error('Domain loading failed');
+      toastService.error(tToast('domainLoadError'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +90,7 @@ export default function DomainsPage() {
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.sendgridDomainId) {
-        toastService.error('Domain or SendGrid ID not found');
+        toastService.error(tToast('domainNotFound'));
         return;
       }
 
@@ -122,7 +123,7 @@ export default function DomainsPage() {
         await loadDomains();
       }
     } catch (error: any) {
-      toastService.error(error.message || 'Verification failed');
+      toastService.error(error.message || tToast('verificationError'));
     } finally {
       setVerifying(null);
     }
@@ -134,7 +135,7 @@ export default function DomainsPage() {
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.dnsRecords || domain.dnsRecords.length === 0) {
-        toastService.error('Domain or DNS records not found');
+        toastService.error(tToast('dnsRecordsNotFound'));
         return;
       }
 
@@ -163,7 +164,7 @@ export default function DomainsPage() {
         }
       }
     } catch (error: any) {
-      toastService.error('DNS check failed');
+      toastService.error(tToast('dnsCheckError'));
     } finally {
       setCheckingDns(null);
     }
@@ -187,10 +188,10 @@ export default function DomainsPage() {
       const context = getContext();
       await domainServiceEnhanced.softDelete(domainId, context);
       await loadDomains();
-      toastService.success('Domain deleted successfully');
+      toastService.success(tToast('domainDeleted'));
 
     } catch (error: any) {
-      toastService.error('Failed to delete domain');
+      toastService.error(tToast('domainDeleteError'));
     }
   };
 

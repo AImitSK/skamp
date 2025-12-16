@@ -28,6 +28,7 @@ import {
 export default function BrandingPage() {
   const t = useTranslations('settings.branding');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +86,7 @@ export default function BrandingPage() {
         });
       }
     } catch (error) {
-      toastService.error('Fehler beim Laden der Einstellungen');
+      toastService.error(tToast('branding.settingsLoadError'));
     } finally {
       setLoading(false);
     }
@@ -97,13 +98,13 @@ export default function BrandingPage() {
 
     // Validiere Dateityp
     if (!file.type.startsWith('image/')) {
-      toastService.error('Bitte wählen Sie eine Bilddatei aus');
+      toastService.error(tToast('branding.invalidFileType'));
       return;
     }
 
     // Validiere Dateigröße (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toastService.error('Die Datei darf maximal 5MB groß sein');
+      toastService.error(tToast('branding.fileTooLarge'));
       return;
     }
 
@@ -203,9 +204,9 @@ export default function BrandingPage() {
         emailLogoAssetId: emailAsset?.id || asset.id
       }));
 
-      toastService.success('Logo erfolgreich hochgeladen und gespeichert');
+      toastService.success(tToast('branding.logoUploaded'));
     } catch (error) {
-      toastService.error('Fehler beim Hochladen des Logos');
+      toastService.error(tToast('branding.logoUploadError'));
     } finally {
       setUploadingLogo(false);
     }
@@ -214,7 +215,7 @@ export default function BrandingPage() {
   const handleRemoveLogo = async () => {
 
     if (!user || !organizationId) {
-      toastService.error('Bitte warten Sie, bis die Daten geladen sind');
+      toastService.error(tToast('branding.pleaseWait'));
       return;
     }
 
@@ -231,9 +232,9 @@ export default function BrandingPage() {
         emailLogoAssetId: undefined
       }));
 
-      toastService.success('Logo erfolgreich entfernt und gespeichert');
+      toastService.success(tToast('branding.logoRemoved'));
     } catch (error) {
-      toastService.error('Fehler beim Entfernen des Logos');
+      toastService.error(tToast('branding.logoRemoveError'));
     }
   };
 
@@ -241,7 +242,7 @@ export default function BrandingPage() {
     e.preventDefault();
 
     if (!user || !organizationId) {
-      toastService.error('Bitte warten Sie, bis die Daten geladen sind');
+      toastService.error(tToast('branding.pleaseWait'));
       return;
     }
 
@@ -261,9 +262,9 @@ export default function BrandingPage() {
         { organizationId: organizationId, userId: user.uid }
       );
 
-      toastService.success('Branding-Einstellungen erfolgreich gespeichert');
+      toastService.success(tToast('branding.settingsSaved'));
     } catch (error) {
-      toastService.error('Fehler beim Speichern der Einstellungen');
+      toastService.error(tToast('saveError'));
     } finally {
       setSaving(false);
     }

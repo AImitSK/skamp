@@ -44,6 +44,7 @@ import { toastService } from '@/lib/utils/toast';
 
 export default function TeamSettingsPage() {
   const t = useTranslations('settings.team');
+  const tToast = useTranslations('toasts');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const organizationId = currentOrganization?.id || '';
@@ -220,14 +221,14 @@ export default function TeamSettingsPage() {
         });
         
         if (response.ok) {
-          toastService.success('Einladung wurde erfolgreich versendet!');
+          toastService.success(tToast('invitationSent'));
         } else {
-          
-          toastService.error('Einladung erstellt, aber E-Mail konnte nicht versendet werden');
+
+          toastService.error(tToast('invitationCreatedEmailFailed'));
         }
       } catch (emailError) {
-        
-        toastService.error('Einladung erstellt, aber E-Mail konnte nicht versendet werden');
+
+        toastService.error(tToast('invitationCreatedEmailFailed'));
       }
       
       // Modal schließen und Liste neu laden
@@ -248,7 +249,7 @@ export default function TeamSettingsPage() {
     // 1. Prüfe ob aktueller User Owner ist
     const currentMember = teamMembers.find(m => m.userId === user?.uid);
     if (currentMember?.role !== 'owner') {
-      toastService.error('Nur der Owner kann Rollen ändern');
+      toastService.error(tToast('roleChangeOnlyOwner'));
       return;
     }
 
@@ -264,10 +265,10 @@ export default function TeamSettingsPage() {
       const context = { organizationId, userId: user?.uid || '' };
       await teamMemberService.update(member.id!, { role: newRole }, context);
       await loadTeamMembers();
-      toastService.success(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
+      toastService.success(tToast('roleChanged', { role: roleConfig[newRole].label }));
     } catch (error) {
 
-      toastService.error('Fehler beim Ändern der Rolle');
+      toastService.error(tToast('roleChangeError'));
     }
   };
   
@@ -275,13 +276,13 @@ export default function TeamSettingsPage() {
     // 1. Prüfe ob aktueller User Owner ist
     const currentMember = teamMembers.find(m => m.userId === user?.uid);
     if (currentMember?.role !== 'owner') {
-      toastService.error('Nur der Owner kann Mitglieder entfernen');
+      toastService.error(tToast('teamMemberRemoveOnlyOwner'));
       return;
     }
 
     // 2. Owner kann nicht entfernt werden
     if (member.role === 'owner') {
-      toastService.error('Der Owner kann nicht entfernt werden');
+      toastService.error(tToast('ownerCannotBeRemoved'));
       return;
     }
 
@@ -297,9 +298,9 @@ export default function TeamSettingsPage() {
       const context = { organizationId, userId: user?.uid || '' };
       await teamMemberService.remove(memberToRemove.id!, context);
       await loadTeamMembers();
-      toastService.success('Mitglied wurde entfernt');
+      toastService.success(tToast('memberRemoved'));
     } catch (error) {
-      toastService.error('Fehler beim Entfernen des Mitglieds');
+      toastService.error(tToast('memberRemoveError'));
     } finally {
       setShowConfirmModal(false);
       setMemberToRemove(null);
@@ -315,7 +316,7 @@ export default function TeamSettingsPage() {
       // 1. Finde aktuellen Owner
       const currentOwner = teamMembers.find(m => m.role === 'owner');
       if (!currentOwner || currentOwner.userId !== user.uid) {
-        toastService.error('Nur der Owner kann die Rolle übertragen');
+        toastService.error(tToast('roleTransferOnlyOwner'));
         return;
       }
 
@@ -327,13 +328,13 @@ export default function TeamSettingsPage() {
 
       // 4. Reload und Erfolg
       await loadTeamMembers();
-      toastService.success(`${memberToTransfer.displayName} ist jetzt der neue Owner`);
+      toastService.success(tToast('ownerTransferred', { name: memberToTransfer.displayName }));
 
       setShowTransferModal(false);
       setMemberToTransfer(null);
     } catch (error) {
       console.error('Error transferring ownership:', error);
-      toastService.error('Fehler beim Übertragen der Owner-Rolle');
+      toastService.error(tToast('ownerTransferError'));
     }
   };
 
@@ -381,13 +382,13 @@ export default function TeamSettingsPage() {
       });
 
       if (response.ok) {
-        toastService.success('Einladung wurde erneut versendet');
+        toastService.success(tToast('invitationResent'));
       } else {
         throw new Error('E-Mail-Versand fehlgeschlagen');
       }
     } catch (error: any) {
       console.error('Error resending invite:', error);
-      toastService.error(error.message || 'Fehler beim erneuten Versenden der Einladung');
+      toastService.error(tToast('invitationResendError'));
     }
   };
   

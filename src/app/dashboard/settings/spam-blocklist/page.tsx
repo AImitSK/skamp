@@ -21,6 +21,7 @@ import { toastService } from '@/lib/utils/toast';
 
 export default function SpamBlocklistPage() {
   const t = useTranslations('settings.spam');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [patterns, setPatterns] = useState<SpamPattern[]>([]);
@@ -49,7 +50,7 @@ export default function SpamBlocklistPage() {
       );
       setPatterns(data);
     } catch {
-      toastService.error('Fehler beim Laden der Spam-Patterns');
+      toastService.error(tToast('loadError'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function SpamBlocklistPage() {
     if (!user?.uid || !currentOrganization?.id) return;
 
     if (!formData.pattern.trim()) {
-      toastService.error('Bitte geben Sie ein Pattern ein');
+      toastService.error(tToast('spam.patternRequired'));
       return;
     }
 
@@ -74,7 +75,7 @@ export default function SpamBlocklistPage() {
         description: formData.description.trim() || undefined
       }, { userId: user.uid });
 
-      toastService.success('Pattern erfolgreich hinzugefügt');
+      toastService.success(tToast('spam.patternAdded'));
       setIsDialogOpen(false);
       setFormData({
         type: 'url_domain',
@@ -84,7 +85,7 @@ export default function SpamBlocklistPage() {
       });
       loadPatterns();
     } catch {
-      toastService.error('Fehler beim Hinzufügen des Patterns');
+      toastService.error(tToast('spam.patternAddError'));
     }
   };
 
@@ -93,10 +94,10 @@ export default function SpamBlocklistPage() {
 
     try {
       await spamPatternService.delete(patternId);
-      toastService.success('Pattern erfolgreich gelöscht');
+      toastService.success(tToast('spam.patternDeleted'));
       loadPatterns();
     } catch {
-      toastService.error('Fehler beim Löschen des Patterns');
+      toastService.error(tToast('spam.patternDeleteError'));
     }
   };
 
@@ -106,14 +107,14 @@ export default function SpamBlocklistPage() {
     try {
       if (pattern.isActive) {
         await spamPatternService.deactivate(pattern.id);
-        toastService.success('Pattern deaktiviert');
+        toastService.success(tToast('spam.patternDeactivated'));
       } else {
         await spamPatternService.update(pattern.id, { isActive: true }, { userId: user?.uid || '' });
-        toastService.success('Pattern aktiviert');
+        toastService.success(tToast('spam.patternActivated'));
       }
       loadPatterns();
     } catch {
-      toastService.error('Fehler beim Aktivieren/Deaktivieren');
+      toastService.error(tToast('spam.patternToggleError'));
     }
   };
 

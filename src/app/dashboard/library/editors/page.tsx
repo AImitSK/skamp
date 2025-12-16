@@ -277,6 +277,7 @@ interface JournalistDatabaseEntry {
 // Main Component
 export default function EditorsPage() {
   const t = useTranslations('editors');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -612,12 +613,12 @@ export default function EditorsPage() {
   const handleImportReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     // SuperAdmin sollte sich nicht selbst referenzieren
     if (isSuperAdmin) {
-      toastService.info('SuperAdmin: Journalisten direkt im CRM verwalten - kein Verweis nötig');
+      toastService.info(tToast('editors.superAdminNoReference'));
       return;
     }
 
     if (!subscription?.features.importEnabled) {
-      toastService.warning('Importieren von Journalisten nur mit Premium-Abo verfügbar');
+      toastService.warning(tToast('editors.importRequiresPremium'));
       return;
     }
 
@@ -631,9 +632,9 @@ export default function EditorsPage() {
         notes: `Importiert als Verweis am ${new Date().toLocaleDateString('de-DE')}`
       });
 
-      toastService.success(`${journalist.personalData.displayName} als Multi-Entity Verweis erfolgreich importiert`);
+      toastService.success(tToast('editors.journalistImported', { name: journalist.personalData.displayName }));
     } catch (error) {
-      toastService.error(error instanceof Error ? `Import fehlgeschlagen: ${error.message}` : 'Import fehlgeschlagen');
+      toastService.error(error instanceof Error ? tToast('editors.importFailed', { message: error.message }) : tToast('editors.importFailedGeneric'));
     } finally {
       setImportingIds(prev => {
         const newSet = new Set(prev);
@@ -655,9 +656,9 @@ export default function EditorsPage() {
         organizationId: currentOrganization.id
       });
 
-      toastService.success(`${journalist.personalData.displayName} erfolgreich aus Verweisen entfernt`);
+      toastService.success(tToast('editors.referenceRemoved', { name: journalist.personalData.displayName }));
     } catch (error) {
-      toastService.error('Verweis konnte nicht entfernt werden');
+      toastService.error(tToast('editors.referenceRemoveError'));
     } finally{
       setImportingIds(prev => {
         const newSet = new Set(prev);
@@ -1141,7 +1142,7 @@ export default function EditorsPage() {
         journalist={importDialogJournalist}
         organizationId={currentOrganization?.id || ''}
         onSuccess={() => {
-          toastService.success('Journalist erfolgreich zu Ihrem CRM hinzugefügt');
+          toastService.success(tToast('editors.journalistAddedToCrm'));
         }}
       />
 

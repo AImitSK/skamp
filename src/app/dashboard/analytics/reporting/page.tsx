@@ -36,6 +36,7 @@ export default function ReportingPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const t = useTranslations('reporting');
+  const tToast = useTranslations('toasts');
 
   const [reportings, setReportings] = useState<AutoReporting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +62,7 @@ export default function ReportingPage() {
       setReportings(data);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
-      toastService.error('Reportings konnten nicht geladen werden');
+      toastService.error(tToast('reportingsLoadError'));
     } finally {
       setIsLoading(false);
     }
@@ -77,11 +78,11 @@ export default function ReportingPage() {
         newStatus,
         { organizationId: currentOrganization.id, userId: user.uid }
       );
-      toastService.success(newStatus ? 'Auto-Reporting aktiviert' : 'Auto-Reporting pausiert');
+      toastService.success(tToast(newStatus ? 'autoReportingActivated' : 'autoReportingPaused'));
       loadReportings();
     } catch (error) {
       console.error('Fehler beim Umschalten:', error);
-      toastService.error('Status konnte nicht geändert werden');
+      toastService.error(tToast('autoReportingStatusChangeError'));
     }
   };
 
@@ -95,11 +96,11 @@ export default function ReportingPage() {
         reporting.id,
         { organizationId: currentOrganization.id, userId: user.uid }
       );
-      toastService.success('Auto-Reporting gelöscht');
+      toastService.success(tToast('autoReportingDeleted'));
       loadReportings();
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
-      toastService.error('Löschen fehlgeschlagen');
+      toastService.error(tToast('deleteError'));
     }
   };
 
@@ -107,7 +108,7 @@ export default function ReportingPage() {
     if (!reporting.id || !user) return;
 
     try {
-      toastService.loading('Report wird gesendet...');
+      toastService.loading(tToast('reportSending'));
 
       // Firebase ID-Token für Authentifizierung holen
       const token = await user.getIdToken();
@@ -123,16 +124,16 @@ export default function ReportingPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Versand fehlgeschlagen');
+        throw new Error(errorData.error || tToast('reportSendError'));
       }
 
       toastService.dismiss();
-      toastService.success('Report wurde versendet');
+      toastService.success(tToast('reportSent'));
       loadReportings();
     } catch (error) {
       toastService.dismiss();
       console.error('Fehler beim Senden:', error);
-      toastService.error(error instanceof Error ? error.message : 'Report konnte nicht gesendet werden');
+      toastService.error(error instanceof Error ? error.message : tToast('reportSendError'));
     }
   };
 

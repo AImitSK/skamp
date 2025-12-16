@@ -63,6 +63,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function BoilerplatesPage() {
   const t = useTranslations('boilerplates');
+  const tToast = useTranslations('boilerplates.toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [showModal, setShowModal] = useState(false);
@@ -175,17 +176,17 @@ export default function BoilerplatesPage() {
       onConfirm: async () => {
         try {
           await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
-          toastService.success(t('toasts.deleteSuccess', { name }));
+          toastService.success(tToast('deleteSuccess', { name }));
         } catch (error) {
           toastService.error(
             error instanceof Error
-              ? t('toasts.deleteError', { message: error.message })
-              : t('toasts.deleteErrorGeneric')
+              ? tToast('deleteError', { message: error.message })
+              : tToast('deleteErrorGeneric')
           );
         }
       }
     });
-  }, [deleteBoilerplateMutation, organizationId, t]);
+  }, [deleteBoilerplateMutation, organizationId, t, tToast]);
 
   const handleToggleFavorite = useCallback(async (id: string) => {
     if (!organizationId || !id || !user) return;
@@ -196,15 +197,15 @@ export default function BoilerplatesPage() {
         organizationId,
         userId: user.uid
       });
-      toastService.success(t('toasts.favoriteSuccess'));
+      toastService.success(tToast('favoriteSuccess'));
     } catch (error) {
       toastService.error(
         error instanceof Error
-          ? t('toasts.favoriteError', { message: error.message })
-          : t('toasts.favoriteErrorGeneric')
+          ? tToast('favoriteError', { message: error.message })
+          : tToast('favoriteErrorGeneric')
       );
     }
-  }, [toggleFavoriteMutation, organizationId, user, t]);
+  }, [toggleFavoriteMutation, organizationId, user, tToast]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return t('unknown');

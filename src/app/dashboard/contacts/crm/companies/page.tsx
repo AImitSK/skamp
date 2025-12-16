@@ -30,6 +30,7 @@ import clsx from 'clsx';
  */
 export default function CompaniesPage() {
   const t = useTranslations('companies');
+  const tToast = useTranslations('toasts.companies');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -121,10 +122,10 @@ export default function CompaniesPage() {
           { ids: [id], organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              toastService.success(`${name} erfolgreich gelöscht`);
+              toastService.success(tToast('deleted', { name }));
             },
             onError: () => {
-              toastService.error('Firma konnte nicht gelöscht werden');
+              toastService.error(tToast('deleteError'));
             },
           }
         );
@@ -146,11 +147,11 @@ export default function CompaniesPage() {
           { ids, organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              toastService.success(`${ids.length} Firmen erfolgreich gelöscht`);
+              toastService.success(tToast('bulkDeleted', { count: ids.length }));
               setSelectedIds(new Set());
             },
             onError: () => {
-              toastService.error('Firmen konnten nicht gelöscht werden');
+              toastService.error(tToast('bulkDeleteError'));
             },
           }
         );
@@ -167,14 +168,14 @@ export default function CompaniesPage() {
       });
 
       if (!csvContent || filteredCompanies.length === 0) {
-        toastService.warning('Keine Daten zum Exportieren');
+        toastService.warning(tToast('noDataToExport'));
         return;
       }
 
       downloadCSV(csvContent, 'firmen-export.csv');
-      toastService.success('Export erfolgreich: firmen-export.csv');
+      toastService.success(tToast('exportSuccess'));
     } catch (error) {
-      toastService.error('Export fehlgeschlagen - bitte Konsole prüfen');
+      toastService.error(tToast('exportError'));
     }
   };
 
@@ -342,7 +343,7 @@ export default function CompaniesPage() {
           }}
           onSave={() => {
             // React Query automatically refetches after mutations
-            toastService.success(selectedCompany ? 'Firma erfolgreich aktualisiert' : 'Firma erfolgreich erstellt');
+            toastService.success(selectedCompany ? tToast('updated') : tToast('created'));
             setShowCompanyModal(false);
             setSelectedCompany(null);
           }}
@@ -357,7 +358,7 @@ export default function CompaniesPage() {
           onImportSuccess={() => {
             setShowImportModal(false);
             // React Query automatically refetches after mutations
-            toastService.success('Import erfolgreich abgeschlossen');
+            toastService.success(tToast('importSuccess'));
           }}
         />
       )}
