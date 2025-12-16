@@ -31,6 +31,7 @@ export function PublicationSelector({
   onDataLoad
 }: PublicationSelectorProps) {
   const t = useTranslations('monitoring.publicationSelector');
+  const tToast = useTranslations('toasts');
 
   const [lookupData, setLookupData] = useState<PublicationLookupResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,7 @@ export function PublicationSelector({
           onPublicationSelect(data.publications[0]);
         }
       } catch (error) {
-        toastService.error('Medium konnte nicht gefunden werden');
+        toastService.error(tToast('mediumNotFound'));
       } finally {
         setLoading(false);
       }

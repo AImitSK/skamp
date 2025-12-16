@@ -52,6 +52,7 @@ import ReviewStep from './structured-generation/steps/ReviewStep';
 export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: StructuredGenerationModalProps) {
   const { user } = useAuth();
   const t = useTranslations('pr.ai.structuredGeneration');
+  const tToast = useTranslations('toasts');
 
   // Workflow State
   const [currentStep, setCurrentStep] = useState<GenerationStep>('context');
@@ -131,12 +132,12 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
     try {
       onGenerate(result);
-      toastService.success(t('success.contentApplied'));
+      toastService.success(tToast('ai.contentApplied'));
       // Modal wird automatisch durch parent component geschlossen
     } catch (error) {
-      toastService.error(t('errors.applyFailed'));
+      toastService.error(tToast('ai.applyFailed'));
     }
-  }, [generatedResult, context, onGenerate, t]);
+  }, [generatedResult, context, onGenerate, tToast]);
 
   // Handler für Template-Auswahl
   const handleTemplateSelect = useCallback((template: AITemplate) => {

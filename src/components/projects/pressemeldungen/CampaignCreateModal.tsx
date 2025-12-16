@@ -28,6 +28,7 @@ export default function CampaignCreateModal({
   onSuccess
 }: Props) {
   const t = useTranslations('projects.pressemeldungen.createModal');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,12 +38,12 @@ export default function CampaignCreateModal({
     e.preventDefault();
 
     if (!title.trim()) {
-      toastService.error('Bitte geben Sie einen Titel ein.');
+      toastService.error(tToast('campaigns.titleRequired'));
       return;
     }
 
     if (!user?.uid) {
-      toastService.error('Sie müssen angemeldet sein, um eine Kampagne zu erstellen.');
+      toastService.error(tToast('authRequired'));
       return;
     }
 
@@ -73,14 +74,14 @@ export default function CampaignCreateModal({
         refetchType: 'active' // Nur aktive Queries neu laden
       });
 
-      toastService.success('Kampagne erfolgreich erstellt');
+      toastService.success(tToast('campaigns.created'));
       onSuccess(campaignId);
     } catch (error) {
-      toastService.error('Fehler beim Erstellen der Kampagne. Bitte versuchen Sie es erneut.');
+      toastService.error(tToast('campaigns.createError'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, user, organizationId, projectId, onSuccess, queryClient]);
+  }, [title, user, organizationId, projectId, onSuccess, queryClient, tToast]);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);

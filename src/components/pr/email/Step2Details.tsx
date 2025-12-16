@@ -41,6 +41,7 @@ export default function Step2Details({
   campaign
 }: Step2DetailsProps) {
   const t = useTranslations('email.step2');
+  const tToast = useTranslations('toasts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const hasInitialized = useRef(false);
@@ -97,13 +98,13 @@ export default function Step2Details({
               totalCount: 0, // Wird von RecipientManager berechnet
               validCount: 0
             });
-            toastService.success(t('listsLoadedSuccess', { count: allListIds.length }));
+            toastService.success(tToast('listsLoaded', { count: allListIds.length }));
           } else {
             console.log('⚠️ Step2Details: Keine Liste-IDs gefunden!');
           }
         }
       } catch (error) {
-        toastService.error(t('listsLoadedError'));
+        toastService.error(tToast('listsLoadError'));
       } finally {
         setLoadingProject(false);
       }

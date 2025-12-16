@@ -47,6 +47,7 @@ export function InboxAssetSelectorModal({
   onAssetsSelected
 }: InboxAssetSelectorModalProps) {
   const t = useTranslations('inbox.assetSelector');
+  const tToast = useTranslations('toasts');
 
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -86,7 +87,7 @@ export function InboxAssetSelectorModal({
         setProjects(projectsData);
       } catch (error) {
         console.error('Error loading projects:', error);
-        toastService.error('Fehler beim Laden der Projekte');
+        toastService.error(tToast('projectsLoadError'));
       } finally {
         setLoadingProjects(false);
       }
@@ -136,13 +137,13 @@ export function InboxAssetSelectorModal({
           { id: projectFolder.id, name: projectName }
         ]);
       } else {
-        toastService.warning('Projekt-Ordner nicht gefunden');
+        toastService.warning(tToast('projectFolderNotFound'));
         setAssets([]);
         setFolders([]);
       }
     } catch (error) {
       console.error('Error loading project root:', error);
-      toastService.error('Fehler beim Laden des Projekts');
+      toastService.error(tToast('projectLoadError'));
     } finally {
       setLoading(false);
     }
@@ -162,7 +163,7 @@ export function InboxAssetSelectorModal({
       setBreadcrumbs(newBreadcrumbs);
     } catch (error) {
       console.error('Error loading folder:', error);
-      toastService.error('Fehler beim Laden des Ordners');
+      toastService.error(tToast('folderLoadError'));
     } finally {
       setLoading(false);
     }

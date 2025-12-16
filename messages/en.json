@@ -4411,8 +4411,6 @@
         },
         "title": "Email Details"
       },
-      "listsLoadedError": "Error loading distribution lists",
-      "listsLoadedSuccess": "{count} distribution list(s) loaded",
       "recipients": {
         "title": "Recipients"
       },
@@ -11013,6 +11011,16 @@
     }
   },
   "toasts": {
+    "ai": {
+      "contentTooShortForImageIdeas": "Please enter more content in the press release (min. 100 characters) so the AI can develop suitable image ideas.",
+      "selectProjectFirst": "Please select a project first so the image can be saved correctly.",
+      "noImageIdeasGenerated": "No image ideas could be generated. Please try again.",
+      "imageGeneratedAndSaved": "Image successfully generated and saved!",
+      "imageGenerationFailed": "The image could not be generated. Please try again.",
+      "imageGenerationPolicyViolation": "The image could not be generated because the content violates the guidelines. Please choose a different image suggestion.",
+      "contentTooShortForHeadlines": "Please enter some content in the press release first so the AI can generate headlines from it.",
+      "noHeadlinesGenerated": "No headlines could be generated. Please try again."
+    },
     "authRequired": "Authentication required",
     "archiveError": "Error archiving",
     "autoReportingActivated": "Auto-reporting activated",
@@ -11104,6 +11112,7 @@
     "listCreateError": "List could not be created",
     "listDeleted": "\"{name}\" successfully deleted",
     "listDeleteError": "List could not be deleted",
+    "listDetailsLoadError": "Error loading list details",
     "listRefreshed": "Dynamic list successfully updated",
     "listRefreshError": "List could not be updated",
     "listsDeleted": "{count} lists successfully deleted",
@@ -11114,6 +11123,10 @@
     "refreshAllStarted": "Update started - recalculating all dynamic lists...",
     "refreshAllSuccess": "All dynamic lists successfully updated",
     "loadError": "Error loading",
+    "projectsLoadError": "Error loading projects",
+    "projectLoadError": "Error loading project",
+    "projectFolderNotFound": "Project folder not found",
+    "folderLoadError": "Error loading folder",
     "maxRecipientsReached": "Maximum {max} recipients allowed",
     "mediumNotFound": "Medium could not be found",
     "memberRemoveError": "Error removing member",
@@ -11131,6 +11144,10 @@
     "ownerTransferError": "Error transferring owner role",
     "ownerTransferred": "{name} is now the new owner",
     "pipelinePdfGenerated": "Pipeline PDF successfully generated",
+    "priorityChanged": "Priority successfully changed",
+    "priorityChangeError": "Error changing priority",
+    "statusChanged": "Status successfully changed",
+    "statusChangeError": "Error changing status",
     "pressReleaseCreateError": "Error creating press release",
     "pressReleaseCreated": "Press release successfully created",
     "projectArchived": "Project archived",
@@ -11162,6 +11179,8 @@
     "saveError": "Error saving",
     "saved": "Successfully saved",
     "selectRecipient": "Please select at least one recipient",
+    "shareLinkCreated": "Share link successfully created",
+    "shareLinkCreateError": "Error creating share link. Please try again",
     "settingsError": "Error saving settings",
     "settingsSaved": "Settings saved",
     "signatureCreated": "Signature successfully created",
@@ -11194,7 +11213,6 @@
     "syncError": "Error synchronizing",
     "teamMemberRemoveOnlyOwner": "Only the owner can remove members",
     "teamMembersLoadError": "Error loading team members",
-    "testEmailSent": "Test email sent to {email}",
     "translationCreated": "Translation successfully created",
     "updateError": "Error updating",
     "updated": "Successfully updated",
@@ -11220,6 +11238,19 @@
       "folderMoveError": "The folder could not be moved",
       "folderUpdated": "Folder updated"
     },
+    "projects": {
+      "boilerplateImported": "\"{name}\" successfully imported",
+      "boilerplateImportError": "Document could not be imported",
+      "boilerplateSaved": "\"{name}\" saved as boilerplate",
+      "boilerplateSaveError": "Boilerplate could not be saved",
+      "boilerplateNameRequired": "Please enter a name",
+      "fileDeleted": "File \"{name}\" successfully deleted",
+      "fileDeleteError": "File could not be deleted",
+      "fileNotFound": "File could not be found",
+      "fileMoved": "File successfully moved",
+      "folderCreated": "Folder successfully created"
+    },
+    "documentSaved": "Document successfully saved",
     "keyVisual": {
       "fileTooLarge": "File too large (max 10MB)",
       "imageFileOnly": "Only image files are allowed",
@@ -11256,8 +11287,11 @@
     "campaigns": {
       "approvalLinkSendError": "Error sending approval link",
       "approvalLinkSent": "Approval link successfully sent",
+      "created": "Campaign successfully created",
+      "createError": "Error creating campaign",
       "deleteError": "Error deleting campaign",
-      "deleted": "Campaign successfully deleted"
+      "deleted": "Campaign successfully deleted",
+      "titleRequired": "Please enter a title"
     },
     "tasks": {
       "completedWithTitle": "\"{title}\" marked as completed",
@@ -11265,20 +11299,14 @@
       "reopenedWithTitle": "\"{title}\" reopened",
       "reopenError": "Task could not be reopened",
       "deletedWithTitle": "\"{title}\" successfully deleted",
-      "deleteError": "Task could not be deleted"
+      "deleteError": "Task could not be deleted",
+      "templatesCreated": "{count} template tasks successfully created",
+      "templatesCreateError": "Error creating template tasks"
     },
     "translation": {
       "deleted": "Translation ({language}) deleted",
       "pdfOpened": "PDF for {language} opened",
       "pdfError": "PDF generation failed"
-    },
-    "ai": {
-      "contentTooShortForImageIdeas": "Please enter more content in the press release (min. 100 characters) so the AI can develop suitable image ideas.",
-      "selectProjectFirst": "Please select a project first so the image can be saved correctly.",
-      "noImageIdeasGenerated": "No image ideas could be generated. Please try again.",
-      "imageGeneratedAndSaved": "Image successfully generated and saved!",
-      "imageGenerationFailed": "The image could not be generated. Please try again.",
-      "imageGenerationPolicyViolation": "The image could not be generated because the content violates the guidelines. Please choose a different image suggestion."
     },
     "copyError": "Error copying"
   },

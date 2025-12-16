@@ -47,6 +47,7 @@ export default function ShareModal({
   userId // NEW
 }: ShareModalProps) {
   const t = useTranslations('mediathek.shareModal');
+  const tToast = useTranslations('toasts');
 
   const defaultTitle = type === 'folder'
     ? (target as MediaFolder).name
@@ -110,11 +111,11 @@ export default function ShareModal({
       };
 
       setCreatedLink(linkData);
-      toastService.success('Share-Link erfolgreich erstellt');
+      toastService.success(tToast('shareLinkCreated'));
 
     } catch (error) {
       console.error('Share-Link Error:', error);
-      toastService.error('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut');
+      toastService.error(tToast('shareLinkCreateError'));
     } finally {
       setCreating(false);
     }

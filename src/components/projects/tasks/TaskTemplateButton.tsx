@@ -85,10 +85,11 @@ export function TaskTemplateButton({
   onSuccess
 }: TaskTemplateButtonProps) {
   const t = useTranslations('projects.tasks.templateButton');
+  const tToast = useTranslations('toasts');
 
   const handleCreateTemplateTasks = async () => {
     if (!userId) {
-      toastService.error('Benutzer nicht gefunden');
+      toastService.error(tToast('authRequired'));
       return;
     }
 
@@ -119,10 +120,10 @@ export function TaskTemplateButton({
       onSuccess();
 
       // Erfolgs-Toast
-      toastService.success(`${TASK_TEMPLATE_KEYS.length} Standard-Tasks erfolgreich erstellt`);
+      toastService.success(tToast('tasks.templatesCreated', { count: TASK_TEMPLATE_KEYS.length }));
     } catch (error) {
       console.error('Error creating template tasks:', error);
-      toastService.error('Fehler beim Erstellen der Vorlagen-Tasks');
+      toastService.error(tToast('tasks.templatesCreateError'));
     }
   };
 

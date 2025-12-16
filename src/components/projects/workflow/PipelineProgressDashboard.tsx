@@ -19,6 +19,7 @@ interface PipelineProgressDashboardProps {}
 
 function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
   const t = useTranslations('projects.workflow.pipeline');
+  const tToast = useTranslations('toasts');
 
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
@@ -29,7 +30,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
 
   // Error Handling
   if (error) {
-    toastService.error('Fehler beim Laden der Tasks');
+    toastService.error(tToast('loadError'));
   }
 
   // Pipeline-Fortschritt aus zentraler Konstante

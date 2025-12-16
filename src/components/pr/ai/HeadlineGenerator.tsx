@@ -30,6 +30,7 @@ export function HeadlineGenerator({
   onTitleSelect
 }: HeadlineGeneratorProps) {
   const t = useTranslations('pr.ai.headlineGenerator');
+  const tToast = useTranslations('toasts');
   const [headlines, setHeadlines] = useState<HeadlineOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -40,7 +41,7 @@ export function HeadlineGenerator({
     // Prüfe ob genug Content vorhanden ist
     const contentToAnalyze = content.trim();
     if (contentToAnalyze.length < 50) {
-      toastService.error('Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.');
+      toastService.error(tToast('ai.contentTooShortForHeadlines'));
       setLoading(false);
       return;
     }
@@ -71,11 +72,11 @@ export function HeadlineGenerator({
         setHeadlines(headlineOptions);
         setShowSuggestions(true);
       } else {
-        toastService.error('Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut.');
+        toastService.error(tToast('ai.noHeadlinesGenerated'));
       }
     } catch (error) {
       console.error('Fehler beim Generieren der Headlines:', error);
-      toastService.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      toastService.error(tToast('error'));
     } finally {
       setLoading(false);
     }

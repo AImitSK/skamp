@@ -107,6 +107,7 @@ export default function ProjectFoldersView({
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
   const t = useTranslations('projects.foldersView');
+  const tToast = useTranslations('toasts');
 
   // Custom Hooks für Business Logic
   const {
@@ -139,8 +140,8 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    toastService.success('Dokument wurde erfolgreich gespeichert');
-  }, [selectedFolderId, loadFolderContent, onRefresh]);
+    toastService.success(tToast('documentSaved'));
+  }, [selectedFolderId, loadFolderContent, onRefresh, tToast]);
 
   // Boilerplate Import Handler
   const handleBoilerplateImport = useCallback(async (boilerplate: Boilerplate) => {
@@ -162,13 +163,13 @@ export default function ProjectFoldersView({
 
       // Refresh folder content
       loadFolderContent(selectedFolderId);
-      toastService.success(`"${boilerplate.name}" wurde erfolgreich importiert`);
+      toastService.success(tToast('boilerplateImported', { name: boilerplate.name }));
     } catch (error) {
       console.error('Fehler beim Importieren:', error);
-      toastService.error('Dokument konnte nicht importiert werden');
+      toastService.error(tToast('boilerplateImportError'));
       throw error;
     }
-  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent]);
+  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent, tToast]);
 
   // Save as Boilerplate State & Handlers (INLINE)
   const [showSaveAsBoilerplateModal, setShowSaveAsBoilerplateModal] = useState(false);
@@ -188,7 +189,7 @@ export default function ProjectFoldersView({
 
   const handleSaveBoilerplate = useCallback(async () => {
     if (!user?.uid || !assetToSaveAsBoilerplate || !boilerplateName.trim()) {
-      toastService.error('Bitte geben Sie einen Namen ein');
+      toastService.error(tToast('projects.boilerplateNameRequired'));
       return;
     }
 
@@ -212,16 +213,16 @@ export default function ProjectFoldersView({
         { organizationId, userId: user.uid }
       );
 
-      toastService.success(`"${boilerplateName}" wurde als Boilerplate gespeichert`);
+      toastService.success(tToast('boilerplateSaved', { name: boilerplateName }));
       setShowSaveAsBoilerplateModal(false);
       setAssetToSaveAsBoilerplate(null);
     } catch (error) {
       console.error('Fehler beim Speichern als Boilerplate:', error);
-      toastService.error('Boilerplate konnte nicht gespeichert werden');
+      toastService.error(tToast('boilerplateSaveError'));
     } finally {
       setBoilerplateSaving(false);
     }
-  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId]);
+  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId, tToast]);
 
   const handleDeleteSuccess = useCallback(() => {
     // Refresh current view after deletion
@@ -340,8 +341,8 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    toastService.success('Ordner wurde erfolgreich erstellt');
-  }, [selectedFolderId, loadFolderContent, onRefresh]);
+    toastService.success(tToast('projects.folderCreated'));
+  }, [selectedFolderId, loadFolderContent, onRefresh, tToast]);
 
   const handleMoveAsset = useCallback((asset: any) => {
     setAssetToMove(asset);
@@ -359,8 +360,8 @@ export default function ProjectFoldersView({
       loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
 
-    toastService.success('Datei wurde erfolgreich verschoben');
-  }, [handleGoToRoot, onRefresh, loadAllFolders]);
+    toastService.success(tToast('projects.fileMoved'));
+  }, [handleGoToRoot, onRefresh, loadAllFolders, tToast]);
 
   // Use handleAssetClick from useFileActions (optimized with useCallback)
   const handleAssetClick = useCallback(
@@ -377,12 +378,12 @@ export default function ProjectFoldersView({
       const assetToDelete = assets.find(asset => asset.id === assetId);
 
       if (!assetToDelete) {
-        toastService.error('Datei konnte nicht gefunden werden');
+        toastService.error(tToast('projects.fileNotFound'));
         return;
       }
 
       await deleteMediaAsset(assetToDelete);
-      toastService.success(`Datei "${fileName}" wurde erfolgreich gelöscht`);
+      toastService.success(tToast('projects.fileDeleted', { name: fileName }));
 
       // Refresh current view
       if (selectedFolderId) {
@@ -392,9 +393,9 @@ export default function ProjectFoldersView({
       }
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
-      toastService.error('Datei konnte nicht gelöscht werden');
+      toastService.error(tToast('projects.fileDeleteError'));
     }
-  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh]);
+  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh, tToast]);
 
   // File statistics (optimized with useMemo)
   const fileStats = useMemo(() => {

@@ -28,6 +28,7 @@ interface Props {
 
 export default function ListDetailsModal({ open, onClose, list, type }: Props) {
   const t = useTranslations('projects.distribution.listDetails');
+  const tToast = useTranslations('toasts');
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -74,7 +75,7 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
           setPublications(loadedPublications);
         }
       } catch (error) {
-        toastService.error('Fehler beim Laden der Listen-Details');
+        toastService.error(tToast('listDetailsLoadError'));
       } finally {
         setLoading(false);
       }

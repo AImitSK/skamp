@@ -134,6 +134,7 @@ export function StatusManager({
   showTimers = true
 }: StatusManagerProps) {
   const t = useTranslations('inbox.statusManager');
+  const tToast = useTranslations('toasts');
   const [updating, setUpdating] = useState(false);
   const [slaInfo, setSlaInfo] = useState<{
     responseTime?: number;
@@ -200,10 +201,10 @@ export function StatusManager({
 
       onStatusChange?.(thread.id!, status);
       console.log('✅ Thread status updated successfully');
-      toastService.success('Status erfolgreich geändert');
+      toastService.success(tToast('statusChanged'));
     } catch (error) {
       console.error('Error updating thread status:', error);
-      toastService.error('Fehler beim Ändern des Status');
+      toastService.error(tToast('statusChangeError'));
     } finally {
       setUpdating(false);
     }
@@ -228,10 +229,10 @@ export function StatusManager({
 
       onStatusChange?.(thread.id!, thread.status as ThreadStatus, priority);
       console.log('✅ Thread priority updated successfully');
-      toastService.success('Priorität erfolgreich geändert');
+      toastService.success(tToast('priorityChanged'));
     } catch (error) {
       console.error('Error updating thread priority:', error);
-      toastService.error('Fehler beim Ändern der Priorität');
+      toastService.error(tToast('priorityChangeError'));
     } finally {
       setUpdating(false);
     }

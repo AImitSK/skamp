@@ -4406,8 +4406,6 @@
         },
         "title": "E-Mail Details"
       },
-      "listsLoadedError": "Fehler beim Laden der Verteilerlisten",
-      "listsLoadedSuccess": "{count} Verteilerliste(n) geladen",
       "recipients": {
         "title": "Empfänger"
       },
@@ -11027,6 +11025,16 @@
     }
   },
   "toasts": {
+    "ai": {
+      "contentTooShortForImageIdeas": "Bitte geben Sie zuerst mehr Inhalt in die Pressemitteilung ein (mind. 100 Zeichen), damit die KI passende Bildideen entwickeln kann.",
+      "selectProjectFirst": "Bitte wählen Sie zuerst ein Projekt aus, damit das Bild korrekt gespeichert werden kann.",
+      "noImageIdeasGenerated": "Keine Bildideen konnten generiert werden. Bitte versuchen Sie es erneut.",
+      "imageGeneratedAndSaved": "Bild erfolgreich generiert und gespeichert!",
+      "imageGenerationFailed": "Das Bild konnte nicht generiert werden. Bitte versuchen Sie es erneut.",
+      "imageGenerationPolicyViolation": "Das Bild konnte nicht generiert werden, da der Inhalt gegen die Richtlinien verstößt. Bitte wählen Sie einen anderen Bildvorschlag.",
+      "contentTooShortForHeadlines": "Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.",
+      "noHeadlinesGenerated": "Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut."
+    },
     "authRequired": "Authentifizierung erforderlich",
     "archiveError": "Fehler beim Archivieren",
     "autoReportingActivated": "Auto-Reporting aktiviert",
@@ -11118,6 +11126,7 @@
     "listCreateError": "Liste konnte nicht erstellt werden",
     "listDeleted": "\"{name}\" erfolgreich gelöscht",
     "listDeleteError": "Liste konnte nicht gelöscht werden",
+    "listDetailsLoadError": "Fehler beim Laden der Listen-Details",
     "listRefreshed": "Dynamische Liste erfolgreich aktualisiert",
     "listRefreshError": "Liste konnte nicht aktualisiert werden",
     "listsDeleted": "{count} Listen erfolgreich gelöscht",
@@ -11128,6 +11137,10 @@
     "refreshAllStarted": "Aktualisierung gestartet - alle dynamischen Listen werden neu berechnet...",
     "refreshAllSuccess": "Alle dynamischen Listen erfolgreich aktualisiert",
     "loadError": "Fehler beim Laden",
+    "projectsLoadError": "Fehler beim Laden der Projekte",
+    "projectLoadError": "Fehler beim Laden des Projekts",
+    "projectFolderNotFound": "Projekt-Ordner nicht gefunden",
+    "folderLoadError": "Fehler beim Laden des Ordners",
     "maxRecipientsReached": "Maximal {max} Empfänger erlaubt",
     "mediumNotFound": "Medium konnte nicht gefunden werden",
     "memberRemoveError": "Fehler beim Entfernen des Mitglieds",
@@ -11145,6 +11158,10 @@
     "ownerTransferError": "Fehler beim Übertragen der Owner-Rolle",
     "ownerTransferred": "{name} ist jetzt der neue Owner",
     "pipelinePdfGenerated": "Pipeline-PDF erfolgreich generiert",
+    "priorityChanged": "Priorität erfolgreich geändert",
+    "priorityChangeError": "Fehler beim Ändern der Priorität",
+    "statusChanged": "Status erfolgreich geändert",
+    "statusChangeError": "Fehler beim Ändern des Status",
     "pressReleaseCreateError": "Fehler beim Erstellen der Pressemeldung",
     "pressReleaseCreated": "Pressemeldung erfolgreich erstellt",
     "projectArchived": "Projekt archiviert",
@@ -11176,6 +11193,8 @@
     "saveError": "Fehler beim Speichern",
     "saved": "Erfolgreich gespeichert",
     "selectRecipient": "Bitte mindestens einen Empfänger auswählen",
+    "shareLinkCreated": "Share-Link erfolgreich erstellt",
+    "shareLinkCreateError": "Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut",
     "settingsError": "Fehler beim Speichern der Einstellungen",
     "settingsSaved": "Einstellungen gespeichert",
     "signatureCreated": "Signatur erfolgreich erstellt",
@@ -11208,7 +11227,6 @@
     "syncError": "Fehler beim Synchronisieren",
     "teamMemberRemoveOnlyOwner": "Nur der Owner kann Mitglieder entfernen",
     "teamMembersLoadError": "Fehler beim Laden der Team-Mitglieder",
-    "testEmailSent": "Test-Email an {email} versendet",
     "translationCreated": "Übersetzung erfolgreich erstellt",
     "updateError": "Fehler beim Aktualisieren",
     "updated": "Erfolgreich aktualisiert",
@@ -11234,6 +11252,19 @@
       "folderMoveError": "Der Ordner konnte nicht verschoben werden",
       "folderUpdated": "Ordner aktualisiert"
     },
+    "projects": {
+      "boilerplateImported": "\"{name}\" wurde erfolgreich importiert",
+      "boilerplateImportError": "Dokument konnte nicht importiert werden",
+      "boilerplateSaved": "\"{name}\" wurde als Boilerplate gespeichert",
+      "boilerplateSaveError": "Boilerplate konnte nicht gespeichert werden",
+      "boilerplateNameRequired": "Bitte geben Sie einen Namen ein",
+      "fileDeleted": "Datei \"{name}\" wurde erfolgreich gelöscht",
+      "fileDeleteError": "Datei konnte nicht gelöscht werden",
+      "fileNotFound": "Datei konnte nicht gefunden werden",
+      "fileMoved": "Datei wurde erfolgreich verschoben",
+      "folderCreated": "Ordner wurde erfolgreich erstellt"
+    },
+    "documentSaved": "Dokument wurde erfolgreich gespeichert",
     "keyVisual": {
       "fileTooLarge": "Datei zu groß (max 10MB)",
       "imageFileOnly": "Nur Bilddateien sind erlaubt",
@@ -11270,8 +11301,11 @@
     "campaigns": {
       "approvalLinkSendError": "Fehler beim Versenden des Freigabe-Links",
       "approvalLinkSent": "Freigabe-Link erfolgreich versendet",
+      "created": "Kampagne erfolgreich erstellt",
+      "createError": "Fehler beim Erstellen der Kampagne",
       "deleteError": "Fehler beim Löschen der Kampagne",
-      "deleted": "Kampagne erfolgreich gelöscht"
+      "deleted": "Kampagne erfolgreich gelöscht",
+      "titleRequired": "Bitte geben Sie einen Titel ein"
     },
     "translation": {
       "deleted": "Übersetzung ({language}) gelöscht",
@@ -11284,15 +11318,9 @@
       "reopenedWithTitle": "\"{title}\" wieder geöffnet",
       "reopenError": "Task konnte nicht wieder geöffnet werden",
       "deletedWithTitle": "\"{title}\" erfolgreich gelöscht",
-      "deleteError": "Task konnte nicht gelöscht werden"
-    },
-    "ai": {
-      "contentTooShortForImageIdeas": "Bitte geben Sie zuerst mehr Inhalt in die Pressemitteilung ein (mind. 100 Zeichen), damit die KI passende Bildideen entwickeln kann.",
-      "selectProjectFirst": "Bitte wählen Sie zuerst ein Projekt aus, damit das Bild korrekt gespeichert werden kann.",
-      "noImageIdeasGenerated": "Keine Bildideen konnten generiert werden. Bitte versuchen Sie es erneut.",
-      "imageGeneratedAndSaved": "Bild erfolgreich generiert und gespeichert!",
-      "imageGenerationFailed": "Das Bild konnte nicht generiert werden. Bitte versuchen Sie es erneut.",
-      "imageGenerationPolicyViolation": "Das Bild konnte nicht generiert werden, da der Inhalt gegen die Richtlinien verstößt. Bitte wählen Sie einen anderen Bildvorschlag."
+      "deleteError": "Task konnte nicht gelöscht werden",
+      "templatesCreated": "{count} Standard-Tasks erfolgreich erstellt",
+      "templatesCreateError": "Fehler beim Erstellen der Vorlagen-Tasks"
     },
     "copyError": "Fehler beim Kopieren"
   },
