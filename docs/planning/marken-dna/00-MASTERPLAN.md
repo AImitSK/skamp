@@ -8,7 +8,7 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 
 ---
 
-## Zwei-Ebenen-Architektur
+## Drei-Ebenen-Architektur
 
 ### Ebene 1: Marken-DNA (Kundenebene)
 
@@ -27,7 +27,23 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 5. Ziele-Setzer (Messlatte)
 6. Botschaften-Baukasten (Dachbotschaften)
 
-### Ebene 2: Projekt-Kernbotschaft (Projektebene)
+### Ebene 2: 🧪 DNA Synthese (Projektebene)
+
+| Aspekt | Beschreibung |
+|--------|--------------|
+| **Charakter** | KI-optimierte Verdichtung der 6 Marken-DNA Dokumente |
+| **Speicherort** | Projekt → Strategie-Tab |
+| **Inhalt** | Kompakte Kurzform (~500 Tokens statt ~5.000) |
+| **Zweck** | Effizienter KI-Kontext für Textgenerierung |
+
+**Warum DNA Synthese?**
+- Token-Ersparnis: 6 Dokumente = ~5.000 Tokens → Synthese = ~500 Tokens
+- KI-optimiert: Strukturiert für schnelle Verarbeitung
+- Fokus auf Textgenerierung: Tonalität, Kernbotschaften, Do's & Don'ts
+
+**Icon:** BeakerIcon (Erlenmeyerkolben) 🧪 - überall wo mit der Synthese gearbeitet wird
+
+### Ebene 3: 💬 Kernbotschaft (Projektebene)
 
 | Aspekt | Beschreibung |
 |--------|--------------|
@@ -35,6 +51,19 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 | **Speicherort** | Projekt → Strategie-Tab |
 | **Inhalt** | Anlass, Ziel, Teilbotschaften, Material |
 | **Zweck** | Konkrete Ausrichtung für dieses eine Projekt |
+
+### Ebene 4: 🧬 AI Sequenz → 📋 Text-Matrix
+
+| Aspekt | Beschreibung |
+|--------|--------------|
+| **AI Sequenz** | KI-Prozess der DNA Synthese + Kernbotschaft kombiniert |
+| **Text-Matrix** | Output der AI Sequenz - bearbeitbare Vorlage |
+| **Zweck** | Strategisch fundierte Textvorlage für Feinschliff |
+
+**Der Prozess (Die CeleroPress Formel):**
+```
+🧪 DNA Synthese + 💬 Kernbotschaft → 🧬 AI Sequenz → 📋 Text-Matrix → 📰 Pressemeldung
+```
 
 ---
 
@@ -67,7 +96,6 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 │  ├── Ziele            ○ [Erstellen]                            │
 │  ├── Dachbotschaften  ○ [Erstellen]                            │
 │  ├── ─────────────────                                         │
-│  ├── 🚀 Komplett-Workshop                                      │
 │  └── 🗑️ Alle löschen                                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -82,37 +110,66 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 │  Kunde: IBD Wickeltechnik GmbH                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Marken DNA verwenden: [====○]                                  │
-│  └─ Nur aktivierbar wenn Marken DNA 100% vollständig            │
-│  └─ Sonst: "Vervollständigen Sie die Marken DNA"                │
+│  🧪 DNA SYNTHESE                                                │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Noch nicht erstellt                                    │   │
+│  │  [🧪 DNA synthetisieren]                                │   │
+│  │  └─ Nur aktivierbar wenn Marken-DNA 100% vollständig    │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  Nach Synthetisierung:                                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  🧪 DNA Synthese ✓                                 [⋮]  │   │
+│  │  ──────────────────────────────────────────────────     │   │
+│  │  **Positionierung:** Innovativer Technologieführer...   │   │
+│  │  **Tonalität:** Seriös, nahbar, kompetent               │   │
+│  │  **Kernbotschaften:** ...                               │   │
+│  │  **Vermeiden:** ...                                     │   │
+│  │  ──────────────────────────────────────────────────     │   │
+│  │  [✏️ Bearbeiten]                                        │   │
+│  │                                                         │   │
+│  │  [⋮] → Neu synthetisieren | Löschen                     │   │
+│  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 │  ─────────────────────────────────────────────────────────────  │
 │                                                                 │
-│  💬 PROJEKT-KERNBOTSCHAFT                                       │
+│  💬 KERNBOTSCHAFT                                               │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │  Chat-Bereich (KI-Wizard)                               │   │
 │  │  • KI fragt nach Anlass, Ziel, Teilbotschaft            │   │
 │  │  • User antwortet oder gibt Copy/Paste                  │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
-│  [📄 Strategie erzeugen]                                        │
+│  [🧬 AI Sequenz starten]                                        │
 │                                                                 │
 │  ─────────────────────────────────────────────────────────────  │
 │                                                                 │
-│  📄 ERZEUGTE STRATEGIE (wenn vorhanden)                         │
+│  📋 TEXT-MATRIX (wenn vorhanden)                                │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │  [Dokument-Ansicht / Editor]                            │   │
 │  └─────────────────────────────────────────────────────────┘   │
-│  [✏️ Bearbeiten]  [🤖 Mit KI besprechen/umarbeiten]             │
+│  [✏️ Bearbeiten]  [🧬 Mit AI Sequenz umarbeiten]                │
+│                                                                 │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  Nach Feinschliff + Freigabe:                                   │
+│  [📰 Als Pressemeldung finalisieren]                            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+**Die CeleroPress Formel:**
+```
+🧪 M-DNA Synthese + 💬 Kernbotschaft → 🧬 AI Sequenz → 📋 Text-Matrix → 📰 Pressemeldung
 ```
 
 **Änderungen zum alten Strategie-Tab:**
 - ❌ Keine Vorlagen mehr
 - ❌ Kein Datei-Upload für Strategie
-- ✅ Chat-basierte Erstellung
-- ✅ Marken DNA Toggle
+- ✅ Chat-basierte Erstellung (Kernbotschaft)
+- ✅ 🧪 DNA Synthese (Token-optimierte Kurzform)
+- ✅ 🧬 AI Sequenz (KI-Prozess)
+- ✅ 📋 Text-Matrix (bearbeitbare Vorlage)
 
 ---
 
@@ -123,37 +180,35 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 | Modus | Beschreibung | Was wird übergeben |
 |-------|--------------|-------------------|
 | **Standard** | Wie bisher | Checkboxen + Templates |
-| **Experte** | Mit Strategie | Projekt-Strategie-Dokument |
+| **Experte** | Mit CeleroPress Formel | 🧪 DNA Synthese + 💬 Kernbotschaft |
 
-### Marken DNA Übergabe
+### DNA Synthese Übergabe
 
 ```
-WENN "Marken DNA verwenden" = AKTIV:
-  → Marken DNA wird IMMER an KI übergeben (beide Modi)
-  → KI hat Anleitung wie sie damit umgehen soll
+WENN DNA Synthese vorhanden:
+  → 🧪 DNA Synthese wird an KI übergeben (~500 Tokens)
+  → NICHT die 6 Original-Dokumente (~5.000 Tokens)
+  → 🧬 AI Sequenz kombiniert alles zur 📋 Text-Matrix
 ```
 
-### Prompt-Struktur für KI
+### Prompt-Struktur für AI Sequenz
 
 ```
 "Du bist ein PR-Profi.
 
 Schritt 1 (Kontext):
-Lade die Marken-DNA:
-- Positionierung: [aus Dokument]
-- Tonalität: [aus Dokument]
-- Zielgruppen: [aus Dokument]
-- Dachbotschaften: [aus Dokument]
+Nutze die 🧪 DNA Synthese:
+[Kompakte Zusammenfassung mit Positionierung, Tonalität, Kernbotschaften, Zielgruppen]
 
 Schritt 2 (Aufgabe):
-Nutze das Projekt-Briefing:
-- Anlass: [aus Projekt-Strategie]
-- Ziel: [aus Projekt-Strategie]
-- Teilbotschaft: [aus Projekt-Strategie]
+Nutze die 💬 Kernbotschaft:
+- Anlass: [aus Projekt]
+- Ziel: [aus Projekt]
+- Teilbotschaft: [aus Projekt]
 
 Schritt 3 (Execution):
-Schreibe die Pressemeldung, ABER nutze dabei
-den Sprachstil und die Werte aus der Marken-DNA."
+Erstelle die 📋 Text-Matrix - eine Pressemeldungs-Vorlage,
+die den Sprachstil und die Werte aus der DNA Synthese nutzt."
 ```
 
 ---
@@ -190,25 +245,53 @@ interface MarkenDNADocument {
 }
 ```
 
-### Projekt-Strategie
+### 🧪 DNA Synthese (NEU)
 
 ```typescript
-// Firestore: projects/{projectId}/strategyDocument
-interface ProjectStrategy {
+// Firestore: projects/{projectId}/dnaSynthese
+interface DNASynthese {
   id: string;
   projectId: string;
   customerId: string;
   organizationId: string;
 
-  // Marken DNA Verknüpfung
-  useMarkenDNA: boolean;
-  markenDNAComplete: boolean;
+  // Inhalt (KI-optimierte Kurzform)
+  content: string;           // HTML für Anzeige
+  plainText: string;         // Plain-Text für KI-Übergabe (~500 Tokens)
+
+  // Tracking
+  synthesizedAt: Timestamp;
+  synthesizedFrom: string[]; // IDs der 6 Marken-DNA Dokumente
+  markenDNAVersion: string;  // Hash um Änderungen zu erkennen
+  manuallyEdited: boolean;   // Wurde manuell angepasst?
+
+  // Audit
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  updatedBy: string;
+}
+```
+
+### 💬 Kernbotschaft
+
+```typescript
+// Firestore: projects/{projectId}/kernbotschaft
+interface Kernbotschaft {
+  id: string;
+  projectId: string;
+  customerId: string;
+  organizationId: string;
 
   // Inhalt
   occasion: string;          // Anlass
   goal: string;              // Ziel
   keyMessage: string;        // Teilbotschaft
   content: string;           // Generiertes Dokument
+  plainText: string;         // Für KI
+
+  // Status
+  status: 'draft' | 'completed';
 
   // Chat-Verlauf
   chatHistory?: ChatMessage[];
@@ -216,6 +299,8 @@ interface ProjectStrategy {
   // Audit
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  createdBy: string;
+  updatedBy: string;
 }
 ```
 
@@ -235,13 +320,27 @@ interface ProjectStrategy {
 
 ## Implementierungsphasen
 
+### MVP (Release 1)
+
 | Phase | Beschreibung | Abhängigkeiten |
 |-------|--------------|----------------|
 | **1** | Datenmodell & Services | - |
 | **2** | Marken-DNA Bibliothek (UI) | Phase 1 |
 | **3** | KI-Chat-Wizard (Genkit Flows) | Phase 1 |
+
+### Release 2
+
+| Phase | Beschreibung | Abhängigkeiten |
+|-------|--------------|----------------|
 | **4** | Strategie-Tab Umbau | Phase 2, 3 |
+
+### Release 3
+
+| Phase | Beschreibung | Abhängigkeiten |
+|-------|--------------|----------------|
 | **5** | KI-Assistenten Integration | Phase 4 |
+
+> **Hinweis:** Diese Aufteilung ermöglicht schnelleres Feedback und reduziert Risiko.
 
 ---
 

@@ -99,8 +99,6 @@ interface StatusCirclesProps {
 │  ○ Ziele-Setzer          [Erstellen]        │
 │  ○ Botschaften-Bau.      [Erstellen]        │
 ├─────────────────────────────────────────────┤
-│  🚀 Komplett-Workshop starten               │
-├─────────────────────────────────────────────┤
 │  🗑️ Alle Dokumente löschen                  │
 └─────────────────────────────────────────────┘
 ```
@@ -108,7 +106,6 @@ interface StatusCirclesProps {
 **Logik:**
 - Vorhanden (●): Zeigt [Ansehen] [Bearbeiten] [Löschen]
 - Fehlend (○): Zeigt [Erstellen]
-- "Komplett-Workshop" öffnet Chat der durch alle offenen Dokumente führt
 - "Alle löschen" mit Bestätigungsdialog
 
 ---
@@ -147,36 +144,6 @@ Modal mit Split-View:
 
 ---
 
-### 2.6 Komplett-Workshop Modal
-
-**Datei:** `src/components/marken-dna/WorkshopModal.tsx`
-
-Führt durch alle fehlenden Dokumente:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🚀 Komplett-Workshop für IBD Wickeltechnik GmbH        [✕]    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Fortschritt: ████████░░░░ 3/6 Dokumente                       │
-│                                                                 │
-│  ✅ Briefing-Check (übersprungen - bereits vorhanden)          │
-│  ✅ SWOT-Analyse (übersprungen - bereits vorhanden)            │
-│  ▶️ Zielgruppen-Radar (aktuell)                                │
-│  ○ Positionierungs-Designer                                    │
-│  ○ Ziele-Setzer                                                │
-│  ○ Botschaften-Baukasten                                       │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  [Chat-Interface für aktuelles Dokument]                        │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  [Überspringen]  [Pausieren]              [Weiter zum nächsten] │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## Komponenten-Struktur
 
 ```
@@ -190,7 +157,6 @@ src/app/dashboard/library/marken-dna/
 
 src/components/marken-dna/
 ├── MarkenDNAEditorModal.tsx          # Editor mit Chat
-├── WorkshopModal.tsx                 # Komplett-Workshop
 ├── ChatInterface.tsx                 # Chat-Komponente (wiederverwendbar)
 ├── DocumentPreview.tsx               # Live-Vorschau
 └── __tests__/
@@ -228,7 +194,6 @@ interface MarkenDNAPageState {
 - [ ] Status-Kreise funktional und klickbar
 - [ ] Dropdown-Menü mit allen Aktionen
 - [ ] Editor-Modal mit Split-View
-- [ ] Komplett-Workshop funktional
 - [ ] Löschen mit Bestätigung
 - [ ] Suche und Filter funktionieren
 - [ ] Responsive Design

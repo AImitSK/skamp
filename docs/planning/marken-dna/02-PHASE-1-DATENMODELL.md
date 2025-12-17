@@ -188,25 +188,54 @@ useDeleteAllMarkenDNA()
 
 ---
 
-### 1.4 Projekt-Strategie Erweiterung
+### 1.4 🧪 DNA Synthese Interface
 
-**Datei:** `src/types/project.ts` (erweitern)
+**Datei:** `src/types/dna-synthese.ts` (neu)
 
 ```typescript
-// Zum bestehenden Project Interface hinzufügen:
-export interface Project {
-  // ... bestehende Felder
+import { Timestamp } from 'firebase/firestore';
 
-  // NEU: Marken-DNA Integration
-  useMarkenDNA?: boolean;
-  markenDNAComplete?: boolean;
+// 🧪 DNA Synthese - KI-optimierte Kurzform der 6 Marken-DNA Dokumente
+export interface DNASynthese {
+  id: string;
+  projectId: string;
+  customerId: string;
+  organizationId: string;
+
+  // Inhalt (KI-optimierte Kurzform, ~500 Tokens)
+  content: string;           // HTML für Anzeige
+  plainText: string;         // Plain-Text für KI-Übergabe
+
+  // Tracking
+  synthesizedAt: Timestamp;
+  synthesizedFrom: string[]; // IDs der 6 Marken-DNA Dokumente
+  markenDNAVersion: string;  // Hash um Änderungen zu erkennen
+  manuallyEdited: boolean;   // Wurde manuell angepasst?
+
+  // Audit
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  updatedBy: string;
+}
+
+// Create-Daten
+export interface DNASyntheseCreateData {
+  projectId: string;
+  customerId: string;
+  content: string;
+  plainText: string;
+  synthesizedFrom: string[];
+  markenDNAVersion: string;
 }
 ```
 
-**Datei:** `src/types/project-strategy.ts` (neu)
+### 1.5 💬 Kernbotschaft Interface
+
+**Datei:** `src/types/kernbotschaft.ts` (neu)
 
 ```typescript
-export interface ProjectStrategy {
+export interface Kernbotschaft {
   id: string;
   projectId: string;
   customerId: string;
@@ -251,7 +280,20 @@ match /customers/{customerId}/markenDNA/{docId} {
     belongsToOrganization(resource.data.organizationId);
 }
 
-match /projects/{projectId}/strategy/{strategyId} {
+// 🧪 DNA Synthese (pro Projekt)
+match /projects/{projectId}/dnaSynthese/{syntheseId} {
+  allow read, write: if isAuthenticated() &&
+    belongsToOrganization(resource.data.organizationId);
+}
+
+// 💬 Kernbotschaft
+match /projects/{projectId}/kernbotschaft/{kernbotschaftId} {
+  allow read, write: if isAuthenticated() &&
+    belongsToOrganization(resource.data.organizationId);
+}
+
+// 📋 Text-Matrix
+match /projects/{projectId}/textMatrix/{matrixId} {
   allow read, write: if isAuthenticated() &&
     belongsToOrganization(resource.data.organizationId);
 }
@@ -287,8 +329,10 @@ describe('MarkenDNAService', () => {
 ## Erledigungs-Kriterien
 
 - [ ] TypeScript Interfaces erstellt und exportiert
-- [ ] Firebase Service mit allen CRUD-Methoden
+- [ ] MarkenDNA Service mit allen CRUD-Methoden
+- [ ] 🧪 DNASynthese Service mit CRUD + synthesize-Methode
+- [ ] 💬 Kernbotschaft Service mit CRUD-Methoden
+- [ ] 📋 TextMatrix Service mit CRUD-Methoden
 - [ ] React Query Hooks funktionsfähig
 - [ ] Firestore Regeln angepasst
 - [ ] Tests geschrieben und bestanden
-- [ ] Projekt-Erweiterung für useMarkenDNA Flag

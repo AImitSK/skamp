@@ -23,9 +23,10 @@ KI-Assistent
 │   ├── Checkboxen für Optionen
 │   └── Template-Auswahl
 │
-└── Experten-Modus (NEU)
-    ├── Projekt-Strategie wird verwendet
-    ├── Marken-DNA wird übergeben (wenn aktiv)
+└── Experten-Modus (NEU) - CeleroPress Formel
+    ├── 🧪 DNA Synthese wird übergeben (~500 Tokens)
+    ├── 💬 Kernbotschaft wird verwendet
+    ├── 🧬 AI Sequenz generiert 📋 Text-Matrix
     └── KI hat spezielle Anleitung
 ```
 
@@ -51,11 +52,11 @@ KI-Assistent
     <Button
       variant={mode === 'expert' ? 'primary' : 'outline'}
       onClick={() => setMode('expert')}
-      disabled={!hasProjectStrategy}
-      title={!hasProjectStrategy ? 'Erstellen Sie zuerst eine Projekt-Strategie' : ''}
+      disabled={!hasDNASynthese}
+      title={!hasDNASynthese ? 'Erstellen Sie zuerst eine DNA Synthese' : ''}
     >
+      <BeakerIcon className="h-4 w-4 mr-1" />
       Experte
-      {project?.useMarkenDNA && <SparklesIcon className="h-4 w-4 ml-1" />}
     </Button>
   </div>
 </div>
@@ -70,8 +71,8 @@ KI-Assistent
 ```typescript
 interface AIContext {
   mode: 'standard' | 'expert';
-  projectStrategy?: ProjectStrategy;
-  markenDNA?: MarkenDNAExport;
+  dnaSynthese?: string;              // 🧪 Kurzform (~500 Tokens)
+  kernbotschaft?: Kernbotschaft;
   userPrompt: string;
   selectedOptions?: string[];
   template?: string;
@@ -90,19 +91,16 @@ export async function buildAIContext(
   };
 
   if (mode === 'expert') {
-    // Projekt-Strategie laden
-    const projectStrategy = await projectStrategyService.get(projectId);
-    if (projectStrategy) {
-      context.projectStrategy = projectStrategy;
+    // 🧪 DNA Synthese laden (bereits verdichtet, ~500 Tokens)
+    const dnaSynthese = await dnaSyntheseService.get(projectId);
+    if (dnaSynthese) {
+      context.dnaSynthese = dnaSynthese.plainText;
     }
 
-    // Prüfen ob Marken-DNA aktiv
-    const project = await projectService.get(projectId);
-    if (project?.useMarkenDNA && project.customerId) {
-      const markenDNA = await markenDNAService.exportForAI(project.customerId);
-      if (markenDNA) {
-        context.markenDNA = markenDNA;
-      }
+    // 💬 Kernbotschaft laden
+    const kernbotschaft = await kernbotschaftService.get(projectId);
+    if (kernbotschaft) {
+      context.kernbotschaft = kernbotschaft;
     }
   }
 
@@ -120,61 +118,41 @@ export async function buildAIContext(
 export function buildExpertModePrompt(context: AIContext): string {
   let prompt = `Du bist ein erfahrener PR-Profi und Texter.
 
-MODUS: EXPERTE
-Du hast Zugriff auf die strategischen Grundlagen des Kunden und nutzt diese
+MODUS: EXPERTE 🧪 - CeleroPress Formel
+Du hast Zugriff auf die DNA Synthese des Kunden und nutzt diese
 für konsistente, markentreue Kommunikation.
 
 `;
 
-  // Marken-DNA einbinden wenn vorhanden
-  if (context.markenDNA) {
+  // 🧪 DNA Synthese einbinden (bereits verdichtet, ~500 Tokens)
+  if (context.dnaSynthese) {
     prompt += `
 ═══════════════════════════════════════════════════════════════════
-MARKEN-DNA (Langfristige Strategie des Kunden)
+🧪 DNA SYNTHESE (KI-optimierte Kurzform der Marken-DNA)
 ═══════════════════════════════════════════════════════════════════
 
-${context.markenDNA.briefing ? `
-## UNTERNEHMENSPROFIL
-${context.markenDNA.briefing}
-` : ''}
+${context.dnaSynthese}
 
-${context.markenDNA.positioning ? `
-## POSITIONIERUNG & USP
-${context.markenDNA.positioning}
-
-WICHTIG: Nutze den hier definierten Tonfall und Sound für alle Texte!
-` : ''}
-
-${context.markenDNA.audience ? `
-## ZIELGRUPPEN
-${context.markenDNA.audience}
-` : ''}
-
-${context.markenDNA.messages ? `
-## KERNBOTSCHAFTEN
-${context.markenDNA.messages}
-
-WICHTIG: Flechte mindestens eine dieser Botschaften subtil in jeden Text ein!
-` : ''}
+WICHTIG: Nutze Tonalität, Kernbotschaften und Positionierung aus dieser Synthese!
 
 `;
   }
 
-  // Projekt-Strategie einbinden
-  if (context.projectStrategy) {
+  // Projekt-Kernbotschaft einbinden
+  if (context.kernbotschaft) {
     prompt += `
 ═══════════════════════════════════════════════════════════════════
-PROJEKT-STRATEGIE (Aktuelle Aufgabe)
+PROJEKT-KERNBOTSCHAFT (Aktuelle Aufgabe)
 ═══════════════════════════════════════════════════════════════════
 
 ## ANLASS
-${context.projectStrategy.occasion}
+${context.kernbotschaft.occasion}
 
 ## ZIEL
-${context.projectStrategy.goal}
+${context.kernbotschaft.goal}
 
 ## KERNBOTSCHAFT FÜR DIESES PROJEKT
-${context.projectStrategy.keyMessage}
+${context.kernbotschaft.keyMessage}
 
 `;
   }
@@ -187,11 +165,11 @@ DEINE AUFGABE
 
 Erstelle den gewünschten Text unter Beachtung folgender Regeln:
 
-1. KONSISTENZ: Halte dich strikt an die Positionierung und Tonalität aus der Marken-DNA
+1. KONSISTENZ: Halte dich strikt an Positionierung und Tonalität aus der DNA Synthese
 2. BOTSCHAFTEN: Integriere die Kernbotschaften subtil - nicht plakativ
 3. ZIELGRUPPE: Schreibe für die definierten Zielgruppen
 4. FOKUS: Erfülle das Projektziel und transportiere die Projekt-Kernbotschaft
-5. FAKTEN: Nutze nur Fakten aus dem Briefing - erfinde nichts dazu
+5. FAKTEN: Nutze nur Fakten aus der Synthese - erfinde nichts dazu
 
 ═══════════════════════════════════════════════════════════════════
 USER-ANFRAGE
@@ -336,20 +314,20 @@ export function useExpertAssistant(projectId: string) {
 {mode === 'expert' && (
   <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm">
     <div className="flex items-center gap-2 text-purple-700 font-medium">
-      <SparklesIcon className="h-4 w-4" />
+      <BeakerIcon className="h-4 w-4" />
       Experten-Modus aktiv
     </div>
     <ul className="mt-2 space-y-1 text-purple-600">
-      {usedMarkenDNA && (
+      {usedDNASynthese && (
         <li className="flex items-center gap-1">
           <CheckIcon className="h-3 w-3" />
-          Marken-DNA wird verwendet
+          🧪 DNA Synthese wird verwendet
         </li>
       )}
-      {usedProjectStrategy && (
+      {usedKernbotschaft && (
         <li className="flex items-center gap-1">
           <CheckIcon className="h-3 w-3" />
-          Projekt-Strategie wird verwendet
+          💬 Kernbotschaft wird verwendet
         </li>
       )}
     </ul>
@@ -364,8 +342,9 @@ export function useExpertAssistant(projectId: string) {
 {result && (
   <div className="mt-4">
     <div className="flex items-center justify-between mb-2">
-      <span className="text-sm text-gray-500">
-        Generiert mit {result.usedMarkenDNA ? 'Marken-DNA' : 'Standard-Einstellungen'}
+      <span className="text-sm text-gray-500 flex items-center gap-1">
+        {result.usedDNASynthese && <BeakerIcon className="h-4 w-4" />}
+        Generiert mit {result.usedDNASynthese ? 'DNA Synthese (CeleroPress Formel)' : 'Standard-Einstellungen'}
       </span>
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={() => copyToClipboard(result.content)}>
@@ -394,16 +373,17 @@ User wählt Modus
 │                         STANDARD                              │
 │  - Checkboxen und Templates wie bisher                        │
 │  - Keine automatische Kontext-Ladung                          │
-│  - Marken-DNA wird NICHT verwendet                            │
+│  - DNA Synthese wird NICHT verwendet                          │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
-│                          EXPERTE                              │
-│  - Projekt-Strategie wird geladen                             │
-│  - WENN "Marken DNA verwenden" aktiv im Projekt:              │
-│    → Marken-DNA wird automatisch geladen                      │
-│  - Beides wird an KI übergeben                                │
+│              🧪 EXPERTE - CeleroPress Formel                  │
+│  - 🧪 DNA Synthese wird geladen (~500 Tokens)                 │
+│  - 💬 Kernbotschaft wird geladen                              │
+│  - 🧬 AI Sequenz kombiniert beides                            │
+│  - 📋 Text-Matrix wird generiert                              │
 │  - KI hat spezielle Anleitung für konsistente Texte           │
+│  - Token-effizient durch Synthese statt 6 Dokumente           │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -411,20 +391,22 @@ User wählt Modus
 
 ## Abhängigkeiten
 
-- Phase 1 (Datenmodell - für MarkenDNA Export)
+- Phase 1 (Datenmodell - für Marken-Synthese Interface)
 - Phase 3 (KI-Chat - für Genkit Setup)
-- Phase 4 (Strategie-Tab - für Projekt-Strategie Daten)
+- Phase 4 (Strategie-Tab - für Marken-Synthese & Kernbotschaft)
 - Bestehender KI-Assistent
 
 ---
 
 ## Erledigungs-Kriterien
 
-- [ ] Modus-Auswahl im UI
+- [ ] Modus-Auswahl im UI mit BeakerIcon
 - [ ] Standard-Modus funktioniert wie bisher
-- [ ] Experten-Modus lädt Kontext automatisch
-- [ ] Marken-DNA wird korrekt an KI übergeben
-- [ ] Projekt-Strategie wird korrekt an KI übergeben
-- [ ] System-Prompt ist vollständig und korrekt
+- [ ] Experten-Modus lädt 🧪 DNA Synthese automatisch
+- [ ] DNA Synthese wird korrekt an KI übergeben (~500 Tokens)
+- [ ] 💬 Kernbotschaft wird korrekt an KI übergeben
+- [ ] 🧬 AI Sequenz generiert 📋 Text-Matrix
+- [ ] System-Prompt (CeleroPress Formel) ist vollständig und korrekt
 - [ ] Ergebnis zeigt an welche Daten verwendet wurden
+- [ ] BeakerIcon (🧪) konsistent für DNA Synthese verwendet
 - [ ] Tests geschrieben

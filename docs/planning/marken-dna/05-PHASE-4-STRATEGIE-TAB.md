@@ -1,7 +1,7 @@
 # Phase 4: Strategie-Tab Umbau
 
 ## Ziel
-Den Strategie-Tab im Projekt komplett umbauen: Weg von Templates, hin zum Chat-basierten Ansatz mit Marken-DNA Integration.
+Den Strategie-Tab im Projekt komplett umbauen: Weg von Templates, hin zur CeleroPress Formel mit 🧪 DNA Synthese, 🧬 AI Sequenz und 📋 Text-Matrix.
 
 ---
 
@@ -18,11 +18,12 @@ Strategie-Tab (ALT)
 ## Neuer Zustand
 
 ```
-Strategie-Tab (NEU)
-├── MarkenDNA Toggle + Status
-├── Projekt-Kernbotschaft Chat
-├── Generiertes Dokument (Ansicht/Editor)
-└── Aktionen (Bearbeiten, Mit KI umarbeiten)
+Strategie-Tab (NEU) - Die CeleroPress Formel
+├── 🧪 DNA Synthese (Synthetisieren / Anzeige / Bearbeiten)
+├── 💬 Kernbotschaft Chat
+├── 🧬 AI Sequenz (KI-Prozess)
+├── 📋 Text-Matrix (Output / Vorlage)
+└── 📰 Pressemeldung (nach Feinschliff + Freigabe)
 ```
 
 ---
@@ -49,34 +50,45 @@ Strategie-Tab (NEU)
 export function StrategieTabContent({ project }: Props) {
   const { customerId } = project;
   const { data: markenDNAStatus } = useMarkenDNAStatus(customerId);
-  const { data: projectStrategy } = useProjectStrategy(project.id);
+  const { data: dnaSynthese } = useDNASynthese(project.id);
+  const { data: kernbotschaft } = useKernbotschaft(project.id);
+  const { data: textMatrix } = useTextMatrix(project.id);
 
-  const [useMarkenDNA, setUseMarkenDNA] = useState(project.useMarkenDNA ?? false);
-  const canUseMarkenDNA = markenDNAStatus?.isComplete ?? false;
+  const canSynthesize = markenDNAStatus?.isComplete ?? false;
 
   return (
     <div className="space-y-6">
-      {/* Marken-DNA Toggle */}
-      <MarkenDNAToggle
-        enabled={useMarkenDNA}
-        canEnable={canUseMarkenDNA}
-        customerName={project.customerName}
-        onToggle={setUseMarkenDNA}
-        onCompleteClick={() => router.push(`/dashboard/library/marken-dna?customer=${customerId}`)}
-      />
-
-      {/* Chat-Bereich für Projekt-Kernbotschaft */}
-      <ProjectStrategyChat
+      {/* 🧪 DNA Synthese */}
+      <DNASyntheseSection
         projectId={project.id}
         customerId={customerId}
-        useMarkenDNA={useMarkenDNA}
-        existingStrategy={projectStrategy}
+        customerName={project.customerName}
+        dnaSynthese={dnaSynthese}
+        canSynthesize={canSynthesize}
+        markenDNAStatus={markenDNAStatus}
       />
 
-      {/* Generiertes Dokument */}
-      {projectStrategy && (
-        <GeneratedStrategyDocument
-          strategy={projectStrategy}
+      {/* 💬 Kernbotschaft Chat */}
+      <KernbotschaftChat
+        projectId={project.id}
+        customerId={customerId}
+        dnaSynthese={dnaSynthese}
+        existingKernbotschaft={kernbotschaft}
+      />
+
+      {/* 🧬 AI Sequenz Button */}
+      {kernbotschaft && dnaSynthese && !textMatrix && (
+        <AISequenzButton
+          projectId={project.id}
+          dnaSynthese={dnaSynthese}
+          kernbotschaft={kernbotschaft}
+        />
+      )}
+
+      {/* 📋 Text-Matrix */}
+      {textMatrix && (
+        <TextMatrixSection
+          textMatrix={textMatrix}
           onEdit={() => setEditing(true)}
           onRework={() => setReworking(true)}
         />
@@ -88,64 +100,119 @@ export function StrategieTabContent({ project }: Props) {
 
 ---
 
-### 4.3 MarkenDNA Toggle Komponente
+### 4.3 🧪 DNA Synthese Komponente
 
-**Datei:** `src/components/projects/strategy/MarkenDNAToggle.tsx`
+**Datei:** `src/components/projects/strategy/DNASyntheseSection.tsx`
+
+**Icon:** `BeakerIcon` aus `@heroicons/react/24/outline`
 
 ```tsx
-interface MarkenDNAToggleProps {
-  enabled: boolean;
-  canEnable: boolean;
+interface DNASyntheseSectionProps {
+  projectId: string;
+  customerId: string;
   customerName: string;
-  onToggle: (enabled: boolean) => void;
-  onCompleteClick: () => void;
+  dnaSynthese?: DNASynthese;
+  canSynthesize: boolean;
+  markenDNAStatus?: CustomerMarkenDNAStatus;
 }
 
-export function MarkenDNAToggle({
-  enabled,
-  canEnable,
+export function DNASyntheseSection({
+  projectId,
+  customerId,
   customerName,
-  onToggle,
-  onCompleteClick,
-}: MarkenDNAToggleProps) {
+  dnaSynthese,
+  canSynthesize,
+  markenDNAStatus,
+}: DNASyntheseSectionProps) {
+  const { mutate: synthesize, isLoading } = useSynthesizeDNA();
+  const [isEditing, setIsEditing] = useState(false);
+
   return (
-    <div className="bg-white rounded-lg border p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-medium">Marken-DNA verwenden</h3>
-          <p className="text-sm text-gray-500">
-            {canEnable
-              ? `Die Marken-DNA von ${customerName} wird bei der Texterstellung verwendet.`
-              : `Die Marken-DNA von ${customerName} ist noch nicht vollständig.`
-            }
-          </p>
+    <div className="bg-white rounded-lg border">
+      <div className="p-4 border-b flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BeakerIcon className="h-5 w-5 text-purple-600" />
+          <h3 className="font-medium">DNA Synthese</h3>
         </div>
 
-        {canEnable ? (
-          <Switch
-            checked={enabled}
-            onChange={onToggle}
-          />
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCompleteClick}
-          >
-            Vervollständigen
-          </Button>
+        {dnaSynthese && (
+          <DropdownMenu>
+            <DropdownMenuItem onClick={() => synthesize({ projectId, customerId })}>
+              <BeakerIcon className="h-4 w-4 mr-2" />
+              Neu synthetisieren
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => deleteDNASynthese(projectId)}>
+              <TrashIcon className="h-4 w-4 mr-2" />
+              Löschen
+            </DropdownMenuItem>
+          </DropdownMenu>
         )}
       </div>
 
-      {/* Status-Anzeige wenn nicht vollständig */}
-      {!canEnable && (
-        <div className="mt-3 pt-3 border-t">
-          <StatusCircles
-            documents={markenDNAStatus.documents}
-            size="sm"
-          />
-        </div>
-      )}
+      <div className="p-4">
+        {!dnaSynthese ? (
+          /* Noch nicht erstellt */
+          <div className="text-center py-6">
+            {canSynthesize ? (
+              <>
+                <p className="text-gray-500 mb-4">
+                  Erstelle eine KI-optimierte Kurzform der Marken-DNA für {customerName}.
+                </p>
+                <Button onClick={() => synthesize({ projectId, customerId })} disabled={isLoading}>
+                  <BeakerIcon className="h-4 w-4 mr-2" />
+                  DNA synthetisieren
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 mb-4">
+                  Die Marken-DNA von {customerName} ist noch nicht vollständig.
+                </p>
+                <StatusCircles documents={markenDNAStatus?.documents} size="sm" />
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => router.push(`/dashboard/library/marken-dna?customer=${customerId}`)}
+                >
+                  Marken-DNA vervollständigen
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          /* Synthese vorhanden */
+          <>
+            <div className="flex items-center gap-2 text-green-600 mb-3">
+              <CheckCircleIcon className="h-5 w-5" />
+              <span className="text-sm font-medium">DNA Synthese aktiv</span>
+            </div>
+
+            {isEditing ? (
+              <TipTapEditor
+                content={dnaSynthese.content}
+                onSave={(content) => updateDNASynthese(projectId, content)}
+                onCancel={() => setIsEditing(false)}
+              />
+            ) : (
+              <>
+                <div
+                  className="prose prose-sm max-w-none bg-gray-50 rounded p-4"
+                  dangerouslySetInnerHTML={{ __html: dnaSynthese.content }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <PencilIcon className="h-4 w-4 mr-1" />
+                  Bearbeiten
+                </Button>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -153,30 +220,30 @@ export function MarkenDNAToggle({
 
 ---
 
-### 4.4 Projekt-Strategie Chat Komponente
+### 4.4 Projekt-Kernbotschaft Chat Komponente
 
-**Datei:** `src/components/projects/strategy/ProjectStrategyChat.tsx`
+**Datei:** `src/components/projects/strategy/ProjektKernbotschaftChat.tsx`
 
 ```tsx
-interface ProjectStrategyChatProps {
+interface ProjektKernbotschaftChatProps {
   projectId: string;
   customerId: string;
-  useMarkenDNA: boolean;
-  existingStrategy?: ProjectStrategy;
+  markenSynthese?: MarkenSynthese;  // 🧪 Wird als Kontext übergeben
+  existingKernbotschaft?: ProjektKernbotschaft;
 }
 
-export function ProjectStrategyChat({
+export function ProjektKernbotschaftChat({
   projectId,
   customerId,
-  useMarkenDNA,
-  existingStrategy,
-}: ProjectStrategyChatProps) {
+  markenSynthese,
+  existingKernbotschaft,
+}: ProjektKernbotschaftChatProps) {
   const {
     messages,
     document,
     isLoading,
     sendMessage,
-  } = useProjectStrategyChat(projectId, customerId, useMarkenDNA);
+  } = useKernbotschaftChat(projectId, customerId, markenSynthese?.plainText);
 
   const [input, setInput] = useState('');
 
@@ -194,6 +261,14 @@ export function ProjectStrategyChat({
           Projekt-Kernbotschaft erarbeiten
         </h3>
       </div>
+
+      {/* 🧪 Marken-Synthese Hinweis */}
+      {markenSynthese && (
+        <div className="px-4 py-2 bg-purple-50 border-b flex items-center gap-2 text-sm text-purple-700">
+          <BeakerIcon className="h-4 w-4" />
+          Marken-Synthese wird als Kontext verwendet
+        </div>
+      )}
 
       {/* Chat-Nachrichten */}
       <div className="p-4 h-96 overflow-y-auto space-y-4">
@@ -379,11 +454,15 @@ deleteProjectStrategy(strategyId: string): Promise<void>
 ## Erledigungs-Kriterien
 
 - [ ] Alte Template-Grid entfernt
-- [ ] Marken-DNA Toggle funktioniert
-- [ ] Toggle nur aktivierbar wenn DNA vollständig
-- [ ] Chat-Interface implementiert
-- [ ] Dokument wird generiert und gespeichert
-- [ ] Bearbeiten funktioniert (TipTap)
-- [ ] "Mit KI umarbeiten" funktioniert
-- [ ] useMarkenDNA Flag wird im Projekt gespeichert
+- [ ] 🧪 DNA Synthese Section implementiert
+- [ ] "DNA synthetisieren" Button funktioniert
+- [ ] "Neu synthetisieren" im Dropdown funktioniert
+- [ ] Synthese nur möglich wenn Marken-DNA vollständig
+- [ ] Synthese ist editierbar (TipTap)
+- [ ] 💬 Kernbotschaft Chat implementiert
+- [ ] Chat nutzt DNA Synthese als Kontext
+- [ ] 🧬 AI Sequenz Button implementiert
+- [ ] 📋 Text-Matrix wird generiert und gespeichert
+- [ ] "Mit AI Sequenz umarbeiten" funktioniert
+- [ ] BeakerIcon (🧪) für DNA Synthese konsistent verwendet
 - [ ] Tests geschrieben
