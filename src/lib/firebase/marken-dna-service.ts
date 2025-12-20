@@ -193,13 +193,13 @@ class MarkenDNAService {
       const documents = await this.getDocuments(companyId);
 
       // Status-Map erstellen
-      const documentStatus = {
-        briefing: false,
-        swot: false,
-        audience: false,
-        positioning: false,
-        goals: false,
-        messages: false,
+      const documentStatus: CompanyMarkenDNAStatus['documents'] = {
+        briefing: 'missing',
+        swot: 'missing',
+        audience: 'missing',
+        positioning: 'missing',
+        goals: 'missing',
+        messages: 'missing',
       };
 
       let totalCompleteness = 0;
@@ -207,7 +207,7 @@ class MarkenDNAService {
 
       documents.forEach(doc => {
         if (doc.type in documentStatus) {
-          documentStatus[doc.type as MarkenDNADocumentType] = true;
+          documentStatus[doc.type as MarkenDNADocumentType] = doc.status;
           totalCompleteness += doc.completeness || 0;
 
           if (!lastUpdated || doc.updatedAt.toMillis() > lastUpdated.toMillis()) {
@@ -216,8 +216,8 @@ class MarkenDNAService {
         }
       });
 
-      const documentCount = Object.values(documentStatus).filter(Boolean).length;
-      const averageCompleteness = documentCount > 0 ? totalCompleteness / documentCount : 0;
+      const completedCount = Object.values(documentStatus).filter(s => s === 'completed').length;
+      const averageCompleteness = completedCount > 0 ? Math.round(totalCompleteness / completedCount) : 0;
 
       // Company-Name ermitteln (aus erstem Dokument)
       const companyName = documents.length > 0 ? documents[0].companyName : '';
@@ -226,8 +226,8 @@ class MarkenDNAService {
         companyId,
         companyName,
         documents: documentStatus,
-        completeness: Math.round(averageCompleteness),
-        isComplete: documentCount === 6,
+        completeness: averageCompleteness,
+        isComplete: completedCount === 6,
         lastUpdated,
       };
     } catch (error) {

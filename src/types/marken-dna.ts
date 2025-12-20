@@ -81,12 +81,12 @@ export interface CompanyMarkenDNAStatus {
   companyId: string;          // Referenz auf Company (type: 'customer')
   companyName: string;
   documents: {
-    briefing: boolean;
-    swot: boolean;
-    audience: boolean;
-    positioning: boolean;
-    goals: boolean;
-    messages: boolean;
+    briefing: 'missing' | 'draft' | 'completed';
+    swot: 'missing' | 'draft' | 'completed';
+    audience: 'missing' | 'draft' | 'completed';
+    positioning: 'missing' | 'draft' | 'completed';
+    goals: 'missing' | 'draft' | 'completed';
+    messages: 'missing' | 'draft' | 'completed';
   };
   completeness: number;       // Gesamtfortschritt 0-100
   isComplete: boolean;        // Alle 6 Dokumente vorhanden

@@ -1,10 +1,18 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MarkenDNAEditorModal } from '../MarkenDNAEditorModal';
+import { CompanyEnhanced } from '@/types/crm-enhanced';
+import { Timestamp } from 'firebase/firestore';
 
 describe('MarkenDNAEditorModal', () => {
-  const mockCompany = {
+  const mockCompany: CompanyEnhanced = {
     id: 'company-123',
     name: 'Test GmbH',
+    type: 'customer',
+    officialName: 'Test GmbH',
+    organizationId: 'org-123',
+    createdBy: 'user-123',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   };
 
   const mockOnClose = jest.fn();

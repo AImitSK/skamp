@@ -8,12 +8,8 @@ import {
   PencilIcon,
 } from '@heroicons/react/24/outline';
 import { MARKEN_DNA_DOCUMENTS, type MarkenDNADocumentType } from '@/types/marken-dna';
+import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { useState } from 'react';
-
-interface CompanyEnhanced {
-  id: string;
-  name: string;
-}
 
 interface MarkenDNAEditorModalProps {
   open: boolean;

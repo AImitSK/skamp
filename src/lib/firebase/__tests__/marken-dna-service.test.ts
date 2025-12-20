@@ -353,7 +353,7 @@ describe('MarkenDNAService', () => {
     it('sollte den korrekten Status für einen Kunden berechnen', async () => {
       const mockDocs = [
         createMockDocument('briefing', 'company-1', 100),
-        createMockDocument('swot', 'company-1', 80),
+        createMockDocument('swot', 'company-1', 100),
       ];
       const firestore = require('firebase/firestore');
 
@@ -368,10 +368,10 @@ describe('MarkenDNAService', () => {
 
       expect(result.companyId).toBe('company-1');
       expect(result.companyName).toBe('Test Company GmbH');
-      expect(result.documents.briefing).toBe(true);
-      expect(result.documents.swot).toBe(true);
-      expect(result.documents.audience).toBe(false);
-      expect(result.completeness).toBe(90); // (100 + 80) / 2 = 90
+      expect(result.documents.briefing).toBe('completed');
+      expect(result.documents.swot).toBe('completed');
+      expect(result.documents.audience).toBe('missing');
+      expect(result.completeness).toBe(100); // (100 + 100) / 2 = 100
       expect(result.isComplete).toBe(false);
     });
 

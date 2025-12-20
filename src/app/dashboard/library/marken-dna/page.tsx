@@ -3,13 +3,21 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useCompanies } from '@/lib/hooks/useCRMData';
+import { useAllCustomersMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { MagnifyingGlassIcon, FunnelIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CompanyTable } from './components/CompanyTable';
+import { MarkenDNAEditorModal } from '@/components/marken-dna/MarkenDNAEditorModal';
+import { toastService } from '@/lib/utils/toast';
+import { type MarkenDNADocumentType, type DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import clsx from 'clsx';
 
 /**
@@ -23,20 +31,42 @@ import clsx from 'clsx';
 export default function MarkenDNAPage() {
   const t = useTranslations('markenDNA');
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
+  const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
   // Daten laden
   const { data: companies = [], isLoading } = useCompanies(currentOrganization?.id);
+  const { data: markenDNAStatuses = [], isLoading: isLoadingDNA } = useAllCustomersMarkenDNAStatus(currentOrganization?.id || '');
 
   // UI State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'complete' | 'incomplete'>('all');
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<Set<string>>(new Set());
+  const [editingCompany, setEditingCompany] = useState<CompanyEnhanced | null>(null);
+  const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
 
   // Nur Kunden filtern (type: 'customer')
   const customers = useMemo(() => {
     return companies.filter(company => company.type === 'customer');
   }, [companies]);
+
+  // Hilfsfunktion: Marken-DNA Status für Company abrufen
+  const getMarkenDNAStatus = (companyId: string): Record<MarkenDNADocumentType, DocumentStatus> => {
+    const status = markenDNAStatuses.find(s => s.companyId === companyId);
+    if (!status) {
+      return {
+        briefing: 'missing',
+        swot: 'missing',
+        audience: 'missing',
+        positioning: 'missing',
+        goals: 'missing',
+        messages: 'missing',
+      };
+    }
+    return status.documents as Record<MarkenDNADocumentType, DocumentStatus>;
+  };
 
   // Filter & Search
   const filteredCustomers = useMemo(() => {
@@ -46,22 +76,66 @@ export default function MarkenDNAPage() {
       if (!searchMatch) return false;
 
       // Status-Filter
-      // TODO: Status-Berechnung aus Marken-DNA Dokumenten
-      // Für jetzt: Alle anzeigen
       if (filterStatus === 'complete') {
-        // return customer.markenDNAComplete === true;
-        return false; // Placeholder
+        const status = markenDNAStatuses.find(s => s.companyId === customer.id);
+        return status?.isComplete === true;
       }
       if (filterStatus === 'incomplete') {
-        // return customer.markenDNAComplete === false;
-        return true; // Placeholder
+        const status = markenDNAStatuses.find(s => s.companyId === customer.id);
+        return status?.isComplete !== true;
       }
 
       return true;
     }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  }, [customers, searchTerm, filterStatus]);
+  }, [customers, searchTerm, filterStatus, markenDNAStatuses]);
 
-  if (isLoading) {
+  // Handler-Funktionen
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedCompanyIds(new Set(filteredCustomers.map(c => c.id!)));
+    } else {
+      setSelectedCompanyIds(new Set());
+    }
+  };
+
+  const handleSelect = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedCompanyIds);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedCompanyIds(newSelected);
+  };
+
+  const handleView = (id: string) => {
+    router.push(`/dashboard/library/marken-dna/${id}`);
+  };
+
+  const handleEdit = (company: CompanyEnhanced) => {
+    // TODO: Öffne Editor-Modal
+    console.log('Edit company:', company);
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Möchten Sie wirklich alle Marken-DNA Dokumente für "${name}" löschen?`)) {
+      // TODO: Implement delete
+      toastService.success(tToast('markenDNA.allDocumentsDeleted'));
+    }
+  };
+
+  const handleSaveDocument = async (content: string) => {
+    try {
+      // TODO: Implement save
+      toastService.success(tToast('markenDNA.documentSaved'));
+      setEditingCompany(null);
+      setEditingDocumentType(null);
+    } catch (error) {
+      toastService.error(tToast('saveError'));
+    }
+  };
+
+  if (isLoading || isLoadingDNA) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -102,129 +176,120 @@ export default function MarkenDNAPage() {
           />
         </div>
 
-        {/* Filter Button */}
-        <button
-          className={clsx(
-            'inline-flex items-center justify-center rounded-lg',
-            'border border-zinc-300 bg-white text-zinc-700',
-            'hover:bg-zinc-50 transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-            'h-10 w-10 p-2.5'
-          )}
-          aria-label="Filter"
-        >
-          <FunnelIcon className="h-5 w-5 stroke-2" />
-        </button>
+        {/* Filter Popover */}
+        <Popover className="relative">
+          <PopoverButton
+            className={clsx(
+              'inline-flex items-center justify-center rounded-lg',
+              'border border-zinc-300 bg-white text-zinc-700',
+              'hover:bg-zinc-50 transition-colors',
+              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+              'h-10 w-10 p-2.5'
+            )}
+          >
+            <FunnelIcon className="h-5 w-5 stroke-2" />
+          </PopoverButton>
+
+          <PopoverPanel
+            anchor="bottom end"
+            className="mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Status
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={filterStatus === 'all'}
+                      onChange={() => setFilterStatus('all')}
+                    />
+                    <label className="text-sm text-zinc-700">Alle</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={filterStatus === 'complete'}
+                      onChange={() => setFilterStatus('complete')}
+                    />
+                    <label className="text-sm text-zinc-700">Vollständig</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={filterStatus === 'incomplete'}
+                      onChange={() => setFilterStatus('incomplete')}
+                    />
+                    <label className="text-sm text-zinc-700">Unvollständig</label>
+                  </div>
+                </div>
+              </div>
+
+              {(filterStatus !== 'all') && (
+                <div className="flex justify-end pt-2 border-t border-zinc-200">
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-sm text-zinc-500 hover:text-zinc-700 underline"
+                  >
+                    Zurücksetzen
+                  </button>
+                </div>
+              )}
+            </div>
+          </PopoverPanel>
+        </Popover>
       </div>
 
       {/* 3. Results Info */}
       <div className="flex items-center justify-between">
         <Text className="text-sm text-zinc-600">
           {filteredCustomers.length} {filteredCustomers.length === 1 ? 'Kunde' : 'Kunden'} gefunden
-        </Text>
-      </div>
-
-      {/* 4. Table Placeholder */}
-      <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-        {/* Table Header */}
-        <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
-          <div className="flex items-center">
-            <div className="w-[40%]">
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Kunde
-              </span>
-            </div>
-            <div className="w-[30%]">
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Status
-              </span>
-            </div>
-            <div className="w-[20%]">
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Aktualisiert
-              </span>
-            </div>
-            <div className="w-[10%] flex justify-end">
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Aktionen
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Table Body */}
-        <div className="divide-y divide-zinc-200">
-          {filteredCustomers.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <p className="text-sm text-zinc-500">Keine Kunden gefunden</p>
-            </div>
-          ) : (
-            filteredCustomers.map((customer) => (
-              <div
-                key={customer.id}
-                className="px-6 py-4 hover:bg-zinc-50 transition-colors"
-              >
-                <div className="flex items-center">
-                  {/* Kunde */}
-                  <div className="w-[40%]">
-                    <button className="text-sm font-semibold text-zinc-900 hover:text-primary truncate">
-                      {customer.name}
-                    </button>
-                    {customer.industryClassification?.primary && (
-                      <div className="text-xs text-zinc-500 mt-1">
-                        {customer.industryClassification.primary}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Status - Placeholder */}
-                  <div className="w-[30%]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {/* Placeholder: 6 Kreise für die 6 Dokumente */}
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="Briefing-Check" />
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="SWOT-Analyse" />
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="Zielgruppen-Radar" />
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="Positionierungs-Designer" />
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="Ziele-Setzer" />
-                        <div className="h-3 w-3 rounded-full bg-zinc-300" title="Botschaften-Baukasten" />
-                      </div>
-                      <span className="ml-2 text-xs text-zinc-500">0%</span>
-                    </div>
-                  </div>
-
-                  {/* Aktualisiert - Placeholder */}
-                  <div className="w-[20%]">
-                    <span className="text-sm text-zinc-600">-</span>
-                  </div>
-
-                  {/* Aktionen - Placeholder */}
-                  <div className="w-[10%] flex justify-end">
-                    <button
-                      className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors"
-                      aria-label="Aktionen"
-                    >
-                      <svg
-                        className="h-4 w-4 text-zinc-700"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2.5"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+          {selectedCompanyIds.size > 0 && (
+            <span className="ml-2">
+              · {selectedCompanyIds.size} ausgewählt
+            </span>
           )}
-        </div>
+        </Text>
+        {selectedCompanyIds.size > 0 && (
+          <button
+            onClick={() => {
+              if (confirm(`Möchten Sie wirklich ${selectedCompanyIds.size} Kunden löschen?`)) {
+                // TODO: Bulk delete
+                toastService.success(tToast('markenDNA.allDocumentsDeleted'));
+                setSelectedCompanyIds(new Set());
+              }
+            }}
+            className="text-sm text-red-600 hover:text-red-700 underline"
+          >
+            {selectedCompanyIds.size} Löschen
+          </button>
+        )}
       </div>
+
+      {/* 4. Table */}
+      <CompanyTable
+        companies={filteredCustomers}
+        selectedIds={selectedCompanyIds}
+        onSelectAll={handleSelectAll}
+        onSelect={handleSelect}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        getMarkenDNAStatus={getMarkenDNAStatus}
+      />
+
+      {/* Editor Modal */}
+      {editingCompany && editingDocumentType && (
+        <MarkenDNAEditorModal
+          open={true}
+          onClose={() => {
+            setEditingCompany(null);
+            setEditingDocumentType(null);
+          }}
+          company={editingCompany}
+          documentType={editingDocumentType}
+          onSave={handleSaveDocument}
+        />
+      )}
     </div>
   );
 }
