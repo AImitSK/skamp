@@ -213,25 +213,31 @@ WENN DNA Synthese vorhanden:
   → 🧬 AI Sequenz kombiniert alles zur 📋 Text-Matrix
 ```
 
-### Prompt-Struktur für AI Sequenz
+### Prompt-Struktur für AI Sequenz (Drei-Schichten-Architektur)
 
-```
-"Du bist ein PR-Profi.
+Die AI Sequenz nutzt eine **Drei-Schichten-Architektur** mit klarer Priorität:
 
-Schritt 1 (Kontext):
-Nutze die 🧪 DNA Synthese:
-[Kompakte Zusammenfassung mit Positionierung, Tonalität, Kernbotschaften, Zielgruppen]
+EBENE 1: MARKEN-DNA (Höchste Priorität)
+- Tonalität → ÜBERSCHREIBT Ebene 2 bei Konflikten!
+- USP & Positionierung
+- Kernbotschaften (Dachbotschaften)
+- No-Go-Words (Blacklist)
+- Quelle: DNA Synthese (~500 Tokens)
 
-Schritt 2 (Aufgabe):
-Nutze die 💬 Kernbotschaft:
-- Anlass: [aus Projekt]
-- Ziel: [aus Projekt]
-- Teilbotschaft: [aus Projekt]
+EBENE 2: SCORE-REGELN (Journalistisches Handwerk)
+- Headline: 40-75 Zeichen, aktive Verben, Keywords
+- Lead: 80-200 Zeichen, 5 W-Fragen
+- Struktur: 3-4 Absätze, je 150-400 Zeichen
+- Zitat, CTA, Hashtags
+- Quelle: Shared Prompt Library (SCORE_PROMPTS)
 
-Schritt 3 (Execution):
-Erstelle die 📋 Text-Matrix - eine Pressemeldungs-Vorlage,
-die den Sprachstil und die Werte aus der DNA Synthese nutzt."
-```
+EBENE 3: PROJEKT-KONTEXT (Aktuelle Fakten)
+- Anlass, Ziel, Teilbotschaft
+- Quelle: Kernbotschaft
+
+**Kritische Regel:** Die Tonalität der DNA (Ebene 1) hat bei Konflikten **immer Vorrang** vor den Score-Regeln (Ebene 2).
+
+> Siehe `06-PHASE-5-KI-ASSISTENTEN.md` für die vollständige Implementierung.
 
 ---
 

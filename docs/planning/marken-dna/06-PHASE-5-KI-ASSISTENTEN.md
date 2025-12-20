@@ -4,7 +4,39 @@
 > Siehe `10-WORKFLOW-AGENT.md` für Details zum schrittweisen Workflow.
 
 ## Ziel
-Den KI-Assistenten um den Experten-Modus erweitern, der die Marken-DNA und Projekt-Strategie automatisch nutzt.
+Den KI-Assistenten um den Experten-Modus erweitern, der die Marken-DNA und Projekt-Strategie automatisch nutzt – mit garantiertem PR-SEO Score von 85-95%.
+
+---
+
+## Die Drei-Schichten-Architektur (AI Sequenz)
+
+Der Experten-Modus orchestriert drei Schichten mit klarer Prioritäts-Hierarchie:
+
+EBENE 1: MARKEN-DNA (Höchste Priorität)
+- Tonalität (formal/casual/modern) → ÜBERSCHREIBT Ebene 2
+- USP & Positionierung
+- Kernbotschaften (Dachbotschaften)
+- No-Go-Words (Blacklist)
+- Zielgruppen-Definition
+- Quelle: DNA Synthese (~500 Tokens)
+
+EBENE 2: SCORE-REGELN (Journalistisches Handwerk)
+- Headline: 40-75 Zeichen, aktive Verben, Keywords
+- Lead: 80-200 Zeichen, 5 W-Fragen
+- Struktur: 3-4 Absätze, je 150-400 Zeichen
+- Zitat: "Wörtliche Rede", sagt [Name], [Rolle]
+- CTA + Hashtags
+- Industrie-spezifische Anpassungen
+- Quelle: Shared Prompt Library (SCORE_PROMPTS)
+
+EBENE 3: PROJEKT-KONTEXT (Aktuelle Fakten)
+- Anlass (Warum jetzt?)
+- Ziel (Was soll erreicht werden?)
+- Teilbotschaft (Projekt-spezifische Message)
+- Material/Fakten (Daten für dieses Projekt)
+- Quelle: Kernbotschaft
+
+**Kritische Regel:** Die Tonalität der Marken-DNA (Ebene 1) hat bei Konflikten **immer Vorrang** vor den allgemeinen Branchenregeln (Ebene 2).
 
 ---
 
@@ -30,6 +62,9 @@ KI-Assistent
     ├── 🧪 DNA Synthese wird übergeben (~500 Tokens)
     ├── 💬 Kernbotschaft wird verwendet
     ├── 🧬 AI Sequenz generiert 📋 Text-Matrix
+    ├── Score-Regeln aus Shared Library
+    ├── Tonalitäts-Override möglich (mit Warnung)
+    ├── PR-SEO Score 85-95% garantiert
     └── KI hat spezielle Anleitung
 ```
 
@@ -37,7 +72,347 @@ KI-Assistent
 
 ## Aufgaben
 
-### 5.1 KI-Assistenten UI erweitern
+### 5.1 Shared Prompt Library erstellen
+
+**Datei:** `src/lib/ai/prompts/score-optimization.ts`
+
+```typescript
+/**
+ * Shared Prompt Library für PR-SEO Score Optimierung
+ *
+ * Diese Library enthält alle Regeln für konsistente, SEO-optimierte PR-Texte.
+ * Die Regeln werden in der AI Sequenz (Ebene 2) verwendet.
+ */
+
+export const SCORE_PROMPTS = {
+  headline: {
+    rules: [
+      'Länge: 40-75 Zeichen (optimal für Social Media & SEO)',
+      'Aktive Verben verwenden (bringt, schafft, revolutioniert)',
+      'Keywords in erste 5 Wörter',
+      'Keine Füllwörter (sehr, besonders, ganz)',
+      'Zahlen und Fakten bevorzugen',
+    ],
+    examples: {
+      good: [
+        'KI-Startup sichert 50 Mio. € Series-A-Finanzierung',
+        'Neue Plattform reduziert CO2-Emissionen um 40%',
+      ],
+      bad: [
+        'Sehr interessante Neuigkeiten von unserem Unternehmen',
+        'Wir freuen uns sehr über eine tolle Entwicklung',
+      ],
+    },
+  },
+
+  lead: {
+    rules: [
+      'Länge: 80-200 Zeichen',
+      'Beantwortet 5 W-Fragen (Wer, Was, Wann, Wo, Warum)',
+      'Wichtigste Info zuerst (umgekehrte Pyramide)',
+      'Keine Wiederholung der Headline',
+      'Call-to-Action implizit vorbereiten',
+    ],
+  },
+
+  structure: {
+    rules: [
+      '3-4 Absätze optimal',
+      'Absatzlänge: 150-400 Zeichen',
+      'Ein Gedanke pro Absatz',
+      'Bulletpoints sparsam einsetzen',
+      'Leerraum für Lesbarkeit',
+    ],
+  },
+
+  quote: {
+    rules: [
+      'Wörtliche Rede in Anführungszeichen',
+      'Zuordnung: "Text", sagt [Name], [Rolle]',
+      'Persönliche Perspektive (nicht Marketing-Sprech)',
+      'Maximal 2 Zitate pro Text',
+      'Zitat bringt Emotion oder Experten-Perspektive',
+    ],
+    examples: {
+      good: [
+        '"Diese Technologie wird die Branche grundlegend verändern", sagt Dr. Sarah Müller, CTO.',
+        '"Wir haben drei Jahre an dieser Lösung gearbeitet", erklärt Gründer Max Schmidt.',
+      ],
+      bad: [
+        'Wir freuen uns sehr über diese Entwicklung.',
+        'Unser Unternehmen ist führend in diesem Bereich.',
+      ],
+    },
+  },
+
+  cta: {
+    rules: [
+      'Klar und konkret (nicht "mehr Infos")',
+      'Link zur Landingpage/Whitepaper',
+      '3-5 relevante Hashtags',
+      'Hashtags: Branche + Thema + evtl. Event',
+      'Keine generischen Tags (#innovation #digital)',
+    ],
+    examples: {
+      good: [
+        'Jetzt Whitepaper herunterladen: [URL] #KI #Gesundheitswesen #MedTech',
+        'Live-Demo buchen: [URL] #PropTech #Immobilien #Nachhaltigkeit',
+      ],
+      bad: [
+        'Mehr Informationen auf unserer Website. #news #update',
+      ],
+    },
+  },
+
+  industry: {
+    tech: [
+      'Fokus auf Innovation und technische Details',
+      'Metriken und Performance-Daten',
+      'Integration und API-Möglichkeiten erwähnen',
+      'Open Source oder Partnerschaften hervorheben',
+    ],
+    healthcare: [
+      'Patientennutzen in den Vordergrund',
+      'Regulatorische Zulassungen erwähnen',
+      'Datenschutz und Sicherheit betonen',
+      'Evidenzbasierte Aussagen (Studien, Daten)',
+    ],
+    finance: [
+      'ROI und Business-Impact betonen',
+      'Compliance und Regulierung adressieren',
+      'Risikomanagement erwähnen',
+      'Konkrete Zahlen und Benchmarks',
+    ],
+  },
+};
+
+/**
+ * Generiert Score-Optimierungs-Prompt basierend auf Industrie
+ */
+export function getScoreOptimizationPrompt(industry?: string): string {
+  const industryRules = industry && SCORE_PROMPTS.industry[industry as keyof typeof SCORE_PROMPTS.industry]
+    ? SCORE_PROMPTS.industry[industry as keyof typeof SCORE_PROMPTS.industry]
+    : [];
+
+  return `
+EBENE 2: SCORE-REGELN (Journalistisches Handwerk)
+
+Optimiere den Text für einen PR-SEO Score von 85-95% basierend auf diesen Regeln:
+
+HEADLINE
+${SCORE_PROMPTS.headline.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+LEAD
+${SCORE_PROMPTS.lead.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+STRUKTUR
+${SCORE_PROMPTS.structure.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+ZITAT
+${SCORE_PROMPTS.quote.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+CTA & HASHTAGS
+${SCORE_PROMPTS.cta.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+${industryRules.length > 0 ? `
+INDUSTRIE-SPEZIFISCH (${industry?.toUpperCase()})
+${industryRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+` : ''}
+
+WICHTIG: Diese Regeln gelten IMMER, außer die Marken-DNA (Ebene 1) fordert explizit etwas anderes (z.B. informelle Tonalität statt formeller).
+`;
+}
+```
+
+---
+
+### 5.2 AI Sequenz Prompt Builder
+
+**Datei:** `src/lib/ai/prompts/ai-sequence.ts`
+
+```typescript
+import { getScoreOptimizationPrompt } from './score-optimization';
+
+interface AISequenceContext {
+  dnaSynthese?: string;
+  kernbotschaft?: {
+    occasion: string;
+    goal: string;
+    keyMessage: string;
+  };
+  industry?: string;
+  toneOverride?: 'formal' | 'casual' | 'modern' | null;
+}
+
+/**
+ * Baut den vollständigen AI Sequenz Prompt mit drei Ebenen:
+ * EBENE 1: Marken-DNA (höchste Priorität)
+ * EBENE 2: Score-Regeln (journalistisches Handwerk)
+ * EBENE 3: Projekt-Kontext (aktuelle Fakten)
+ */
+export function buildAISequencePrompt(context: AISequenceContext): string {
+  let prompt = '';
+
+  // EBENE 1: MARKEN-DNA
+  if (context.dnaSynthese) {
+    const extractedTone = extractToneFromDNA(context.dnaSynthese);
+    const effectiveTone = context.toneOverride || extractedTone;
+
+    prompt += `
+═══════════════════════════════════════════════════════════════════
+EBENE 1: MARKEN-DNA (Höchste Priorität)
+═══════════════════════════════════════════════════════════════════
+
+${context.dnaSynthese}
+
+EXTRAHIERTE TONALITÄT: ${effectiveTone || 'nicht definiert'}
+${context.toneOverride ? `⚠️ TONALITÄTS-OVERRIDE AKTIV: "${context.toneOverride}" überschreibt DNA-Vorgabe` : ''}
+
+WICHTIG:
+- Die Tonalität aus dieser DNA hat VORRANG vor allen anderen Regeln
+- USP, Kernbotschaften und No-Go-Words sind bindend
+- Zielgruppe bestimmt Sprache und Komplexität
+
+`;
+  }
+
+  // EBENE 2: SCORE-REGELN
+  prompt += `
+═══════════════════════════════════════════════════════════════════
+${getScoreOptimizationPrompt(context.industry)}
+═══════════════════════════════════════════════════════════════════
+
+`;
+
+  // EBENE 3: PROJEKT-KONTEXT
+  if (context.kernbotschaft) {
+    prompt += `
+═══════════════════════════════════════════════════════════════════
+EBENE 3: PROJEKT-KONTEXT (Aktuelle Fakten)
+═══════════════════════════════════════════════════════════════════
+
+ANLASS (Warum jetzt?)
+${context.kernbotschaft.occasion}
+
+ZIEL (Was soll erreicht werden?)
+${context.kernbotschaft.goal}
+
+KERNBOTSCHAFT FÜR DIESES PROJEKT
+${context.kernbotschaft.keyMessage}
+
+`;
+  }
+
+  prompt += `
+═══════════════════════════════════════════════════════════════════
+KONFLIKT-AUFLÖSUNG
+═══════════════════════════════════════════════════════════════════
+
+Bei Konflikten zwischen den Ebenen gilt folgende Priorität:
+1. EBENE 1 (Marken-DNA) überschreibt IMMER Ebene 2
+2. EBENE 2 (Score-Regeln) ist Standard, wenn Ebene 1 nichts anderes fordert
+3. EBENE 3 (Projekt-Kontext) liefert die aktuellen Fakten
+
+Beispiel: Wenn die DNA "casual und modern" vorgibt, dann nutze NICHT die formelle
+Branchensprache aus Ebene 2, sondern passe die Score-Regeln an die DNA-Tonalität an.
+
+ZIEL: PR-SEO Score von 85-95% erreichen, ohne die Marken-DNA zu verletzen.
+`;
+
+  return prompt;
+}
+
+/**
+ * Extrahiert Tonalität aus DNA Synthese
+ */
+function extractToneFromDNA(dnaSynthese: string): string | null {
+  const toneKeywords = {
+    formal: ['formell', 'professionell', 'seriös', 'sachlich'],
+    casual: ['casual', 'locker', 'entspannt', 'freundlich', 'nahbar'],
+    modern: ['modern', 'innovativ', 'frisch', 'jung', 'dynamisch'],
+  };
+
+  const lowerDNA = dnaSynthese.toLowerCase();
+
+  for (const [tone, keywords] of Object.entries(toneKeywords)) {
+    if (keywords.some(keyword => lowerDNA.includes(keyword))) {
+      return tone;
+    }
+  }
+
+  return null;
+}
+```
+
+---
+
+### 5.3 Tonalitäts-Override im UI
+
+**Datei:** Erweitere die Assistenten-Komponente
+
+```tsx
+import { useState } from 'react';
+
+type ToneOption = 'formal' | 'casual' | 'modern' | null;
+
+function ToneOverrideSelect({
+  defaultTone,
+  onToneChange
+}: {
+  defaultTone: string | null;
+  onToneChange: (tone: ToneOption) => void;
+}) {
+  const [showWarning, setShowWarning] = useState(false);
+
+  const handleToneChange = (tone: ToneOption) => {
+    if (tone && tone !== defaultTone) {
+      setShowWarning(true);
+    } else {
+      setShowWarning(false);
+    }
+    onToneChange(tone);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">
+        Tonalität
+        {defaultTone && (
+          <span className="ml-2 text-xs text-gray-500">
+            (DNA: {defaultTone})
+          </span>
+        )}
+      </label>
+
+      <select
+        onChange={(e) => handleToneChange(e.target.value as ToneOption || null)}
+        className="w-full rounded-md border border-gray-300 px-3 py-2"
+      >
+        <option value="">Aus DNA übernehmen</option>
+        <option value="formal">Formell</option>
+        <option value="casual">Casual</option>
+        <option value="modern">Modern</option>
+      </select>
+
+      {showWarning && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm">
+          <div className="flex items-start gap-2">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="text-yellow-800">
+              <strong>Achtung:</strong> Du überschreibst die Tonalität aus der Marken-DNA.
+              Dies kann zu Inkonsistenzen in der Markenkommunikation führen.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+### 5.4 KI-Assistenten UI erweitern
 
 **Datei:** Bestehende Assistenten-Komponente erweitern
 
@@ -67,7 +442,7 @@ KI-Assistent
 
 ---
 
-### 5.2 Kontext-Aufbereitung für KI
+### 5.5 Kontext-Aufbereitung für KI
 
 **Datei:** `src/lib/ai/context-builder.ts`
 
@@ -113,7 +488,7 @@ export async function buildAIContext(
 
 ---
 
-### 5.3 System-Prompt für Experten-Modus (Mehrsprachig)
+### 5.6 System-Prompt für Experten-Modus (Mehrsprachig)
 
 **Datei:** `src/lib/ai/prompts/expert-mode.ts`
 
@@ -246,7 +621,7 @@ ${context.userPrompt}
 
 ---
 
-### 5.4 Genkit Flow für Experten-Modus
+### 5.7 Genkit Flow für Experten-Modus
 
 **Datei:** `src/lib/ai/flows/expert-assistant.ts`
 
@@ -305,7 +680,7 @@ export const expertAssistantFlow = ai.defineFlow(
 );
 ```
 
-### 5.4.1 API-Route
+### 5.7.1 API-Route
 
 **Datei:** `src/app/api/assistant/expert/route.ts`
 
@@ -340,7 +715,7 @@ export async function POST(request: Request) {
 
 ---
 
-### 5.5 Frontend Hook (Genkit)
+### 5.8 Frontend Hook (Genkit)
 
 **Datei:** `src/lib/hooks/useExpertAssistant.ts`
 
@@ -592,11 +967,20 @@ export function useExpertAssistant(projectId: string) {
 - Bestehender KI-Assistent
 - Bestehende Genkit-Konfiguration (`src/lib/ai/genkit-config.ts`)
 - **Zentraler Toast-Service** (`src/lib/utils/toast.ts`)
+- **Shared Prompt Library** (`src/lib/ai/prompts/score-optimization.ts`)
 
 ---
 
 ## Erledigungs-Kriterien
 
+- [ ] Shared Prompt Library erstellt (score-optimization.ts)
+- [ ] AI Sequenz Prompt Builder erstellt (ai-sequence.ts)
+- [ ] Tonalität wird aus DNA extrahiert
+- [ ] Tonalitäts-Override mit Warnung implementiert
+- [ ] Drei-Schichten-Architektur im Prompt korrekt
+- [ ] DNA hat bei Konflikten Vorrang (dokumentiert im Prompt)
+- [ ] Score-Regeln aus Shared Library eingebunden
+- [ ] PR-SEO Score 85-95% wird erreicht (testen!)
 - [ ] Modus-Auswahl im UI mit BeakerIcon
 - [ ] Standard-Modus funktioniert wie bisher
 - [ ] Experten-Modus lädt 🧪 DNA Synthese automatisch
