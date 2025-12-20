@@ -8,7 +8,8 @@ import {
   NewspaperIcon,
   DocumentTextIcon,
   PhotoIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import { Badge } from "@/components/ui/badge";
 import { useAutoGlobal } from "@/lib/hooks/useAutoGlobal";
@@ -48,6 +49,12 @@ export default function LibraryLayout({
       nameKey: "tabs.boilerplates",
       href: "/dashboard/library/boilerplates",
       icon: DocumentTextIcon,
+      descriptionKey: ""
+    },
+    {
+      nameKey: "tabs.markenDna",
+      href: "/dashboard/library/marken-dna",
+      icon: SparklesIcon,
       descriptionKey: ""
     },
     {
