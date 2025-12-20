@@ -1,5 +1,8 @@
 # Phase 1: Datenmodell & Services
 
+> **Workflow-Agent:** Für die Implementierung dieser Phase den `marken-dna-impl` Agent verwenden.
+> Siehe `10-WORKFLOW-AGENT.md` für Details zum schrittweisen Workflow.
+
 ## Ziel
 Grundlegende Datenstrukturen und Firebase-Services für die Marken-DNA erstellen.
 
@@ -24,10 +27,12 @@ export type MarkenDNADocumentType =
   | 'messages';
 
 // Haupt-Interface
+// Firestore: companies/{companyId}/markenDNA/{documentType}
+// Hinweis: Kunden sind Companies mit type: 'customer'
 export interface MarkenDNADocument {
   id: string;
-  customerId: string;
-  customerName: string;
+  companyId: string;          // Referenz auf Company (type: 'customer')
+  companyName: string;
   organizationId: string;
 
   // Typ
@@ -63,8 +68,8 @@ export interface ChatMessage {
 
 // Create-Daten
 export interface MarkenDNACreateData {
-  customerId: string;
-  customerName: string;
+  companyId: string;          // Referenz auf Company (type: 'customer')
+  companyName: string;
   type: MarkenDNADocumentType;
   content: string;
   plainText?: string;
@@ -85,9 +90,10 @@ export interface MarkenDNAUpdateData {
 }
 
 // Kunden-Status (für Übersichtstabelle)
-export interface CustomerMarkenDNAStatus {
-  customerId: string;
-  customerName: string;
+// Hinweis: Kunden sind Companies mit type: 'customer'
+export interface CompanyMarkenDNAStatus {
+  companyId: string;          // Referenz auf Company (type: 'customer')
+  companyName: string;
   documents: {
     briefing: boolean;
     swot: boolean;
@@ -147,23 +153,29 @@ export const MARKEN_DNA_DOCUMENTS: Record<MarkenDNADocumentType, {
 **Datei:** `src/lib/firebase/marken-dna-service.ts`
 
 ```typescript
+// Firestore-Pfad: companies/{companyId}/markenDNA/{documentType}
+// Hinweis: Kunden sind Companies mit type: 'customer'
+
 // Service-Methoden:
 
 // CRUD
-getDocument(customerId: string, type: MarkenDNADocumentType): Promise<MarkenDNADocument | null>
-getDocuments(customerId: string): Promise<MarkenDNADocument[]>
+getDocument(companyId: string, type: MarkenDNADocumentType): Promise<MarkenDNADocument | null>
+getDocuments(companyId: string): Promise<MarkenDNADocument[]>
 createDocument(data: MarkenDNACreateData, context: ServiceContext): Promise<string>
-updateDocument(id: string, data: MarkenDNAUpdateData, context: ServiceContext): Promise<void>
-deleteDocument(id: string): Promise<void>
-deleteAllForCustomer(customerId: string): Promise<void>
+updateDocument(companyId: string, type: MarkenDNADocumentType, data: MarkenDNAUpdateData, context: ServiceContext): Promise<void>
+deleteDocument(companyId: string, type: MarkenDNADocumentType): Promise<void>
+deleteAllForCompany(companyId: string): Promise<void>
 
 // Status
-getCustomerStatus(customerId: string): Promise<CustomerMarkenDNAStatus>
-getAllCustomersStatus(organizationId: string): Promise<CustomerMarkenDNAStatus[]>
-isComplete(customerId: string): Promise<boolean>
+getCompanyStatus(companyId: string): Promise<CompanyMarkenDNAStatus>
+getAllCustomersStatus(organizationId: string): Promise<CompanyMarkenDNAStatus[]>  // Filtert auf type: 'customer'
+isComplete(companyId: string): Promise<boolean>
 
 // Export für KI
-exportForAI(customerId: string): Promise<string>  // Alle Dokumente als Plain-Text
+exportForAI(companyId: string): Promise<string>  // Alle Dokumente als Plain-Text
+
+// Hash-Berechnung für Aktualitäts-Check
+computeMarkenDNAHash(companyId: string): Promise<string>
 ```
 
 ---
@@ -174,10 +186,11 @@ exportForAI(customerId: string): Promise<string>  // Alle Dokumente als Plain-Te
 
 ```typescript
 // Query Hooks
-useMarkenDNADocument(customerId: string, type: MarkenDNADocumentType)
-useMarkenDNADocuments(customerId: string)
-useMarkenDNAStatus(customerId: string)
-useAllCustomersMarkenDNAStatus(organizationId: string)
+useMarkenDNADocument(companyId: string, type: MarkenDNADocumentType)
+useMarkenDNADocuments(companyId: string)
+useMarkenDNAStatus(companyId: string)
+useAllCustomersMarkenDNAStatus(organizationId: string)  // Filtert auf type: 'customer'
+useMarkenDNAHash(companyId: string)  // Für Aktualitäts-Check
 
 // Mutation Hooks
 useCreateMarkenDNADocument()
@@ -196,20 +209,21 @@ useDeleteAllMarkenDNA()
 import { Timestamp } from 'firebase/firestore';
 
 // 🧪 DNA Synthese - KI-optimierte Kurzform der 6 Marken-DNA Dokumente
+// Firestore: projects/{projectId}/dnaSynthese/{id}
 export interface DNASynthese {
   id: string;
   projectId: string;
-  customerId: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
   organizationId: string;
 
   // Inhalt (KI-optimierte Kurzform, ~500 Tokens)
   content: string;           // HTML für Anzeige
   plainText: string;         // Plain-Text für KI-Übergabe
 
-  // Tracking
+  // Tracking & Aktualitäts-Check
   synthesizedAt: Timestamp;
-  synthesizedFrom: string[]; // IDs der 6 Marken-DNA Dokumente
-  markenDNAVersion: string;  // Hash um Änderungen zu erkennen
+  synthesizedFrom: string[]; // Typen der 6 Marken-DNA Dokumente
+  markenDNAVersion: string;  // Hash um Änderungen zu erkennen (siehe unten)
   manuallyEdited: boolean;   // Wurde manuell angepasst?
 
   // Audit
@@ -222,12 +236,32 @@ export interface DNASynthese {
 // Create-Daten
 export interface DNASyntheseCreateData {
   projectId: string;
-  customerId: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
   content: string;
   plainText: string;
   synthesizedFrom: string[];
-  markenDNAVersion: string;
+  markenDNAVersion: string;  // Hash über alle 6 Marken-DNA Dokumente
 }
+
+/**
+ * markenDNAVersion Hash-Tracking:
+ *
+ * Bei Synthese-Erstellung:
+ *   → Hash über alle 6 Marken-DNA Dokumente berechnen
+ *   → Hash speichern in markenDNAVersion
+ *
+ * Später im Projekt:
+ *   → Aktuellen Hash der 6 Dokumente berechnen
+ *   → Vergleich mit gespeichertem markenDNAVersion
+ *   → Bei Mismatch: "⚠️ Marken-DNA wurde geändert. Neu synthetisieren?"
+ *
+ * Hash-Berechnung:
+ *   const combined = documents
+ *     .sort((a, b) => a.type.localeCompare(b.type))
+ *     .map(d => `${d.type}:${d.updatedAt.toMillis()}`)
+ *     .join('|');
+ *   return sha256(combined).substring(0, 16);
+ */
 ```
 
 ### 1.5 💬 Kernbotschaft Interface
@@ -235,10 +269,14 @@ export interface DNASyntheseCreateData {
 **Datei:** `src/types/kernbotschaft.ts` (neu)
 
 ```typescript
+import { Timestamp } from 'firebase/firestore';
+import { ChatMessage } from './marken-dna';
+
+// Firestore: projects/{projectId}/kernbotschaft/{id}
 export interface Kernbotschaft {
   id: string;
   projectId: string;
-  customerId: string;
+  companyId: string;          // Referenz auf Company (type: 'customer')
   organizationId: string;
 
   // Inhalt
@@ -269,7 +307,9 @@ export interface Kernbotschaft {
 ```javascript
 // firestore.rules ergänzen
 
-match /customers/{customerId}/markenDNA/{docId} {
+// Marken-DNA als Subcollection unter companies
+// Hinweis: Kunden sind Companies mit type: 'customer'
+match /companies/{companyId}/markenDNA/{docType} {
   allow read: if isAuthenticated() &&
     belongsToOrganization(resource.data.organizationId);
   allow create: if isAuthenticated() &&
@@ -307,12 +347,14 @@ match /projects/{projectId}/textMatrix/{matrixId} {
 // __tests__/marken-dna-service.test.ts
 
 describe('MarkenDNAService', () => {
-  it('sollte ein Dokument erstellen');
-  it('sollte alle Dokumente eines Kunden laden');
-  it('sollte den Kundenstatus korrekt berechnen');
+  it('sollte ein Dokument erstellen unter companies/{companyId}/markenDNA/');
+  it('sollte alle Dokumente einer Company laden');
+  it('sollte den Company-Status korrekt berechnen');
   it('sollte isComplete true zurückgeben wenn alle 6 Dokumente vorhanden');
-  it('sollte alle Dokumente eines Kunden löschen können');
+  it('sollte alle Dokumente einer Company löschen können');
   it('sollte exportForAI alle Dokumente als Text zurückgeben');
+  it('sollte computeMarkenDNAHash einen konsistenten Hash berechnen');
+  it('sollte getAllCustomersStatus nur Companies mit type: customer zurückgeben');
 });
 ```
 
@@ -329,10 +371,18 @@ describe('MarkenDNAService', () => {
 ## Erledigungs-Kriterien
 
 - [ ] TypeScript Interfaces erstellt und exportiert
-- [ ] MarkenDNA Service mit allen CRUD-Methoden
+- [ ] MarkenDNA Service mit allen CRUD-Methoden (Pfad: `companies/{companyId}/markenDNA/`)
+- [ ] `computeMarkenDNAHash()` Methode für Aktualitäts-Check implementiert
 - [ ] 🧪 DNASynthese Service mit CRUD + synthesize-Methode
 - [ ] 💬 Kernbotschaft Service mit CRUD-Methoden
 - [ ] 📋 TextMatrix Service mit CRUD-Methoden
 - [ ] React Query Hooks funktionsfähig
-- [ ] Firestore Regeln angepasst
+- [ ] Firestore Regeln angepasst (companies statt customers)
 - [ ] Tests geschrieben und bestanden
+
+---
+
+## Nächste Schritte
+
+- **Weiter:** `03-PHASE-2-BIBLIOTHEK.md` (Marken-DNA UI)
+- **Dokumentation:** Nach Abschluss aller Phasen → `09-DOKUMENTATION.md`

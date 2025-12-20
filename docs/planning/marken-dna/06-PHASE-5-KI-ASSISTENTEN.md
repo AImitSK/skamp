@@ -1,5 +1,8 @@
 # Phase 5: KI-Assistenten Integration
 
+> **Workflow-Agent:** Für die Implementierung dieser Phase den `marken-dna-impl` Agent verwenden.
+> Siehe `10-WORKFLOW-AGENT.md` für Details zum schrittweisen Workflow.
+
 ## Ziel
 Den KI-Assistenten um den Experten-Modus erweitern, der die Marken-DNA und Projekt-Strategie automatisch nutzt.
 
@@ -110,30 +113,90 @@ export async function buildAIContext(
 
 ---
 
-### 5.3 System-Prompt für Experten-Modus
+### 5.3 System-Prompt für Experten-Modus (Mehrsprachig)
 
-**Datei:** `src/genkit/prompts/expert-mode-prompt.ts`
+**Datei:** `src/lib/ai/prompts/expert-mode.ts`
 
 ```typescript
-export function buildExpertModePrompt(context: AIContext): string {
-  let prompt = `Du bist ein erfahrener PR-Profi und Texter.
+type PromptLanguage = 'de' | 'en';
+
+// Mehrsprachige Basis-Texte für den System-Prompt
+const EXPERT_MODE_TEXTS: Record<PromptLanguage, {
+  intro: string;
+  synthesiHeader: string;
+  synthesisNote: string;
+  kernbotschaftHeader: string;
+  occasionLabel: string;
+  goalLabel: string;
+  messageLabel: string;
+  taskHeader: string;
+  rules: string[];
+  userRequestHeader: string;
+}> = {
+  de: {
+    intro: `Du bist ein erfahrener PR-Profi und Texter.
 
 MODUS: EXPERTE 🧪 - CeleroPress Formel
 Du hast Zugriff auf die DNA Synthese des Kunden und nutzt diese
-für konsistente, markentreue Kommunikation.
+für konsistente, markentreue Kommunikation.`,
+    synthesiHeader: '🧪 DNA SYNTHESE (KI-optimierte Kurzform der Marken-DNA)',
+    synthesisNote: 'WICHTIG: Nutze Tonalität, Kernbotschaften und Positionierung aus dieser Synthese!',
+    kernbotschaftHeader: 'PROJEKT-KERNBOTSCHAFT (Aktuelle Aufgabe)',
+    occasionLabel: 'ANLASS',
+    goalLabel: 'ZIEL',
+    messageLabel: 'KERNBOTSCHAFT FÜR DIESES PROJEKT',
+    taskHeader: 'DEINE AUFGABE',
+    rules: [
+      'KONSISTENZ: Halte dich strikt an Positionierung und Tonalität aus der DNA Synthese',
+      'BOTSCHAFTEN: Integriere die Kernbotschaften subtil - nicht plakativ',
+      'ZIELGRUPPE: Schreibe für die definierten Zielgruppen',
+      'FOKUS: Erfülle das Projektziel und transportiere die Projekt-Kernbotschaft',
+      'FAKTEN: Nutze nur Fakten aus der Synthese - erfinde nichts dazu',
+    ],
+    userRequestHeader: 'USER-ANFRAGE',
+  },
+  en: {
+    intro: `You are an experienced PR professional and copywriter.
 
-`;
+MODE: EXPERT 🧪 - CeleroPress Formula
+You have access to the customer's DNA Synthesis and use it
+for consistent, brand-aligned communication.`,
+    synthesiHeader: '🧪 DNA SYNTHESIS (AI-optimized summary of Brand DNA)',
+    synthesisNote: 'IMPORTANT: Use tonality, key messages and positioning from this synthesis!',
+    kernbotschaftHeader: 'PROJECT KEY MESSAGE (Current Task)',
+    occasionLabel: 'OCCASION',
+    goalLabel: 'GOAL',
+    messageLabel: 'KEY MESSAGE FOR THIS PROJECT',
+    taskHeader: 'YOUR TASK',
+    rules: [
+      'CONSISTENCY: Strictly adhere to positioning and tonality from the DNA Synthesis',
+      'MESSAGES: Integrate key messages subtly - not blatantly',
+      'AUDIENCE: Write for the defined target groups',
+      'FOCUS: Fulfill the project goal and convey the project key message',
+      'FACTS: Use only facts from the synthesis - do not invent anything',
+    ],
+    userRequestHeader: 'USER REQUEST',
+  },
+};
+
+export function buildExpertModePrompt(
+  context: AIContext,
+  language: PromptLanguage = 'de'
+): string {
+  const texts = EXPERT_MODE_TEXTS[language] || EXPERT_MODE_TEXTS['de'];
+
+  let prompt = texts.intro + '\n\n';
 
   // 🧪 DNA Synthese einbinden (bereits verdichtet, ~500 Tokens)
   if (context.dnaSynthese) {
     prompt += `
 ═══════════════════════════════════════════════════════════════════
-🧪 DNA SYNTHESE (KI-optimierte Kurzform der Marken-DNA)
+${texts.synthesiHeader}
 ═══════════════════════════════════════════════════════════════════
 
 ${context.dnaSynthese}
 
-WICHTIG: Nutze Tonalität, Kernbotschaften und Positionierung aus dieser Synthese!
+${texts.synthesisNote}
 
 `;
   }
@@ -142,16 +205,16 @@ WICHTIG: Nutze Tonalität, Kernbotschaften und Positionierung aus dieser Synthes
   if (context.kernbotschaft) {
     prompt += `
 ═══════════════════════════════════════════════════════════════════
-PROJEKT-KERNBOTSCHAFT (Aktuelle Aufgabe)
+${texts.kernbotschaftHeader}
 ═══════════════════════════════════════════════════════════════════
 
-## ANLASS
+## ${texts.occasionLabel}
 ${context.kernbotschaft.occasion}
 
-## ZIEL
+## ${texts.goalLabel}
 ${context.kernbotschaft.goal}
 
-## KERNBOTSCHAFT FÜR DIESES PROJEKT
+## ${texts.messageLabel}
 ${context.kernbotschaft.keyMessage}
 
 `;
@@ -160,19 +223,15 @@ ${context.kernbotschaft.keyMessage}
   // Anleitung für die KI
   prompt += `
 ═══════════════════════════════════════════════════════════════════
-DEINE AUFGABE
+${texts.taskHeader}
 ═══════════════════════════════════════════════════════════════════
 
-Erstelle den gewünschten Text unter Beachtung folgender Regeln:
+${language === 'de' ? 'Erstelle den gewünschten Text unter Beachtung folgender Regeln:' : 'Create the requested text following these rules:'}
 
-1. KONSISTENZ: Halte dich strikt an Positionierung und Tonalität aus der DNA Synthese
-2. BOTSCHAFTEN: Integriere die Kernbotschaften subtil - nicht plakativ
-3. ZIELGRUPPE: Schreibe für die definierten Zielgruppen
-4. FOKUS: Erfülle das Projektziel und transportiere die Projekt-Kernbotschaft
-5. FAKTEN: Nutze nur Fakten aus der Synthese - erfinde nichts dazu
+${texts.rules.map((rule, i) => `${i + 1}. ${rule}`).join('\n')}
 
 ═══════════════════════════════════════════════════════════════════
-USER-ANFRAGE
+${texts.userRequestHeader}
 ═══════════════════════════════════════════════════════════════════
 
 ${context.userPrompt}
@@ -182,23 +241,33 @@ ${context.userPrompt}
 }
 ```
 
+> **Hinweis:** Der System-Prompt wird in der UI-Sprache des Benutzers generiert.
+> Siehe `07-ENTWICKLUNGSRICHTLINIEN.md` für vollständige Sprach-Handling Dokumentation.
+
 ---
 
 ### 5.4 Genkit Flow für Experten-Modus
 
-**Datei:** `src/genkit/flows/expert-assistant.ts`
+**Datei:** `src/lib/ai/flows/expert-assistant.ts`
 
 ```typescript
+import { ai } from '@/lib/ai/genkit-config';
+import { z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
+import { buildAIContext } from '@/lib/ai/context-builder';
+import { buildExpertModePrompt } from '@/lib/ai/prompts/expert-mode';
+
 const ExpertAssistantInputSchema = z.object({
   projectId: z.string(),
   userPrompt: z.string(),
+  language: z.enum(['de', 'en']).default('de'),
   outputFormat: z.enum(['pressrelease', 'social', 'blog', 'email', 'custom']).optional(),
 });
 
 const ExpertAssistantOutputSchema = z.object({
   content: z.string(),
-  usedMarkenDNA: z.boolean(),
-  usedProjectStrategy: z.boolean(),
+  usedDNASynthese: z.boolean(),
+  usedKernbotschaft: z.boolean(),
   suggestions: z.array(z.string()).optional(),
 });
 
@@ -209,19 +278,19 @@ export const expertAssistantFlow = ai.defineFlow(
     outputSchema: ExpertAssistantOutputSchema,
   },
   async (input) => {
-    // Kontext aufbauen
+    // Kontext aufbauen (lädt 🧪 DNA Synthese + 💬 Kernbotschaft)
     const context = await buildAIContext(
       input.projectId,
       'expert',
       input.userPrompt
     );
 
-    // System-Prompt erstellen
-    const systemPrompt = buildExpertModePrompt(context);
+    // System-Prompt in der Benutzersprache erstellen
+    const systemPrompt = buildExpertModePrompt(context, input.language);
 
-    // Generieren
+    // Generieren mit Gemini
     const response = await ai.generate({
-      model: googleAI.model('gemini-2.5-pro'),
+      model: googleAI.model('gemini-2.0-flash'),
       system: systemPrompt,
       prompt: input.userPrompt,
       config: { temperature: 0.7 },
@@ -229,21 +298,21 @@ export const expertAssistantFlow = ai.defineFlow(
 
     return {
       content: response.text,
-      usedMarkenDNA: !!context.markenDNA,
-      usedProjectStrategy: !!context.projectStrategy,
+      usedDNASynthese: !!context.dnaSynthese,
+      usedKernbotschaft: !!context.kernbotschaft,
     };
   }
 );
 ```
 
----
-
-### 5.5 API-Endpunkt
+### 5.4.1 API-Route
 
 **Datei:** `src/app/api/assistant/expert/route.ts`
 
 ```typescript
-import { expertAssistantFlow } from '@/genkit/flows/expert-assistant';
+import { expertAssistantFlow } from '@/lib/ai/flows/expert-assistant';
+import { getServerSession } from 'next-auth';
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -259,46 +328,90 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const result = await expertAssistantFlow(body);
-
-  return NextResponse.json(result);
+  try {
+    const result = await expertAssistantFlow(body);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Expert Assistant Error:', error);
+    return NextResponse.json({ error: 'Generation failed' }, { status: 500 });
+  }
 }
 ```
 
 ---
 
-### 5.6 Frontend Hook
+### 5.5 Frontend Hook (Genkit)
 
 **Datei:** `src/lib/hooks/useExpertAssistant.ts`
 
 ```typescript
+import { useLocale } from 'next-intl';
+import { useState, useCallback } from 'react';
+import { toastService } from '@/lib/utils/toast';
+import { useTranslations } from 'next-intl';
+
+interface ExpertAssistantResult {
+  content: string;
+  usedDNASynthese: boolean;
+  usedKernbotschaft: boolean;
+  suggestions?: string[];
+}
+
 export function useExpertAssistant(projectId: string) {
+  const locale = useLocale();
+  const tToast = useTranslations('toasts');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ExpertAssistantOutput | null>(null);
+  const [result, setResult] = useState<ExpertAssistantResult | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const generate = async (prompt: string, outputFormat?: string) => {
+  const generate = useCallback(async (prompt: string, outputFormat?: string) => {
     setIsLoading(true);
+    setError(null);
 
-    const response = await fetch('/api/assistant/expert', {
-      method: 'POST',
-      body: JSON.stringify({
-        projectId,
-        userPrompt: prompt,
-        outputFormat,
-      }),
-    });
+    try {
+      const response = await fetch('/api/assistant/expert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          userPrompt: prompt,
+          language: locale,
+          outputFormat,
+        }),
+      });
 
-    const data = await response.json();
-    setResult(data);
-    setIsLoading(false);
+      if (!response.ok) {
+        throw new Error('Generation failed');
+      }
 
-    return data;
-  };
+      const data = await response.json();
+      setResult(data);
+      return data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      toastService.error(tToast('markenDNA.generationError', { error: error.message }));
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, locale, tToast]);
+
+  const copyToClipboard = useCallback(async () => {
+    if (result?.content) {
+      await navigator.clipboard.writeText(result.content);
+      toastService.success(tToast('copySuccess'));
+    }
+  }, [result, tToast]);
 
   return {
     generate,
     result,
     isLoading,
+    error,
+    copyToClipboard,
+    usedDNASynthese: result?.usedDNASynthese ?? false,
+    usedKernbotschaft: result?.usedKernbotschaft ?? false,
   };
 }
 ```
@@ -318,13 +431,13 @@ export function useExpertAssistant(projectId: string) {
       Experten-Modus aktiv
     </div>
     <ul className="mt-2 space-y-1 text-purple-600">
-      {usedDNASynthese && (
+      {hasDNASynthese && (
         <li className="flex items-center gap-1">
           <CheckIcon className="h-3 w-3" />
           🧪 DNA Synthese wird verwendet
         </li>
       )}
-      {usedKernbotschaft && (
+      {hasKernbotschaft && (
         <li className="flex items-center gap-1">
           <CheckIcon className="h-3 w-3" />
           💬 Kernbotschaft wird verwendet
@@ -344,7 +457,9 @@ export function useExpertAssistant(projectId: string) {
     <div className="flex items-center justify-between mb-2">
       <span className="text-sm text-gray-500 flex items-center gap-1">
         {result.usedDNASynthese && <BeakerIcon className="h-4 w-4" />}
-        Generiert mit {result.usedDNASynthese ? 'DNA Synthese (CeleroPress Formel)' : 'Standard-Einstellungen'}
+        Generiert mit {result.usedDNASynthese
+          ? '🧪 DNA Synthese (CeleroPress Formel)'
+          : 'Standard-Einstellungen'}
       </span>
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={() => copyToClipboard(result.content)}>
@@ -389,12 +504,94 @@ User wählt Modus
 
 ---
 
+## Toast-Benachrichtigungen & i18n
+
+Feedback für KI-Generierung im Experten-Modus mit **next-intl**:
+
+```typescript
+import { useTranslations } from 'next-intl';
+import { toastService } from '@/lib/utils/toast';
+
+// Im useExpertAssistant Hook
+export function useExpertAssistant(projectId: string) {
+  const t = useTranslations('markenDNA');
+  const tToast = useTranslations('toasts');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<ExpertAssistantOutput | null>(null);
+
+  const generate = async (prompt: string, outputFormat?: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/assistant/expert', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId,
+          userPrompt: prompt,
+          outputFormat,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Generation failed');
+      }
+
+      const data = await response.json();
+      setResult(data);
+
+      // Info über verwendete Daten
+      if (data.usedDNASynthese) {
+        toastService.info(t('expert.generatedWithSynthesis'));
+      }
+
+      return data;
+    } catch (error) {
+      toastService.error(tToast('markenDNA.generationError', { error: error.message }));
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // In Zwischenablage kopieren
+  const copyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toastService.success(tToast('copySuccess'));
+    } catch (error) {
+      toastService.error(tToast('copyError'));
+    }
+  };
+
+  // In Editor einfügen
+  const insertIntoEditor = (content: string) => {
+    // Editor-Logik...
+    toastService.success(t('expert.insertedIntoEditor'));
+  };
+
+  return {
+    generate,
+    copyToClipboard,
+    insertIntoEditor,
+    result,
+    isLoading,
+  };
+}
+```
+
+> Siehe `07-ENTWICKLUNGSRICHTLINIEN.md` für vollständige Toast- und i18n-Dokumentation.
+
+---
+
 ## Abhängigkeiten
 
 - Phase 1 (Datenmodell - für Marken-Synthese Interface)
-- Phase 3 (KI-Chat - für Genkit Setup)
+- Phase 3 (KI-Chat mit Genkit Flows)
 - Phase 4 (Strategie-Tab - für Marken-Synthese & Kernbotschaft)
 - Bestehender KI-Assistent
+- Bestehende Genkit-Konfiguration (`src/lib/ai/genkit-config.ts`)
+- **Zentraler Toast-Service** (`src/lib/utils/toast.ts`)
 
 ---
 
@@ -410,3 +607,12 @@ User wählt Modus
 - [ ] Ergebnis zeigt an welche Daten verwendet wurden
 - [ ] BeakerIcon (🧪) konsistent für DNA Synthese verwendet
 - [ ] Tests geschrieben
+
+---
+
+## Nächste Schritte
+
+- **Abschluss:** `09-DOKUMENTATION.md` (Phase 6: Dokumentation erstellen)
+- Alle Services, Hooks, Flows dokumentieren
+- ADRs für Architektur-Entscheidungen schreiben
+- README für `docs/marken-dna/` erstellen

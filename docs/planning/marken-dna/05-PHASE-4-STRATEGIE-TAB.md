@@ -1,5 +1,8 @@
 # Phase 4: Strategie-Tab Umbau
 
+> **Workflow-Agent:** Für die Implementierung dieser Phase den `marken-dna-impl` Agent verwenden.
+> Siehe `10-WORKFLOW-AGENT.md` für Details zum schrittweisen Workflow.
+
 ## Ziel
 Den Strategie-Tab im Projekt komplett umbauen: Weg von Templates, hin zur CeleroPress Formel mit 🧪 DNA Synthese, 🧬 AI Sequenz und 📋 Text-Matrix.
 
@@ -48,8 +51,9 @@ Strategie-Tab (NEU) - Die CeleroPress Formel
 
 ```tsx
 export function StrategieTabContent({ project }: Props) {
-  const { customerId } = project;
-  const { data: markenDNAStatus } = useMarkenDNAStatus(customerId);
+  // project.customer.id referenziert eine Company mit type: 'customer'
+  const companyId = project.customer?.id;
+  const { data: markenDNAStatus } = useMarkenDNAStatus(companyId);
   const { data: dnaSynthese } = useDNASynthese(project.id);
   const { data: kernbotschaft } = useKernbotschaft(project.id);
   const { data: textMatrix } = useTextMatrix(project.id);
@@ -61,8 +65,8 @@ export function StrategieTabContent({ project }: Props) {
       {/* 🧪 DNA Synthese */}
       <DNASyntheseSection
         projectId={project.id}
-        customerId={customerId}
-        customerName={project.customerName}
+        companyId={companyId}
+        companyName={project.customer?.name}
         dnaSynthese={dnaSynthese}
         canSynthesize={canSynthesize}
         markenDNAStatus={markenDNAStatus}
@@ -71,7 +75,7 @@ export function StrategieTabContent({ project }: Props) {
       {/* 💬 Kernbotschaft Chat */}
       <KernbotschaftChat
         projectId={project.id}
-        customerId={customerId}
+        companyId={companyId}
         dnaSynthese={dnaSynthese}
         existingKernbotschaft={kernbotschaft}
       />
@@ -109,17 +113,17 @@ export function StrategieTabContent({ project }: Props) {
 ```tsx
 interface DNASyntheseSectionProps {
   projectId: string;
-  customerId: string;
-  customerName: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
+  companyName: string;
   dnaSynthese?: DNASynthese;
   canSynthesize: boolean;
-  markenDNAStatus?: CustomerMarkenDNAStatus;
+  markenDNAStatus?: CompanyMarkenDNAStatus;
 }
 
 export function DNASyntheseSection({
   projectId,
-  customerId,
-  customerName,
+  companyId,
+  companyName,
   dnaSynthese,
   canSynthesize,
   markenDNAStatus,
@@ -137,7 +141,7 @@ export function DNASyntheseSection({
 
         {dnaSynthese && (
           <DropdownMenu>
-            <DropdownMenuItem onClick={() => synthesize({ projectId, customerId })}>
+            <DropdownMenuItem onClick={() => synthesize({ projectId, companyId })}>
               <BeakerIcon className="h-4 w-4 mr-2" />
               Neu synthetisieren
             </DropdownMenuItem>
@@ -156,9 +160,9 @@ export function DNASyntheseSection({
             {canSynthesize ? (
               <>
                 <p className="text-gray-500 mb-4">
-                  Erstelle eine KI-optimierte Kurzform der Marken-DNA für {customerName}.
+                  Erstelle eine KI-optimierte Kurzform der Marken-DNA für {companyName}.
                 </p>
-                <Button onClick={() => synthesize({ projectId, customerId })} disabled={isLoading}>
+                <Button onClick={() => synthesize({ projectId, companyId })} disabled={isLoading}>
                   <BeakerIcon className="h-4 w-4 mr-2" />
                   DNA synthetisieren
                 </Button>
@@ -166,13 +170,13 @@ export function DNASyntheseSection({
             ) : (
               <>
                 <p className="text-gray-500 mb-4">
-                  Die Marken-DNA von {customerName} ist noch nicht vollständig.
+                  Die Marken-DNA von {companyName} ist noch nicht vollständig.
                 </p>
                 <StatusCircles documents={markenDNAStatus?.documents} size="sm" />
                 <Button
                   variant="outline"
                   className="mt-4"
-                  onClick={() => router.push(`/dashboard/library/marken-dna?customer=${customerId}`)}
+                  onClick={() => router.push(`/dashboard/library/marken-dna?company=${companyId}`)}
                 >
                   Marken-DNA vervollständigen
                 </Button>
@@ -220,37 +224,59 @@ export function DNASyntheseSection({
 
 ---
 
-### 4.4 Projekt-Kernbotschaft Chat Komponente
+### 4.4 Projekt-Kernbotschaft Chat Komponente (Genkit)
 
 **Datei:** `src/components/projects/strategy/ProjektKernbotschaftChat.tsx`
 
+> **Hinweis:** Diese Komponente nutzt den `useGenkitChat` Hook aus Phase 8 (`08-CHAT-UI-KONZEPT.md`).
+
 ```tsx
+import { useLocale, useTranslations } from 'next-intl';
+import { useGenkitChat } from '@/lib/hooks/useGenkitChat';
+
 interface ProjektKernbotschaftChatProps {
   projectId: string;
-  customerId: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
+  companyName: string;
   markenSynthese?: MarkenSynthese;  // 🧪 Wird als Kontext übergeben
   existingKernbotschaft?: ProjektKernbotschaft;
 }
 
 export function ProjektKernbotschaftChat({
   projectId,
-  customerId,
+  companyId,
+  companyName,
   markenSynthese,
   existingKernbotschaft,
 }: ProjektKernbotschaftChatProps) {
+  const locale = useLocale();
+  const t = useTranslations('markenDNA');
+
+  // Genkit Chat Hook
   const {
     messages,
-    document,
-    isLoading,
+    input,
+    setInput,
     sendMessage,
-  } = useKernbotschaftChat(projectId, customerId, markenSynthese?.plainText);
+    isLoading,
+    document,
+    progress,
+    suggestedPrompts,
+  } = useGenkitChat({
+    flowName: 'projectStrategyChat',
+    projectId,
+    companyId,
+    companyName,
+    dnaSynthese: markenSynthese?.plainText, // 🧪 DNA Synthese als Kontext
+    existingChatHistory: existingKernbotschaft?.chatHistory,
+  });
 
-  const [input, setInput] = useState('');
-
-  const handleSubmit = async () => {
-    if (!input.trim()) return;
-    await sendMessage(input);
-    setInput('');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      sendMessage(input);
+      setInput('');
+    }
   };
 
   return (
@@ -258,15 +284,15 @@ export function ProjektKernbotschaftChat({
       <div className="p-4 border-b">
         <h3 className="font-medium flex items-center gap-2">
           <ChatBubbleLeftIcon className="h-5 w-5" />
-          Projekt-Kernbotschaft erarbeiten
+          {t('kernbotschaft.title')}
         </h3>
       </div>
 
-      {/* 🧪 Marken-Synthese Hinweis */}
+      {/* 🧪 DNA Synthese Hinweis */}
       {markenSynthese && (
         <div className="px-4 py-2 bg-purple-50 border-b flex items-center gap-2 text-sm text-purple-700">
           <BeakerIcon className="h-4 w-4" />
-          Marken-Synthese wird als Kontext verwendet
+          {t('kernbotschaft.contextHint')}
         </div>
       )}
 
@@ -274,8 +300,21 @@ export function ProjektKernbotschaftChat({
       <div className="p-4 h-96 overflow-y-auto space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-gray-500 py-8">
-            <p>Starten Sie den Dialog mit der KI, um die Kernbotschaft</p>
-            <p>für dieses Projekt zu erarbeiten.</p>
+            <p>{t('kernbotschaft.emptyState')}</p>
+            {/* Vorgeschlagene Prompts */}
+            {suggestedPrompts.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                {suggestedPrompts.map((prompt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setInput(prompt)}
+                    className="px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -287,31 +326,38 @@ export function ProjektKernbotschaftChat({
       </div>
 
       {/* Eingabe */}
-      <div className="p-4 border-t">
+      <form onSubmit={handleSubmit} className="p-4 border-t">
         <div className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Beschreiben Sie den Anlass, Ihre Ziele..."
+            placeholder={t('kernbotschaft.placeholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit();
+                handleSubmit(e);
               }
             }}
           />
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            Senden
+          <Button type="submit" disabled={isLoading || !input.trim()}>
+            {t('send')}
           </Button>
         </div>
-      </div>
+      </form>
 
-      {/* Strategie erzeugen Button */}
+      {/* Fortschrittsanzeige */}
+      {progress > 0 && progress < 100 && (
+        <div className="px-4 py-2 border-t">
+          <ProgressBar value={progress} />
+        </div>
+      )}
+
+      {/* Kernbotschaft speichern Button */}
       {document && (
         <div className="p-4 border-t bg-gray-50">
-          <Button onClick={() => saveStrategy(document)}>
+          <Button onClick={() => saveKernbotschaft(document)}>
             <DocumentIcon className="h-4 w-4 mr-2" />
-            Strategie erzeugen
+            {t('kernbotschaft.save')}
           </Button>
         </div>
       )}
@@ -366,21 +412,127 @@ export function GeneratedStrategyDocument({
 
 ---
 
-### 4.6 "Mit KI umarbeiten" Modal
+### 4.6 "Mit KI umarbeiten" Modal (Genkit)
 
 **Datei:** `src/components/projects/strategy/ReworkStrategyModal.tsx`
 
-Öffnet einen neuen Chat-Dialog mit dem bestehenden Dokument als Kontext:
+Öffnet einen neuen Chat-Dialog mit dem bestehenden Dokument als Kontext.
+Der Flow erhält das bestehende Dokument im `existingDocument` Parameter.
 
 ```tsx
+import { useTranslations } from 'next-intl';
+import { useGenkitChat } from '@/lib/hooks/useGenkitChat';
+
 export function ReworkStrategyModal({
   strategy,
+  projectId,
+  companyId,
+  companyName,
   onClose,
   onSave,
 }: Props) {
-  // Chat der das bestehende Dokument als Kontext hat
-  // User kann sagen: "Mach es kürzer", "Ändere den Ton", etc.
+  const t = useTranslations('markenDNA');
+
+  // Genkit Chat mit bestehendem Dokument als Kontext
+  const {
+    messages,
+    input,
+    setInput,
+    sendMessage,
+    isLoading,
+    document,
+  } = useGenkitChat({
+    flowName: 'projectStrategyChat',
+    projectId,
+    companyId,
+    companyName,
+    existingDocument: strategy.content, // Für Umarbeiten-Modus
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      sendMessage(input);
+      setInput('');
+    }
+  };
+
+  return (
+    <Modal open onClose={onClose}>
+      <ModalHeader>{t('textMatrix.rework')}</ModalHeader>
+      <ModalBody>
+        {/* Chat zum Umarbeiten */}
+        <div className="h-96 overflow-y-auto space-y-4">
+          {messages.map((msg, i) => (
+            <ChatMessage key={i} message={msg} />
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-4">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t('rework.placeholder')}
+          />
+          <Button type="submit" disabled={isLoading}>
+            {t('send')}
+          </Button>
+        </form>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose}>
+          {t('cancel')}
+        </Button>
+        <Button onClick={() => onSave(document)} disabled={!document}>
+          {t('save')}
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
 }
+```
+
+---
+
+### 4.6.1 Kernbotschaft mit useGenkitChat Hook
+
+> **Hinweis:** Die Kernbotschaft nutzt den `projectStrategyChatFlow` aus Phase 3.
+> Die vollständige Hook-Definition befindet sich in `08-CHAT-UI-KONZEPT.md`.
+
+**API-Route:** `src/app/api/ai-chat/project-strategy/route.ts`
+
+```typescript
+import { projectStrategyChatFlow } from '@/lib/ai/flows/project-strategy-chat';
+import { getServerSession } from 'next-auth';
+import { NextResponse } from 'next/server';
+
+export async function POST(req: Request) {
+  const session = await getServerSession();
+  if (!session) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const result = await projectStrategyChatFlow(body);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Project Strategy Chat Error:', error);
+    return NextResponse.json({ error: 'Chat failed' }, { status: 500 });
+  }
+}
+```
+
+**Verwendung in der Komponente:**
+```typescript
+// Siehe 4.4 für die vollständige Komponente
+const { messages, input, sendMessage, isLoading, document } = useGenkitChat({
+  flowName: 'projectStrategyChat',
+  projectId,
+  companyId,
+  companyName,
+  dnaSynthese: markenSynthese?.plainText,
+});
 ```
 
 ---
@@ -443,11 +595,101 @@ deleteProjectStrategy(strategyId: string): Promise<void>
 
 ---
 
+## Toast-Benachrichtigungen & i18n
+
+Alle Aktionen im Strategie-Tab mit **next-intl** Übersetzungen:
+
+```typescript
+import { useTranslations } from 'next-intl';
+import { toastService } from '@/lib/utils/toast';
+
+function StrategieTabContent({ project }: Props) {
+  const t = useTranslations('markenDNA');
+  const tToast = useTranslations('toasts');
+
+  // 🧪 DNA Synthese erstellen
+  const { mutate: synthesize } = useSynthesizeDNA({
+    onSuccess: () => {
+      toastService.success(tToast('markenDNA.synthesisSaved'));
+    },
+    onError: (error) => {
+      toastService.error(tToast('markenDNA.synthesisError', { error: error.message }));
+    },
+  });
+
+  // 🧪 DNA Synthese löschen
+  const handleDeleteSynthese = async () => {
+    if (!confirm(t('synthesis.confirmDelete'))) return;
+
+    try {
+      await deleteDNASynthese(projectId);
+      toastService.success(tToast('markenDNA.synthesisDeleted'));
+    } catch (error) {
+      toastService.error(tToast('deleteError', { message: error.message }));
+    }
+  };
+
+  // 🧪 DNA Synthese aktualisieren (nach TipTap-Bearbeitung)
+  const handleSaveSynthese = async (content: string) => {
+    try {
+      await updateDNASynthese(projectId, { content, manuallyEdited: true });
+      toastService.success(tToast('markenDNA.synthesisUpdated'));
+      setIsEditing(false);
+    } catch (error) {
+      toastService.error(tToast('saveError', { message: error.message }));
+    }
+  };
+
+  // 💬 Kernbotschaft speichern
+  const handleSaveKernbotschaft = async () => {
+    try {
+      await saveKernbotschaft(projectId, kernbotschaftData);
+      toastService.success(tToast('markenDNA.kernbotschaftSaved'));
+    } catch (error) {
+      toastService.error(tToast('saveError', { message: error.message }));
+    }
+  };
+
+  // 🧬 AI Sequenz → 📋 Text-Matrix generieren
+  const handleGenerateTextMatrix = async () => {
+    const loadingToast = toastService.loading(t('textMatrix.generating'));
+
+    try {
+      await generateTextMatrix(projectId, { dnaSynthese, kernbotschaft });
+      toastService.dismiss(loadingToast);
+      toastService.success(tToast('markenDNA.textMatrixGenerated'));
+    } catch (error) {
+      toastService.dismiss(loadingToast);
+      toastService.error(tToast('markenDNA.generationError', { error: error.message }));
+    }
+  };
+
+  // In Zwischenablage kopieren
+  const handleCopyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toastService.success(tToast('copySuccess'));
+    } catch (error) {
+      toastService.error(tToast('copyError'));
+    }
+  };
+
+  // ...
+}
+```
+
+> Siehe `07-ENTWICKLUNGSRICHTLINIEN.md` für vollständige Toast- und i18n-Dokumentation.
+
+---
+
 ## Abhängigkeiten
 
 - Phase 1 (Datenmodell)
 - Phase 2 (Marken-DNA Bibliothek - für StatusCircles, etc.)
-- Phase 3 (KI-Chat-Wizard - für useProjectStrategyChat)
+- Phase 3 (KI-Chat mit Genkit Flows)
+- Phase 8 (Chat-UI Konzept - für `useGenkitChat` Hook)
+- Bestehende Genkit-Konfiguration (`src/lib/ai/genkit-config.ts`)
+- **Zentraler Toast-Service** (`src/lib/utils/toast.ts`)
 
 ---
 
@@ -466,3 +708,10 @@ deleteProjectStrategy(strategyId: string): Promise<void>
 - [ ] "Mit AI Sequenz umarbeiten" funktioniert
 - [ ] BeakerIcon (🧪) für DNA Synthese konsistent verwendet
 - [ ] Tests geschrieben
+
+---
+
+## Nächste Schritte
+
+- **Weiter:** `06-PHASE-5-KI-ASSISTENTEN.md` (KI-Assistenten Integration)
+- **Dokumentation:** Nach Abschluss aller Phasen → `09-DOKUMENTATION.md`

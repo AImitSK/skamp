@@ -8,6 +8,25 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 
 ---
 
+## Workflow-Agent
+
+> **WICHTIG:** Für die Implementierung der Phasen den `marken-dna-impl` Agent verwenden!
+>
+> ```
+> Starte den marken-dna-impl Agent für Phase X
+> ```
+>
+> Der Agent:
+> - Liest ALLE relevanten Dokumente (nicht nur diesen Masterplan!)
+> - Erstellt Todo-Listen und zeigt sie dem User
+> - Arbeitet schrittweise mit User-Zustimmung
+> - Führt Qualitätsprüfungen durch (Linter, TypeScript, Tests)
+> - Committet nach jedem abgeschlossenen Schritt
+>
+> Siehe `10-WORKFLOW-AGENT.md` für Details.
+
+---
+
 ## Drei-Ebenen-Architektur
 
 ### Ebene 1: Marken-DNA (Kundenebene)
@@ -15,9 +34,12 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 | Aspekt | Beschreibung |
 |--------|--------------|
 | **Charakter** | Langfristig, statisch (jährliche Überprüfung) |
-| **Speicherort** | Bibliothek → Marken DNA → [Kunde] |
+| **Speicherort** | Firestore: `companies/{companyId}/markenDNA/{docType}` |
+| **UI-Pfad** | Bibliothek → Marken DNA → [Kunde] |
 | **Inhalt** | 6 Strategie-Dokumente |
 | **Zweck** | "Gedächtnis" der KI - Leitplanken für alle Kommunikation |
+
+> **Hinweis:** Kunden sind `Company`-Dokumente mit `type: 'customer'`. Es gibt keine separate `customers`-Collection.
 
 **Die 6 Dokumente:**
 1. Briefing-Check (Faktenbasis)
@@ -218,11 +240,12 @@ die den Sprachstil und die Werte aus der DNA Synthese nutzt."
 ### Marken-DNA Collection
 
 ```typescript
-// Firestore: customers/{customerId}/markenDNA/{documentType}
+// Firestore: companies/{companyId}/markenDNA/{documentType}
+// Hinweis: Kunden sind Companies mit type: 'customer'
 interface MarkenDNADocument {
   id: string;
-  customerId: string;
-  customerName: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
+  companyName: string;
   organizationId: string;
 
   // Dokument-Typ
@@ -252,17 +275,17 @@ interface MarkenDNADocument {
 interface DNASynthese {
   id: string;
   projectId: string;
-  customerId: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
   organizationId: string;
 
   // Inhalt (KI-optimierte Kurzform)
   content: string;           // HTML für Anzeige
   plainText: string;         // Plain-Text für KI-Übergabe (~500 Tokens)
 
-  // Tracking
+  // Tracking & Aktualitäts-Check
   synthesizedAt: Timestamp;
   synthesizedFrom: string[]; // IDs der 6 Marken-DNA Dokumente
-  markenDNAVersion: string;  // Hash um Änderungen zu erkennen
+  markenDNAVersion: string;  // Hash um Änderungen zu erkennen (siehe unten)
   manuallyEdited: boolean;   // Wurde manuell angepasst?
 
   // Audit
@@ -273,6 +296,18 @@ interface DNASynthese {
 }
 ```
 
+**markenDNAVersion Hash-Tracking:**
+```
+Bei Synthese-Erstellung:
+  → Hash über alle 6 Marken-DNA Dokumente berechnen
+  → Hash speichern in markenDNAVersion
+
+Später im Projekt:
+  → Aktuellen Hash der 6 Dokumente berechnen
+  → Vergleich mit gespeichertem markenDNAVersion
+  → Bei Mismatch: "⚠️ Marken-DNA wurde geändert. Neu synthetisieren?"
+```
+
 ### 💬 Kernbotschaft
 
 ```typescript
@@ -280,7 +315,7 @@ interface DNASynthese {
 interface Kernbotschaft {
   id: string;
   projectId: string;
-  customerId: string;
+  companyId: string;         // Referenz auf Company (type: 'customer')
   organizationId: string;
 
   // Inhalt
@@ -326,7 +361,7 @@ interface Kernbotschaft {
 |-------|--------------|----------------|
 | **1** | Datenmodell & Services | - |
 | **2** | Marken-DNA Bibliothek (UI) | Phase 1 |
-| **3** | KI-Chat-Wizard (Genkit Flows) | Phase 1 |
+| **3** | KI-Chat (Genkit Flows + Streaming) | Phase 1 |
 
 ### Release 2
 
@@ -340,7 +375,14 @@ interface Kernbotschaft {
 |-------|--------------|----------------|
 | **5** | KI-Assistenten Integration | Phase 4 |
 
+### Abschluss
+
+| Phase | Beschreibung | Abhängigkeiten |
+|-------|--------------|----------------|
+| **6** | Dokumentation | Phasen 1-5 |
+
 > **Hinweis:** Diese Aufteilung ermöglicht schnelleres Feedback und reduziert Risiko.
+> Phase 6 (Dokumentation) wird parallel zu den anderen Phasen vorbereitet und am Ende finalisiert.
 
 ---
 
@@ -359,8 +401,12 @@ interface Kernbotschaft {
 |-------|--------|
 | `00-MASTERPLAN.md` | Diese Datei - Gesamtübersicht |
 | `01-DOKUMENTE.md` | Details zu den 6 Strategie-Dokumenten |
-| `02-PHASE-1-DATENMODELL.md` | Implementierungsplan Phase 1 |
-| `03-PHASE-2-BIBLIOTHEK.md` | Implementierungsplan Phase 2 |
-| `04-PHASE-3-KI-CHAT.md` | Implementierungsplan Phase 3 |
-| `05-PHASE-4-STRATEGIE-TAB.md` | Implementierungsplan Phase 4 |
-| `06-PHASE-5-KI-ASSISTENTEN.md` | Implementierungsplan Phase 5 |
+| `02-PHASE-1-DATENMODELL.md` | Implementierungsplan Phase 1: Datenmodell & Services |
+| `03-PHASE-2-BIBLIOTHEK.md` | Implementierungsplan Phase 2: Marken-DNA Bibliothek (UI) |
+| `04-PHASE-3-KI-CHAT.md` | Implementierungsplan Phase 3: KI-Chat mit Genkit Flows |
+| `05-PHASE-4-STRATEGIE-TAB.md` | Implementierungsplan Phase 4: Strategie-Tab Umbau |
+| `06-PHASE-5-KI-ASSISTENTEN.md` | Implementierungsplan Phase 5: KI-Assistenten Integration |
+| `07-ENTWICKLUNGSRICHTLINIEN.md` | Projektweite Patterns (Design System, Toasts, i18n, Tests) |
+| `08-CHAT-UI-KONZEPT.md` | Chat-UI Konzept mit Genkit |
+| `09-DOKUMENTATION.md` | Implementierungsplan Phase 6: Dokumentation nach Abschluss |
+| `10-WORKFLOW-AGENT.md` | Workflow-Agent für schrittweise Implementierung |
