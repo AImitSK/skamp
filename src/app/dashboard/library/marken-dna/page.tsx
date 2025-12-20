@@ -118,7 +118,7 @@ export default function MarkenDNAPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
-    if (confirm(`Möchten Sie wirklich alle Marken-DNA Dokumente für "${name}" löschen?`)) {
+    if (confirm(t('confirmDelete', { companyName: name }))) {
       // TODO: Implement delete
       toastService.success(tToast('markenDNA.allDocumentsDeleted'));
     }
@@ -150,9 +150,9 @@ export default function MarkenDNAPage() {
     <div className="space-y-6">
       {/* 1. Page Header */}
       <div>
-        <h1 className="text-3xl font-semibold text-zinc-900">Marken DNA</h1>
+        <h1 className="text-3xl font-semibold text-zinc-900">{t('title')}</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Strategische Positionierung Ihrer Kunden
+          {t('subtitle')}
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export default function MarkenDNAPage() {
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Kunden durchsuchen..."
+            placeholder={t('searchPlaceholder')}
             className={clsx(
               'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
               'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -197,7 +197,7 @@ export default function MarkenDNAPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                  Status
+                  {t('filter.status')}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -205,21 +205,21 @@ export default function MarkenDNAPage() {
                       checked={filterStatus === 'all'}
                       onChange={() => setFilterStatus('all')}
                     />
-                    <label className="text-sm text-zinc-700">Alle</label>
+                    <label className="text-sm text-zinc-700">{t('filter.all')}</label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={filterStatus === 'complete'}
                       onChange={() => setFilterStatus('complete')}
                     />
-                    <label className="text-sm text-zinc-700">Vollständig</label>
+                    <label className="text-sm text-zinc-700">{t('filter.complete')}</label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={filterStatus === 'incomplete'}
                       onChange={() => setFilterStatus('incomplete')}
                     />
-                    <label className="text-sm text-zinc-700">Unvollständig</label>
+                    <label className="text-sm text-zinc-700">{t('filter.incomplete')}</label>
                   </div>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function MarkenDNAPage() {
                     onClick={() => setFilterStatus('all')}
                     className="text-sm text-zinc-500 hover:text-zinc-700 underline"
                   >
-                    Zurücksetzen
+                    {t('filter.reset')}
                   </button>
                 </div>
               )}
@@ -242,17 +242,17 @@ export default function MarkenDNAPage() {
       {/* 3. Results Info */}
       <div className="flex items-center justify-between">
         <Text className="text-sm text-zinc-600">
-          {filteredCustomers.length} {filteredCustomers.length === 1 ? 'Kunde' : 'Kunden'} gefunden
+          {filteredCustomers.length} {filteredCustomers.length === 1 ? t('results.customer') : t('results.customers')} {t('results.found')}
           {selectedCompanyIds.size > 0 && (
             <span className="ml-2">
-              · {selectedCompanyIds.size} ausgewählt
+              · {selectedCompanyIds.size} {t('results.selected')}
             </span>
           )}
         </Text>
         {selectedCompanyIds.size > 0 && (
           <button
             onClick={() => {
-              if (confirm(`Möchten Sie wirklich ${selectedCompanyIds.size} Kunden löschen?`)) {
+              if (confirm(t('confirmBulkDelete', { count: selectedCompanyIds.size }))) {
                 // TODO: Bulk delete
                 toastService.success(tToast('markenDNA.allDocumentsDeleted'));
                 setSelectedCompanyIds(new Set());
@@ -260,7 +260,7 @@ export default function MarkenDNAPage() {
             }}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            {selectedCompanyIds.size} Löschen
+            {selectedCompanyIds.size} {t('actions.delete')}
           </button>
         )}
       </div>

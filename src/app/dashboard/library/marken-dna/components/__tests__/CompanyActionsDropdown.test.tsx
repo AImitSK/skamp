@@ -54,12 +54,12 @@ describe('CompanyActionsDropdown', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Briefing-Check')).toBeInTheDocument();
-      expect(screen.getByText('SWOT-Analyse')).toBeInTheDocument();
-      expect(screen.getByText('Zielgruppen-Radar')).toBeInTheDocument();
-      expect(screen.getByText('Positionierungs-Designer')).toBeInTheDocument();
-      expect(screen.getByText('Ziele-Setzer')).toBeInTheDocument();
-      expect(screen.getByText('Botschaften-Baukasten')).toBeInTheDocument();
+      expect(screen.getByText('documents.briefing')).toBeInTheDocument();
+      expect(screen.getByText('documents.swot')).toBeInTheDocument();
+      expect(screen.getByText('documents.audience')).toBeInTheDocument();
+      expect(screen.getByText('documents.positioning')).toBeInTheDocument();
+      expect(screen.getByText('documents.goals')).toBeInTheDocument();
+      expect(screen.getByText('documents.messages')).toBeInTheDocument();
     });
   });
 
@@ -71,7 +71,7 @@ describe('CompanyActionsDropdown', () => {
 
     await waitFor(() => {
       // Briefing und SWOT existieren
-      const editLabels = screen.getAllByText('Bearbeiten');
+      const editLabels = screen.getAllByText('actions.edit');
       expect(editLabels).toHaveLength(2);
     });
   });
@@ -84,7 +84,7 @@ describe('CompanyActionsDropdown', () => {
 
     await waitFor(() => {
       // 4 Dokumente fehlen = 4 Plus-Icons
-      const items = screen.getByText('Zielgruppen-Radar').closest('button');
+      const items = screen.getByText('documents.audience').closest('button');
       expect(items).toBeInTheDocument();
     });
   });
@@ -97,7 +97,7 @@ describe('CompanyActionsDropdown', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      const briefingItem = screen.getByText('Briefing-Check').closest('button');
+      const briefingItem = screen.getByText('documents.briefing').closest('button');
       if (briefingItem) {
         fireEvent.click(briefingItem);
       }
@@ -113,7 +113,7 @@ describe('CompanyActionsDropdown', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Alle Dokumente löschen')).toBeInTheDocument();
+      expect(screen.getByText('actions.deleteAll')).toBeInTheDocument();
     });
   });
 
@@ -125,7 +125,7 @@ describe('CompanyActionsDropdown', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      const deleteButton = screen.getByText('Alle Dokumente löschen').closest('button');
+      const deleteButton = screen.getByText('actions.deleteAll').closest('button');
       if (deleteButton) {
         fireEvent.click(deleteButton);
       }
@@ -142,11 +142,11 @@ describe('CompanyActionsDropdown', () => {
 
     await waitFor(() => {
       // Prüfe dass alle 6 Dokumenttypen angezeigt werden
-      expect(screen.getByText('Briefing-Check')).toBeInTheDocument();
-      expect(screen.getByText('SWOT-Analyse')).toBeInTheDocument();
+      expect(screen.getByText('documents.briefing')).toBeInTheDocument();
+      expect(screen.getByText('documents.swot')).toBeInTheDocument();
 
       // Prüfe dass "Bearbeiten" für existierende Dokumente angezeigt wird
-      const editLabels = screen.getAllByText('Bearbeiten');
+      const editLabels = screen.getAllByText('actions.edit');
       expect(editLabels.length).toBe(2); // briefing + swot
     });
   });

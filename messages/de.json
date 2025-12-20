@@ -11177,10 +11177,23 @@
     "folderLoadError": "Fehler beim Laden des Ordners",
     "maxRecipientsReached": "Maximal {max} Empfänger erlaubt",
     "media": {
-      "filesUploaded": "{count, plural, =1 {1 Datei erfolgreich hochgeladen} other {# Dateien erfolgreich hochgeladen}}",
-      "uploadPartialSuccess": "{success} Dateien hochgeladen, {failed} fehlgeschlagen",
-      "uploadAllFailed": "Alle Uploads fehlgeschlagen ({count} Dateien)",
-      "uploadError": "Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut"
+      "fileDeleted": "Datei gelöscht",
+      "fileDeleteError": "Die Datei konnte nicht gelöscht werden",
+      "fileMoved": "Datei verschoben",
+      "fileMovedTo": "Datei nach \"{target}\" verschoben",
+      "filesDeleted": "{count} {count, plural, one {Datei} other {Dateien}} gelöscht",
+      "filesDeleteError": "Die Dateien konnten nicht gelöscht werden",
+      "filesMoved": "Dateien verschoben",
+      "filesMovedToRoot": "{count} {count, plural, one {Datei} other {Dateien}} in Root verschoben",
+      "filesMoveError": "Die Dateien konnten nicht verschoben werden",
+      "folderCreated": "Ordner erstellt",
+      "folderDeleted": "Ordner gelöscht",
+      "folderDeleteError": "Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist",
+      "folderMoved": "Ordner verschoben",
+      "folderMovedTo": "Ordner nach \"{target}\" verschoben",
+      "folderMovedToRoot": "Ordner in Root verschoben",
+      "folderMoveError": "Der Ordner konnte nicht verschoben werden",
+      "folderUpdated": "Ordner aktualisiert"
     },
     "mediumNotFound": "Medium konnte nicht gefunden werden",
     "memberRemoveError": "Fehler beim Entfernen des Mitglieds",
@@ -11285,25 +11298,6 @@
     "usageSynced": "Usage synchronisiert",
     "usageSyncedWithDetails": "Usage synchronisiert: {contacts} Kontakte, {teamMembers} Team-Mitglieder",
     "verificationError": "Verifizierung fehlgeschlagen",
-    "media": {
-      "fileDeleted": "Datei gelöscht",
-      "fileDeleteError": "Die Datei konnte nicht gelöscht werden",
-      "fileMoved": "Datei verschoben",
-      "fileMovedTo": "Datei nach \"{target}\" verschoben",
-      "filesDeleted": "{count} {count, plural, one {Datei} other {Dateien}} gelöscht",
-      "filesDeleteError": "Die Dateien konnten nicht gelöscht werden",
-      "filesMoved": "Dateien verschoben",
-      "filesMovedToRoot": "{count} {count, plural, one {Datei} other {Dateien}} in Root verschoben",
-      "filesMoveError": "Die Dateien konnten nicht verschoben werden",
-      "folderCreated": "Ordner erstellt",
-      "folderDeleted": "Ordner gelöscht",
-      "folderDeleteError": "Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist",
-      "folderMoved": "Ordner verschoben",
-      "folderMovedTo": "Ordner nach \"{target}\" verschoben",
-      "folderMovedToRoot": "Ordner in Root verschoben",
-      "folderMoveError": "Der Ordner konnte nicht verschoben werden",
-      "folderUpdated": "Ordner aktualisiert"
-    },
     "projects": {
       "boilerplateImported": "\"{name}\" wurde erfolgreich importiert",
       "boilerplateImportError": "Dokument konnte nicht importiert werden",
@@ -11375,7 +11369,15 @@
       "templatesCreated": "{count} Standard-Tasks erfolgreich erstellt",
       "templatesCreateError": "Fehler beim Erstellen der Vorlagen-Tasks"
     },
-    "copyError": "Fehler beim Kopieren"
+    "copyError": "Fehler beim Kopieren",
+    "markenDNA": {
+      "documentSaved": "Dokument erfolgreich gespeichert",
+      "documentDeleted": "Dokument erfolgreich gelöscht",
+      "allDocumentsDeleted": "Alle Dokumente erfolgreich gelöscht",
+      "saveError": "Fehler beim Speichern: {message}",
+      "deleteError": "Fehler beim Löschen: {message}",
+      "loadError": "Dokumente konnten nicht geladen werden"
+    }
   },
   "setup": {
     "mediaWizard": {
@@ -11469,5 +11471,57 @@
     "tagInput": {
       "placeholder": "Tag eingeben + Enter drücken..."
     }
+  },
+  "markenDNA": {
+    "title": "Marken DNA",
+    "subtitle": "Strategische Positionierung Ihrer Kunden",
+    "searchPlaceholder": "Kunden durchsuchen...",
+    "results": {
+      "customer": "Kunde",
+      "customers": "Kunden",
+      "found": "gefunden",
+      "selected": "ausgewählt"
+    },
+    "filter": {
+      "status": "Status",
+      "all": "Alle",
+      "complete": "Vollständig",
+      "incomplete": "Unvollständig",
+      "reset": "Zurücksetzen"
+    },
+    "table": {
+      "name": "Name",
+      "status": "Status",
+      "updated": "Aktualisiert"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "deleteAll": "Alle Dokumente löschen",
+      "save": "Speichern & Schließen",
+      "saving": "Speichert...",
+      "cancel": "Abbrechen"
+    },
+    "documents": {
+      "briefing": "Briefing-Check",
+      "swot": "SWOT-Analyse",
+      "audience": "Zielgruppen-Radar",
+      "positioning": "Positionierungs-Diamant",
+      "goals": "Ziele-Setzer",
+      "messages": "Botschaften-Baukasten"
+    },
+    "modal": {
+      "for": "für",
+      "aiAssistant": "KI-Assistent",
+      "document": "Dokument",
+      "messagePlaceholder": "Nachricht eingeben...",
+      "chatComingSoon": "KI-Chat wird in Phase 3 implementiert",
+      "chatDescription": "Hier können Sie später mit dem KI-Assistenten das {documentType} Dokument erarbeiten.",
+      "noContent": "Noch kein Inhalt vorhanden",
+      "noContentDescription": "Nutzen Sie den KI-Chat, um das Dokument zu erstellen."
+    },
+    "confirmDelete": "Möchten Sie wirklich alle Marken-DNA Dokumente für \"{companyName}\" löschen?",
+    "confirmBulkDelete": "Möchten Sie wirklich {count} Kunden löschen?"
   }
 }

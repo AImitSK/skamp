@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   EllipsisVerticalIcon,
   PlusIcon,
@@ -32,13 +33,13 @@ interface CompanyActionsDropdownProps {
   onDeleteAll: () => void;
 }
 
-const DOC_TYPES: Array<{ key: MarkenDNADocumentType; label: string }> = [
-  { key: 'briefing', label: 'Briefing-Check' },
-  { key: 'swot', label: 'SWOT-Analyse' },
-  { key: 'audience', label: 'Zielgruppen-Radar' },
-  { key: 'positioning', label: 'Positionierungs-Designer' },
-  { key: 'goals', label: 'Ziele-Setzer' },
-  { key: 'messages', label: 'Botschaften-Baukasten' },
+const DOC_TYPES: Array<{ key: MarkenDNADocumentType }> = [
+  { key: 'briefing' },
+  { key: 'swot' },
+  { key: 'audience' },
+  { key: 'positioning' },
+  { key: 'goals' },
+  { key: 'messages' },
 ];
 
 export function CompanyActionsDropdown({
@@ -48,6 +49,8 @@ export function CompanyActionsDropdown({
   onCreateOrEdit,
   onDeleteAll,
 }: CompanyActionsDropdownProps) {
+  const t = useTranslations('markenDNA');
+
   return (
     <Dropdown>
       {/* 3-Punkte Button (Design System Pattern) */}
@@ -66,7 +69,7 @@ export function CompanyActionsDropdown({
         </div>
 
         {/* Document Items */}
-        {DOC_TYPES.map(({ key, label }) => {
+        {DOC_TYPES.map(({ key }) => {
           const exists = documents[key];
           return (
             <DropdownItem
@@ -80,9 +83,9 @@ export function CompanyActionsDropdown({
                   exists ? 'bg-green-500' : 'bg-zinc-300'
                 )}
               />
-              <span className="flex-1">{label}</span>
+              <span className="flex-1">{t(`documents.${key}`)}</span>
               {exists ? (
-                <span className="text-xs text-zinc-500">Bearbeiten</span>
+                <span className="text-xs text-zinc-500">{t('actions.edit')}</span>
               ) : (
                 <PlusIcon className="h-4 w-4 text-zinc-400" />
               )}
@@ -95,7 +98,7 @@ export function CompanyActionsDropdown({
         {/* Delete All Action */}
         <DropdownItem onClick={onDeleteAll}>
           <TrashIcon className="h-4 w-4 text-red-600" />
-          <span className="text-red-600">Alle Dokumente löschen</span>
+          <span className="text-red-600">{t('actions.deleteAll')}</span>
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

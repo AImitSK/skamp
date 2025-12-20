@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ export function MarkenDNAEditorModal({
   documentType,
   onSave,
 }: MarkenDNAEditorModalProps) {
+  const t = useTranslations('markenDNA');
   const [isSaving, setIsSaving] = useState(false);
   const [documentContent, setDocumentContent] = useState('');
   const documentMetadata = MARKEN_DNA_DOCUMENTS[documentType];
@@ -49,7 +51,7 @@ export function MarkenDNAEditorModal({
         <div className="flex items-center gap-2">
           <DocumentTextIcon className="h-5 w-5 text-primary" />
           <span>{documentMetadata.title}</span>
-          <span className="text-zinc-500">für {company.name}</span>
+          <span className="text-zinc-500">{t('modal.for')} {company.name}</span>
         </div>
       </DialogTitle>
 
@@ -62,7 +64,7 @@ export function MarkenDNAEditorModal({
             <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
               <div className="flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-zinc-700" />
-                <span className="text-sm font-medium text-zinc-900">KI-Assistent</span>
+                <span className="text-sm font-medium text-zinc-900">{t('modal.aiAssistant')}</span>
               </div>
             </div>
 
@@ -72,11 +74,10 @@ export function MarkenDNAEditorModal({
                 <div className="text-center max-w-md">
                   <ChatBubbleLeftRightIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
                   <p className="text-sm text-zinc-500 mb-2">
-                    KI-Chat wird in Phase 3 implementiert
+                    {t('modal.chatComingSoon')}
                   </p>
                   <p className="text-xs text-zinc-400">
-                    Hier können Sie später mit dem KI-Assistenten das {documentMetadata.title} Dokument
-                    erarbeiten.
+                    {t('modal.chatDescription', { documentType: documentMetadata.title })}
                   </p>
                 </div>
               </div>
@@ -86,7 +87,7 @@ export function MarkenDNAEditorModal({
             <div className="p-4 border-t border-zinc-200">
               <input
                 type="text"
-                placeholder="Nachricht eingeben..."
+                placeholder={t('modal.messagePlaceholder')}
                 disabled
                 className="block w-full rounded-lg border border-zinc-300 bg-zinc-50
                            px-3 py-2 text-sm placeholder:text-zinc-300
@@ -103,12 +104,12 @@ export function MarkenDNAEditorModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <DocumentTextIcon className="h-5 w-5 text-zinc-700" />
-                  <span className="text-sm font-medium text-zinc-900">Dokument</span>
+                  <span className="text-sm font-medium text-zinc-900">{t('modal.document')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button plain className="h-8 px-3">
                     <PencilIcon className="h-4 w-4 mr-1" />
-                    Bearbeiten
+                    {t('actions.edit')}
                   </Button>
                 </div>
               </div>
@@ -128,10 +129,10 @@ export function MarkenDNAEditorModal({
                   <div className="text-center max-w-md">
                     <DocumentTextIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
                     <p className="text-sm text-zinc-500 mb-2">
-                      Noch kein Inhalt vorhanden
+                      {t('modal.noContent')}
                     </p>
                     <p className="text-xs text-zinc-400">
-                      Nutzen Sie den KI-Chat, um das Dokument zu erstellen.
+                      {t('modal.noContentDescription')}
                     </p>
                   </div>
                 </div>
@@ -144,10 +145,10 @@ export function MarkenDNAEditorModal({
       {/* Actions */}
       <DialogActions>
         <Button color="secondary" onClick={onClose} disabled={isSaving}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
         <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? 'Speichert...' : 'Speichern & Schließen'}
+          {isSaving ? t('actions.saving') : t('actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

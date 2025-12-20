@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -65,6 +66,7 @@ export function CompanyTable({
   onDelete,
   getMarkenDNAStatus,
 }: CompanyTableProps) {
+  const t = useTranslations('markenDNA');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -140,7 +142,7 @@ export function CompanyTable({
               onClick={() => handleSort('name')}
               className="ml-4 flex items-center text-xs font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-700 transition-colors"
             >
-              Name
+              {t('table.name')}
               <SortIcon field="name" />
             </button>
           </div>
@@ -151,7 +153,7 @@ export function CompanyTable({
               onClick={() => handleSort('status')}
               className="flex items-center text-xs font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-700 transition-colors"
             >
-              Status
+              {t('table.status')}
               <SortIcon field="status" />
             </button>
           </div>
@@ -162,7 +164,7 @@ export function CompanyTable({
               onClick={() => handleSort('updatedAt')}
               className="flex items-center text-xs font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-700 transition-colors"
             >
-              Aktualisiert
+              {t('table.updated')}
               <SortIcon field="updatedAt" />
             </button>
           </div>
@@ -201,7 +203,7 @@ export function CompanyTable({
                     </button>
                     <div className="mt-1">
                       <Badge color="zinc" className="text-xs">
-                        Kunde
+                        {t('results.customer')}
                       </Badge>
                     </div>
                   </div>
@@ -234,16 +236,16 @@ export function CompanyTable({
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => onView(company.id!)}>
                         <EyeIcon className="h-4 w-4" />
-                        Anzeigen
+                        {t('actions.view')}
                       </DropdownItem>
                       <DropdownItem onClick={() => onEdit(company)}>
                         <PencilIcon className="h-4 w-4" />
-                        Bearbeiten
+                        {t('actions.edit')}
                       </DropdownItem>
                       <DropdownDivider />
                       <DropdownItem onClick={() => onDelete(company.id!, company.name)}>
                         <TrashIcon className="h-4 w-4" />
-                        <span className="text-red-600">Löschen</span>
+                        <span className="text-red-600">{t('actions.delete')}</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>

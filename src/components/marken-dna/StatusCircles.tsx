@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 
 export type DocumentStatus = 'missing' | 'draft' | 'completed';
 export type MarkenDNADocumentType = 'briefing' | 'swot' | 'audience' | 'positioning' | 'goals' | 'messages';
@@ -18,15 +19,6 @@ interface StatusCirclesProps {
 }
 
 const DOC_TYPES: readonly MarkenDNADocumentType[] = ['briefing', 'swot', 'audience', 'positioning', 'goals', 'messages'] as const;
-
-const DOC_LABELS: Record<MarkenDNADocumentType, string> = {
-  briefing: 'Briefing-Check',
-  swot: 'SWOT-Analyse',
-  audience: 'Zielgruppen-Radar',
-  positioning: 'Positionierungs-Diamant',
-  goals: 'Ziele-Setzer',
-  messages: 'Botschaften-Baukasten',
-};
 
 const SIZE_CLASSES = {
   sm: 'h-2 w-2',
@@ -51,6 +43,7 @@ export function StatusCircles({
   clickable = false,
   onCircleClick,
 }: StatusCirclesProps) {
+  const t = useTranslations('markenDNA.documents');
   const completedCount = DOC_TYPES.filter((type) => documents[type] === 'completed').length;
   const percentage = Math.round((completedCount / DOC_TYPES.length) * 100);
 
@@ -69,8 +62,8 @@ export function StatusCircles({
             clickable && 'cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1',
             !clickable && 'cursor-default'
           )}
-          title={DOC_LABELS[type]}
-          aria-label={`${DOC_LABELS[type]}: ${documents[type]}`}
+          title={t(type)}
+          aria-label={`${t(type)}: ${documents[type]}`}
         />
       ))}
       <span className="ml-2 text-xs text-zinc-500">

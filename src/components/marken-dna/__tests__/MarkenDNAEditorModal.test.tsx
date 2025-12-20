@@ -3,6 +3,12 @@ import { MarkenDNAEditorModal } from '../MarkenDNAEditorModal';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { Timestamp } from 'firebase/firestore';
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => 'de',
+}));
+
 describe('MarkenDNAEditorModal', () => {
   const mockCompany: CompanyEnhanced = {
     id: 'company-123',
@@ -34,7 +40,8 @@ describe('MarkenDNAEditorModal', () => {
     );
 
     expect(screen.getByText('Briefing-Check')).toBeInTheDocument();
-    expect(screen.getByText(/für Test GmbH/)).toBeInTheDocument();
+    expect(screen.getByText(/modal.for/)).toBeInTheDocument();
+    expect(screen.getByText(/Test GmbH/)).toBeInTheDocument();
   });
 
   it('zeigt Split-View mit Chat und Dokument-Bereichen', () => {
@@ -48,8 +55,8 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    expect(screen.getByText('KI-Assistent')).toBeInTheDocument();
-    expect(screen.getByText('Dokument')).toBeInTheDocument();
+    expect(screen.getByText('modal.aiAssistant')).toBeInTheDocument();
+    expect(screen.getByText('modal.document')).toBeInTheDocument();
   });
 
   it('zeigt Placeholder für KI-Chat (Phase 3)', () => {
@@ -63,7 +70,7 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    expect(screen.getByText(/KI-Chat wird in Phase 3 implementiert/)).toBeInTheDocument();
+    expect(screen.getByText(/modal.chatComingSoon/)).toBeInTheDocument();
   });
 
   it('zeigt Placeholder wenn kein Dokument-Inhalt vorhanden', () => {
@@ -77,7 +84,7 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    expect(screen.getByText('Noch kein Inhalt vorhanden')).toBeInTheDocument();
+    expect(screen.getByText('modal.noContent')).toBeInTheDocument();
   });
 
   it('hat deaktiviertes Chat-Input Feld (Phase 3)', () => {
@@ -91,7 +98,7 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    const chatInput = screen.getByPlaceholderText('Nachricht eingeben...');
+    const chatInput = screen.getByPlaceholderText('modal.messagePlaceholder');
     expect(chatInput).toBeDisabled();
   });
 
@@ -106,7 +113,7 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    const cancelButton = screen.getByRole('button', { name: /abbrechen/i });
+    const cancelButton = screen.getByRole('button', { name: /actions.cancel/i });
     fireEvent.click(cancelButton);
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -125,7 +132,7 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    const saveButton = screen.getByRole('button', { name: /speichern/i });
+    const saveButton = screen.getByRole('button', { name: /actions.save/i });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -153,10 +160,10 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    const saveButton = screen.getByRole('button', { name: /speichern/i });
+    const saveButton = screen.getByRole('button', { name: /actions.save/i });
     fireEvent.click(saveButton);
 
-    expect(screen.getByText('Speichert...')).toBeInTheDocument();
+    expect(screen.getByText('actions.saving')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockOnClose).toHaveBeenCalled();
@@ -178,8 +185,8 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    const saveButton = screen.getByRole('button', { name: /speichern/i });
-    const cancelButton = screen.getByRole('button', { name: /abbrechen/i });
+    const saveButton = screen.getByRole('button', { name: /actions.save/i });
+    const cancelButton = screen.getByRole('button', { name: /actions.cancel/i });
 
     fireEvent.click(saveButton);
 
@@ -228,6 +235,6 @@ describe('MarkenDNAEditorModal', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /bearbeiten/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /actions.edit/i })).toBeInTheDocument();
   });
 });

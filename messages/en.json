@@ -11163,10 +11163,23 @@
     "folderLoadError": "Error loading folder",
     "maxRecipientsReached": "Maximum {max} recipients allowed",
     "media": {
-      "filesUploaded": "{count, plural, =1 {1 file successfully uploaded} other {# files successfully uploaded}}",
-      "uploadPartialSuccess": "{success} files uploaded, {failed} failed",
-      "uploadAllFailed": "All uploads failed ({count} files)",
-      "uploadError": "Error uploading files. Please try again"
+      "fileDeleted": "File deleted",
+      "fileDeleteError": "The file could not be deleted",
+      "fileMoved": "File moved",
+      "fileMovedTo": "File moved to \"{target}\"",
+      "filesDeleted": "{count} {count, plural, one {file} other {files}} deleted",
+      "filesDeleteError": "The files could not be deleted",
+      "filesMoved": "Files moved",
+      "filesMovedToRoot": "{count} {count, plural, one {file} other {files}} moved to root",
+      "filesMoveError": "The files could not be moved",
+      "folderCreated": "Folder created",
+      "folderDeleted": "Folder deleted",
+      "folderDeleteError": "The folder could not be deleted. Make sure it is empty",
+      "folderMoved": "Folder moved",
+      "folderMovedTo": "Folder moved to \"{target}\"",
+      "folderMovedToRoot": "Folder moved to root",
+      "folderMoveError": "The folder could not be moved",
+      "folderUpdated": "Folder updated"
     },
     "mediumNotFound": "Medium could not be found",
     "memberRemoveError": "Error removing member",
@@ -11271,25 +11284,6 @@
     "usageSynced": "Usage synchronized",
     "usageSyncedWithDetails": "Usage synchronized: {contacts} contacts, {teamMembers} team members",
     "verificationError": "Verification failed",
-    "media": {
-      "fileDeleted": "File deleted",
-      "fileDeleteError": "The file could not be deleted",
-      "fileMoved": "File moved",
-      "fileMovedTo": "File moved to \"{target}\"",
-      "filesDeleted": "{count} {count, plural, one {file} other {files}} deleted",
-      "filesDeleteError": "The files could not be deleted",
-      "filesMoved": "Files moved",
-      "filesMovedToRoot": "{count} {count, plural, one {file} other {files}} moved to root",
-      "filesMoveError": "The files could not be moved",
-      "folderCreated": "Folder created",
-      "folderDeleted": "Folder deleted",
-      "folderDeleteError": "The folder could not be deleted. Make sure it is empty",
-      "folderMoved": "Folder moved",
-      "folderMovedTo": "Folder moved to \"{target}\"",
-      "folderMovedToRoot": "Folder moved to root",
-      "folderMoveError": "The folder could not be moved",
-      "folderUpdated": "Folder updated"
-    },
     "projects": {
       "boilerplateImported": "\"{name}\" successfully imported",
       "boilerplateImportError": "Document could not be imported",
@@ -11361,7 +11355,15 @@
       "pdfError": "PDF generation failed"
     },
     "pdfReportGenerated": "PDF report successfully generated",
-    "copyError": "Error copying"
+    "copyError": "Error copying",
+    "markenDNA": {
+      "documentSaved": "Document saved successfully",
+      "documentDeleted": "Document deleted successfully",
+      "allDocumentsDeleted": "All documents deleted successfully",
+      "saveError": "Error saving: {message}",
+      "deleteError": "Error deleting: {message}",
+      "loadError": "Could not load documents"
+    }
   },
   "setup": {
     "mediaWizard": {
@@ -11455,5 +11457,57 @@
     "tagInput": {
       "placeholder": "Enter tag + press Enter..."
     }
+  },
+  "markenDNA": {
+    "title": "Brand DNA",
+    "subtitle": "Strategic positioning of your clients",
+    "searchPlaceholder": "Search clients...",
+    "results": {
+      "customer": "Client",
+      "customers": "Clients",
+      "found": "found",
+      "selected": "selected"
+    },
+    "filter": {
+      "status": "Status",
+      "all": "All",
+      "complete": "Complete",
+      "incomplete": "Incomplete",
+      "reset": "Reset"
+    },
+    "table": {
+      "name": "Name",
+      "status": "Status",
+      "updated": "Updated"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteAll": "Delete all documents",
+      "save": "Save & Close",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "documents": {
+      "briefing": "Briefing Check",
+      "swot": "SWOT Analysis",
+      "audience": "Audience Radar",
+      "positioning": "Positioning Diamond",
+      "goals": "Goal Setter",
+      "messages": "Message Builder"
+    },
+    "modal": {
+      "for": "for",
+      "aiAssistant": "AI Assistant",
+      "document": "Document",
+      "messagePlaceholder": "Type a message...",
+      "chatComingSoon": "AI Chat will be implemented in Phase 3",
+      "chatDescription": "You will be able to work on the {documentType} document with the AI assistant here later.",
+      "noContent": "No content yet",
+      "noContentDescription": "Use the AI chat to create the document."
+    },
+    "confirmDelete": "Do you really want to delete all Brand DNA documents for \"{companyName}\"?",
+    "confirmBulkDelete": "Do you really want to delete {count} clients?"
   }
 }

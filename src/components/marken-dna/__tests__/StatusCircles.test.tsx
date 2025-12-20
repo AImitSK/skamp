@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { StatusCircles, DocumentStatus } from '../StatusCircles';
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => 'de',
+}));
+
 describe('StatusCircles', () => {
   const mockDocuments = {
     briefing: 'completed' as DocumentStatus,
@@ -71,12 +77,12 @@ describe('StatusCircles', () => {
     render(<StatusCircles documents={mockDocuments} />);
 
     const circles = screen.getAllByRole('button');
-    expect(circles[0]).toHaveAttribute('title', 'Briefing-Check');
-    expect(circles[1]).toHaveAttribute('title', 'SWOT-Analyse');
-    expect(circles[2]).toHaveAttribute('title', 'Zielgruppen-Radar');
-    expect(circles[3]).toHaveAttribute('title', 'Positionierungs-Diamant');
-    expect(circles[4]).toHaveAttribute('title', 'Ziele-Setzer');
-    expect(circles[5]).toHaveAttribute('title', 'Botschaften-Baukasten');
+    expect(circles[0]).toHaveAttribute('title', 'briefing');
+    expect(circles[1]).toHaveAttribute('title', 'swot');
+    expect(circles[2]).toHaveAttribute('title', 'audience');
+    expect(circles[3]).toHaveAttribute('title', 'positioning');
+    expect(circles[4]).toHaveAttribute('title', 'goals');
+    expect(circles[5]).toHaveAttribute('title', 'messages');
   });
 
   it('ruft onCircleClick bei Klick auf wenn clickable=true', () => {
@@ -155,7 +161,7 @@ describe('StatusCircles', () => {
     render(<StatusCircles documents={mockDocuments} />);
 
     const circles = screen.getAllByRole('button');
-    expect(circles[0]).toHaveAttribute('aria-label', 'Briefing-Check: completed');
-    expect(circles[2]).toHaveAttribute('aria-label', 'Zielgruppen-Radar: missing');
+    expect(circles[0]).toHaveAttribute('aria-label', 'briefing: completed');
+    expect(circles[2]).toHaveAttribute('aria-label', 'audience: missing');
   });
 });
