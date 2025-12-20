@@ -101,9 +101,9 @@ Das Ergebnis dieser **AI Sequenz**: Eine **Text-Matrix**, die alle strategischen
 
 #### Schritt 4: Von der Matrix zur Meldung
 
-Die Text-Matrix ist kein fertiger Text. Sie ist eine fundierte Vorlage – strategisch korrekt, markenkonform, zielgruppengerecht.
+Die Text-Matrix ist ein strategisches Roh-Skelett – fundiert, aber noch nicht druckreif. Sie ist kein fertiger Text, sondern eine hochwertige Vorlage – strategisch korrekt, markenkonform, zielgruppengerecht. Ein High-Fidelity Draft, der das Fundament legt.
 
-Jetzt kommt der Mensch: Feinschliff, Abstimmung mit dem Kunden, finale Freigabe. Das Ergebnis ist eine Pressemeldung, die nicht nur gut klingt, sondern strategisch fundiert ist.
+Jetzt kommt der Mensch: Feinschliff, Abstimmung mit dem Kunden, finale Freigabe. Der Mensch gibt den finalen 'Sign-off'. Erst dann ist es eine Pressemeldung. Das Ergebnis ist eine Pressemeldung, die nicht nur gut klingt, sondern strategisch fundiert ist und die menschliche Qualitätskontrolle durchlaufen hat.
 
 ---
 

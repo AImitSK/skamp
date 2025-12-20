@@ -108,27 +108,35 @@ import { SparklesIcon } from '@heroicons/react/24/outline';
 
 **Datei:** `src/components/marken-dna/StatusCircles.tsx`
 
+**Status-Visualisierung:**
+- ○ (leer/grau): `missing` - Dokument noch nicht erstellt
+- ◐ (halb/gelb): `draft` - Dokument in Bearbeitung
+- ● (voll/grün): `completed` - Dokument fertig
+
 ```typescript
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 interface StatusCirclesProps {
   documents: {
-    briefing: boolean;
-    swot: boolean;
-    audience: boolean;
-    positioning: boolean;
-    goals: boolean;
-    messages: boolean;
+    briefing: DocumentStatus;
+    swot: DocumentStatus;
+    audience: DocumentStatus;
+    positioning: DocumentStatus;
+    goals: DocumentStatus;
+    messages: DocumentStatus;
   };
   size?: 'sm' | 'md' | 'lg';
   clickable?: boolean;
   onCircleClick?: (type: MarkenDNADocumentType) => void;
 }
 
+type DocumentStatus = 'missing' | 'draft' | 'completed';
+
 // Design System Farben:
-// Vorhanden: bg-green-500 (success)
-// Fehlt: bg-zinc-300
+// missing: bg-zinc-300 (grau)
+// draft: bg-yellow-500 (gelb)
+// completed: bg-green-500 (grün)
 
 export function StatusCircles({ documents, size = 'md', clickable, onCircleClick }: StatusCirclesProps) {
   const sizeClasses = {
@@ -147,6 +155,14 @@ export function StatusCircles({ documents, size = 'md', clickable, onCircleClick
     messages: 'Botschaften-Baukasten',
   };
 
+  const getStatusColor = (status: DocumentStatus) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500';
+      case 'draft': return 'bg-yellow-500';
+      case 'missing': return 'bg-zinc-300';
+    }
+  };
+
   return (
     <div className="flex items-center gap-1">
       {docTypes.map((type) => (
@@ -157,14 +173,14 @@ export function StatusCircles({ documents, size = 'md', clickable, onCircleClick
           className={clsx(
             'rounded-full transition-colors',
             sizeClasses[size],
-            documents[type] ? 'bg-green-500' : 'bg-zinc-300',
+            getStatusColor(documents[type]),
             clickable && 'cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1'
           )}
           title={docLabels[type]}
         />
       ))}
       <span className="ml-2 text-xs text-zinc-500">
-        {Math.round((Object.values(documents).filter(Boolean).length / 6) * 100)}%
+        {Math.round((Object.values(documents).filter(s => s === 'completed').length / 6) * 100)}%
       </span>
     </div>
   );
@@ -392,6 +408,41 @@ export function MarkenDNAEditorModal({
 
 ---
 
+### 2.6 DNA-Synthese Button
+
+**WICHTIG:** Der Button "🧪 DNA synthetisieren" ist nur aktivierbar,
+wenn ALLE 6 Marken-DNA Dokumente den Status `completed` haben.
+
+**Validierung:**
+- Solange Dokumente `missing` oder `draft` sind:
+  - Button ist `disabled`
+  - Tooltip zeigt: "Bitte zuerst alle 6 Dokumente vervollständigen"
+- Bei allen Dokumenten mit Status `completed`:
+  - Button ist aktiv
+  - Klick öffnet DNA-Synthese Workflow (siehe Phase 5)
+
+**Speicherort:**
+Die DNA-Synthese wird auf Unternehmensebene gespeichert:
+```
+companies/{companyId}/markenDNA/synthesis
+```
+
+**Beispiel-Implementierung:**
+```tsx
+const allCompleted = Object.values(documents).every(status => status === 'completed');
+
+<Button
+  disabled={!allCompleted}
+  title={!allCompleted ? 'Bitte zuerst alle 6 Dokumente vervollständigen' : undefined}
+  onClick={handleSynthesis}
+>
+  <BeakerIcon className="h-5 w-5 mr-2" />
+  DNA synthetisieren
+</Button>
+```
+
+---
+
 ## Komponenten-Struktur
 
 ```
@@ -503,6 +554,7 @@ import {
   PlusIcon,               // Erstellen/Hinzufügen
   TrashIcon,              // Löschen
   XMarkIcon,              // Schließen
+  BeakerIcon,             // DNA-Synthese
 
   // Content
   DocumentTextIcon,       // Dokument

@@ -25,7 +25,7 @@ Strategie-Tab (NEU) - Die CeleroPress Formel
 ├── 🧪 DNA Synthese (Synthetisieren / Anzeige / Bearbeiten)
 ├── 💬 Kernbotschaft Chat
 ├── 🧬 AI Sequenz (KI-Prozess)
-├── 📋 Text-Matrix (Output / Vorlage)
+├── 📋 Strategische Text-Matrix (Roh-Skelett)
 └── 📰 Pressemeldung (nach Feinschliff + Freigabe)
 ```
 
@@ -89,7 +89,7 @@ export function StrategieTabContent({ project }: Props) {
         />
       )}
 
-      {/* 📋 Text-Matrix */}
+      {/* 📋 Strategische Text-Matrix (Roh-Skelett) */}
       {textMatrix && (
         <TextMatrixSection
           textMatrix={textMatrix}
@@ -109,6 +109,8 @@ export function StrategieTabContent({ project }: Props) {
 **Datei:** `src/components/projects/strategy/DNASyntheseSection.tsx`
 
 **Icon:** `BeakerIcon` aus `@heroicons/react/24/outline`
+
+**Firestore-Pfad:** `companies/{companyId}/markenDNA/synthesis` (nicht projects/)
 
 ```tsx
 interface DNASyntheseSectionProps {
@@ -368,7 +370,87 @@ export function ProjektKernbotschaftChat({
 
 ---
 
-### 4.5 Generiertes Dokument Komponente
+### 4.5 Text-Matrix Komponente
+
+**Datei:** `src/components/projects/strategy/TextMatrixSection.tsx`
+
+**Icon:** `DocumentTextIcon` aus `@heroicons/react/24/outline`
+
+```tsx
+interface TextMatrixSectionProps {
+  textMatrix: TextMatrix;
+  onEdit: () => void;
+  onRework: () => void;
+}
+
+export function TextMatrixSection({
+  textMatrix,
+  onEdit,
+  onRework,
+}: TextMatrixSectionProps) {
+  const t = useTranslations('markenDNA');
+  const { mutate: finalize } = useFinalizeToPressMeldung();
+
+  return (
+    <div className="bg-white rounded-lg border">
+      <div className="p-4 border-b flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <DocumentTextIcon className="h-5 w-5 text-blue-600" />
+          <h3 className="font-medium">📋 Strategische Text-Matrix (Roh-Skelett)</h3>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <PencilIcon className="h-4 w-4 mr-1" />
+            Bearbeiten
+          </Button>
+          <Button variant="outline" size="sm" onClick={onRework}>
+            <SparklesIcon className="h-4 w-4 mr-1" />
+            Mit AI Sequenz umarbeiten
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-4">
+        {/* Text-Matrix Inhalt (Roh-Skelett) */}
+        <div
+          className="prose max-w-none bg-amber-50 rounded p-4 border border-amber-200"
+          dangerouslySetInnerHTML={{ __html: textMatrix.content }}
+        />
+
+        <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+          <p className="text-sm text-blue-800 mb-2">
+            ℹ️ Dies ist ein KI-generiertes Roh-Skelett. Prüfen Sie den Text sorgfältig,
+            bevor Sie ihn als finale Pressemeldung freigeben.
+          </p>
+        </div>
+      </div>
+
+      {/* Human Sign-off Button */}
+      <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          <p className="font-medium mb-1">📰 Als Pressemeldung finalisieren</p>
+          <p className="text-xs">
+            Dieser Button signalisiert: Der Mensch hat die Matrix geprüft und gibt den
+            finalen Sign-off. Erst danach gilt der Text als fertige Pressemeldung.
+          </p>
+        </div>
+        <Button onClick={() => finalize({ textMatrixId: textMatrix.id })}>
+          <CheckCircleIcon className="h-4 w-4 mr-2" />
+          Human Sign-off
+        </Button>
+      </div>
+
+      <div className="p-4 border-t text-sm text-gray-500">
+        Zuletzt aktualisiert: {formatDate(textMatrix.updatedAt)}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+### 4.6 Generiertes Dokument Komponente
 
 **Datei:** `src/components/projects/strategy/GeneratedStrategyDocument.tsx`
 
@@ -412,7 +494,7 @@ export function GeneratedStrategyDocument({
 
 ---
 
-### 4.6 "Mit KI umarbeiten" Modal (Genkit)
+### 4.7 "Mit KI umarbeiten" Modal (Genkit)
 
 **Datei:** `src/components/projects/strategy/ReworkStrategyModal.tsx`
 
@@ -494,7 +576,7 @@ export function ReworkStrategyModal({
 
 ---
 
-### 4.6.1 Kernbotschaft mit useGenkitChat Hook
+### 4.7.1 Kernbotschaft mit useGenkitChat Hook
 
 > **Hinweis:** Die Kernbotschaft nutzt den `projectStrategyChatFlow` aus Phase 3.
 > Die vollständige Hook-Definition befindet sich in `08-CHAT-UI-KONZEPT.md`.
@@ -537,7 +619,7 @@ const { messages, input, sendMessage, isLoading, document } = useGenkitChat({
 
 ---
 
-### 4.7 Projekt-Service erweitern
+### 4.8 Projekt-Service erweitern
 
 **Datei:** `src/lib/firebase/project-service.ts` (erweitern)
 
@@ -650,7 +732,7 @@ function StrategieTabContent({ project }: Props) {
     }
   };
 
-  // 🧬 AI Sequenz → 📋 Text-Matrix generieren
+  // 🧬 AI Sequenz → 📋 Strategische Text-Matrix (Roh-Skelett) generieren
   const handleGenerateTextMatrix = async () => {
     const loadingToast = toastService.loading(t('textMatrix.generating'));
 
@@ -704,7 +786,8 @@ function StrategieTabContent({ project }: Props) {
 - [ ] 💬 Kernbotschaft Chat implementiert
 - [ ] Chat nutzt DNA Synthese als Kontext
 - [ ] 🧬 AI Sequenz Button implementiert
-- [ ] 📋 Text-Matrix wird generiert und gespeichert
+- [ ] 📋 Strategische Text-Matrix (Roh-Skelett) wird generiert und gespeichert
+- [ ] 📰 "Als Pressemeldung finalisieren (Human Sign-off)" Button implementiert
 - [ ] "Mit AI Sequenz umarbeiten" funktioniert
 - [ ] BeakerIcon (🧪) für DNA Synthese konsistent verwendet
 - [ ] Tests geschrieben

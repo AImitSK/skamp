@@ -45,7 +45,10 @@ export interface MarkenDNADocument {
   structuredData?: Record<string, unknown>;
 
   // Status
-  status: 'draft' | 'completed';
+  // missing: Dokument noch nicht erstellt
+  // draft: Dokument in Bearbeitung (Chat läuft noch)
+  // completed: Dokument fertig und vom User bestätigt
+  status: 'missing' | 'draft' | 'completed';
   completeness: number;       // 0-100
 
   // Chat-Verlauf (für Weiterbearbeitung)
@@ -74,7 +77,7 @@ export interface MarkenDNACreateData {
   content: string;
   plainText?: string;
   structuredData?: Record<string, unknown>;
-  status?: 'draft' | 'completed';
+  status?: 'missing' | 'draft' | 'completed';
   completeness?: number;
   chatHistory?: ChatMessage[];
 }
@@ -84,7 +87,7 @@ export interface MarkenDNAUpdateData {
   content?: string;
   plainText?: string;
   structuredData?: Record<string, unknown>;
-  status?: 'draft' | 'completed';
+  status?: 'missing' | 'draft' | 'completed';
   completeness?: number;
   chatHistory?: ChatMessage[];
 }
@@ -209,16 +212,24 @@ useDeleteAllMarkenDNA()
 import { Timestamp } from 'firebase/firestore';
 
 // 🧪 DNA Synthese - KI-optimierte Kurzform der 6 Marken-DNA Dokumente
-// Firestore: projects/{projectId}/dnaSynthese/{id}
+// Firestore: companies/{companyId}/markenDNA/synthesis
 export interface DNASynthese {
   id: string;
-  projectId: string;
   companyId: string;         // Referenz auf Company (type: 'customer')
   organizationId: string;
 
   // Inhalt (KI-optimierte Kurzform, ~500 Tokens)
   content: string;           // HTML für Anzeige
   plainText: string;         // Plain-Text für KI-Übergabe
+
+  // Tonalität (extrahiert/gewählt)
+  tone: 'formal' | 'casual' | 'modern' | 'technical' | 'startup';
+
+  // Status
+  // missing: Dokument noch nicht erstellt
+  // draft: Dokument in Bearbeitung (Chat läuft noch)
+  // completed: Dokument fertig und vom User bestätigt
+  status: 'missing' | 'draft' | 'completed';
 
   // Tracking & Aktualitäts-Check
   synthesizedAt: Timestamp;
@@ -235,10 +246,10 @@ export interface DNASynthese {
 
 // Create-Daten
 export interface DNASyntheseCreateData {
-  projectId: string;
   companyId: string;         // Referenz auf Company (type: 'customer')
   content: string;
   plainText: string;
+  tone: 'formal' | 'casual' | 'modern' | 'technical' | 'startup';
   synthesizedFrom: string[];
   markenDNAVersion: string;  // Hash über alle 6 Marken-DNA Dokumente
 }
@@ -320,8 +331,8 @@ match /companies/{companyId}/markenDNA/{docType} {
     belongsToOrganization(resource.data.organizationId);
 }
 
-// 🧪 DNA Synthese (pro Projekt)
-match /projects/{projectId}/dnaSynthese/{syntheseId} {
+// 🧪 DNA Synthese (pro Company, gespeichert als Document in markenDNA Collection)
+match /companies/{companyId}/markenDNA/synthesis {
   allow read, write: if isAuthenticated() &&
     belongsToOrganization(resource.data.organizationId);
 }

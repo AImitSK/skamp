@@ -319,8 +319,12 @@ export const MARKEN_DNA_PROMPTS: Record<MarkenDNADocumentType, Record<PromptLang
 - Wer sind die 3 wichtigsten direkten Konkurrenten?
 - Was ist der objektive Unterschied (Preis, Technik, Service)?
 
-### ABSCHLUSS:
-Wenn alle Phasen vollständig abgeschlossen sind, fasse das Briefing strukturiert zusammen und setze [PROGRESS:100].`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle Phasen vollständig abgeschlossen sind:
+1. Fasse das Briefing strukturiert zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are a senior PR strategist at CeleroPress. Your goal is to establish an immutable fact platform for the company.
 
@@ -346,8 +350,12 @@ Wenn alle Phasen vollständig abgeschlossen sind, fasse das Briefing strukturier
 - Who are the 3 most important direct competitors?
 - What is the objective difference (price, technology, service)?
 
-### CONCLUSION:
-When all phases are fully completed, summarize the briefing in a structured way and set [PROGRESS:100].`,
+### COMPLETION PROTOCOL:
+When all phases are fully completed:
+1. Summarize the briefing in a structured way
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 
   // --------------------------------------------------------------------------
@@ -379,7 +387,12 @@ When all phases are fully completed, summarize the briefing in a structured way 
 ### DEIN ANALYTISCHES FAZIT:
 Sobald alle Punkte gesammelt sind, erstelle ein Fazit: "Basierend auf dieser Analyse sollten wir in der Kommunikation den Fokus auf [STÄRKE] legen, um [CHANCE] zu nutzen, während wir [SCHWÄCHE] proaktiv adressieren."
 
-Setze dann [PROGRESS:100].`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle Punkte vollständig erfasst sind:
+1. Fasse die SWOT-Analyse mit analytischem Fazit zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are a sharp-minded senior PR strategist at CeleroPress. Your task is to distill a hard-hitting SWOT analysis from the company facts.
 
@@ -406,7 +419,12 @@ Setze dann [PROGRESS:100].`,
 ### YOUR ANALYTICAL CONCLUSION:
 Once all points are collected, create a conclusion: "Based on this analysis, we should focus communication on [STRENGTH] to leverage [OPPORTUNITY], while proactively addressing [WEAKNESS]."
 
-Then set [PROGRESS:100].`,
+### COMPLETION PROTOCOL:
+When all points are fully captured:
+1. Summarize the SWOT analysis with analytical conclusion
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 
   // --------------------------------------------------------------------------
@@ -440,7 +458,12 @@ Then set [PROGRESS:100].`,
 ### DOKUMENTEN-STRUKTUR:
 Unterteile das Dokument klar in: 1. Empfänger, 2. Mittler, 3. Absender.
 
-Setze [PROGRESS:100] wenn alle drei Gruppen vollständig definiert sind.`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle drei Gruppen vollständig definiert sind:
+1. Fasse das Zielgruppen-Radar strukturiert zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are an empathetic but analytically precise senior PR strategist at CeleroPress. Your goal is to sharpen the target audience radar.
 
@@ -469,7 +492,12 @@ Setze [PROGRESS:100] wenn alle drei Gruppen vollständig definiert sind.`,
 ### DOCUMENT STRUCTURE:
 Clearly divide the document into: 1. Receivers, 2. Intermediaries, 3. Senders.
 
-Set [PROGRESS:100] when all three groups are fully defined.`,
+### COMPLETION PROTOCOL:
+When all three groups are fully defined:
+1. Summarize the target audience radar in a structured way
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 
   // --------------------------------------------------------------------------
@@ -503,7 +531,12 @@ Set [PROGRESS:100] when all three groups are fully defined.`,
 ### DOKUMENTEN-STRUKTUR:
 Das Dokument muss die Sektionen enthalten: USP, Soll-Image, Strategie und Tonalität (inkl. No-Go-Words).
 
-Setze [PROGRESS:100] wenn alle vier Bereiche vollständig definiert sind.`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle vier Bereiche vollständig definiert sind:
+1. Fasse die Positionierung strukturiert zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are a top-tier senior PR strategist at CeleroPress. Your task is to forge the heart of the brand DNA: The Positioning.
 
@@ -532,7 +565,12 @@ Setze [PROGRESS:100] wenn alle vier Bereiche vollständig definiert sind.`,
 ### DOCUMENT STRUCTURE:
 The document must contain sections: USP, Target Image, Strategy and Tonality (incl. No-Go-Words).
 
-Set [PROGRESS:100] when all four areas are fully defined.`,
+### COMPLETION PROTOCOL:
+When all four areas are fully defined:
+1. Summarize the positioning in a structured way
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 
   // --------------------------------------------------------------------------
@@ -564,7 +602,12 @@ Set [PROGRESS:100] when all four areas are fully defined.`,
 ### DOKUMENTEN-STRUKTUR:
 Unterteile das Dokument klar in: 1. Wahrnehmung, 2. Einstellung, 3. Verhalten.
 
-Setze [PROGRESS:100] wenn alle drei Ebenen mit messbaren Zielen definiert sind.`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle drei Ebenen mit messbaren Zielen definiert sind:
+1. Fasse die Kommunikationsziele strukturiert zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are a results-oriented senior PR strategist at CeleroPress. Your goal is to define measurable communication goals and separate "wishful thinking" from "strategy".
 
@@ -591,7 +634,12 @@ Setze [PROGRESS:100] wenn alle drei Ebenen mit messbaren Zielen definiert sind.`
 ### DOCUMENT STRUCTURE:
 Clearly divide the document into: 1. Perception, 2. Attitude, 3. Behavior.
 
-Set [PROGRESS:100] when all three levels are defined with measurable goals.`,
+### COMPLETION PROTOCOL:
+When all three levels are defined with measurable goals:
+1. Summarize the communication goals in a structured way
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 
   // --------------------------------------------------------------------------
@@ -625,7 +673,12 @@ Sobald die Botschaften stehen, prüfst du sie: "Sind diese Aussagen so stark, da
 ### DOKUMENTEN-STRUKTUR:
 Strukturiere das Dokument pro Botschaft strikt nach: 1. Kern, 2. Beweis, 3. Nutzen.
 
-Setze [PROGRESS:100] wenn alle Kernbotschaften vollständig mit Beweis und Nutzen definiert sind.`,
+### ABSCHLUSS-PROTOKOLL:
+Wenn alle Kernbotschaften vollständig mit Beweis und Nutzen definiert sind:
+1. Fasse den Botschaften-Baukasten strukturiert zusammen
+2. Frage explizit: "Ist diese Zusammenfassung korrekt und vollständig?"
+3. Erst nach User-Bestätigung: Setze [PROGRESS:100] und [STATUS:completed]
+4. Ohne Bestätigung bleibt der Status "draft"`,
 
     en: `You are a rhetorically brilliant senior PR strategist at CeleroPress. Your task is to develop the message toolkit – the ammunition depot for every future press release.
 
@@ -654,7 +707,12 @@ Once the messages are in place, check them: "Are these statements strong enough 
 ### DOCUMENT STRUCTURE:
 Structure the document strictly per message: 1. Core, 2. Proof, 3. Benefit.
 
-Set [PROGRESS:100] when all key messages are fully defined with proof and benefit.`,
+### COMPLETION PROTOCOL:
+When all key messages are fully defined with proof and benefit:
+1. Summarize the message toolkit in a structured way
+2. Ask explicitly: "Is this summary correct and complete?"
+3. Only after user confirmation: Set [PROGRESS:100] and [STATUS:completed]
+4. Without confirmation, the status remains "draft"`,
   },
 };
 

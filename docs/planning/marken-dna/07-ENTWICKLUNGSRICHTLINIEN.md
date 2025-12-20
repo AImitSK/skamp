@@ -4,6 +4,21 @@ Dieses Dokument beschreibt die projektweiten Patterns und Standards, die bei der
 
 ---
 
+## Kernprinzip: Strategie-Sicherheit durch KI, Kreative Exzellenz durch Menschen
+
+> **Das oberste Prinzip für das Marken-DNA Feature:**
+>
+> Die KI garantiert strategische Konsistenz (Tonalität, Kernbotschaften, Positionierung).
+> Der Mensch liefert kreative Exzellenz (Feinschliff, Stilsicherheit, finaler Sign-off).
+>
+> **Konkret:**
+> - Die 🧪 DNA-Synthese ist das "Leitplanken-System" – sie verhindert Abweichungen von der Markenidentität
+> - Die 📋 Text-Matrix ist ein High-Fidelity Draft – strategisch fundiert, aber noch nicht druckreif
+> - Der Mensch prüft, verfeinert und gibt den finalen Sign-off
+> - Erst dann ist es eine fertige 📰 Pressemeldung
+
+---
+
 ## Workflow-Agent
 
 > **WICHTIG:** Für die Implementierung aller Phasen den `marken-dna-impl` Agent verwenden!

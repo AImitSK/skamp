@@ -49,12 +49,12 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 5. Ziele-Setzer (Messlatte)
 6. Botschaften-Baukasten (Dachbotschaften)
 
-### Ebene 2: 🧪 DNA Synthese (Projektebene)
+### Ebene 2: 🧪 DNA Synthese (Unternehmensebene)
 
 | Aspekt | Beschreibung |
 |--------|--------------|
-| **Charakter** | KI-optimierte Verdichtung der 6 Marken-DNA Dokumente |
-| **Speicherort** | Projekt → Strategie-Tab |
+| **Charakter** | Globales Brand-Manual für den Kunden, nicht projektspezifisch |
+| **Speicherort** | `companies/{companyId}/markenDNA/synthesis` |
 | **Inhalt** | Kompakte Kurzform (~500 Tokens statt ~5.000) |
 | **Zweck** | Effizienter KI-Kontext für Textgenerierung |
 
@@ -79,7 +79,8 @@ Die Marken-DNA revolutioniert den Strategie-Bereich von CeleroPress durch einen 
 | Aspekt | Beschreibung |
 |--------|--------------|
 | **AI Sequenz** | KI-Prozess der DNA Synthese + Kernbotschaft kombiniert |
-| **Text-Matrix** | Output der AI Sequenz - bearbeitbare Vorlage |
+| **Text-Matrix** | Strategisches Roh-Skelett (High-Fidelity Draft) |
+| **Human-in-the-Loop** | Nach menschlichem Feinschliff → fertige 📰 Pressemeldung |
 | **Zweck** | Strategisch fundierte Textvorlage für Feinschliff |
 
 **Der Prozess (Die CeleroPress Formel):**
@@ -277,10 +278,9 @@ interface MarkenDNADocument {
 ### 🧪 DNA Synthese (NEU)
 
 ```typescript
-// Firestore: projects/{projectId}/dnaSynthese
+// Firestore: companies/{companyId}/markenDNA/synthesis
 interface DNASynthese {
   id: string;
-  projectId: string;
   companyId: string;         // Referenz auf Company (type: 'customer')
   organizationId: string;
 
