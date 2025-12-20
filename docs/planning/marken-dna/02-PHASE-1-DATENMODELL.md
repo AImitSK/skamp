@@ -1,5 +1,12 @@
 # Phase 1: Datenmodell & Services
 
+> ✅ **STATUS: ABGESCHLOSSEN** (2025-12-20)
+>
+> - 12 Dateien erstellt
+> - 79 Tests bestanden
+> - Firestore Rules deployed
+> - Commit: `385ba7bc`
+
 > **Workflow-Agent:** Für die Implementierung dieser Phase den `marken-dna-impl` Agent verwenden.
 > Siehe `10-WORKFLOW-AGENT.md` für Details zum schrittweisen Workflow.
 
@@ -381,15 +388,15 @@ describe('MarkenDNAService', () => {
 
 ## Erledigungs-Kriterien
 
-- [ ] TypeScript Interfaces erstellt und exportiert
-- [ ] MarkenDNA Service mit allen CRUD-Methoden (Pfad: `companies/{companyId}/markenDNA/`)
-- [ ] `computeMarkenDNAHash()` Methode für Aktualitäts-Check implementiert
-- [ ] 🧪 DNASynthese Service mit CRUD + synthesize-Methode
-- [ ] 💬 Kernbotschaft Service mit CRUD-Methoden
-- [ ] 📋 TextMatrix Service mit CRUD-Methoden
-- [ ] React Query Hooks funktionsfähig
-- [ ] Firestore Regeln angepasst (companies statt customers)
-- [ ] Tests geschrieben und bestanden
+- [x] TypeScript Interfaces erstellt und exportiert
+- [x] MarkenDNA Service mit allen CRUD-Methoden (Pfad: `companies/{companyId}/markenDNA/`)
+- [x] `computeMarkenDNAHash()` Methode für Aktualitäts-Check implementiert
+- [x] 🧪 DNASynthese Service mit CRUD + synthesize-Methode
+- [x] 💬 Kernbotschaft Service mit CRUD-Methoden
+- [ ] 📋 TextMatrix Service mit CRUD-Methoden (→ Phase 4)
+- [x] React Query Hooks funktionsfähig
+- [x] Firestore Regeln angepasst (companies statt customers)
+- [x] Tests geschrieben und bestanden (79 Tests)
 
 ---
 

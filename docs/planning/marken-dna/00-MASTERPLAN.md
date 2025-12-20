@@ -363,29 +363,29 @@ interface Kernbotschaft {
 
 ### MVP (Release 1)
 
-| Phase | Beschreibung | Abhängigkeiten |
-|-------|--------------|----------------|
-| **1** | Datenmodell & Services | - |
-| **2** | Marken-DNA Bibliothek (UI) | Phase 1 |
-| **3** | KI-Chat (Genkit Flows + Streaming) | Phase 1 |
+| Phase | Beschreibung | Abhängigkeiten | Status |
+|-------|--------------|----------------|--------|
+| **1** | Datenmodell & Services | - | ✅ Abgeschlossen (2025-12-20) |
+| **2** | Marken-DNA Bibliothek (UI) | Phase 1 | ⏳ Offen |
+| **3** | KI-Chat (Genkit Flows + Streaming) | Phase 1 | ⏳ Offen |
 
 ### Release 2
 
-| Phase | Beschreibung | Abhängigkeiten |
-|-------|--------------|----------------|
-| **4** | Strategie-Tab Umbau | Phase 2, 3 |
+| Phase | Beschreibung | Abhängigkeiten | Status |
+|-------|--------------|----------------|--------|
+| **4** | Strategie-Tab Umbau | Phase 2, 3 | ⏳ Offen |
 
 ### Release 3
 
-| Phase | Beschreibung | Abhängigkeiten |
-|-------|--------------|----------------|
-| **5** | KI-Assistenten Integration | Phase 4 |
+| Phase | Beschreibung | Abhängigkeiten | Status |
+|-------|--------------|----------------|--------|
+| **5** | KI-Assistenten Integration | Phase 4 | ⏳ Offen |
 
 ### Abschluss
 
-| Phase | Beschreibung | Abhängigkeiten |
-|-------|--------------|----------------|
-| **6** | Dokumentation | Phasen 1-5 |
+| Phase | Beschreibung | Abhängigkeiten | Status |
+|-------|--------------|----------------|--------|
+| **6** | Dokumentation | Phasen 1-5 | ⏳ Offen |
 
 > **Hinweis:** Diese Aufteilung ermöglicht schnelleres Feedback und reduziert Risiko.
 > Phase 6 (Dokumentation) wird parallel zu den anderen Phasen vorbereitet und am Ende finalisiert.
