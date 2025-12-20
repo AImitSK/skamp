@@ -132,6 +132,54 @@ service cloud.firestore {
     }
 
     // ========================================
+    // MARKEN-DNA SYSTEM
+    // ========================================
+
+    // Marken-DNA Dokumente - Subcollection unter Companies
+    // Pfad: companies/{companyId}/markenDNA/{documentType}
+    // Erlaubte Dokumenttypen: briefing, swot, audience, positioning, goals, messages, synthesis
+    match /companies/{companyId}/markenDNA/{documentType} {
+      // Helper: Lädt Company-Dokument um organizationId zu prüfen
+      function getCompany() {
+        return get(/databases/$(database)/documents/companies/$(companyId));
+      }
+
+      // Helper: Prüft ob User zur gleichen Org gehört wie die Company
+      function belongsToCompanyOrg() {
+        return isAuthenticated()
+               && getCompany().data.organizationId == request.auth.token.organizationId;
+      }
+
+      // Helper: Prüft ob documentType erlaubt ist
+      function isValidDocumentType() {
+        return documentType in ['briefing', 'swot', 'audience', 'positioning', 'goals', 'messages', 'synthesis'];
+      }
+
+      // Read: User muss zur gleichen Organization gehören wie die Company
+      allow read: if belongsToCompanyOrg() && isValidDocumentType();
+
+      // Write: User muss zur gleichen Organization gehören + valider docType
+      allow create: if belongsToCompanyOrg()
+                    && isValidDocumentType()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      allow update: if belongsToCompanyOrg() && isValidDocumentType();
+
+      allow delete: if belongsToCompanyOrg() && isValidDocumentType();
+    }
+
+    // Kernbotschaft - Subcollection unter Projects
+    // Pfad: organizations/{orgId}/projects/{projectId}/kernbotschaft/{kernbotschaftId}
+    match /organizations/{orgId}/projects/{projectId}/kernbotschaft/{kernbotschaftId} {
+      // Read/Write: User muss zur gleichen Organization gehören
+      allow read: if belongsToOrg(orgId) || isSuperAdmin();
+      allow create: if belongsToOrg(orgId)
+                    && request.resource.data.organizationId == orgId;
+      allow update: if belongsToOrg(orgId);
+      allow delete: if belongsToOrg(orgId);
+    }
+
+    // ========================================
     // USER DATA
     // ========================================
 
