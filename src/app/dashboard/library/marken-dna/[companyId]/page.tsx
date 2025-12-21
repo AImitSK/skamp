@@ -7,7 +7,13 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useCompany } from '@/lib/hooks/useCRMData';
-import { useMarkenDNADocuments } from '@/lib/hooks/useMarkenDNA';
+import {
+  useMarkenDNADocuments,
+  useCreateMarkenDNADocument,
+  useUpdateMarkenDNADocument,
+} from '@/lib/hooks/useMarkenDNA';
+import { MarkenDNADocumentType as MarkenDNADocType } from '@/types/marken-dna';
+import { toastService } from '@/lib/utils/toast';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,8 +73,59 @@ export default function MarkenDNADetailPage() {
     companyId
   );
 
+  // Mutations für Speichern
+  const { mutateAsync: createDocument } = useCreateMarkenDNADocument();
+  const { mutateAsync: updateDocument } = useUpdateMarkenDNADocument();
+
   // UI State
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
+
+  // Speicherfunktion
+  const handleSaveDocument = async (content: string, docType: MarkenDNADocumentType) => {
+    if (!currentOrganization?.id || !user?.uid || !company) {
+      toastService.error('Fehler: Nicht authentifiziert');
+      return;
+    }
+
+    const existingDoc = documents.find(d => d.type === docType);
+    const docTypeTyped = docType as MarkenDNADocType;
+
+    try {
+      if (existingDoc) {
+        // Update existierendes Dokument
+        await updateDocument({
+          companyId,
+          type: docTypeTyped,
+          data: {
+            content,
+            plainText: content,
+            status: 'draft',
+          },
+          organizationId: currentOrganization.id,
+          userId: user.uid,
+        });
+      } else {
+        // Neues Dokument erstellen
+        await createDocument({
+          data: {
+            companyId,
+            companyName: company.name,
+            type: docTypeTyped,
+            content,
+            plainText: content,
+            status: 'draft',
+          },
+          organizationId: currentOrganization.id,
+          userId: user.uid,
+        });
+      }
+      toastService.success('Dokument gespeichert');
+    } catch (error) {
+      console.error('Fehler beim Speichern:', error);
+      toastService.error('Fehler beim Speichern');
+      throw error;
+    }
+  };
 
   // Hilfsfunktion: Status für Dokumenttyp abrufen
   const getDocumentStatus = (docType: MarkenDNADocumentType): DocumentStatus => {
@@ -282,8 +339,8 @@ export default function MarkenDNADetailPage() {
           onClose={() => setEditingDocumentType(null)}
           company={company}
           documentType={editingDocumentType}
-          onSave={async () => {
-            // Nach dem Speichern schließen - der Hook invalidiert automatisch
+          onSave={async (content: string) => {
+            await handleSaveDocument(content, editingDocumentType);
             setEditingDocumentType(null);
           }}
         />
