@@ -102,6 +102,7 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.6.0",
     "react-image-crop": "^11.0.10",
+    "react-markdown": "^10.1.0",
     "react-spreadsheet": "^0.10.1",
     "react-use-measure": "^2.1.7",
     "recharts": "^2.15.4",
