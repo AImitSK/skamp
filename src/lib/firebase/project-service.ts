@@ -2453,7 +2453,7 @@ export const projectService = {
 
       // Dynamischer Import um circular dependencies zu vermeiden
       const { mediaService } = await import('./media-service');
-      
+
       // Zielordner laden
       const targetFolder = await mediaService.getFolder(subfolderId);
       if (!targetFolder) {
@@ -2474,7 +2474,7 @@ export const projectService = {
             3, // retryCount
             context
           );
-          
+
           successfulUploads.push(uploadedAsset.id || 'unknown-id');
         } catch (uploadError: any) {
           failedUploads.push({
@@ -2500,6 +2500,39 @@ export const projectService = {
 
     } catch (error: any) {
       throw new Error(`Upload in Projekt-Ordner fehlgeschlagen: ${error.message}`);
+    }
+  },
+
+  // ========================================
+  // MARKEN-DNA INTEGRATION (PHASE 4)
+  // ========================================
+
+  /**
+   * Aktualisiert die Marken-DNA Einstellung für ein Projekt
+   *
+   * @param projectId - ID des Projekts
+   * @param useMarkenDNA - Ob Marken-DNA verwendet werden soll
+   * @param context - Organisations- und User-Kontext
+   */
+  async updateMarkenDNASetting(
+    projectId: string,
+    useMarkenDNA: boolean,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Sicherheitsprüfung: Prüfe ob Projekt der Organisation gehört
+      const existing = await this.getById(projectId, context);
+      if (!existing) {
+        throw new Error('Projekt nicht gefunden oder keine Berechtigung');
+      }
+
+      const docRef = doc(db, 'projects', projectId);
+      await updateDoc(docRef, {
+        useMarkenDNA,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      throw error;
     }
   }
 };
