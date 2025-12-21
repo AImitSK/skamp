@@ -147,17 +147,10 @@ export default function MarkenDNAPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* 1. Page Header */}
-      <div>
-        <h1 className="text-3xl font-semibold text-zinc-900">{t('title')}</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {t('subtitle')}
-        </p>
-      </div>
-
-      {/* 2. Toolbar */}
-      <div className="flex items-center gap-2">
+    <div>
+      {/* Toolbar */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
         {/* Search Input */}
         <div className="flex-1 relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -237,10 +230,11 @@ export default function MarkenDNAPage() {
             </div>
           </PopoverPanel>
         </Popover>
+        </div>
       </div>
 
-      {/* 3. Results Info */}
-      <div className="flex items-center justify-between">
+      {/* Results Info */}
+      <div className="flex items-center justify-between mb-4">
         <Text className="text-sm text-zinc-600">
           {filteredCustomers.length} {filteredCustomers.length === 1 ? t('results.customer') : t('results.customers')} {t('results.found')}
           {selectedCompanyIds.size > 0 && (
@@ -265,7 +259,7 @@ export default function MarkenDNAPage() {
         )}
       </div>
 
-      {/* 4. Table */}
+      {/* Table */}
       <CompanyTable
         companies={filteredCustomers}
         selectedIds={selectedCompanyIds}
