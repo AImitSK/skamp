@@ -11493,11 +11493,22 @@
     "actions": {
       "view": "View",
       "edit": "Edit",
+      "create": "Create",
       "delete": "Delete",
       "deleteAll": "Delete all documents",
       "save": "Save & Close",
       "saving": "Saving...",
       "cancel": "Cancel"
+    },
+    "backToList": "Back to overview",
+    "companyNotFound": "Company not found",
+    "noContentYet": "No content yet",
+    "lastUpdated": "Last updated",
+    "status": {
+      "completed": "Completed",
+      "draft": "Draft",
+      "missing": "Missing",
+      "allComplete": "Complete"
     },
     "documents": {
       "briefing": "Briefing Check",

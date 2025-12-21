@@ -9,6 +9,40 @@ import { CompanyEnhanced, ContactEnhanced } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
 
 /**
+ * Hook to fetch a single company by ID
+ *
+ * Leverages the companies cache to avoid additional Firestore calls
+ *
+ * @param organizationId - The organization ID
+ * @param companyId - The company ID to fetch
+ * @param options - Optional React Query options
+ * @returns Query result with company data, loading and error states
+ *
+ * @example
+ * ```tsx
+ * const { data: company, isLoading } = useCompany(currentOrganization.id, companyId);
+ * ```
+ */
+export function useCompany(
+  organizationId: string | undefined,
+  companyId: string | undefined,
+  options?: Omit<UseQueryOptions<CompanyEnhanced | null, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: ['company', organizationId, companyId],
+    queryFn: async () => {
+      if (!organizationId || !companyId) throw new Error('Organization ID and Company ID are required');
+      const companies = await companiesEnhancedService.getAll(organizationId);
+      return companies.find(c => c.id === companyId) || null;
+    },
+    enabled: !!organizationId && !!companyId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    ...options,
+  });
+}
+
+/**
  * Hook to fetch companies for an organization with React Query caching
  *
  * @param organizationId - The organization ID to fetch companies for

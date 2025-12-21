@@ -11507,11 +11507,22 @@
     "actions": {
       "view": "Anzeigen",
       "edit": "Bearbeiten",
+      "create": "Erstellen",
       "delete": "Löschen",
       "deleteAll": "Alle Dokumente löschen",
       "save": "Speichern & Schließen",
       "saving": "Speichert...",
       "cancel": "Abbrechen"
+    },
+    "backToList": "Zurück zur Übersicht",
+    "companyNotFound": "Unternehmen nicht gefunden",
+    "noContentYet": "Noch kein Inhalt vorhanden",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "status": {
+      "completed": "Abgeschlossen",
+      "draft": "Entwurf",
+      "missing": "Nicht vorhanden",
+      "allComplete": "Vollständig"
     },
     "documents": {
       "briefing": "Briefing-Check",
