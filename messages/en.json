@@ -11568,5 +11568,21 @@
     },
     "confirmDelete": "Do you really want to delete all Brand DNA documents for \"{companyName}\"?",
     "confirmBulkDelete": "Do you really want to delete {count} clients?"
+  },
+  "assistant": {
+    "tone": {
+      "label": "Tone",
+      "dnaLabel": "DNA",
+      "options": {
+        "inherit": "Inherit from DNA",
+        "formal": "Formal",
+        "casual": "Casual",
+        "modern": "Modern"
+      },
+      "warning": {
+        "title": "Warning",
+        "message": "You are overriding the tone from the Brand DNA. This may lead to inconsistencies in brand communication."
+      }
+    }
   }
 }
