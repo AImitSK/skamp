@@ -27,9 +27,11 @@ const createWrapper = () => {
       mutations: { retry: false }
     }
   });
-  return ({ children }: any) => (
+  const Wrapper = ({ children }: any) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  Wrapper.displayName = 'TestWrapper';
+  return Wrapper;
 };
 
 describe('useProjectMonitoringData', () => {

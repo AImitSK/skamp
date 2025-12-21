@@ -128,7 +128,7 @@ export const resetAdminMocks = () => {
 };
 
 // Default Export für einfachen Import
-export default {
+const firebaseAdminMock = {
   adminDb,
   FieldValue,
   Timestamp,
@@ -136,3 +136,5 @@ export default {
   mockDocumentData,
   resetAdminMocks
 };
+
+export default firebaseAdminMock;

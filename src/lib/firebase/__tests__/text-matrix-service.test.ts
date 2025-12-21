@@ -3,6 +3,7 @@ import {
   collection,
   getDocs,
   addDoc,
+  doc,
   getDoc,
   updateDoc,
   deleteDoc,
@@ -195,6 +196,12 @@ describe('textMatrixService', () => {
 
   describe('finalizeTextMatrix', () => {
     it('sollte Text-Matrix finalisieren', async () => {
+      const mockTimestamp = { seconds: 1234567890, nanoseconds: 0 };
+      const mockDocRef = { id: mockTextMatrix.id };
+
+      (Timestamp.now as jest.Mock) = jest.fn().mockReturnValue(mockTimestamp);
+      (doc as jest.Mock).mockReturnValue(mockDocRef);
+
       (getDoc as jest.Mock).mockResolvedValue({
         exists: () => true,
         data: () => ({ ...mockTextMatrix, status: 'draft' }),
@@ -208,10 +215,12 @@ describe('textMatrixService', () => {
       );
 
       expect(updateDoc).toHaveBeenCalledWith(
-        expect.anything(),
+        mockDocRef,
         expect.objectContaining({
           status: 'finalized',
-          finalizedAt: expect.any(Timestamp),
+          finalizedAt: mockTimestamp,
+          updatedAt: mockTimestamp,
+          updatedBy: mockUserId,
         })
       );
     });

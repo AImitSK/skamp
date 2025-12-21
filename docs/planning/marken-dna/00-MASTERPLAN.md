@@ -373,7 +373,7 @@ interface Kernbotschaft {
 
 | Phase | Beschreibung | Abhängigkeiten | Status |
 |-------|--------------|----------------|--------|
-| **4** | Strategie-Tab Umbau | Phase 2, 3 | ⏳ Offen |
+| **4** | Strategie-Tab Umbau | Phase 2, 3 | ✅ Abgeschlossen (2025-12-21) |
 
 ### Release 3
 
