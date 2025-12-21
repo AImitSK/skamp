@@ -11521,6 +11521,11 @@
       "noContent": "Noch kein Inhalt vorhanden",
       "noContentDescription": "Nutzen Sie den KI-Chat, um das Dokument zu erstellen."
     },
+    "chat": {
+      "inputPlaceholder": "Nachricht eingeben...",
+      "noMessages": "Noch keine Nachrichten",
+      "startConversation": "Starten Sie die Konversation mit dem KI-Assistenten"
+    },
     "confirmDelete": "Möchten Sie wirklich alle Marken-DNA Dokumente für \"{companyName}\" löschen?",
     "confirmBulkDelete": "Möchten Sie wirklich {count} Kunden löschen?"
   }

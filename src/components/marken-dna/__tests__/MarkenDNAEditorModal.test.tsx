@@ -59,20 +59,6 @@ describe('MarkenDNAEditorModal', () => {
     expect(screen.getByText('modal.document')).toBeInTheDocument();
   });
 
-  it('zeigt Placeholder für KI-Chat (Phase 3)', () => {
-    render(
-      <MarkenDNAEditorModal
-        open={true}
-        onClose={mockOnClose}
-        company={mockCompany}
-        documentType="audience"
-        onSave={mockOnSave}
-      />
-    );
-
-    expect(screen.getByText(/modal.chatComingSoon/)).toBeInTheDocument();
-  });
-
   it('zeigt Placeholder wenn kein Dokument-Inhalt vorhanden', () => {
     render(
       <MarkenDNAEditorModal
@@ -85,21 +71,6 @@ describe('MarkenDNAEditorModal', () => {
     );
 
     expect(screen.getByText('modal.noContent')).toBeInTheDocument();
-  });
-
-  it('hat deaktiviertes Chat-Input Feld (Phase 3)', () => {
-    render(
-      <MarkenDNAEditorModal
-        open={true}
-        onClose={mockOnClose}
-        company={mockCompany}
-        documentType="goals"
-        onSave={mockOnSave}
-      />
-    );
-
-    const chatInput = screen.getByPlaceholderText('modal.messagePlaceholder');
-    expect(chatInput).toBeDisabled();
   });
 
   it('ruft onClose bei Klick auf Abbrechen', () => {

@@ -1121,24 +1121,37 @@ const sendMessage = async (userMessage: string) => {
 
 ---
 
+## Status
+
+**✅ ABGESCHLOSSEN** (2025-12-21)
+
+Alle Komponenten von Phase 3 wurden erfolgreich implementiert und getestet.
+
+---
+
 ## Erledigungs-Kriterien
 
 ### Backend
-- [ ] Genkit Flow `markenDNAChatFlow` implementiert
-- [ ] Genkit Flow `projectStrategyChatFlow` implementiert
-- [ ] API-Route `/api/ai-chat/marken-dna` erstellt
-- [ ] Streaming-Route `/api/ai-chat/marken-dna/stream` erstellt (optional)
-- [ ] Alle 6 System-Prompts in DE + EN
-- [ ] Output-Format-Anweisungen implementiert
-- [ ] Extraktion von [DOCUMENT], [PROGRESS], [SUGGESTIONS]
-- [ ] Auth-Check in allen Routes
+- [x] Genkit Flow `markenDNAChatFlow` implementiert
+- [x] Genkit Flow `projectStrategyChatFlow` implementiert
+- [x] API-Route `/api/ai-chat/marken-dna` erstellt
+- [x] API-Route `/api/ai-chat/project-strategy` erstellt
+- [x] Alle 6 System-Prompts in DE + EN
+- [x] Output-Format-Anweisungen implementiert
+- [x] Extraktion von [DOCUMENT], [PROGRESS], [SUGGESTIONS]
+- [x] Auth-Check in allen Routes
+- [x] Umfassende Tests für Flows
 
 ### Frontend (siehe 08-CHAT-UI-KONZEPT.md)
-- [ ] useGenkitChat Hook implementiert
-- [ ] AIChatModal Komponente
-- [ ] Message-Komponenten
-- [ ] Streaming funktioniert (optional)
-- [ ] Tests geschrieben
+- [x] useGenkitChat Hook implementiert
+- [x] AIChatInterface Komponente
+- [x] MessageList Komponente
+- [x] ChatInput Komponente
+- [x] SuggestedPrompts Komponente
+- [x] ProgressIndicator Komponente
+- [x] Integration in MarkenDNAEditorModal
+- [x] useFloatingChatState Hook für Floating-Dialog
+- [x] Tests für alle Komponenten und Hooks
 
 ---
 

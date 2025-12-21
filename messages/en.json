@@ -11507,6 +11507,11 @@
       "noContent": "No content yet",
       "noContentDescription": "Use the AI chat to create the document."
     },
+    "chat": {
+      "inputPlaceholder": "Type a message...",
+      "noMessages": "No messages yet",
+      "startConversation": "Start the conversation with the AI assistant"
+    },
     "confirmDelete": "Do you really want to delete all Brand DNA documents for \"{companyName}\"?",
     "confirmBulkDelete": "Do you really want to delete {count} clients?"
   }
