@@ -379,7 +379,7 @@ interface Kernbotschaft {
 
 | Phase | Beschreibung | Abhängigkeiten | Status |
 |-------|--------------|----------------|--------|
-| **5** | KI-Assistenten Integration | Phase 4 | ⏳ Offen |
+| **5** | KI-Assistenten Integration | Phase 4 | ✅ Abgeschlossen (2025-12-21) |
 
 ### Abschluss
 
