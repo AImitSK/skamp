@@ -11570,6 +11570,27 @@
     "confirmBulkDelete": "Do you really want to delete {count} clients?"
   },
   "assistant": {
+    "mode": {
+      "standard": "Standard",
+      "expert": "Expert Mode"
+    },
+    "expertMode": {
+      "active": "Expert Mode active",
+      "tooltip": "Uses DNA Synthesis & Core Message as context",
+      "noDNA": "No DNA Synthesis available"
+    },
+    "indicator": {
+      "title": "AI uses:",
+      "usingDNA": "DNA Synthesis",
+      "usingKernbotschaft": "Core Message"
+    },
+    "result": {
+      "generatedWith": "Generated with:",
+      "standard": "Standard Mode",
+      "celeroFormula": "Celero Formula",
+      "copy": "Copy",
+      "insert": "Insert"
+    },
     "tone": {
       "label": "Tone",
       "dnaLabel": "DNA",

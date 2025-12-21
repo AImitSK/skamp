@@ -11584,6 +11584,27 @@
     "confirmBulkDelete": "Möchten Sie wirklich {count} Kunden löschen?"
   },
   "assistant": {
+    "mode": {
+      "standard": "Standard",
+      "expert": "Experten-Modus"
+    },
+    "expertMode": {
+      "active": "Experten-Modus aktiv",
+      "tooltip": "Nutzt DNA Synthese & Kernbotschaft als Kontext",
+      "noDNA": "Keine DNA Synthese verfügbar"
+    },
+    "indicator": {
+      "title": "KI nutzt:",
+      "usingDNA": "DNA Synthese",
+      "usingKernbotschaft": "Kernbotschaft"
+    },
+    "result": {
+      "generatedWith": "Generiert mit:",
+      "standard": "Standard-Modus",
+      "celeroFormula": "Celero-Formel",
+      "copy": "Kopieren",
+      "insert": "Einfügen"
+    },
     "tone": {
       "label": "Tonalität",
       "dnaLabel": "DNA",
