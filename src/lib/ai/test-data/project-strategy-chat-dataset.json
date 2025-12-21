@@ -1,0 +1,271 @@
+[
+  {
+    "testCaseId": "kernbotschaft-product-launch",
+    "description": "Projekt-Kernbotschaft für Produktlaunch mit DNA Synthese",
+    "input": {
+      "projectId": "test-project-1",
+      "companyId": "test-company-1",
+      "companyName": "DataFlow GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir launchen SmartAnalytics Pro am 15. Januar. Das ist unsere KI-Plattform die Daten 10x schneller analysiert." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: DataFlow GmbH\n- **USP:** KI-gestützte Datenanalyse 10x schneller als Wettbewerb\n- **POSITIONIERUNG:** Challenger, modern-professionell\n- **TONALITÄT:** präzise, direkt, faktenbasiert"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 15, "max": 35 },
+      "qualityCriteria": {
+        "shouldAskAboutNewsHook": true,
+        "shouldReferToDNA": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-initial-start",
+    "description": "Erster Start ohne vorherige Informationen",
+    "input": {
+      "projectId": "test-project-2",
+      "companyId": "test-company-2",
+      "companyName": "TechStart GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Lass uns eine Kernbotschaft für unser nächstes Projekt entwickeln." }
+      ],
+      "dnaSynthese": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 0, "max": 15 },
+      "qualityCriteria": {
+        "shouldAskAboutOccasion": true,
+        "shouldBeWelcoming": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-with-dna-context",
+    "description": "Kernbotschaft-Entwicklung mit vollständiger DNA Synthese",
+    "input": {
+      "projectId": "test-project-3",
+      "companyId": "test-company-3",
+      "companyName": "MediCare Health GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir expandieren nach Österreich und wollen das mit einer Pressemeldung ankündigen." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: MediCare Health GmbH\n- **USP:** Patentierte Telemedizin-Technologie, 500+ Praxen\n- **POSITIONIERUNG:** Marktführer Telemedizin DACH\n- **ZIELGRUPPEN:** Ärzte, Gesundheitsjournalisten\n- **KERNBOTSCHAFTEN:** 1. Fachärzte überall 2. 60% weniger Wartezeit\n- **TONALITÄT:** fachlich, vertrauenswürdig\n- **NO-GO:** Übertreibungen, ungeprüfte Heilversprechen"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 15, "max": 35 },
+      "qualityCriteria": {
+        "shouldUseDNAGuidelines": true,
+        "shouldAskAboutGoals": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-full-conversation",
+    "description": "Vollständiges Gespräch bis zur Kernbotschaft",
+    "input": {
+      "projectId": "test-project-4",
+      "companyId": "test-company-4",
+      "companyName": "CloudSystems AG",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir haben eine Partnerschaft mit SAP geschlossen." },
+        { "role": "assistant", "content": "Eine Partnerschaft mit SAP ist ein starker News-Hook! [PROGRESS:20] Was macht die Nachricht besonders relevant? Ist es eine exklusive Partnerschaft? [SUGGESTIONS]\nDetails zur Partnerschaft\nZiele der Kooperation\n[/SUGGESTIONS]" },
+        { "role": "user", "content": "Es ist eine strategische Partnerschaft für Cloud-Migration. SAP-Kunden können unsere Tools direkt nutzen." },
+        { "role": "assistant", "content": "Verstanden. Integration in SAP-Ökosystem ist ein klarer Nutzen. [PROGRESS:40] Was soll die Pressemeldung konkret erreichen? Leads? Bekanntheit? [SUGGESTIONS]\nLead-Generierung\nMarkenbekanntheit\nPartner-Gewinnung\n[/SUGGESTIONS]" },
+        { "role": "user", "content": "Primär Lead-Generierung bei SAP-Kunden. Sekundär Bekanntheit in der SAP-Community." },
+        { "role": "assistant", "content": "Klare Ziele! [PROGRESS:60] Welches Detail soll im Fokus stehen? z.B. 'Nahtlose Integration' oder 'Kostenersparnis'? [SUGGESTIONS]\nNahtlose Integration\nZeitersparnis\nKomplettlösung\n[/SUGGESTIONS]" },
+        { "role": "user", "content": "Der Fokus sollte auf 40% Zeitersparnis bei der Migration liegen. Das haben wir in Pilotprojekten gemessen." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: CloudSystems AG\n- **USP:** End-to-End Cloud-Migration\n- **TONALITÄT:** technisch-präzise, lösungsorientiert"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 75, "max": 95 },
+      "qualityCriteria": {
+        "shouldGenerateKernbotschaft": true,
+        "shouldIncludeMetric": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-english-mode",
+    "description": "Englische Projekt-Kernbotschaft",
+    "input": {
+      "projectId": "test-project-5",
+      "companyId": "test-company-5",
+      "companyName": "TechGlobal Inc",
+      "language": "en",
+      "messages": [
+        { "role": "user", "content": "We closed a $25M Series B funding round led by Sequoia Capital." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESIS: TechGlobal Inc\n- **USP:** Fastest ML processing\n- **POSITIONING:** Industry leader\n- **TONALITY:** confident, data-driven"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 15, "max": 40 },
+      "qualityCriteria": {
+        "shouldRespondInEnglish": true,
+        "shouldAskAboutUseOfFunds": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-personnel-news",
+    "description": "Personalie - Neuer CEO",
+    "input": {
+      "projectId": "test-project-6",
+      "companyId": "test-company-6",
+      "companyName": "Industrie AG",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Dr. Maria Schmidt wird unsere neue CEO. Sie kommt von Siemens und hat dort 15 Jahre die Digitalisierung geleitet." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: Industrie AG\n- **USP:** 150 Jahre Tradition, globaler Marktführer\n- **POSITIONIERUNG:** Konservativ-verlässlich\n- **TONALITÄT:** formal, seriös"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 45 },
+      "qualityCriteria": {
+        "shouldAskAboutVision": true,
+        "shouldRespectFormalTone": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-event-announcement",
+    "description": "Event-Ankündigung - Konferenz",
+    "input": {
+      "projectId": "test-project-7",
+      "companyId": "test-company-7",
+      "companyName": "EventPro GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir veranstalten die 'Digital Future Conference' am 20. März in Frankfurt. Erwartet werden 500 Teilnehmer und 30 Speaker." }
+      ],
+      "dnaSynthese": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 15, "max": 35 },
+      "qualityCriteria": {
+        "shouldAskAboutHighlights": true,
+        "shouldAskAboutTargetAudience": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-crisis-communication",
+    "description": "Krisenkommunikation - Produktrückruf",
+    "input": {
+      "projectId": "test-project-8",
+      "companyId": "test-company-8",
+      "companyName": "SafeProducts GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir müssen einen präventiven Produktrückruf kommunizieren. Es geht um eine Charge von 5000 Geräten wegen eines potenziellen Sicherheitsrisikos." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: SafeProducts GmbH\n- **USP:** Höchste Sicherheitsstandards\n- **TONALITÄT:** verantwortungsvoll, transparent"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 10, "max": 30 },
+      "qualityCriteria": {
+        "shouldPrioritizeSafety": true,
+        "shouldAskAboutCustomerCommunication": true,
+        "shouldBeTransparent": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-award-announcement",
+    "description": "Auszeichnung kommunizieren",
+    "input": {
+      "projectId": "test-project-9",
+      "companyId": "test-company-9",
+      "companyName": "InnovateTech GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir haben den 'German Innovation Award 2025' in der Kategorie B2B gewonnen!" },
+        { "role": "assistant", "content": "Herzlichen Glückwunsch! [PROGRESS:20] Was macht diese Auszeichnung für Ihr Unternehmen besonders? [SUGGESTIONS]\nJury-Bewertung\nKonkurrenz-Umfeld\nBedeutung für Kunden\n[/SUGGESTIONS]" },
+        { "role": "user", "content": "Es ist das erste Mal, dass ein Startup unter 50 MA diese Kategorie gewinnt. Die Jury hat unsere KI-Lösung gelobt." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: InnovateTech GmbH\n- **POSITIONIERUNG:** Agiler Challenger\n- **TONALITÄT:** selbstbewusst, authentisch"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 50, "max": 75 },
+      "qualityCriteria": {
+        "shouldHighlightUniqueness": true,
+        "shouldAskForQuote": true
+      }
+    }
+  },
+  {
+    "testCaseId": "kernbotschaft-sustainability-report",
+    "description": "Nachhaltigkeitsbericht kommunizieren",
+    "input": {
+      "projectId": "test-project-10",
+      "companyId": "test-company-10",
+      "companyName": "GreenCorp AG",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unser neuer Nachhaltigkeitsbericht zeigt: Wir haben 30% CO2 reduziert und sind jetzt klimaneutral zertifiziert." }
+      ],
+      "dnaSynthese": "🧪 DNA SYNTHESE: GreenCorp AG\n- **USP:** Nachhaltigste Produktion der Branche\n- **TONALITÄT:** authentisch, faktenbasiert\n- **NO-GO:** Greenwashing"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 40 },
+      "qualityCriteria": {
+        "shouldAskForDetails": true,
+        "shouldAvoidGreenwashing": true
+      }
+    }
+  }
+]

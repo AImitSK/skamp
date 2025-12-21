@@ -1,0 +1,325 @@
+[
+  {
+    "testCaseId": "briefing-tech-startup",
+    "description": "Briefing-Check für Tech-Startup - Vollständiges Gespräch",
+    "input": {
+      "documentType": "briefing",
+      "companyId": "test-company-1",
+      "companyName": "DataFlow GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir sind DataFlow, ein B2B-SaaS-Unternehmen aus Berlin, gegründet 2020, 45 Mitarbeiter. Wir entwickeln KI-gestützte Datenanalyse-Tools für mittelständische Unternehmen." },
+        { "role": "assistant", "content": "Vielen Dank für die Informationen. Ich habe notiert: DataFlow GmbH, B2B-SaaS, Berlin, 2020, 45 MA, KI-Datenanalyse für KMU. Was ist Ihr konkretes Kernprodukt und welche Preismodelle bieten Sie an?" },
+        { "role": "user", "content": "Unser Hauptprodukt ist SmartAnalytics Pro - eine Plattform die Unternehmensdaten 10x schneller analysiert als herkömmliche Tools. Wir bieten Starter (299€/Monat), Professional (599€/Monat) und Enterprise (individuell)." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 60 },
+      "qualityCriteria": {
+        "shouldReflectInput": true,
+        "shouldAskFollowUp": true,
+        "shouldBeStructured": true
+      }
+    }
+  },
+  {
+    "testCaseId": "briefing-minimal-start",
+    "description": "Briefing-Check - Erste Nachricht, minimaler Input",
+    "input": {
+      "documentType": "briefing",
+      "companyId": "test-company-2",
+      "companyName": "EcoTech Solutions",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Hallo, wir möchten gerne mit dem Briefing starten." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 0, "max": 15 },
+      "qualityCriteria": {
+        "shouldAskAboutCompany": true,
+        "shouldBeWelcoming": true
+      }
+    }
+  },
+  {
+    "testCaseId": "swot-strengths-phase",
+    "description": "SWOT-Analyse - Stärken-Phase mit konkreten Daten",
+    "input": {
+      "documentType": "swot",
+      "companyId": "test-company-3",
+      "companyName": "MediCare Health GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unsere größte Stärke ist unsere patentierte Telemedizin-Technologie, die bereits in 500 Arztpraxen eingesetzt wird. Wir haben 3 Patente und eine Zertifizierung nach ISO 27001." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 15, "max": 35 },
+      "qualityCriteria": {
+        "shouldAcknowledgeStrengths": true,
+        "shouldProbeForUSP": true,
+        "shouldAskAboutWeaknesses": true
+      }
+    }
+  },
+  {
+    "testCaseId": "swot-complete-analysis",
+    "description": "SWOT-Analyse - Alle 4 Bereiche abgedeckt",
+    "input": {
+      "documentType": "swot",
+      "companyId": "test-company-3",
+      "companyName": "MediCare Health GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Stärken: Patentierte Technologie, 500 Praxen, ISO-Zertifizierung" },
+        { "role": "assistant", "content": "Ich habe notiert... [DOCUMENT]## Stärken...[/DOCUMENT] [PROGRESS:25] Was sind Ihre Schwächen?" },
+        { "role": "user", "content": "Schwächen: Geringe Markenbekanntheit, kleines Marketingbudget (50k/Jahr), keine eigene Vertriebsmannschaft" },
+        { "role": "assistant", "content": "Verstanden... [DOCUMENT]## Schwächen...[/DOCUMENT] [PROGRESS:50] Welche Chancen sehen Sie?" },
+        { "role": "user", "content": "Chancen: Digitalisierung im Gesundheitswesen, neue Fördergelder vom Bund, steigende Nachfrage nach Telemedizin" },
+        { "role": "assistant", "content": "Notiert... [DOCUMENT]## Chancen...[/DOCUMENT] [PROGRESS:75] Welche Risiken gibt es?" },
+        { "role": "user", "content": "Risiken: Neue Datenschutzgesetze, große Tech-Konzerne als potenzielle Konkurrenten, Abhängigkeit von Erstattungen der Krankenkassen" }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 85, "max": 100 },
+      "qualityCriteria": {
+        "shouldHaveAllSections": true,
+        "shouldProvideConclusion": true,
+        "shouldAskForConfirmation": true
+      }
+    }
+  },
+  {
+    "testCaseId": "audience-receivers-focus",
+    "description": "Zielgruppen-Radar - Empfänger-Gruppe definieren",
+    "input": {
+      "documentType": "audience",
+      "companyId": "test-company-4",
+      "companyName": "CloudSystems AG",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unsere Hauptzielgruppe sind IT-Entscheider in mittelständischen Unternehmen (100-500 MA), vorwiegend CTOs und IT-Leiter. Sie informieren sich hauptsächlich auf LinkedIn und lesen Fachmagazine wie Computerwoche." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 25, "max": 45 },
+      "qualityCriteria": {
+        "shouldIdentifyPainPoints": true,
+        "shouldAskAboutIntermediaries": true
+      }
+    }
+  },
+  {
+    "testCaseId": "positioning-usp-discovery",
+    "description": "Positionierungs-Designer - USP herausarbeiten",
+    "input": {
+      "documentType": "positioning",
+      "companyId": "test-company-5",
+      "companyName": "FinanzPlus Bank",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unser USP ist unsere KI-gestützte Risikoanalyse, die 40% präziser ist als traditionelle Methoden. Wir sind die einzige Bank in Deutschland mit BaFin-zertifizierter KI-Beratung." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 40 },
+      "qualityCriteria": {
+        "shouldChallengeUSP": true,
+        "shouldAskForTargetImage": true
+      }
+    }
+  },
+  {
+    "testCaseId": "positioning-english-mode",
+    "description": "Positionierungs-Designer - Englische Sprache",
+    "input": {
+      "documentType": "positioning",
+      "companyId": "test-company-6",
+      "companyName": "TechGlobal Inc",
+      "language": "en",
+      "messages": [
+        { "role": "user", "content": "Our USP is our proprietary machine learning algorithm that processes data 5x faster than competitors. We have 3 patents and partnerships with Fortune 500 companies." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 40 },
+      "qualityCriteria": {
+        "shouldRespondInEnglish": true,
+        "shouldChallengeUSP": true
+      }
+    }
+  },
+  {
+    "testCaseId": "goals-perception-level",
+    "description": "Ziele-Setzer - Wahrnehmungsziele definieren",
+    "input": {
+      "documentType": "goals",
+      "companyId": "test-company-7",
+      "companyName": "GreenEnergy Solutions",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir wollen als führender Anbieter für nachhaltige Energielösungen wahrgenommen werden. Konkret: 50 Erwähnungen in Fachmedien pro Quartal, Steigerung des Google-Suchvolumens um 30%." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 25, "max": 45 },
+      "qualityCriteria": {
+        "shouldAcknowledgeMeasurability": true,
+        "shouldAskAboutAttitudeGoals": true
+      }
+    }
+  },
+  {
+    "testCaseId": "messages-core-development",
+    "description": "Botschaften-Baukasten - Kernbotschaft mit Beweis entwickeln",
+    "input": {
+      "documentType": "messages",
+      "companyId": "test-company-8",
+      "companyName": "AutoParts GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unsere Kernbotschaft ist: 'Wir sind Marktführer für nachhaltige Automobilzulieferteile.' Beweis: 45.000 Tonnen CO2 eingespart pro Jahr, 100% erneuerbare Energie in allen Werken, TÜV-Zertifizierung für Nachhaltigkeit." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 20, "max": 45 },
+      "qualityCriteria": {
+        "shouldValidateProof": true,
+        "shouldAskForBenefit": true
+      }
+    }
+  },
+  {
+    "testCaseId": "messages-complete-with-rework",
+    "description": "Botschaften-Baukasten - Überarbeitung bestehendes Dokument",
+    "input": {
+      "documentType": "messages",
+      "companyId": "test-company-8",
+      "companyName": "AutoParts GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Die zweite Kernbotschaft ist zu schwach. Bitte formuliere sie prägnanter und füge konkretere Zahlen hinzu." }
+      ],
+      "existingDocument": "## Kernbotschaft 1\n**Kern:** Marktführer für nachhaltige Automobilzulieferteile\n**Beweis:** 45.000t CO2/Jahr, 100% erneuerbare Energie\n**Nutzen:** Kunden erfüllen ESG-Kriterien\n\n## Kernbotschaft 2\n**Kern:** Wir liefern schnell\n**Beweis:** Kurze Lieferzeiten\n**Nutzen:** Gut für die Produktion"
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 70, "max": 95 },
+      "qualityCriteria": {
+        "shouldImproveWeakSection": true,
+        "shouldKeepStrongSections": true
+      }
+    }
+  },
+  {
+    "testCaseId": "briefing-vague-input",
+    "description": "Briefing-Check - Vage Antworten nachbohren",
+    "input": {
+      "documentType": "briefing",
+      "companyId": "test-company-9",
+      "companyName": "InnovateTech",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Wir sind ein innovatives Unternehmen, das tolle Produkte macht. Wir sind die Besten in unserer Branche." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 0, "max": 15 },
+      "qualityCriteria": {
+        "shouldPushBackOnVagueness": true,
+        "shouldAskForSpecifics": true
+      }
+    }
+  },
+  {
+    "testCaseId": "swot-devil-advocate",
+    "description": "SWOT-Analyse - Advocatus Diaboli bei Stärken",
+    "input": {
+      "documentType": "swot",
+      "companyId": "test-company-10",
+      "companyName": "ServiceFirst GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "user", "content": "Unsere Stärke ist unser exzellenter Kundenservice." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": false,
+        "progress": true,
+        "suggestions": true
+      },
+      "expectedProgressRange": { "min": 5, "max": 20 },
+      "qualityCriteria": {
+        "shouldChallengeAsUSP": true,
+        "shouldAskForEvidence": true
+      }
+    }
+  }
+]

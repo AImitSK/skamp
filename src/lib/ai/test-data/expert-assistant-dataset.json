@@ -1,0 +1,247 @@
+[
+  {
+    "testCaseId": "pressrelease-with-dna",
+    "description": "Pressemeldung mit vollständiger DNA Synthese",
+    "input": {
+      "projectId": "test-project-1",
+      "userPrompt": "Schreibe eine Pressemeldung über den Launch unserer neuen KI-Plattform SmartAnalytics Pro. Der Launch findet am 15. Januar 2025 statt.",
+      "language": "de",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: DataFlow GmbH\n- **USP:** KI-gestützte Datenanalyse 10x schneller als Wettbewerb\n- **POSITIONIERUNG:** Challenger, modern-professionell\n- **ZIELGRUPPEN:** CTOs/IT-Leiter, Tech-Journalisten\n- **KERNBOTSCHAFTEN:** 1. Schnellste Analyse am Markt 2. Deutsche Datenschutz-Standards\n- **TONALITÄT:** präzise, direkt, faktenbasiert\n- **NO-GO:** revolutionär, einzigartig (ohne Beweis)",
+      "kernbotschaft": "SmartAnalytics Pro macht Datenanalyse für KMU bezahlbar und zugänglich."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 500,
+      "qualityCriteria": {
+        "hasHeadline": true,
+        "hasDateAndLocation": true,
+        "hasCoreMessage": true,
+        "hasQuote": true,
+        "hasBoilerplate": true,
+        "respectsTonality": true
+      }
+    }
+  },
+  {
+    "testCaseId": "pressrelease-without-dna",
+    "description": "Pressemeldung ohne DNA Synthese (Fallback-Test)",
+    "input": {
+      "projectId": "test-project-2",
+      "userPrompt": "Schreibe eine Pressemeldung über unsere neue Partnerschaft mit Microsoft.",
+      "language": "de",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": null,
+      "kernbotschaft": null
+    },
+    "reference": {
+      "expectedUseDNA": false,
+      "expectedUseKernbotschaft": false,
+      "minContentLength": 300,
+      "qualityCriteria": {
+        "hasBasicStructure": true,
+        "isGeneric": true
+      }
+    }
+  },
+  {
+    "testCaseId": "social-media-linkedin",
+    "description": "LinkedIn-Post mit DNA-konformer Tonalität",
+    "input": {
+      "projectId": "test-project-3",
+      "userPrompt": "Erstelle einen LinkedIn-Post für unseren CEO über die Expansion nach Österreich.",
+      "language": "de",
+      "outputFormat": "social"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: MediCare Health GmbH\n- **USP:** Patentierte Telemedizin-Technologie\n- **POSITIONIERUNG:** Marktführer, seriös-vertrauenswürdig\n- **ZIELGRUPPEN:** Ärzte, Krankenhausleitung, Gesundheitsjournalisten\n- **TONALITÄT:** fachlich, empathisch, zukunftsorientiert\n- **NO-GO:** reißerisch, Superlative ohne Beleg",
+      "kernbotschaft": "Telemedizin für alle - MediCare bringt Fachärzte in jeden Winkel Österreichs."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 150,
+      "maxContentLength": 600,
+      "qualityCriteria": {
+        "hasEmojis": false,
+        "isAppropriateForLinkedIn": true,
+        "matchesTonality": true
+      }
+    }
+  },
+  {
+    "testCaseId": "blog-article-technical",
+    "description": "Technischer Blog-Artikel mit Experten-Modus",
+    "input": {
+      "projectId": "test-project-4",
+      "userPrompt": "Schreibe einen Blog-Artikel über die Vorteile unserer Cloud-Migration-Lösung für den IT-Entscheider.",
+      "language": "de",
+      "outputFormat": "blog"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: CloudSystems AG\n- **USP:** End-to-End Cloud-Migration mit 99.9% Uptime-Garantie\n- **POSITIONIERUNG:** Enterprise-Partner, technisch führend\n- **ZIELGRUPPEN:** CTOs, IT-Architekten, Cloud-Entscheider\n- **KERNBOTSCHAFTEN:** 1. Zero-Downtime Migration 2. Made in Germany 3. ISO 27001 zertifiziert\n- **TONALITÄT:** technisch-präzise, lösungsorientiert\n- **NO-GO:** Marketing-Floskeln, vage Versprechen",
+      "kernbotschaft": "Cloud-Migration ohne Geschäftsunterbrechung - unsere Zero-Downtime-Methodik macht's möglich."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 800,
+      "qualityCriteria": {
+        "hasTechnicalDepth": true,
+        "hasStructuredSections": true,
+        "addressesPainPoints": true
+      }
+    }
+  },
+  {
+    "testCaseId": "email-customer-newsletter",
+    "description": "Kunden-Newsletter E-Mail",
+    "input": {
+      "projectId": "test-project-5",
+      "userPrompt": "Schreibe eine Newsletter-E-Mail an unsere Bestandskunden über das neue Premium-Feature.",
+      "language": "de",
+      "outputFormat": "email"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: FinanzPlus Bank\n- **USP:** KI-gestützte Vermögensberatung, BaFin-zertifiziert\n- **POSITIONIERUNG:** Innovativer Herausforderer, vertrauenswürdig\n- **ZIELGRUPPEN:** Private Anleger 35-55, vermögende Kunden\n- **TONALITÄT:** professionell, nahbar, sicherheitsorientiert\n- **NO-GO:** Renditeversprechen, aggressive Verkaufssprache",
+      "kernbotschaft": "Ihr Vermögen verdient intelligente Beratung - jetzt mit KI-Unterstützung."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 200,
+      "maxContentLength": 500,
+      "qualityCriteria": {
+        "hasPersonalGreeting": true,
+        "hasCTA": true,
+        "isCompliant": true
+      }
+    }
+  },
+  {
+    "testCaseId": "english-pressrelease",
+    "description": "Englische Pressemeldung mit DNA",
+    "input": {
+      "projectId": "test-project-6",
+      "userPrompt": "Write a press release about our Series B funding round of 25 million dollars.",
+      "language": "en",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESIS: TechGlobal Inc\n- **USP:** Fastest ML processing in the industry\n- **POSITIONING:** Industry leader, innovative\n- **TARGET GROUPS:** Tech investors, enterprise clients, tech media\n- **KEY MESSAGES:** 1. 5x faster than competitors 2. Fortune 500 partnerships\n- **TONALITY:** confident, data-driven, forward-looking\n- **NO-GO:** hype words without proof",
+      "kernbotschaft": "TechGlobal secures $25M to scale AI infrastructure globally."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 400,
+      "qualityCriteria": {
+        "isInEnglish": true,
+        "hasInvestorQuote": true,
+        "hasUseCaseOfFunds": true
+      }
+    }
+  },
+  {
+    "testCaseId": "custom-format-faq",
+    "description": "Custom Format - FAQ-Sektion",
+    "input": {
+      "projectId": "test-project-7",
+      "userPrompt": "Erstelle eine FAQ-Sektion mit 5 Fragen und Antworten zu unserem neuen Produkt.",
+      "language": "de",
+      "outputFormat": "custom"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: GreenEnergy Solutions\n- **USP:** 100% erneuerbare Energie für Unternehmen\n- **POSITIONIERUNG:** Nachhaltigkeits-Champion\n- **ZIELGRUPPEN:** Nachhaltigkeitsbeauftragte, Geschäftsführer KMU\n- **TONALITÄT:** authentisch, zukunftsorientiert, faktenbasiert\n- **NO-GO:** Greenwashing-Verdacht",
+      "kernbotschaft": "Grüne Energie ohne Kompromisse - für Unternehmen, die Verantwortung übernehmen."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 400,
+      "qualityCriteria": {
+        "hasFiveQuestions": true,
+        "questionsAreRelevant": true,
+        "answersAreHelpful": true
+      }
+    }
+  },
+  {
+    "testCaseId": "score-optimization-test",
+    "description": "Test der Score-Optimierung (PR-SEO Score 85-95%)",
+    "input": {
+      "projectId": "test-project-8",
+      "userPrompt": "Schreibe eine Pressemeldung über unsere Auszeichnung als 'Innovator des Jahres'.",
+      "language": "de",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: AutoParts GmbH\n- **USP:** Nachhaltigste Automobilzulieferer Deutschlands\n- **POSITIONIERUNG:** Nachhaltigkeits-Marktführer\n- **ZIELGRUPPEN:** Einkäufer Automobil-OEMs, Wirtschaftsjournalisten\n- **KERNBOTSCHAFTEN:** 1. 45.000t CO2 eingespart/Jahr 2. 100% erneuerbare Energie\n- **TONALITÄT:** selbstbewusst, nachhaltig, präzise\n- **NO-GO:** Selbstbeweihräucherung ohne Fakten",
+      "kernbotschaft": "Auszeichnung bestätigt: AutoParts setzt Maßstäbe für nachhaltige Produktion."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 500,
+      "qualityCriteria": {
+        "hasActiveVerbs": true,
+        "hasConcreteNumbers": true,
+        "keywordInFirstSentence": true,
+        "noPassiveVoiceOveruse": true
+      }
+    }
+  },
+  {
+    "testCaseId": "tonality-formal-corporate",
+    "description": "Formale Corporate-Tonalität Test",
+    "input": {
+      "projectId": "test-project-9",
+      "userPrompt": "Erstelle eine Pressemeldung für die Hauptversammlung unserer Aktionäre.",
+      "language": "de",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: Industrie AG\n- **USP:** 150 Jahre Tradition, globaler Marktführer\n- **POSITIONIERUNG:** Konservativ-verlässlich, Traditions-Unternehmen\n- **ZIELGRUPPEN:** Aktionäre, Finanzanalysten, Wirtschaftspresse\n- **TONALITÄT:** formal, seriös, zurückhaltend\n- **NO-GO:** lockere Sprache, Anglizismen, Startup-Jargon",
+      "kernbotschaft": "Industrie AG: Stabile Dividende und nachhaltiges Wachstum für Aktionäre."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 400,
+      "qualityCriteria": {
+        "isFormal": true,
+        "hasNoAnglicisms": true,
+        "appropriateForShareholders": true
+      }
+    }
+  },
+  {
+    "testCaseId": "tonality-startup-dynamic",
+    "description": "Dynamische Startup-Tonalität Test",
+    "input": {
+      "projectId": "test-project-10",
+      "userPrompt": "Erstelle eine Pressemeldung über unseren Pivot zu einem neuen Geschäftsmodell.",
+      "language": "de",
+      "outputFormat": "pressrelease"
+    },
+    "context": {
+      "dnaSynthese": "🧪 DNA SYNTHESE: DisruptTech\n- **USP:** Schnellste Go-to-Market Zeit der Branche\n- **POSITIONIERUNG:** Disruptiver Challenger, agil\n- **ZIELGRUPPEN:** VCs, Startup-Medien, Early Adopters\n- **TONALITÄT:** dynamisch, mutig, zukunftsweisend\n- **NO-GO:** Buzzwords ohne Substanz, leere Versprechen",
+      "kernbotschaft": "DisruptTech: Neues Geschäftsmodell verdreifacht Wachstumspotenzial."
+    },
+    "reference": {
+      "expectedUseDNA": true,
+      "expectedUseKernbotschaft": true,
+      "minContentLength": 350,
+      "qualityCriteria": {
+        "isDynamic": true,
+        "showsConfidence": true,
+        "hasGrowthNarrative": true
+      }
+    }
+  }
+]
