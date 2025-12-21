@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState, useCallback, useMemo } from 'react';
 import { toastService } from '@/lib/utils/toast';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
+import { auth } from '@/lib/firebase/client-init';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -67,9 +68,19 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
     setError(null);
 
     try {
+      // Get Firebase auth token
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+      const token = await user.getIdToken();
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           documentType: options.documentType,
           companyId: options.companyId,
