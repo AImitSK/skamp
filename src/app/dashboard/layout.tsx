@@ -73,7 +73,8 @@ import {
   AdjustmentsHorizontalIcon,
   TicketIcon,
   CircleStackIcon,
-  ClockIcon
+  ClockIcon,
+  FingerPrintIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -169,6 +170,12 @@ const navigationItems: Omit<NavigationItem, 'current'>[] = [
         href: "/dashboard/library/media",
         icon: PhotoIcon,
         descriptionKey: "mediaDesc"
+      },
+      {
+        nameKey: "markenDNA",
+        href: "/dashboard/library/marken-dna",
+        icon: FingerPrintIcon,
+        descriptionKey: "markenDNADesc"
       },
       {
         nameKey: "database",
