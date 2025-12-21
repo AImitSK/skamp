@@ -366,7 +366,7 @@ interface Kernbotschaft {
 | Phase | Beschreibung | Abhängigkeiten | Status |
 |-------|--------------|----------------|--------|
 | **1** | Datenmodell & Services | - | ✅ Abgeschlossen (2025-12-20) |
-| **2** | Marken-DNA Bibliothek (UI) | Phase 1 | ⏳ Offen |
+| **2** | Marken-DNA Bibliothek (UI) | Phase 1 | ✅ Abgeschlossen (2025-12-21) |
 | **3** | KI-Chat (Genkit Flows + Streaming) | Phase 1 | ⏳ Offen |
 
 ### Release 2
