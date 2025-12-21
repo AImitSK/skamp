@@ -385,7 +385,7 @@ interface Kernbotschaft {
 
 | Phase | Beschreibung | Abhängigkeiten | Status |
 |-------|--------------|----------------|--------|
-| **6** | Dokumentation | Phasen 1-5 | ⏳ Offen |
+| **6** | Dokumentation | Phasen 1-5 | ✅ Abgeschlossen (2025-12-21) |
 
 > **Hinweis:** Diese Aufteilung ermöglicht schnelleres Feedback und reduziert Risiko.
 > Phase 6 (Dokumentation) wird parallel zu den anderen Phasen vorbereitet und am Ende finalisiert.

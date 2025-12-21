@@ -88,7 +88,8 @@
       "Bash(del update-translations.py messagesde.json.backup messagesen.json.backup)",
       "Bash(del add_templates_validator.py)",
       "Bash(timeout 10 npm run:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(Select-String -Pattern \"marken-dna\" -Context 2,2)"
     ]
   },
   "enableAllProjectMcpServers": true,
