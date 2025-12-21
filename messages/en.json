@@ -11362,7 +11362,17 @@
       "allDocumentsDeleted": "All documents deleted successfully",
       "saveError": "Error saving: {message}",
       "deleteError": "Error deleting: {message}",
-      "loadError": "Could not load documents"
+      "loadError": "Could not load documents",
+      "synthesisSaved": "DNA Synthesis successfully created",
+      "synthesisDeleted": "DNA Synthesis deleted",
+      "synthesisUpdated": "Changes saved",
+      "synthesisError": "Error in DNA Synthesis: {error}",
+      "kernbotschaftSaved": "Core message saved",
+      "textMatrixGenerated": "Text Matrix successfully generated",
+      "textMatrixSaved": "Text Matrix saved",
+      "generationError": "Error generating: {error}",
+      "chatError": "Chat error: {error}",
+      "documentComplete": "Document is complete - ready to save"
     }
   },
   "setup": {
@@ -11511,6 +11521,50 @@
       "inputPlaceholder": "Type a message...",
       "noMessages": "No messages yet",
       "startConversation": "Start the conversation with the AI assistant"
+    },
+    "strategyTab": {
+      "title": "Strategy",
+      "celeroFormula": "The CeleroPress Formula"
+    },
+    "synthesis": {
+      "title": "DNA Synthesis",
+      "create": "Synthesize DNA",
+      "resynthesize": "Re-synthesize",
+      "edit": "Edit",
+      "delete": "Delete",
+      "active": "DNA Synthesis active",
+      "incomplete": "The Brand DNA of {companyName} is not yet complete.",
+      "createHint": "Create an AI-optimized summary of the Brand DNA for {companyName}.",
+      "completeDNA": "Complete Brand DNA",
+      "confirmDelete": "Do you really want to delete the DNA Synthesis?"
+    },
+    "kernbotschaft": {
+      "title": "Develop Core Message",
+      "placeholder": "Describe the occasion, your goals...",
+      "contextHint": "DNA Synthesis is used as context",
+      "emptyState": "Start developing your core message with the AI assistant.",
+      "save": "Save core message"
+    },
+    "aiSequenz": {
+      "title": "AI Sequence",
+      "description": "Run the AI Sequence to generate the strategic text matrix",
+      "button": "Generate Text Matrix",
+      "generating": "Generating text matrix..."
+    },
+    "textMatrix": {
+      "title": "Strategic Text Matrix",
+      "subtitle": "Draft Skeleton",
+      "generate": "Generate Text Matrix",
+      "rework": "Rework with AI Sequence",
+      "edit": "Edit",
+      "hint": "This is an AI-generated draft skeleton. Review the text carefully before releasing it as a final press release.",
+      "finalize": "Finalize as Press Release",
+      "humanSignoff": "Human Sign-off",
+      "humanSignoffDescription": "This button signals: The human has reviewed the matrix and gives the final sign-off. Only then is the text considered a finished press release."
+    },
+    "rework": {
+      "title": "Rework with AI",
+      "placeholder": "Describe what you want to change..."
     },
     "confirmDelete": "Do you really want to delete all Brand DNA documents for \"{companyName}\"?",
     "confirmBulkDelete": "Do you really want to delete {count} clients?"

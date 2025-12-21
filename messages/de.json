@@ -11376,7 +11376,17 @@
       "allDocumentsDeleted": "Alle Dokumente erfolgreich gelöscht",
       "saveError": "Fehler beim Speichern: {message}",
       "deleteError": "Fehler beim Löschen: {message}",
-      "loadError": "Dokumente konnten nicht geladen werden"
+      "loadError": "Dokumente konnten nicht geladen werden",
+      "synthesisSaved": "DNA Synthese erfolgreich erstellt",
+      "synthesisDeleted": "DNA Synthese gelöscht",
+      "synthesisUpdated": "Änderungen gespeichert",
+      "synthesisError": "Fehler bei DNA Synthese: {error}",
+      "kernbotschaftSaved": "Kernbotschaft gespeichert",
+      "textMatrixGenerated": "Text-Matrix erfolgreich generiert",
+      "textMatrixSaved": "Text-Matrix gespeichert",
+      "generationError": "Fehler bei Generierung: {error}",
+      "chatError": "Chat-Fehler: {error}",
+      "documentComplete": "Dokument ist vollständig - bereit zum Speichern"
     }
   },
   "setup": {
@@ -11525,6 +11535,50 @@
       "inputPlaceholder": "Nachricht eingeben...",
       "noMessages": "Noch keine Nachrichten",
       "startConversation": "Starten Sie die Konversation mit dem KI-Assistenten"
+    },
+    "strategyTab": {
+      "title": "Strategie",
+      "celeroFormula": "Die CeleroPress Formel"
+    },
+    "synthesis": {
+      "title": "DNA Synthese",
+      "create": "DNA synthetisieren",
+      "resynthesize": "Neu synthetisieren",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "active": "DNA Synthese aktiv",
+      "incomplete": "Die Marken-DNA von {companyName} ist noch nicht vollständig.",
+      "createHint": "Erstelle eine KI-optimierte Kurzform der Marken-DNA für {companyName}.",
+      "completeDNA": "Marken-DNA vervollständigen",
+      "confirmDelete": "Möchten Sie die DNA Synthese wirklich löschen?"
+    },
+    "kernbotschaft": {
+      "title": "Kernbotschaft erarbeiten",
+      "placeholder": "Beschreiben Sie den Anlass, Ihre Ziele...",
+      "contextHint": "DNA Synthese wird als Kontext verwendet",
+      "emptyState": "Starten Sie die Erarbeitung Ihrer Kernbotschaft mit dem KI-Assistenten.",
+      "save": "Kernbotschaft speichern"
+    },
+    "aiSequenz": {
+      "title": "AI Sequenz",
+      "description": "Führe die AI Sequenz aus, um die strategische Text-Matrix zu generieren",
+      "button": "Text-Matrix generieren",
+      "generating": "Text-Matrix wird generiert..."
+    },
+    "textMatrix": {
+      "title": "Strategische Text-Matrix",
+      "subtitle": "Roh-Skelett",
+      "generate": "Text-Matrix generieren",
+      "rework": "Mit AI Sequenz umarbeiten",
+      "edit": "Bearbeiten",
+      "hint": "Dies ist ein KI-generiertes Roh-Skelett. Prüfen Sie den Text sorgfältig, bevor Sie ihn als finale Pressemeldung freigeben.",
+      "finalize": "Als Pressemeldung finalisieren",
+      "humanSignoff": "Human Sign-off",
+      "humanSignoffDescription": "Dieser Button signalisiert: Der Mensch hat die Matrix geprüft und gibt den finalen Sign-off. Erst danach gilt der Text als fertige Pressemeldung."
+    },
+    "rework": {
+      "title": "Mit KI umarbeiten",
+      "placeholder": "Beschreiben Sie, was Sie ändern möchten..."
     },
     "confirmDelete": "Möchten Sie wirklich alle Marken-DNA Dokumente für \"{companyName}\" löschen?",
     "confirmBulkDelete": "Möchten Sie wirklich {count} Kunden löschen?"
