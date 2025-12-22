@@ -7,6 +7,7 @@ import {
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
   PencilIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import { MARKEN_DNA_DOCUMENTS, type MarkenDNADocumentType } from '@/types/marken-dna';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
@@ -37,6 +38,7 @@ export function MarkenDNAEditorModal({
   const [isSaving, setIsSaving] = useState(false);
   const [documentContent, setDocumentContent] = useState(existingDocument || '');
   const [documentStatus, setDocumentStatus] = useState<'draft' | 'completed'>('draft');
+  const [isEditing, setIsEditing] = useState(false);
   const documentMetadata = MARKEN_DNA_DOCUMENTS[documentType];
 
   // Synchronisiere documentContent wenn existingDocument sich ändert (z.B. Modal öffnet)
@@ -112,17 +114,37 @@ export function MarkenDNAEditorModal({
                   <span className="text-sm font-medium text-zinc-900">{t('modal.document')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button plain className="h-8 px-3">
-                    <PencilIcon className="h-4 w-4 mr-1" />
-                    {t('actions.edit')}
+                  <Button
+                    plain
+                    className="h-8 px-3"
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    {isEditing ? (
+                      <>
+                        <EyeIcon className="h-4 w-4 mr-1" />
+                        {t('actions.preview')}
+                      </>
+                    ) : (
+                      <>
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        {t('actions.edit')}
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
             </div>
 
-            {/* Document Preview Area */}
+            {/* Document Preview/Edit Area */}
             <div className="flex-1 overflow-y-auto p-4">
-              {documentContent ? (
+              {isEditing ? (
+                <textarea
+                  className="w-full h-full min-h-[500px] p-3 text-sm font-mono border border-zinc-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  value={documentContent}
+                  onChange={(e) => setDocumentContent(e.target.value)}
+                  placeholder={t('modal.editPlaceholder')}
+                />
+              ) : documentContent ? (
                 <div className="prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 prose-strong:text-zinc-900 prose-li:text-zinc-700">
                   <Markdown>{documentContent}</Markdown>
                 </div>

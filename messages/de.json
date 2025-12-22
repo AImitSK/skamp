@@ -11510,6 +11510,7 @@
     "actions": {
       "view": "Anzeigen",
       "edit": "Bearbeiten",
+      "preview": "Vorschau",
       "create": "Erstellen",
       "delete": "Löschen",
       "deleteAll": "Alle Dokumente löschen",
@@ -11544,7 +11545,8 @@
       "chatComingSoon": "KI-Chat wird in Phase 3 implementiert",
       "chatDescription": "Hier können Sie später mit dem KI-Assistenten das {documentType} Dokument erarbeiten.",
       "noContent": "Noch kein Inhalt vorhanden",
-      "noContentDescription": "Nutzen Sie den KI-Chat, um das Dokument zu erstellen."
+      "noContentDescription": "Nutzen Sie den KI-Chat, um das Dokument zu erstellen.",
+      "editPlaceholder": "Markdown-Text hier bearbeiten..."
     },
     "chat": {
       "inputPlaceholder": "Nachricht eingeben...",

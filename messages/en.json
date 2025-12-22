@@ -11496,6 +11496,7 @@
     "actions": {
       "view": "View",
       "edit": "Edit",
+      "preview": "Preview",
       "create": "Create",
       "delete": "Delete",
       "deleteAll": "Delete all documents",
@@ -11530,7 +11531,8 @@
       "chatComingSoon": "AI Chat will be implemented in Phase 3",
       "chatDescription": "You will be able to work on the {documentType} document with the AI assistant here later.",
       "noContent": "No content yet",
-      "noContentDescription": "Use the AI chat to create the document."
+      "noContentDescription": "Use the AI chat to create the document.",
+      "editPlaceholder": "Edit markdown text here..."
     },
     "chat": {
       "inputPlaceholder": "Type a message...",
