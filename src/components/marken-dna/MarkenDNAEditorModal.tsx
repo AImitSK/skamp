@@ -41,12 +41,12 @@ export function MarkenDNAEditorModal({
   const [isEditing, setIsEditing] = useState(false);
   const documentMetadata = MARKEN_DNA_DOCUMENTS[documentType];
 
-  // Synchronisiere documentContent wenn existingDocument sich ändert (z.B. Modal öffnet)
+  // State zurücksetzen wenn sich documentType oder existingDocument ändert
   useEffect(() => {
-    if (existingDocument) {
-      setDocumentContent(existingDocument);
-    }
-  }, [existingDocument]);
+    setDocumentContent(existingDocument || '');
+    setDocumentStatus('draft');
+    setIsEditing(false);
+  }, [documentType, existingDocument]);
 
   const handleDocumentUpdate = (newDocument: string) => {
     setDocumentContent(newDocument);
@@ -95,6 +95,7 @@ export function MarkenDNAEditorModal({
 
             {/* AI Chat Integration */}
             <AIChatInterface
+              key={`${company.id}-${documentType}`}
               documentType={documentType}
               companyId={company.id || ''}
               companyName={company.name}
