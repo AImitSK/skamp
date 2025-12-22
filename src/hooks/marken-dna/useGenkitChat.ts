@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from 'next-intl';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { toastService } from '@/lib/utils/toast';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
 import { auth } from '@/lib/firebase/client-init';
@@ -45,6 +45,12 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [documentStatus, setDocumentStatus] = useState<'draft' | 'completed'>('draft');
+
+  // Ref für Callback um stets aktuelle Referenz zu haben
+  const onDocumentUpdateRef = useRef(options.onDocumentUpdate);
+  useEffect(() => {
+    onDocumentUpdateRef.current = options.onDocumentUpdate;
+  }, [options.onDocumentUpdate]);
 
   // API-Endpunkt basierend auf flowName
   const apiEndpoint = useMemo(() => {
@@ -108,7 +114,7 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
       // Dokument aktualisieren
       if (data.document) {
         setDocument(data.document);
-        options.onDocumentUpdate?.(data.document);
+        onDocumentUpdateRef.current?.(data.document);
       }
 
       // Progress aktualisieren

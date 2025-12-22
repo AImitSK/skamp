@@ -50,6 +50,7 @@ export function MarkenDNAEditorModal({
 
   const handleDocumentUpdate = (newDocument: string) => {
     setDocumentContent(newDocument);
+    setIsEditing(false); // Bei AI-Update zur Preview wechseln
   };
 
   const handleStatusChange = (status: 'draft' | 'completed') => {
