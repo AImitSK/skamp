@@ -140,6 +140,19 @@ export default function MarkenDNADetailPage() {
     return doc?.content;
   };
 
+  // Hilfsfunktion: Markdown zu Plain-Text für Vorschau
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/#{1,6}\s+/g, '') // Headers entfernen
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold entfernen
+      .replace(/\*([^*]+)\*/g, '$1') // Italic entfernen
+      .replace(/^\s*[-*+]\s+/gm, '') // Liste entfernen
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links entfernen
+      .replace(/`([^`]+)`/g, '$1') // Code entfernen
+      .replace(/\n{2,}/g, ' ') // Mehrfache Zeilenumbrüche
+      .trim();
+  };
+
   // Hilfsfunktion: Letzte Aktualisierung abrufen
   const getDocumentUpdatedAt = (docType: MarkenDNADocumentType): string | undefined => {
     const doc = documents.find(d => d.type === docType);
@@ -298,7 +311,7 @@ export default function MarkenDNADetailPage() {
               {/* Content Preview */}
               {content ? (
                 <p className="text-sm text-zinc-600 line-clamp-3 mb-3">
-                  {content.substring(0, 150)}...
+                  {stripMarkdown(content).substring(0, 150)}...
                 </p>
               ) : (
                 <p className="text-sm text-zinc-400 italic mb-3">
