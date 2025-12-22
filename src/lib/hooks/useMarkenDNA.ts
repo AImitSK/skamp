@@ -124,8 +124,9 @@ export function useAllCustomersMarkenDNAStatus(
       return markenDNAService.getAllCustomersStatus(organizationId);
     },
     enabled: !!organizationId,
-    staleTime: 5 * 60 * 1000, // 5 Minuten
-    gcTime: 10 * 60 * 1000, // 10 Minuten
+    staleTime: 30 * 1000, // 30 Sekunden - schnellere Aktualisierung
+    gcTime: 5 * 60 * 1000, // 5 Minuten
+    refetchOnMount: 'always', // Immer beim Mount neu laden
     ...options,
   });
 }
