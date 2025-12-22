@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  BeakerIcon,
   CheckCircleIcon,
   PencilIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
+import { DnaIcon } from '@/components/icons/DnaIcon';
 import { StatusCircles } from '@/components/marken-dna/StatusCircles';
 import type { CompanyMarkenDNAStatus } from '@/types/marken-dna';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
@@ -88,7 +88,7 @@ export function DNASyntheseSection({
       {/* Header */}
       <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BeakerIcon className="h-5 w-5 text-purple-600" />
+          <DnaIcon className="h-5 w-5 text-purple-600" />
           <h3 className="text-base font-semibold text-zinc-900">DNA Synthese</h3>
         </div>
 
@@ -106,7 +106,7 @@ export function DNASyntheseSection({
             </DropdownButton>
             <DropdownMenu anchor="bottom end">
               <DropdownItem onClick={handleSynthesizeClick} disabled={!canSynthesize || isLoading}>
-                <BeakerIcon className="h-4 w-4" />
+                <DnaIcon className="h-4 w-4" />
                 <span>Neu synthetisieren</span>
               </DropdownItem>
               <DropdownDivider />
@@ -134,7 +134,7 @@ export function DNASyntheseSection({
                   disabled={isLoading}
                   className="bg-primary hover:bg-primary-hover text-white h-10 px-6 rounded-lg font-medium transition-colors"
                 >
-                  <BeakerIcon className="h-4 w-4 mr-2" />
+                  <DnaIcon className="h-4 w-4 mr-2" />
                   DNA synthetisieren
                 </Button>
               </>

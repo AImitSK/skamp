@@ -9,8 +9,8 @@ import {
   DocumentTextIcon,
   PhotoIcon,
   CircleStackIcon,
-  SparklesIcon
 } from "@heroicons/react/24/outline";
+import { DnaIcon } from "@/components/icons/DnaIcon";
 import { Badge } from "@/components/ui/badge";
 import { useAutoGlobal } from "@/lib/hooks/useAutoGlobal";
 import { useTranslations } from "next-intl";
@@ -54,7 +54,7 @@ export default function LibraryLayout({
     {
       nameKey: "tabs.markenDna",
       href: "/dashboard/library/marken-dna",
-      icon: SparklesIcon,
+      icon: DnaIcon,
       descriptionKey: ""
     },
     {

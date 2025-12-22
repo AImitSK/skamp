@@ -74,8 +74,8 @@ import {
   TicketIcon,
   CircleStackIcon,
   ClockIcon,
-  FingerPrintIcon
 } from "@heroicons/react/24/outline";
+import { DnaIcon } from "@/components/icons/DnaIcon";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import React, { useState } from "react";
@@ -174,7 +174,7 @@ const navigationItems: Omit<NavigationItem, 'current'>[] = [
       {
         nameKey: "markenDNA",
         href: "/dashboard/library/marken-dna",
-        icon: FingerPrintIcon,
+        icon: DnaIcon,
         descriptionKey: "markenDNADesc"
       },
       {
