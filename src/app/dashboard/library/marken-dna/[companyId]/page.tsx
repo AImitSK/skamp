@@ -11,6 +11,7 @@ import {
   useMarkenDNADocuments,
   useCreateMarkenDNADocument,
   useUpdateMarkenDNADocument,
+  useDeleteMarkenDNADocument,
 } from '@/lib/hooks/useMarkenDNA';
 import { MarkenDNADocumentType as MarkenDNADocType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
@@ -26,6 +27,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -73,9 +75,10 @@ export default function MarkenDNADetailPage() {
     companyId
   );
 
-  // Mutations für Speichern
+  // Mutations für Speichern und Löschen
   const { mutateAsync: createDocument } = useCreateMarkenDNADocument();
   const { mutateAsync: updateDocument } = useUpdateMarkenDNADocument();
+  const { mutateAsync: deleteDocument, isPending: isDeleting } = useDeleteMarkenDNADocument();
 
   // UI State
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
@@ -128,6 +131,28 @@ export default function MarkenDNADetailPage() {
       console.error('Fehler beim Speichern:', error);
       toastService.error('Fehler beim Speichern');
       throw error;
+    }
+  };
+
+  // Löschfunktion
+  const handleDeleteDocument = async (docType: MarkenDNADocumentType) => {
+    if (!currentOrganization?.id) {
+      toastService.error('Fehler: Nicht authentifiziert');
+      return;
+    }
+
+    const docTypeTyped = docType as MarkenDNADocType;
+
+    try {
+      await deleteDocument({
+        companyId,
+        type: docTypeTyped,
+        organizationId: currentOrganization.id,
+      });
+      toastService.success('Dokument gelöscht');
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      toastService.error('Fehler beim Löschen');
     }
   };
 
@@ -332,17 +357,34 @@ export default function MarkenDNADetailPage() {
                 ) : (
                   <span className="text-xs text-zinc-400">—</span>
                 )}
-                <Button
-                  plain
-                  className="text-primary hover:text-primary-dark"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setEditingDocumentType(key);
-                  }}
-                >
-                  <PencilIcon className="h-4 w-4 mr-1" />
-                  {status === 'missing' ? t('actions.create') : t('actions.edit')}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {status !== 'missing' && (
+                    <Button
+                      plain
+                      className="text-red-500 hover:text-red-700"
+                      disabled={isDeleting}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        if (confirm(t('confirmDeleteDocument'))) {
+                          handleDeleteDocument(key);
+                        }
+                      }}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    plain
+                    className="text-primary hover:text-primary-dark"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setEditingDocumentType(key);
+                    }}
+                  >
+                    <PencilIcon className="h-4 w-4 mr-1" />
+                    {status === 'missing' ? t('actions.create') : t('actions.edit')}
+                  </Button>
+                </div>
               </div>
             </div>
           );

@@ -11519,6 +11519,7 @@
     },
     "backToList": "Zurück zur Übersicht",
     "companyNotFound": "Unternehmen nicht gefunden",
+    "confirmDeleteDocument": "Möchten Sie dieses Dokument wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "noContentYet": "Noch kein Inhalt vorhanden",
     "lastUpdated": "Zuletzt aktualisiert",
     "status": {

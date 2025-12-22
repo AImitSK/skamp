@@ -11505,6 +11505,7 @@
     },
     "backToList": "Back to overview",
     "companyNotFound": "Company not found",
+    "confirmDeleteDocument": "Are you sure you want to delete this document? This action cannot be undone.",
     "noContentYet": "No content yet",
     "lastUpdated": "Last updated",
     "status": {
