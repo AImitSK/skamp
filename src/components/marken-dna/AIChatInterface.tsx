@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { PaperAirplaneIcon, ArrowPathIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 import { useGenkitChat } from '@/hooks/marken-dna/useGenkitChat';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
+import Markdown from 'react-markdown';
 
 interface AIChatInterfaceProps {
   documentType: MarkenDNADocumentType;
@@ -122,10 +123,8 @@ export function AIChatInterface({
 
                 {/* AI Message Content */}
                 <div className="px-4 py-3">
-                  <div className="prose prose-sm max-w-none prose-zinc">
-                    <div className="text-sm text-zinc-700 whitespace-pre-wrap">
-                      {cleanContent(message.content)}
-                    </div>
+                  <div className="prose prose-sm max-w-none prose-zinc prose-headings:text-zinc-900 prose-p:text-zinc-700 prose-strong:text-zinc-900 prose-li:text-zinc-700">
+                    <Markdown>{cleanContent(message.content)}</Markdown>
                   </div>
                 </div>
               </div>
