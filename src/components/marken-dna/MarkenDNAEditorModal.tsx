@@ -21,7 +21,7 @@ interface MarkenDNAEditorModalProps {
   documentType: MarkenDNADocumentType;
   existingDocument?: string;
   existingChatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  onSave: (content: string) => Promise<void>;
+  onSave: (content: string, status: 'draft' | 'completed') => Promise<void>;
 }
 
 export function MarkenDNAEditorModal({
@@ -36,6 +36,7 @@ export function MarkenDNAEditorModal({
   const t = useTranslations('markenDNA');
   const [isSaving, setIsSaving] = useState(false);
   const [documentContent, setDocumentContent] = useState(existingDocument || '');
+  const [documentStatus, setDocumentStatus] = useState<'draft' | 'completed'>('draft');
   const documentMetadata = MARKEN_DNA_DOCUMENTS[documentType];
 
   // Synchronisiere documentContent wenn existingDocument sich ändert (z.B. Modal öffnet)
@@ -49,10 +50,14 @@ export function MarkenDNAEditorModal({
     setDocumentContent(newDocument);
   };
 
+  const handleStatusChange = (status: 'draft' | 'completed') => {
+    setDocumentStatus(status);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(documentContent);
+      await onSave(documentContent, documentStatus);
       onClose();
     } catch (error) {
       // Error handling is done in useGenkitChat via toastService
@@ -93,6 +98,7 @@ export function MarkenDNAEditorModal({
               existingDocument={existingDocument}
               existingChatHistory={existingChatHistory}
               onDocumentUpdate={handleDocumentUpdate}
+              onStatusChange={handleStatusChange}
             />
           </div>
 

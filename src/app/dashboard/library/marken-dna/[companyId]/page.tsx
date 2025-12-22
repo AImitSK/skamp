@@ -81,7 +81,11 @@ export default function MarkenDNADetailPage() {
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
 
   // Speicherfunktion
-  const handleSaveDocument = async (content: string, docType: MarkenDNADocumentType) => {
+  const handleSaveDocument = async (
+    content: string,
+    docType: MarkenDNADocumentType,
+    status: 'draft' | 'completed' = 'draft'
+  ) => {
     if (!currentOrganization?.id || !user?.uid || !company) {
       toastService.error('Fehler: Nicht authentifiziert');
       return;
@@ -99,7 +103,7 @@ export default function MarkenDNADetailPage() {
           data: {
             content,
             plainText: content,
-            status: 'draft',
+            status,
           },
           organizationId: currentOrganization.id,
           userId: user.uid,
@@ -113,7 +117,7 @@ export default function MarkenDNADetailPage() {
             type: docTypeTyped,
             content,
             plainText: content,
-            status: 'draft',
+            status,
           },
           organizationId: currentOrganization.id,
           userId: user.uid,
@@ -356,8 +360,8 @@ export default function MarkenDNADetailPage() {
             documentType={editingDocumentType}
             existingDocument={existingDoc?.content}
             existingChatHistory={existingDoc?.chatHistory}
-            onSave={async (content: string) => {
-              await handleSaveDocument(content, editingDocumentType);
+            onSave={async (content: string, status: 'draft' | 'completed') => {
+              await handleSaveDocument(content, editingDocumentType, status);
               setEditingDocumentType(null);
             }}
           />

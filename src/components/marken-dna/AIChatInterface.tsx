@@ -13,6 +13,7 @@ interface AIChatInterfaceProps {
   existingDocument?: string;
   existingChatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   onDocumentUpdate?: (document: string) => void;
+  onStatusChange?: (status: 'draft' | 'completed') => void;
 }
 
 export function AIChatInterface({
@@ -22,6 +23,7 @@ export function AIChatInterface({
   existingDocument,
   existingChatHistory,
   onDocumentUpdate,
+  onStatusChange,
 }: AIChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +37,7 @@ export function AIChatInterface({
     regenerate,
     copyLastResponse,
     sendSuggestion,
+    documentStatus,
   } = useGenkitChat({
     flowName: 'markenDNAChat',
     documentType,
@@ -44,6 +47,13 @@ export function AIChatInterface({
     existingChatHistory,
     onDocumentUpdate,
   });
+
+  // Status-Änderungen an Parent weitergeben
+  useEffect(() => {
+    if (onStatusChange) {
+      onStatusChange(documentStatus);
+    }
+  }, [documentStatus, onStatusChange]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

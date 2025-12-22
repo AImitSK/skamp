@@ -26,6 +26,7 @@ interface GenkitChatResponse {
   document?: string;
   progress?: number;
   suggestions?: string[];
+  status?: 'draft' | 'completed';
 }
 
 export function useGenkitChat(options: UseGenkitChatOptions) {
@@ -43,6 +44,7 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
   const [progress, setProgress] = useState(0);
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
   const [error, setError] = useState<Error | null>(null);
+  const [documentStatus, setDocumentStatus] = useState<'draft' | 'completed'>('draft');
 
   // API-Endpunkt basierend auf flowName
   const apiEndpoint = useMemo(() => {
@@ -119,6 +121,11 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
         setSuggestedPrompts(data.suggestions);
       }
 
+      // Status aktualisieren (für Speicherung)
+      if (data.status) {
+        setDocumentStatus(data.status);
+      }
+
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
@@ -176,5 +183,6 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
     document,
     progress,
     suggestedPrompts,
+    documentStatus,
   };
 }

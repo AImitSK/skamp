@@ -31,6 +31,7 @@ export const MarkenDNAChatOutputSchema = z.object({
   document: z.string().optional(),      // Extrahiertes [DOCUMENT]...[/DOCUMENT]
   progress: z.number().optional(),       // Extrahiertes [PROGRESS:XX]
   suggestions: z.array(z.string()).optional(), // Extrahierte [SUGGESTIONS]
+  status: z.enum(['draft', 'completed']).optional(), // Extrahiertes [STATUS:XX]
 });
 
 export type MarkenDNAChatInput = z.infer<typeof MarkenDNAChatInputSchema>;
@@ -77,6 +78,7 @@ export const markenDNAChatFlow = ai.defineFlow(
       document: extractDocument(responseText),
       progress: extractProgress(responseText),
       suggestions: extractSuggestions(responseText),
+      status: extractStatus(responseText),
     };
   }
 );
@@ -150,4 +152,18 @@ function extractSuggestions(text: string): string[] | undefined {
     .split('\n')
     .map(s => s.trim())
     .filter(s => s.length > 0);
+}
+
+/**
+ * Extrahiert Status aus [STATUS:XX] Tag
+ * Mögliche Werte: completed, draft
+ */
+function extractStatus(text: string): 'draft' | 'completed' | undefined {
+  const match = text.match(/\[STATUS:(\w+)\]/i);
+  if (!match) return undefined;
+
+  const status = match[1].toLowerCase();
+  if (status === 'completed') return 'completed';
+  if (status === 'draft') return 'draft';
+  return undefined;
 }
