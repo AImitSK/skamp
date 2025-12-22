@@ -90,7 +90,6 @@ class MarkenDNAService {
         title: MARKEN_DNA_DOCUMENTS[data.type].title,
         content: data.content,
         plainText: data.plainText || data.content.replace(/<[^>]*>/g, ''),
-        structuredData: data.structuredData,
         status: data.status || 'draft',
         completeness: data.completeness || 0,
         chatHistory: data.chatHistory || [],
@@ -99,6 +98,11 @@ class MarkenDNAService {
         createdBy: context.userId,
         updatedBy: context.userId,
       };
+
+      // structuredData nur hinzufuegen wenn definiert (Firebase erlaubt kein undefined)
+      if (data.structuredData !== undefined) {
+        documentData.structuredData = data.structuredData;
+      }
 
       const docRef = doc(db, 'companies', data.companyId, 'markenDNA', data.type);
       await setDoc(docRef, documentData);
@@ -122,8 +126,13 @@ class MarkenDNAService {
     try {
       const docRef = doc(db, 'companies', companyId, 'markenDNA', type);
 
+      // undefined-Werte filtern (Firebase erlaubt kein undefined)
+      const filteredData = Object.fromEntries(
+        Object.entries(data).filter(([, value]) => value !== undefined)
+      );
+
       const updateData: any = {
-        ...data,
+        ...filteredData,
         updatedAt: serverTimestamp(),
         updatedBy: context.userId,
       };

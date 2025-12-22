@@ -11073,6 +11073,7 @@
       "updated": "Firma erfolgreich aktualisiert"
     },
     "copied": "In Zwischenablage kopiert",
+    "copySuccess": "In Zwischenablage kopiert",
     "created": "Erfolgreich erstellt",
     "deleteError": "Fehler beim Löschen",
     "deleted": "Erfolgreich gelöscht",

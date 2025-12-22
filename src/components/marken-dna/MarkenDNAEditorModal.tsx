@@ -12,6 +12,7 @@ import { MARKEN_DNA_DOCUMENTS, type MarkenDNADocumentType } from '@/types/marken
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { useState } from 'react';
 import { AIChatInterface } from './AIChatInterface';
+import Markdown from 'react-markdown';
 
 interface MarkenDNAEditorModalProps {
   open: boolean;
@@ -103,11 +104,8 @@ export function MarkenDNAEditorModal({
             {/* Document Preview Area */}
             <div className="flex-1 overflow-y-auto p-4">
               {documentContent ? (
-                <div className="prose prose-sm max-w-none">
-                  {/* TODO: TipTap Editor Preview in Phase 3 */}
-                  <div className="text-sm text-zinc-700 whitespace-pre-wrap">
-                    {documentContent}
-                  </div>
+                <div className="prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 prose-strong:text-zinc-900 prose-li:text-zinc-700">
+                  <Markdown>{documentContent}</Markdown>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">

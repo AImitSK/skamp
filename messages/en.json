@@ -11059,6 +11059,7 @@
       "updated": "Company successfully updated"
     },
     "copied": "Copied to clipboard",
+    "copySuccess": "Copied to clipboard",
     "created": "Successfully created",
     "deleteError": "Error deleting",
     "deleted": "Successfully deleted",
