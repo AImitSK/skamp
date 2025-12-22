@@ -346,18 +346,23 @@ export default function MarkenDNADetailPage() {
       </div>
 
       {/* Editor Modal */}
-      {editingDocumentType && (
-        <MarkenDNAEditorModal
-          open={true}
-          onClose={() => setEditingDocumentType(null)}
-          company={company}
-          documentType={editingDocumentType}
-          onSave={async (content: string) => {
-            await handleSaveDocument(content, editingDocumentType);
-            setEditingDocumentType(null);
-          }}
-        />
-      )}
+      {editingDocumentType && (() => {
+        const existingDoc = documents.find(d => d.type === editingDocumentType);
+        return (
+          <MarkenDNAEditorModal
+            open={true}
+            onClose={() => setEditingDocumentType(null)}
+            company={company}
+            documentType={editingDocumentType}
+            existingDocument={existingDoc?.content}
+            existingChatHistory={existingDoc?.chatHistory}
+            onSave={async (content: string) => {
+              await handleSaveDocument(content, editingDocumentType);
+              setEditingDocumentType(null);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { MARKEN_DNA_DOCUMENTS, type MarkenDNADocumentType } from '@/types/marken-dna';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AIChatInterface } from './AIChatInterface';
 import Markdown from 'react-markdown';
 
@@ -19,6 +19,8 @@ interface MarkenDNAEditorModalProps {
   onClose: () => void;
   company: CompanyEnhanced;
   documentType: MarkenDNADocumentType;
+  existingDocument?: string;
+  existingChatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   onSave: (content: string) => Promise<void>;
 }
 
@@ -27,12 +29,21 @@ export function MarkenDNAEditorModal({
   onClose,
   company,
   documentType,
+  existingDocument,
+  existingChatHistory,
   onSave,
 }: MarkenDNAEditorModalProps) {
   const t = useTranslations('markenDNA');
   const [isSaving, setIsSaving] = useState(false);
-  const [documentContent, setDocumentContent] = useState('');
+  const [documentContent, setDocumentContent] = useState(existingDocument || '');
   const documentMetadata = MARKEN_DNA_DOCUMENTS[documentType];
+
+  // Synchronisiere documentContent wenn existingDocument sich ändert (z.B. Modal öffnet)
+  useEffect(() => {
+    if (existingDocument) {
+      setDocumentContent(existingDocument);
+    }
+  }, [existingDocument]);
 
   const handleDocumentUpdate = (newDocument: string) => {
     setDocumentContent(newDocument);
@@ -79,6 +90,8 @@ export function MarkenDNAEditorModal({
               documentType={documentType}
               companyId={company.id || ''}
               companyName={company.name}
+              existingDocument={existingDocument}
+              existingChatHistory={existingChatHistory}
               onDocumentUpdate={handleDocumentUpdate}
             />
           </div>
