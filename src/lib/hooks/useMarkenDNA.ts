@@ -124,10 +124,10 @@ export function useAllCustomersMarkenDNAStatus(
       return markenDNAService.getAllCustomersStatus(organizationId);
     },
     enabled: !!organizationId,
-    staleTime: 0, // Immer als stale betrachten
-    gcTime: 5 * 60 * 1000, // 5 Minuten
-    refetchOnMount: true, // Bei jedem Mount neu laden
-    refetchOnWindowFocus: true, // Bei Tab-Fokus neu laden
+    staleTime: 0,
+    gcTime: 0, // Kein Caching - immer frisch laden
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
     ...options,
   });
 }
