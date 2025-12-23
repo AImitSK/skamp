@@ -42,6 +42,13 @@ export function ChatInput({
     }
   }, [value]);
 
+  // Fokus zurücksetzen wenn Laden fertig ist
+  useEffect(() => {
+    if (!isLoading && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isLoading]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

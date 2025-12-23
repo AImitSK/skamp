@@ -38,11 +38,14 @@ export function AIMessage({ content, onRegenerate, onCopy }: AIMessageProps) {
   const documentMatch = content.match(/\[DOCUMENT\]([\s\S]*?)\[\/DOCUMENT\]/);
   const documentContent = documentMatch ? documentMatch[1].trim() : null;
 
-  // Content ohne Meta-Tags für Anzeige (ohne [DOCUMENT], [PROGRESS], [SUGGESTIONS])
+  // Content ohne Meta-Tags für Anzeige
   const cleanContent = content
-    .replace(/\[DOCUMENT\][\s\S]*?\[\/DOCUMENT\]/g, '')
-    .replace(/\[PROGRESS:\d+\]/g, '')
-    .replace(/\[SUGGESTIONS\][\s\S]*?\[\/SUGGESTIONS\]/g, '')
+    .replace(/\[DOCUMENT\][\s\S]*?\[\/DOCUMENT\]/g, '')  // [DOCUMENT]...[/DOCUMENT]
+    .replace(/\[PROGRESS:\d+\]/g, '')                     // [PROGRESS:50]
+    .replace(/\[SUGGESTIONS\][\s\S]*?\[\/SUGGESTIONS\]/g, '') // [SUGGESTIONS]...[/SUGGESTIONS]
+    .replace(/\[\/?SUGGESTIONS\]/g, '')                   // [SUGGESTIONS] oder [/SUGGESTIONS] alleine
+    .replace(/\[STATUS:[^\]]+\]/g, '')                    // [STATUS:completed], [STATUS:draft], etc.
+    .replace(/\[\/?DOCUMENT\]/g, '')                      // [DOCUMENT] oder [/DOCUMENT] alleine
     .trim();
 
   return (
