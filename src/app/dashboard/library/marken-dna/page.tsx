@@ -1,7 +1,7 @@
 // src/app/dashboard/library/marken-dna/page.tsx
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -38,7 +38,14 @@ export default function MarkenDNAPage() {
 
   // Daten laden
   const { data: companies = [], isLoading } = useCompanies(currentOrganization?.id);
-  const { data: markenDNAStatuses = [], isLoading: isLoadingDNA } = useAllCustomersMarkenDNAStatus(currentOrganization?.id || '');
+  const { data: markenDNAStatuses = [], isLoading: isLoadingDNA, refetch: refetchStatus } = useAllCustomersMarkenDNAStatus(currentOrganization?.id);
+
+  // Refetch bei jedem Mount um aktuellen Status zu zeigen
+  useEffect(() => {
+    if (currentOrganization?.id) {
+      refetchStatus();
+    }
+  }, [currentOrganization?.id, refetchStatus]);
 
   // UI State
   const [searchTerm, setSearchTerm] = useState('');
