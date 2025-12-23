@@ -1,20 +1,15 @@
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { ChatHeader } from './components/ChatHeader';
-import { ChatMessages } from './components/ChatMessages';
+import { ChatMessages, ChatMessage } from './components/ChatMessages';
 import { ChatInput } from './components/ChatInput';
 import { ActionBubbles } from './components/ActionBubbles';
 import { DocumentSidebar } from './components/DocumentSidebar';
-
-export type MarkenDNADocumentType =
-  | 'briefing'
-  | 'swot'
-  | 'audience'
-  | 'positioning'
-  | 'goals'
-  | 'messages';
+import { useGenkitChat } from '@/hooks/marken-dna/useGenkitChat';
+import { MarkenDNADocumentType } from '@/types/marken-dna';
+import { toastService } from '@/lib/utils/toast';
 
 interface MarkenDNAChatModalProps {
   isOpen: boolean;
@@ -22,6 +17,9 @@ interface MarkenDNAChatModalProps {
   documentType: MarkenDNADocumentType;
   companyId: string;
   companyName: string;
+  existingDocument?: string;
+  existingChatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  onSave: (content: string, status: 'draft' | 'completed') => Promise<void>;
 }
 
 /**
@@ -29,7 +27,7 @@ interface MarkenDNAChatModalProps {
  *
  * Layout:
  * - Fullscreen Modal (fixed inset-0)
- * - Header: Titel, Company, Close-Button, Sidebar-Toggle (disabled in Phase 1)
+ * - Header: Titel, Company, Close-Button, Sidebar-Toggle
  * - Chat-Area: Scrollbarer Bereich für Messages
  * - Input-Area: Große Input-Box + 3 Action-Bubbles
  *
@@ -41,16 +39,31 @@ export function MarkenDNAChatModal({
   documentType,
   companyId,
   companyName,
+  existingDocument,
+  existingChatHistory,
+  onSave,
 }: MarkenDNAChatModalProps) {
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Temporäres Mock-Dokument für Phase 3 (später aus Chat-State)
-  const [documentContent, setDocumentContent] = useState(
-    '# Briefing-Check\n\n## Phase 1: Unternehmensprofil\n\n**Branche:** Noch nicht ausgefüllt\n\n**Geschäftsmodell:** Noch nicht ausgefüllt'
-  );
+  // useGenkitChat Hook Integration
+  const {
+    messages,
+    input,
+    setInput,
+    isLoading,
+    sendMessage,
+    document: currentDocument,
+    documentStatus,
+  } = useGenkitChat({
+    flowName: 'markenDNAChat',
+    documentType,
+    companyId,
+    companyName,
+    existingDocument,
+    existingChatHistory,
+  });
 
   // Dokumenttyp-Titel Mapping
   const documentTitles: Record<MarkenDNADocumentType, string> = {
@@ -62,43 +75,83 @@ export function MarkenDNAChatModal({
     messages: 'Botschaften-Baukasten',
   };
 
+  // Messages in ChatMessages-Format konvertieren
+  const chatMessages: ChatMessage[] = messages.map((msg, idx) => ({
+    id: `${msg.role}-${idx}`,
+    role: msg.role,
+    content: msg.content,
+  }));
+
+  // Keyboard-Shortcut: Escape = Modal schließen (mit Warnung wenn ungespeichert)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        e.preventDefault();
+        handleCloseWithWarning();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, messages]);
+
+  const handleCloseWithWarning = () => {
+    if (messages.length > 0 && currentDocument) {
+      // Es gibt ungespeicherte Änderungen
+      if (confirm('Möchtest du wirklich schließen? Nicht gespeicherte Änderungen gehen verloren.')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
-
-    // TODO: In Phase 2 - Message an KI senden
-    console.log('Send message:', inputValue);
-    setInputValue('');
+    if (!input.trim() || isLoading) return;
+    sendMessage(input);
   };
 
   const handleShowDocument = () => {
-    // Toggle Sidebar
     setSidebarOpen(!sidebarOpen);
   };
 
   const handleRestart = () => {
-    // Zeige Bestätigungs-Dialog
     setShowRestartConfirm(true);
   };
 
   const confirmRestart = () => {
-    // Chat zurücksetzen (später: Messages leeren, State zurücksetzen)
-    setInputValue('');
-    setDocumentContent(
-      '# Briefing-Check\n\n## Phase 1: Unternehmensprofil\n\n**Branche:** Noch nicht ausgefüllt\n\n**Geschäftsmodell:** Noch nicht ausgefüllt'
-    );
+    // Chat zurücksetzen
+    window.location.reload(); // Einfachste Variante um State komplett zurückzusetzen
     setShowRestartConfirm(false);
   };
 
-  const handleSave = () => {
-    // TODO: In Phase 3 - Dokument speichern + Modal schließen
-    console.log('Save and close');
-    onClose();
+  const handleSave = async () => {
+    if (!currentDocument) {
+      toastService.error('Kein Dokument vorhanden zum Speichern');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave(currentDocument, documentStatus);
+      toastService.success('Dokument gespeichert');
+      onClose();
+    } catch (error) {
+      toastService.error('Fehler beim Speichern');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleCloseWithWarning}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -130,21 +183,21 @@ export function MarkenDNAChatModal({
                 <ChatHeader
                   title={documentTitles[documentType]}
                   companyName={companyName}
-                  onClose={onClose}
+                  onClose={handleCloseWithWarning}
                   onToggleSidebar={handleShowDocument}
                   sidebarOpen={sidebarOpen}
                 />
 
                 {/* Chat Messages Area */}
-                <ChatMessages messages={[]} isLoading={isLoading} />
+                <ChatMessages messages={chatMessages} isLoading={isLoading} />
 
                 {/* Input Area */}
                 <div className="border-t border-zinc-200 bg-white">
                   <div className="max-w-3xl mx-auto px-6 py-4">
                     <form onSubmit={handleSendMessage}>
                       <ChatInput
-                        value={inputValue}
-                        onChange={setInputValue}
+                        value={input}
+                        onChange={setInput}
                         isLoading={isLoading}
                         placeholder="Nachricht eingeben..."
                       />
@@ -155,6 +208,7 @@ export function MarkenDNAChatModal({
                       onShowDocument={handleShowDocument}
                       onRestart={handleRestart}
                       onSave={handleSave}
+                      isSaving={isSaving}
                     />
                   </div>
                 </div>
@@ -165,7 +219,7 @@ export function MarkenDNAChatModal({
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
                 title={documentTitles[documentType]}
-                content={documentContent}
+                content={currentDocument || ''}
               />
             </Dialog.Panel>
           </Transition.Child>

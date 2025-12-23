@@ -18,7 +18,7 @@ import { toastService } from '@/lib/utils/toast';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MarkenDNAEditorModal } from '@/components/marken-dna/MarkenDNAEditorModal';
+import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { StatusCircles, MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import {
   ArrowLeftIcon,
@@ -391,15 +391,16 @@ export default function MarkenDNADetailPage() {
         })}
       </div>
 
-      {/* Editor Modal */}
+      {/* Chat Modal */}
       {editingDocumentType && (() => {
         const existingDoc = documents.find(d => d.type === editingDocumentType);
         return (
-          <MarkenDNAEditorModal
+          <MarkenDNAChatModal
             key={`modal-${companyId}-${editingDocumentType}`}
-            open={true}
+            isOpen={true}
             onClose={() => setEditingDocumentType(null)}
-            company={company}
+            companyId={companyId}
+            companyName={company.name}
             documentType={editingDocumentType}
             existingDocument={existingDoc?.content}
             existingChatHistory={existingDoc?.chatHistory}

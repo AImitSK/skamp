@@ -46,8 +46,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   };
 
   const handleRegenerate = (messageId: string) => {
-    // TODO: Message neu generieren
-    console.log('Regenerate message:', messageId);
+    // TODO: Message neu generieren (wird in Phase 5 implementiert)
   };
 
   return (
