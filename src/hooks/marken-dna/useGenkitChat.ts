@@ -52,6 +52,17 @@ export function useGenkitChat(options: UseGenkitChatOptions) {
     onDocumentUpdateRef.current = options.onDocumentUpdate;
   }, [options.onDocumentUpdate]);
 
+  // State zurücksetzen wenn sich documentType oder companyId ändert
+  useEffect(() => {
+    setMessages(options.existingChatHistory || []);
+    setDocument(options.existingDocument || null);
+    setInput('');
+    setProgress(0);
+    setSuggestedPrompts([]);
+    setError(null);
+    setDocumentStatus('draft');
+  }, [options.documentType, options.companyId]);
+
   // API-Endpunkt basierend auf flowName
   const apiEndpoint = useMemo(() => {
     switch (options.flowName) {

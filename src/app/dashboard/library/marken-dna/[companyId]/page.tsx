@@ -396,6 +396,7 @@ export default function MarkenDNADetailPage() {
         const existingDoc = documents.find(d => d.type === editingDocumentType);
         return (
           <MarkenDNAEditorModal
+            key={`modal-${companyId}-${editingDocumentType}`}
             open={true}
             onClose={() => setEditingDocumentType(null)}
             company={company}
