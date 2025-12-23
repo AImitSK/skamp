@@ -59,16 +59,18 @@ class MarkenDNAService {
    * Laedt alle Marken-DNA Dokumente eines Kunden
    */
   async getDocuments(companyId: string): Promise<MarkenDNADocument[]> {
+    console.log('[MarkenDNA] getDocuments called for companyId:', companyId);
     try {
       const collectionRef = collection(db, 'companies', companyId, 'markenDNA');
       const snapshot = await getDocs(collectionRef);
+      console.log('[MarkenDNA] getDocuments found', snapshot.docs.length, 'docs for', companyId);
 
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as MarkenDNADocument));
     } catch (error) {
-      console.error('Fehler beim Laden der Marken-DNA Dokumente:', error);
+      console.error('[MarkenDNA] Fehler beim Laden der Marken-DNA Dokumente:', error);
       return [];
     }
   }
@@ -251,6 +253,7 @@ class MarkenDNAService {
    * Hinweis: Filtert auf Companies mit type: 'customer'
    */
   async getAllCustomersStatus(organizationId: string): Promise<CompanyMarkenDNAStatus[]> {
+    console.log('[MarkenDNA] getAllCustomersStatus called with organizationId:', organizationId);
     try {
       // Alle Kunden der Organisation laden
       const companiesQuery = query(
@@ -261,12 +264,16 @@ class MarkenDNAService {
       );
 
       const companiesSnapshot = await getDocs(companiesQuery);
+      console.log('[MarkenDNA] Found companies:', companiesSnapshot.docs.length);
+
       const statuses: CompanyMarkenDNAStatus[] = [];
 
       // Fuer jeden Kunden den Status ermitteln
       for (const companyDoc of companiesSnapshot.docs) {
         const companyId = companyDoc.id;
+        console.log('[MarkenDNA] Getting status for company:', companyId, companyDoc.data().name);
         const status = await this.getCompanyStatus(companyId);
+        console.log('[MarkenDNA] Status for', companyId, ':', status.documents);
 
         // Company-Name aus Company-Dokument uebernehmen falls nicht in Marken-DNA vorhanden
         if (!status.companyName) {
@@ -276,9 +283,10 @@ class MarkenDNAService {
         statuses.push(status);
       }
 
+      console.log('[MarkenDNA] Returning statuses for', statuses.length, 'companies');
       return statuses;
     } catch (error) {
-      console.error('Fehler beim Ermitteln aller Kunden-Status:', error);
+      console.error('[MarkenDNA] Fehler beim Ermitteln aller Kunden-Status:', error);
       return [];
     }
   }

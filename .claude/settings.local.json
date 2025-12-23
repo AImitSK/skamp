@@ -89,7 +89,8 @@
       "Bash(del add_templates_validator.py)",
       "Bash(timeout 10 npm run:*)",
       "Bash(touch:*)",
-      "Bash(Select-String -Pattern \"marken-dna\" -Context 2,2)"
+      "Bash(Select-String -Pattern \"marken-dna\" -Context 2,2)",
+      "WebFetch(domain:skamp-git-feature-marken-dna-aimitsks-projects.vercel.app)"
     ]
   },
   "enableAllProjectMcpServers": true,
