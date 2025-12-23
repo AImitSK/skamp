@@ -253,39 +253,39 @@ class MarkenDNAService {
    * Hinweis: Filtert auf Companies mit type: 'customer'
    */
   async getAllCustomersStatus(organizationId: string): Promise<CompanyMarkenDNAStatus[]> {
-    console.log('[MarkenDNA] getAllCustomersStatus called with organizationId:', organizationId);
     try {
       // Alle Kunden der Organisation laden (aus companies_enhanced Collection!)
+      // WICHTIG: Kein deletedAt Filter - Firestore kann nicht nach nicht-existierenden Feldern filtern
+      // WICHTIG: Kein orderBy - braucht Composite Index
       const companiesQuery = query(
         collection(db, 'companies_enhanced'),
         where('organizationId', '==', organizationId),
-        where('type', '==', 'customer'),
-        where('deletedAt', '==', null),
-        orderBy('name')
+        where('type', '==', 'customer')
       );
 
       const companiesSnapshot = await getDocs(companiesQuery);
-      console.log('[MarkenDNA] Found companies:', companiesSnapshot.docs.length);
 
       const statuses: CompanyMarkenDNAStatus[] = [];
 
       // Fuer jeden Kunden den Status ermitteln
       for (const companyDoc of companiesSnapshot.docs) {
-        const companyId = companyDoc.id;
-        console.log('[MarkenDNA] Getting status for company:', companyId, companyDoc.data().name);
-        const status = await this.getCompanyStatus(companyId);
-        console.log('[MarkenDNA] Status for', companyId, ':', status.documents);
+        const companyData = companyDoc.data();
+
+        // Ueberspringe geloeschte Companies (falls deletedAt gesetzt ist)
+        if (companyData.deletedAt) continue;
+
+        const status = await this.getCompanyStatus(companyDoc.id);
 
         // Company-Name aus Company-Dokument uebernehmen falls nicht in Marken-DNA vorhanden
         if (!status.companyName) {
-          status.companyName = companyDoc.data().name || '';
+          status.companyName = companyData.name || '';
         }
 
         statuses.push(status);
       }
 
-      console.log('[MarkenDNA] Returning statuses for', statuses.length, 'companies');
-      return statuses;
+      // Client-seitig nach Name sortieren (statt Firestore orderBy das Index braucht)
+      return statuses.sort((a, b) => a.companyName.localeCompare(b.companyName, 'de'));
     } catch (error) {
       console.error('[MarkenDNA] Fehler beim Ermitteln aller Kunden-Status:', error);
       return [];
