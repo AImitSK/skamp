@@ -6,6 +6,7 @@ import { ChatHeader } from './components/ChatHeader';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatInput } from './components/ChatInput';
 import { ActionBubbles } from './components/ActionBubbles';
+import { DocumentSidebar } from './components/DocumentSidebar';
 
 export type MarkenDNADocumentType =
   | 'briefing'
@@ -44,6 +45,12 @@ export function MarkenDNAChatModal({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+
+  // Temporäres Mock-Dokument für Phase 3 (später aus Chat-State)
+  const [documentContent, setDocumentContent] = useState(
+    '# Briefing-Check\n\n## Phase 1: Unternehmensprofil\n\n**Branche:** Noch nicht ausgefüllt\n\n**Geschäftsmodell:** Noch nicht ausgefüllt'
+  );
 
   // Dokumenttyp-Titel Mapping
   const documentTitles: Record<MarkenDNADocumentType, string> = {
@@ -65,14 +72,22 @@ export function MarkenDNAChatModal({
   };
 
   const handleShowDocument = () => {
-    // TODO: In Phase 3 - Sidebar öffnen
-    console.log('Show document sidebar');
-    setSidebarOpen(true);
+    // Toggle Sidebar
+    setSidebarOpen(!sidebarOpen);
   };
 
   const handleRestart = () => {
-    // TODO: In Phase 3 - Bestätigung + Chat zurücksetzen
-    console.log('Restart chat');
+    // Zeige Bestätigungs-Dialog
+    setShowRestartConfirm(true);
+  };
+
+  const confirmRestart = () => {
+    // Chat zurücksetzen (später: Messages leeren, State zurücksetzen)
+    setInputValue('');
+    setDocumentContent(
+      '# Briefing-Check\n\n## Phase 1: Unternehmensprofil\n\n**Branche:** Noch nicht ausgefüllt\n\n**Geschäftsmodell:** Noch nicht ausgefüllt'
+    );
+    setShowRestartConfirm(false);
   };
 
   const handleSave = () => {
@@ -108,43 +123,131 @@ export function MarkenDNAChatModal({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="fixed inset-0 bg-white flex flex-col">
-              {/* Header */}
-              <ChatHeader
-                title={documentTitles[documentType]}
-                companyName={companyName}
-                onClose={onClose}
-                onToggleSidebar={handleShowDocument}
-                sidebarOpen={sidebarOpen}
-                sidebarDisabled={true} // Phase 1: Sidebar-Toggle disabled
-              />
+            <Dialog.Panel className="fixed inset-0 bg-white flex flex-row">
+              {/* Chat-Bereich */}
+              <div className="flex-1 flex flex-col">
+                {/* Header */}
+                <ChatHeader
+                  title={documentTitles[documentType]}
+                  companyName={companyName}
+                  onClose={onClose}
+                  onToggleSidebar={handleShowDocument}
+                  sidebarOpen={sidebarOpen}
+                />
 
-              {/* Chat Messages Area */}
-              <ChatMessages messages={[]} isLoading={isLoading} />
+                {/* Chat Messages Area */}
+                <ChatMessages messages={[]} isLoading={isLoading} />
 
-              {/* Input Area */}
-              <div className="border-t border-zinc-200 bg-white">
-                <div className="max-w-3xl mx-auto px-6 py-4">
-                  <form onSubmit={handleSendMessage}>
-                    <ChatInput
-                      value={inputValue}
-                      onChange={setInputValue}
-                      isLoading={isLoading}
-                      placeholder="Nachricht eingeben..."
+                {/* Input Area */}
+                <div className="border-t border-zinc-200 bg-white">
+                  <div className="max-w-3xl mx-auto px-6 py-4">
+                    <form onSubmit={handleSendMessage}>
+                      <ChatInput
+                        value={inputValue}
+                        onChange={setInputValue}
+                        isLoading={isLoading}
+                        placeholder="Nachricht eingeben..."
+                      />
+                    </form>
+
+                    {/* Action Bubbles */}
+                    <ActionBubbles
+                      onShowDocument={handleShowDocument}
+                      onRestart={handleRestart}
+                      onSave={handleSave}
                     />
-                  </form>
-
-                  {/* Action Bubbles */}
-                  <ActionBubbles
-                    onShowDocument={handleShowDocument}
-                    onRestart={handleRestart}
-                    onSave={handleSave}
-                  />
+                  </div>
                 </div>
               </div>
+
+              {/* Dokument-Sidebar */}
+              <DocumentSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                title={documentTitles[documentType]}
+                content={documentContent}
+              />
             </Dialog.Panel>
           </Transition.Child>
         </div>
+
+        {/* Bestätigungs-Dialog: Neu starten */}
+        <Transition appear show={showRestartConfirm} as={Fragment}>
+          <Dialog
+            as="div"
+            className="relative z-50"
+            onClose={() => setShowRestartConfirm(false)}
+          >
+            {/* Backdrop */}
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black bg-opacity-25" />
+            </Transition.Child>
+
+            {/* Dialog */}
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-semibold text-zinc-900"
+                    >
+                      Chat neu starten?
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-zinc-600">
+                        Möchtest du wirklich von vorne beginnen? Der aktuelle
+                        Chat-Verlauf geht verloren, wenn du nicht vorher
+                        gespeichert hast.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center
+                                   border border-zinc-300 bg-white text-zinc-700
+                                   hover:bg-zinc-50 font-medium
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                                   h-10 px-6 rounded-lg transition-colors"
+                        onClick={() => setShowRestartConfirm(false)}
+                      >
+                        Abbrechen
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center
+                                   bg-primary hover:bg-primary-hover text-white
+                                   font-medium
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                                   h-10 px-6 rounded-lg transition-colors"
+                        onClick={confirmRestart}
+                      >
+                        Neu starten
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
       </Dialog>
     </Transition>
   );

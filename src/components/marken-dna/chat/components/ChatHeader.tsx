@@ -8,7 +8,6 @@ interface ChatHeaderProps {
   onClose: () => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
-  sidebarDisabled?: boolean;
 }
 
 /**
@@ -30,7 +29,6 @@ export function ChatHeader({
   onClose,
   onToggleSidebar,
   sidebarOpen,
-  sidebarDisabled = false,
 }: ChatHeaderProps) {
   return (
     <div className="h-14 border-b border-zinc-200 px-4 flex items-center justify-between bg-white">
@@ -59,17 +57,12 @@ export function ChatHeader({
       {/* Rechts: Sidebar-Toggle */}
       <button
         onClick={onToggleSidebar}
-        disabled={sidebarDisabled}
-        className={`inline-flex items-center justify-center
+        className="inline-flex items-center justify-center
                    rounded-md transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                   ${
-                     sidebarDisabled
-                       ? 'text-zinc-300 cursor-not-allowed'
-                       : 'text-zinc-700 hover:text-zinc-900'
-                   }`}
+                   text-zinc-700 hover:text-zinc-900
+                   focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         aria-label="Dokument-Sidebar anzeigen"
-        title={sidebarDisabled ? 'Sidebar in Phase 3' : 'Dokument anzeigen'}
+        title={sidebarOpen ? 'Sidebar schließen' : 'Dokument anzeigen'}
       >
         <DocumentTextIcon className="h-5 w-5" />
       </button>
