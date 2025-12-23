@@ -1,6 +1,5 @@
 'use client';
 
-import ReactMarkdown from 'react-markdown';
 import {
   DocumentTextIcon,
   ChartBarIcon,
@@ -20,23 +19,9 @@ interface ResultBoxProps {
  * Result-Box Komponente (Claude-Style)
  *
  * Formatierte Box für strukturierte Phasen-Ergebnisse in AI-Messages.
- * Header mit Icon + Titel, Markdown-gerendeter Content.
+ * Header mit Icon + Titel, Content als Key-Value Grid.
  *
  * Design-Referenz: docs/planning/marken-dna/08-CHAT-UI-KONZEPT.md
- *
- * Styling:
- * - Background: bg-zinc-50
- * - Border: border-zinc-200
- * - Rounded: rounded-lg
- *
- * @example
- * ```tsx
- * <ResultBox
- *   title="Phase 1: Unternehmensprofil"
- *   content="**Branche:** Golf & Gastronomie\n- Mitgliedschaften\n- Greenfee-Gäste"
- *   icon="document"
- * />
- * ```
  */
 export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps) {
   // Icon-Mapping
@@ -51,18 +36,77 @@ export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps)
 
   const Icon = iconMap[icon];
 
+  // Markdown-Formatierung entfernen
+  const cleanMarkdown = (text: string) => {
+    return text
+      .replace(/^#{1,6}\s*/g, '')  // ## Headers entfernen
+      .replace(/^\s*[-*]\s*/g, '') // - und * Listenpunkte entfernen
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold** → bold
+      .replace(/\*([^*]+)\*/g, '$1')     // *italic* → italic
+      .replace(/`([^`]+)`/g, '$1')       // `code` → code
+      .trim();
+  };
+
+  // Content parsen: Zeilen mit ":" werden als Key-Value behandelt
+  const parseContent = (text: string) => {
+    const lines = text.split('\n').filter(line => line.trim());
+
+    return lines.map((line, index) => {
+      // Erst Markdown bereinigen
+      const cleanLine = cleanMarkdown(line);
+
+      // Erste Zeile oder Zeilen die mit "Phase" beginnen sind Überschriften
+      const isHeader = index === 0 || cleanLine.toLowerCase().startsWith('phase');
+
+      // Prüfe ob es ein Key-Value Paar ist (enthält ":")
+      const colonIndex = cleanLine.indexOf(':');
+
+      if (colonIndex > 0 && colonIndex < 30) {
+        // Key-Value Paar
+        const key = cleanLine.substring(0, colonIndex).trim();
+        const value = cleanLine.substring(colonIndex + 1).trim();
+
+        return { type: 'kv' as const, key, value, isHeader };
+      } else {
+        // Normale Zeile
+        return { type: 'text' as const, text: cleanLine, isHeader };
+      }
+    });
+  };
+
+  const parsedContent = parseContent(content);
+
   return (
-    <div className="bg-zinc-50 border border-zinc-200 rounded-lg overflow-hidden">
+    <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden transition-shadow hover:shadow-md">
       {/* Header mit Icon + Titel */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200">
-        <Icon className="h-5 w-5 text-zinc-700" />
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 bg-zinc-50">
+        <Icon className="h-4 w-4 text-zinc-600" />
         <h4 className="text-sm font-semibold text-zinc-900">{title}</h4>
       </div>
 
-      {/* Content: Markdown */}
+      {/* Content als Grid */}
       <div className="px-4 py-3">
-        <div className="prose prose-sm max-w-none prose-zinc">
-          <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="space-y-1">
+          {parsedContent.map((item, index) => {
+            if (item.type === 'kv') {
+              return (
+                <div key={index} className="grid grid-cols-[140px_1fr] gap-2 text-sm">
+                  <span className={`text-zinc-500 ${item.isHeader ? 'font-semibold text-zinc-900' : ''}`}>
+                    {item.key}:
+                  </span>
+                  <span className={`text-zinc-700 ${item.isHeader ? 'font-semibold text-zinc-900' : ''}`}>
+                    {item.value}
+                  </span>
+                </div>
+              );
+            } else {
+              return (
+                <div key={index} className={`text-sm ${item.isHeader ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
+                  {item.text}
+                </div>
+              );
+            }
+          })}
         </div>
       </div>
     </div>

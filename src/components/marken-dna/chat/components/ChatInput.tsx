@@ -1,6 +1,6 @@
 'use client';
 
-import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 
 interface ChatInputProps {
@@ -53,7 +53,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="relative bg-white border border-zinc-300 rounded-xl shadow-sm">
+    <div className="relative bg-white border border-zinc-300 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.1)] focus-within:shadow-none focus-within:border-zinc-400 transition-all">
       {/* Textarea */}
       <textarea
         ref={textareaRef}
@@ -86,7 +86,7 @@ export function ChatInput({
                    disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Senden"
       >
-        <PaperAirplaneIcon className="h-4 w-4" />
+        <ArrowRightIcon className="h-4 w-4" />
       </button>
     </div>
   );

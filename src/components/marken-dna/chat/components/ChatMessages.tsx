@@ -50,14 +50,13 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white">
+    <div className="flex-1 overflow-y-auto bg-zinc-50">
       <div className="max-w-3xl mx-auto px-6 py-6">
         {/* Empty State */}
         {messages.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <p className="text-sm text-zinc-500">
-              Willkommen! Beginne das Gespräch, um das Dokument zu erstellen.
-            </p>
+            <h1 className="text-2xl font-semibold text-zinc-900">Willkommen!</h1>
+            <h3 className="text-base text-zinc-500 mt-2">Beginne das Gespräch, um das Dokument zu erstellen.</h3>
           </div>
         )}
 

@@ -48,7 +48,12 @@ export function AIMessage({ content, onRegenerate, onCopy }: AIMessageProps) {
   return (
     <div className="mb-6 max-w-3xl">
       {/* Hauptinhalt: Markdown */}
-      <div className="prose prose-sm max-w-none prose-zinc">
+      <div className="prose prose-sm max-w-none prose-zinc
+                      prose-headings:font-semibold prose-headings:text-zinc-900
+                      prose-p:text-zinc-700 prose-p:leading-relaxed
+                      prose-strong:text-zinc-900 prose-strong:font-semibold
+                      prose-ul:my-2 prose-li:my-0.5 prose-li:text-zinc-700
+                      prose-li:marker:text-zinc-400">
         <ReactMarkdown>{cleanContent}</ReactMarkdown>
       </div>
 

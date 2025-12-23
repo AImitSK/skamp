@@ -115,6 +115,7 @@ export function MarkenDNAChatModal({
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     sendMessage(input);
+    setInput('');
   };
 
   const handleShowDocument = () => {
@@ -176,7 +177,7 @@ export function MarkenDNAChatModal({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="fixed inset-0 bg-white flex flex-row">
+            <Dialog.Panel className="fixed inset-0 bg-zinc-50 flex flex-row">
               {/* Chat-Bereich */}
               <div className="flex-1 flex flex-col">
                 {/* Header */}
@@ -192,7 +193,7 @@ export function MarkenDNAChatModal({
                 <ChatMessages messages={chatMessages} isLoading={isLoading} />
 
                 {/* Input Area */}
-                <div className="border-t border-zinc-200 bg-white">
+                <div className="bg-zinc-50">
                   <div className="max-w-3xl mx-auto px-6 py-4">
                     <form onSubmit={handleSendMessage}>
                       <ChatInput

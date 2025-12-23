@@ -1,6 +1,7 @@
 // tailwind.config.ts
 import type { Config } from 'tailwindcss'
 import plugin from 'tailwindcss/plugin'
+import typography from '@tailwindcss/typography'
 
 const config: Config = {
   content: [
@@ -54,6 +55,7 @@ const config: Config = {
     },
   },
   plugins: [
+    typography,
     plugin(function ({ addVariant }) {
       // Headless UI data-* variants
       addVariant('data-dark', '&[data-dark="true"]')
