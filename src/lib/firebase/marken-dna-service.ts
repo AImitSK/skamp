@@ -255,11 +255,12 @@ class MarkenDNAService {
   async getAllCustomersStatus(organizationId: string): Promise<CompanyMarkenDNAStatus[]> {
     console.log('[MarkenDNA] getAllCustomersStatus called with organizationId:', organizationId);
     try {
-      // Alle Kunden der Organisation laden
+      // Alle Kunden der Organisation laden (aus companies_enhanced Collection!)
       const companiesQuery = query(
-        collection(db, 'companies'),
+        collection(db, 'companies_enhanced'),
         where('organizationId', '==', organizationId),
         where('type', '==', 'customer'),
+        where('deletedAt', '==', null),
         orderBy('name')
       );
 
