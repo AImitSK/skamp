@@ -710,7 +710,7 @@ Antworte im JSON-Format:
 
 const EXPECTED_STRUCTURES: Record<string, string> = {
   briefing: `- Unternehmensprofil (Branche, Größe, Gründungsjahr)
-- Kernprodukte/Dienstleistungen
+- Kernprodukte / Dienstleistungen
 - Kommunikationsanlass
 - Wettbewerber`,
   swot: `- Stärken (Strengths)

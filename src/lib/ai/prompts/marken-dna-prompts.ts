@@ -25,7 +25,7 @@ export const MARKEN_DNA_PROMPTS: Record<MarkenDNADocumentType, Record<PromptLang
 #### Phase 1: Das Unternehmen (Der Absender)
 - Branche, exakte Tätigkeit und Hauptstandort.
 - Größe (Mitarbeiterzahl) und Gründungsjahr.
-- Kernprodukte/Dienstleistungen (Was wird genau verkauft?).
+- Kernprodukte / Dienstleistungen (Was wird genau verkauft?).
 - Gibt es ein offizielles Leitbild oder eine Mission?
 
 #### Phase 2: Die Aufgabe (Der Anlass)
