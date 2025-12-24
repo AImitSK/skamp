@@ -45,6 +45,7 @@ export function MarkenDNAChatModal({
 }: MarkenDNAChatModalProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // useGenkitChat Hook Integration
@@ -102,13 +103,16 @@ export function MarkenDNAChatModal({
 
   const handleCloseWithWarning = () => {
     if (messages.length > 0 && currentDocument) {
-      // Es gibt ungespeicherte Änderungen
-      if (confirm('Möchtest du wirklich schließen? Nicht gespeicherte Änderungen gehen verloren.')) {
-        onClose();
-      }
+      // Es gibt ungespeicherte Änderungen - Dialog anzeigen
+      setShowCloseConfirm(true);
     } else {
       onClose();
     }
+  };
+
+  const confirmClose = () => {
+    setShowCloseConfirm(false);
+    onClose();
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -295,6 +299,83 @@ export function MarkenDNAChatModal({
                         onClick={confirmRestart}
                       >
                         Neu starten
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
+
+        {/* Bestätigungs-Dialog: Schließen mit ungespeicherten Änderungen */}
+        <Transition appear show={showCloseConfirm} as={Fragment}>
+          <Dialog
+            as="div"
+            className="relative z-50"
+            onClose={() => setShowCloseConfirm(false)}
+          >
+            {/* Backdrop */}
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black bg-opacity-25" />
+            </Transition.Child>
+
+            {/* Dialog */}
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-semibold text-zinc-900"
+                    >
+                      Änderungen verwerfen?
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-zinc-600">
+                        Möchtest du wirklich schließen? Nicht gespeicherte
+                        Änderungen gehen verloren.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center
+                                   border border-zinc-300 bg-white text-zinc-700
+                                   hover:bg-zinc-50 font-medium
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                                   h-10 px-6 rounded-lg transition-colors"
+                        onClick={() => setShowCloseConfirm(false)}
+                      >
+                        Abbrechen
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center
+                                   bg-red-600 hover:bg-red-700 text-white
+                                   font-medium
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+                                   h-10 px-6 rounded-lg transition-colors"
+                        onClick={confirmClose}
+                      >
+                        Verwerfen
                       </button>
                     </div>
                   </Dialog.Panel>
