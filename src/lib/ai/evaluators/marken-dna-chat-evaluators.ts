@@ -23,8 +23,10 @@ interface TestReference {
     document: boolean;
     progress: boolean;
     suggestions: boolean;
+    status?: boolean; // Optional: true wenn [STATUS:...] erwartet wird
   };
   expectedProgressRange?: { min: number; max: number };
+  expectedStatus?: 'draft' | 'completed'; // Optional: erwarteter Status-Wert
   qualityCriteria?: Record<string, boolean>;
 }
 
@@ -242,6 +244,97 @@ export const suggestionsExtractionEvaluator = ai.defineEvaluator(
             hasExtractedSuggestions,
             suggestionsCount: output.suggestions?.length || 0,
             suggestions: output.suggestions?.slice(0, 3), // Nur erste 3 für Details
+          },
+        },
+      };
+    } catch (error: any) {
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0,
+          error: error.message,
+        },
+      };
+    }
+  }
+);
+
+/**
+ * Evaluator: Status Tag Extraction
+ *
+ * Prüft, ob [STATUS:XX] Tag korrekt extrahiert wurde.
+ */
+export const statusExtractionEvaluator = ai.defineEvaluator(
+  {
+    name: 'markenDNA/statusExtraction',
+    displayName: 'Status Tag Extraction',
+    definition: 'Checks if [STATUS:XX] tag is correctly extracted (draft/completed)',
+    isBilled: false,
+  },
+  async (datapoint: BaseEvalDataPoint) => {
+    try {
+      const output = datapoint.output as MarkenDNAChatOutput;
+      const reference = datapoint.reference as TestReference | undefined;
+
+      // Prüfe ob Status im Response vorhanden ist
+      const statusMatch = output.response?.match(/\[STATUS:(\w+)\]/i);
+      const hasStatusInResponse = !!statusMatch;
+      const statusInResponse = statusMatch ? statusMatch[1].toLowerCase() : null;
+
+      // Prüfe ob Status korrekt extrahiert wurde
+      const hasExtractedStatus = output.status === 'draft' || output.status === 'completed';
+
+      // Erwarteter Status aus Reference
+      const expectedStatus = reference?.expectedTags?.status;
+
+      let score = 0;
+      let reasoning = '';
+
+      if (expectedStatus === true) {
+        // Status wird erwartet
+        if (hasStatusInResponse && hasExtractedStatus) {
+          score = 1;
+          reasoning = `Status "${output.status}" correctly extracted`;
+        } else if (hasStatusInResponse && !hasExtractedStatus) {
+          score = 0.5;
+          reasoning = 'Status tag present but extraction failed';
+        } else if (!hasStatusInResponse) {
+          score = 0;
+          reasoning = 'Expected status tag not present in response';
+        }
+      } else if (expectedStatus === false) {
+        // Kein Status erwartet (frühe Phase)
+        if (!hasStatusInResponse) {
+          score = 1;
+          reasoning = 'No status expected and none present - correct behavior';
+        } else {
+          score = 0.7;
+          reasoning = 'Status present but not expected (early stage)';
+        }
+      } else {
+        // expectedStatus nicht definiert - neutral bewerten
+        if (hasStatusInResponse && hasExtractedStatus) {
+          score = 1;
+          reasoning = `Status "${output.status}" correctly extracted (no expectation defined)`;
+        } else if (!hasStatusInResponse) {
+          score = 1;
+          reasoning = 'No status tag present (no expectation defined)';
+        } else {
+          score = 0.5;
+          reasoning = 'Status tag present but extraction may have failed';
+        }
+      }
+
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score,
+          details: {
+            reasoning,
+            expectedStatus,
+            hasStatusInResponse,
+            statusInResponse,
+            extractedStatus: output.status,
           },
         },
       };

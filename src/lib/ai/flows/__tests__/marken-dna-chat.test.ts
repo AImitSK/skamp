@@ -221,6 +221,98 @@ Was möchtest du als nächstes besprechen?`,
     });
   });
 
+  describe('Status Extraction', () => {
+    it('sollte [STATUS:completed] korrekt extrahieren', async () => {
+      const mockResponse = {
+        text: `Perfekt! Das Briefing ist vollständig.
+
+[PROGRESS:100]
+[STATUS:completed]
+
+Alle Informationen wurden erfasst.`,
+      };
+
+      ai.generate.mockResolvedValue(mockResponse);
+
+      const input: MarkenDNAChatInput = {
+        documentType: 'briefing',
+        companyId: 'company-123',
+        companyName: 'Test GmbH',
+        language: 'de',
+        messages: [{ role: 'user', content: 'Ja, das ist korrekt.' }],
+      };
+
+      const result = await markenDNAChatFlow(input);
+
+      expect(result.status).toBe('completed');
+    });
+
+    it('sollte [STATUS:draft] korrekt extrahieren', async () => {
+      const mockResponse = {
+        text: `Ich habe das notiert.
+
+[PROGRESS:50]
+[STATUS:draft]
+
+Was möchtest du als nächstes besprechen?`,
+      };
+
+      ai.generate.mockResolvedValue(mockResponse);
+
+      const input: MarkenDNAChatInput = {
+        documentType: 'briefing',
+        companyId: 'company-123',
+        companyName: 'Test GmbH',
+        language: 'de',
+        messages: [{ role: 'user', content: 'Test' }],
+      };
+
+      const result = await markenDNAChatFlow(input);
+
+      expect(result.status).toBe('draft');
+    });
+
+    it('sollte undefined zurückgeben wenn kein [STATUS] vorhanden', async () => {
+      const mockResponse = {
+        text: 'Antwort ohne Status-Tag',
+      };
+
+      ai.generate.mockResolvedValue(mockResponse);
+
+      const input: MarkenDNAChatInput = {
+        documentType: 'briefing',
+        companyId: 'company-123',
+        companyName: 'Test GmbH',
+        language: 'de',
+        messages: [{ role: 'user', content: 'Test' }],
+      };
+
+      const result = await markenDNAChatFlow(input);
+
+      expect(result.status).toBeUndefined();
+    });
+
+    it('sollte case-insensitive [STATUS:COMPLETED] erkennen', async () => {
+      const mockResponse = {
+        text: '[STATUS:COMPLETED]',
+      };
+
+      ai.generate.mockResolvedValue(mockResponse);
+
+      const input: MarkenDNAChatInput = {
+        documentType: 'briefing',
+        companyId: 'company-123',
+        companyName: 'Test GmbH',
+        language: 'de',
+        messages: [{ role: 'user', content: 'Test' }],
+      };
+
+      const result = await markenDNAChatFlow(input);
+
+      expect(result.status).toBe('completed');
+    });
+  });
+
   describe('Suggestions Extraction', () => {
     it('sollte [SUGGESTIONS]...[/SUGGESTIONS] korrekt extrahieren', async () => {
       const mockResponse = {

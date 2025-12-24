@@ -104,7 +104,8 @@
       "expectedTags": {
         "document": true,
         "progress": true,
-        "suggestions": true
+        "suggestions": true,
+        "status": false
       },
       "expectedProgressRange": { "min": 85, "max": 100 },
       "qualityCriteria": {
@@ -293,6 +294,35 @@
       "qualityCriteria": {
         "shouldPushBackOnVagueness": true,
         "shouldAskForSpecifics": true
+      }
+    }
+  },
+  {
+    "testCaseId": "briefing-user-confirms-completion",
+    "description": "Briefing-Check - User bestätigt Vollständigkeit, Status wird completed",
+    "input": {
+      "documentType": "briefing",
+      "companyId": "test-company-11",
+      "companyName": "TechFlow GmbH",
+      "language": "de",
+      "messages": [
+        { "role": "assistant", "content": "Hier ist die vollständige Zusammenfassung des Briefings:\n\n[DOCUMENT]\n## Briefing-Check: TechFlow GmbH\n\n### Unternehmen\n- Branche: IT-Dienstleistungen\n- Mitarbeiter: 120\n- Standort: Hamburg\n\n### Kernprodukte\n- Cloud-Lösungen\n- Managed Services\n[/DOCUMENT]\n\n[PROGRESS:90]\n\nIst diese Zusammenfassung korrekt und vollständig?" },
+        { "role": "user", "content": "Ja, das ist korrekt und vollständig." }
+      ],
+      "existingDocument": null
+    },
+    "reference": {
+      "expectedTags": {
+        "document": true,
+        "progress": true,
+        "suggestions": false,
+        "status": true
+      },
+      "expectedProgressRange": { "min": 100, "max": 100 },
+      "expectedStatus": "completed",
+      "qualityCriteria": {
+        "shouldConfirmCompletion": true,
+        "shouldSetStatusCompleted": true
       }
     }
   },
