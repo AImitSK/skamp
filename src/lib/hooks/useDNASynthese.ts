@@ -194,8 +194,8 @@ export function useSynthesizeDNA() {
         throw new Error('Nicht authentifiziert');
       }
 
-      // 1. Alle Marken-DNA Dokumente als Plain-Text exportieren
-      const markenDNAContent = await markenDNAService.exportForAI(companyId);
+      // 1. Alle Marken-DNA Dokumente als Plain-Text exportieren (inkl. Ansprechpartner)
+      const markenDNAContent = await markenDNAService.exportForAI(companyId, organizationId);
 
       if (!markenDNAContent) {
         throw new Error('Keine Marken-DNA Dokumente gefunden');

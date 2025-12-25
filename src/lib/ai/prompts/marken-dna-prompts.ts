@@ -438,11 +438,11 @@ When all key messages are fully defined with proof and benefit:
 // ============================================================================
 
 /**
- * Prompt für die 🧪 DNA Synthese - transformiert 6 Dokumente in ~500 Token Kurzform
+ * Prompt für die 🧪 DNA Synthese - transformiert 6 Dokumente + Kontakte in ~600 Token Kurzform
  * Wird im Strategie-Tab verwendet, NICHT im Marken-DNA Editor
  */
 export const DNA_SYNTHESE_PROMPT: Record<PromptLanguage, string> = {
-  de: `Du bist ein Strategie-Analyst und Prompt-Engineer. Deine Aufgabe ist es, die 6 Dokumente der Marken-DNA in eine hocheffiziente, KI-optimierte Kurzform (400-500 Tokens) zu transformieren.
+  de: `Du bist ein Strategie-Analyst und Prompt-Engineer. Deine Aufgabe ist es, die 6 Dokumente der Marken-DNA sowie die Kontaktpersonen in eine hocheffiziente, KI-optimierte Kurzform (500-700 Tokens) zu transformieren.
 
 ### DEIN ZIEL:
 Erstelle ein "technisches Brand-Manual" für eine andere KI. Extrahiere die Essenz, damit künftige Texte konsistent den richtigen Ton treffen und faktisch korrekt sind.
@@ -488,13 +488,20 @@ Erstelle ein "technisches Brand-Manual" für eine andere KI. Extrahiere die Esse
 - Schwäche vermeiden: [Welches Thema nicht ansprechen?]
 - Chance adressieren: [Welcher Trend spielt uns in die Karten?]
 
+**ANSPRECHPARTNER (für Presseanfragen):**
+Wenn Kontaktpersonen mitgeliefert werden, erstelle für jeden relevanten Ansprechpartner:
+- Name: [Vollständiger Name]
+- Position: [Titel/Funktion]
+- Expertise: [Leite aus Position und Abteilung ab, zu welchen Themen diese Person zitiert werden kann - z.B. "Geschäftsführer → strategische Unternehmensentscheidungen, Wachstumspläne" oder "Head Pro → Sportliche Entwicklung, Trainingskonzepte"]
+- Kontakt: [E-Mail und/oder Telefon falls vorhanden]
+
 ### REGELN:
 - Nutze eine dichte, präzise Sprache - aber fülle ALLE Sektionen vollständig aus.
 - Keine Floskeln, nur Fakten und klare Anweisungen.
 - Das Ergebnis muss direkt als KI-Kontext verwendbar sein.
-- Zielgröße: 400-500 Tokens. Lieber zu ausführlich als zu knapp!`,
+- Zielgröße: 500-700 Tokens. Lieber zu ausführlich als zu knapp!`,
 
-  en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents into a highly efficient, AI-optimized short form (400-500 tokens).
+  en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents into a highly efficient, AI-optimized short form (500-700 tokens).
 
 ### YOUR GOAL:
 Create a "technical brand manual" for another AI. Extract the essence so that future texts consistently hit the right tone and are factually correct.
@@ -540,11 +547,18 @@ Create a "technical brand manual" for another AI. Extract the essence so that fu
 - Avoid Weakness: [Which topic not to address?]
 - Address Opportunity: [Which trend plays into our hands?]
 
+**SPOKESPERSONS (for press inquiries):**
+If contact persons are provided, create for each relevant spokesperson:
+- Name: [Full name]
+- Position: [Title/Function]
+- Expertise: [Derive from position and department what topics this person can be quoted on - e.g., "CEO → strategic business decisions, growth plans" or "Head Pro → Sports development, training concepts"]
+- Contact: [Email and/or phone if available]
+
 ### RULES:
 - Use dense, precise language - but fill ALL sections completely.
 - No filler phrases, only facts and clear instructions.
 - The result must be directly usable as AI context.
-- Target size: 400-500 tokens. Better too detailed than too brief!`,
+- Target size: 500-700 tokens. Better too detailed than too brief!`,
 };
 
 // ============================================================================

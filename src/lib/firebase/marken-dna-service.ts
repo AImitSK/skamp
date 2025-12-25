@@ -23,7 +23,36 @@ import {
   CompanyMarkenDNAStatus,
   MARKEN_DNA_DOCUMENTS,
 } from '@/types/marken-dna';
+import { ContactEnhanced } from '@/types/crm-enhanced';
 import crypto from 'crypto';
+
+// Positionen die als "Sprecher" gelten (für DNA Synthese)
+// WICHTIG: Kleingeschrieben, da position.toLowerCase().includes(sp) verwendet wird
+const SPOKESPERSON_POSITIONS = [
+  // Führungsebene
+  'präsident', 'president', 'vorsitzend', 'chairman',
+  'geschäftsführ', 'ceo', 'managing director', // "geschäftsführ" matcht Geschäftsführer/in
+  'vorstand', 'board member',
+  'inhaber', 'owner', 'eigentümer',
+  'gründer', 'founder',
+  'direktor', 'director',
+
+  // Management
+  'leiter', 'head', 'chief',
+  'manager', 'clubmanager',
+
+  // Kommunikation & Marketing
+  'pressesprecher', 'press officer', 'spokesperson',
+  'marketing', 'kommunikation', 'pr-',
+
+  // Golf-/Club-spezifisch
+  'pro', 'head-pro', 'head pro', 'golflehrer',
+  'greenkeeper', 'platzwart', 'course manager',
+  'sekretär', 'secretary', 'clubsekretär',
+  'schatzmeister', 'treasurer', 'kassenwart',
+  'jugendwart', 'sportdirektor', 'sportwart',
+  'captain', 'spielführer',
+];
 
 /**
  * Service fuer Marken-DNA Dokumente
@@ -321,8 +350,14 @@ class MarkenDNAService {
    * [Inhalt]
    *
    * ...
+   *
+   * # Ansprechpartner
+   * [Kontakte mit Führungsrollen]
+   *
+   * @param companyId - ID des Kunden (Company mit type: 'customer')
+   * @param organizationId - Optional: Wenn angegeben, werden auch Ansprechpartner geladen
    */
-  async exportForAI(companyId: string): Promise<string> {
+  async exportForAI(companyId: string, organizationId?: string): Promise<string> {
     try {
       const documents = await this.getDocuments(companyId);
 
@@ -361,11 +396,110 @@ class MarkenDNAService {
         }
       });
 
+      // Ansprechpartner laden wenn organizationId vorhanden
+      if (organizationId) {
+        const spokespersons = await this.getSpokespersonsForCompany(companyId, organizationId);
+        if (spokespersons.length > 0) {
+          const contactsSection = this.formatSpokespersonsForAI(spokespersons);
+          parts.push(contactsSection);
+        }
+      }
+
       return parts.join('\n---\n\n');
     } catch (error) {
       console.error('Fehler beim Export fuer KI:', error);
       return '';
     }
+  }
+
+  /**
+   * Laedt Ansprechpartner (Sprecher) fuer eine Company
+   * Filtert nach Fuehrungspositionen basierend auf SPOKESPERSON_POSITIONS
+   */
+  private async getSpokespersonsForCompany(
+    companyId: string,
+    organizationId: string
+  ): Promise<ContactEnhanced[]> {
+    try {
+      // Alle Kontakte der Company laden
+      const contactsRef = collection(db, 'contacts_enhanced');
+      const q = query(
+        contactsRef,
+        where('organizationId', '==', organizationId),
+        where('companyId', '==', companyId)
+      );
+
+      const snapshot = await getDocs(q);
+      const contacts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ContactEnhanced[];
+
+      // Nach Sprecher-Positionen filtern
+      const spokespersons = contacts.filter(contact => {
+        const position = (contact.position || '').toLowerCase();
+        const department = (contact.department || '').toLowerCase();
+
+        // Pruefen ob Position eine Fuehrungsrolle ist
+        return SPOKESPERSON_POSITIONS.some(sp =>
+          position.includes(sp) || department.includes(sp)
+        );
+      });
+
+      // Sortieren: Präsident/GF zuerst, dann alphabetisch
+      spokespersons.sort((a, b) => {
+        const posA = (a.position || '').toLowerCase();
+        const posB = (b.position || '').toLowerCase();
+
+        // Präsident/CEO ganz oben
+        const isTopA = posA.includes('präsident') || posA.includes('ceo') || posA.includes('geschäftsführer');
+        const isTopB = posB.includes('präsident') || posB.includes('ceo') || posB.includes('geschäftsführer');
+
+        if (isTopA && !isTopB) return -1;
+        if (!isTopA && isTopB) return 1;
+
+        return (a.displayName || '').localeCompare(b.displayName || '');
+      });
+
+      return spokespersons;
+    } catch (error) {
+      console.error('[MarkenDNA] Fehler beim Laden der Ansprechpartner:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Formatiert Ansprechpartner als Plain-Text fuer KI
+   */
+  private formatSpokespersonsForAI(contacts: ContactEnhanced[]): string {
+    const lines: string[] = ['# Ansprechpartner\n'];
+
+    contacts.forEach((contact, index) => {
+      const name = contact.displayName || 'Unbekannt';
+      const position = contact.position || '';
+      const department = contact.department || '';
+
+      // Primaere Email finden
+      const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email
+        || contact.emails?.[0]?.email
+        || '';
+
+      // Primaere Telefonnummer finden
+      const primaryPhone = contact.phones?.find(p => p.isPrimary)?.number
+        || contact.phones?.[0]?.number
+        || '';
+
+      lines.push(`${index + 1}. **${name}**`);
+      if (position) lines.push(`   - Position: ${position}`);
+      if (department) lines.push(`   - Abteilung: ${department}`);
+      if (primaryEmail) lines.push(`   - E-Mail: ${primaryEmail}`);
+      if (primaryPhone) lines.push(`   - Telefon: ${primaryPhone}`);
+      lines.push('');
+    });
+
+    lines.push('Hinweis: Die KI soll aus Position und Abteilung ableiten, zu welchen Themen diese Person zitiert werden kann.');
+
+    return lines.join('\n');
   }
 
   /**
