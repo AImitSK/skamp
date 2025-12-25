@@ -540,6 +540,10 @@ AUSGABE-FORMAT:
    Vorschlag 2
    Vorschlag 3
    [/SUGGESTIONS]
+6. Gib den Status an:
+   - [STATUS:draft] während du noch Informationen sammelst
+   - [STATUS:completed] erst NACHDEM der User die finale Zusammenfassung bestätigt hat
+   WICHTIG: Bei [STATUS:completed] MUSS immer auch [DOCUMENT]...[/DOCUMENT] mit dem finalen Dokument ausgegeben werden!
 `;
   }
 
@@ -560,6 +564,10 @@ OUTPUT FORMAT:
    Suggestion 2
    Suggestion 3
    [/SUGGESTIONS]
+6. Indicate the status:
+   - [STATUS:draft] while still gathering information
+   - [STATUS:completed] only AFTER the user confirms the final summary
+   IMPORTANT: When [STATUS:completed], you MUST also output [DOCUMENT]...[/DOCUMENT] with the final document!
 `;
 }
 

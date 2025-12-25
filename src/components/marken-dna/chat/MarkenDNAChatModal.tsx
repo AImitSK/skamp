@@ -76,6 +76,14 @@ export function MarkenDNAChatModal({
     messages: 'Botschaften-Baukasten',
   };
 
+  // Automatisch Sidebar öffnen wenn Status 'completed' wird
+  useEffect(() => {
+    if (documentStatus === 'completed' && currentDocument && !sidebarOpen) {
+      setSidebarOpen(true);
+      toastService.success('Dokument fertiggestellt! Bitte prüfen und speichern.');
+    }
+  }, [documentStatus, currentDocument, sidebarOpen]);
+
   // Messages in ChatMessages-Format konvertieren
   const chatMessages: ChatMessage[] = messages.map((msg, idx) => ({
     id: `${msg.role}-${idx}`,
