@@ -442,65 +442,109 @@ When all key messages are fully defined with proof and benefit:
  * Wird im Strategie-Tab verwendet, NICHT im Marken-DNA Editor
  */
 export const DNA_SYNTHESE_PROMPT: Record<PromptLanguage, string> = {
-  de: `Du bist ein Strategie-Analyst und Prompt-Engineer. Deine Aufgabe ist es, die 6 Dokumente der Marken-DNA in eine hocheffiziente, KI-optimierte Kurzform (~500 Tokens) zu transformieren.
+  de: `Du bist ein Strategie-Analyst und Prompt-Engineer. Deine Aufgabe ist es, die 6 Dokumente der Marken-DNA in eine hocheffiziente, KI-optimierte Kurzform (400-500 Tokens) zu transformieren.
 
 ### DEIN ZIEL:
-Erstelle keine klassische Zusammenfassung, sondern ein "technisches Brand-Manual" für eine andere KI. Extrahiere die Essenz, damit künftige Texte konsistent den richtigen Ton treffen.
+Erstelle ein "technisches Brand-Manual" für eine andere KI. Extrahiere die Essenz, damit künftige Texte konsistent den richtigen Ton treffen und faktisch korrekt sind.
 
-### ANALYSE-AUFTRAG (Verarbeite alle 6 Dokumente):
-1. **Identität & Kern:** Was ist das unverwechselbare Herzstück (USP) und das Soll-Image?
-2. **Tonalität & Sound:** Extrahiere die 3 wichtigsten Adjektive und den Sprachstil (z.B. "Fachvokabular-dicht", "aktiv-direkt").
-3. **Zielgruppen-Matrix:** Wer sind die primären Empfänger und was ist deren Haupt-Trigger?
-4. **Botschaften-Konzentrat:** Was sind die 3 wichtigsten Kernargumente (Kern + Beweis)?
-5. **Leitplanken (Do's & Don'ts):** Welche Begriffe sind Pflicht, welche sind streng verboten?
-
-### STRUKTUR DER AUSGABE (KI-optimiert):
+### STRUKTUR DER AUSGABE (ALLE Sektionen sind Pflicht):
 
 #### 🧪 DNA SYNTHESE: [Unternehmensname]
-- **USP:** [Ein prägnanter Satz]
-- **POSITIONIERUNG:** [Rolle: z.B. Challenger/Marktführer + Tonalität]
-- **ZIELGRUPPEN:** [Kompakte Liste der Hauptadressaten]
-- **KERNBOTSCHAFTEN:**
-  1. [Botschaft 1]
-  2. [Botschaft 2]
-- **PROMPT-GUIDELINE:** [Instruktion für die KI: z.B. "Schreibe seriös, vermeide Passiv, nutze technische Metriken."]
-- **NO-GO-AREA:** [Verbotene Begriffe oder Tonalitäten]
+
+**UNTERNEHMENSPROFIL:**
+- Branche & Tätigkeit: [Was genau macht das Unternehmen?]
+- Gründung & Größe: [Jahr, Mitarbeiterzahl, Standort]
+- Kernprodukte / Dienstleistungen: [Konkret benennen]
+
+**STRATEGISCHE POSITION:**
+- USP: [Der EINE unverwechselbare Vorteil - kein Buzzword, sondern Fakt]
+- Soll-Image: [Welcher eine Satz soll über die Marke gesagt werden?]
+- Rolle im Markt: [Marktführer / Challenger / Nischen-Experte / Preis-Leistungs-Sieger]
+- Hauptkonkurrenten: [2-3 Namen + was uns unterscheidet]
+
+**ZIELGRUPPEN-MATRIX:**
+1. Primäre Zielgruppe: [Wer? + Haupt-Pain-Point + Wo erreichbar?]
+2. Sekundäre Zielgruppe: [Wer? + Trigger + Medienkonsum]
+3. Multiplikatoren: [Journalisten/Influencer - warum sollten sie berichten?]
+
+**KERNBOTSCHAFTEN (mit Beweis):**
+1. [Behauptung] → Beweis: [Zahl/Fakt/Zertifikat]
+2. [Behauptung] → Beweis: [Zahl/Fakt/Zertifikat]
+3. [Behauptung] → Beweis: [Zahl/Fakt/Zertifikat]
+
+**KOMMUNIKATIONSZIELE:**
+- Wahrnehmung (Kopf): [Was sollen sie WISSEN?]
+- Einstellung (Herz): [Was sollen sie FÜHLEN?]
+- Verhalten (Hand): [Was sollen sie TUN? Haupt-CTA]
+
+**TONALITÄT & SPRACHSTIL:**
+- Sound-Adjektive: [3-4 Adjektive, z.B. "selbstbewusst, einladend, fachkundig"]
+- Sprachstil: [z.B. "Aktiv, direkt, Fachbegriffe sparsam, Du-Ansprache"]
+- MUSS-Begriffe: [Begriffe die immer verwendet werden sollen]
+- VERBOTEN: [No-Go-Wörter und Tonalitäten]
+
+**SWOT-ESSENZ:**
+- Stärke nutzen: [Welche Stärke kommunikativ ausspielen?]
+- Schwäche vermeiden: [Welches Thema nicht ansprechen?]
+- Chance adressieren: [Welcher Trend spielt uns in die Karten?]
 
 ### REGELN:
-- Nutze eine extrem dichte, präzise Sprache.
-- Entferne alle füllenden Höflichkeitsfloskeln.
-- Das Ergebnis muss so formatiert sein, dass es direkt als Kontext in einen System-Prompt eingefügt werden kann.
-- Halte dich strikt an ~500 Tokens.`,
+- Nutze eine dichte, präzise Sprache - aber fülle ALLE Sektionen vollständig aus.
+- Keine Floskeln, nur Fakten und klare Anweisungen.
+- Das Ergebnis muss direkt als KI-Kontext verwendbar sein.
+- Zielgröße: 400-500 Tokens. Lieber zu ausführlich als zu knapp!`,
 
-  en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents into a highly efficient, AI-optimized short form (~500 tokens).
+  en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents into a highly efficient, AI-optimized short form (400-500 tokens).
 
 ### YOUR GOAL:
-Don't create a classic summary, but a "technical brand manual" for another AI. Extract the essence so that future texts consistently hit the right tone.
+Create a "technical brand manual" for another AI. Extract the essence so that future texts consistently hit the right tone and are factually correct.
 
-### ANALYSIS TASK (Process all 6 documents):
-1. **Identity & Core:** What is the unmistakable heart (USP) and target image?
-2. **Tonality & Sound:** Extract the 3 most important adjectives and language style (e.g., "jargon-dense", "active-direct").
-3. **Target Group Matrix:** Who are the primary recipients and what is their main trigger?
-4. **Message Concentrate:** What are the 3 most important core arguments (core + proof)?
-5. **Guidelines (Do's & Don'ts):** Which terms are mandatory, which are strictly forbidden?
-
-### OUTPUT STRUCTURE (AI-optimized):
+### OUTPUT STRUCTURE (ALL sections are mandatory):
 
 #### 🧪 DNA SYNTHESIS: [Company Name]
-- **USP:** [One concise sentence]
-- **POSITIONING:** [Role: e.g., Challenger/Market Leader + Tonality]
-- **TARGET GROUPS:** [Compact list of main addressees]
-- **KEY MESSAGES:**
-  1. [Message 1]
-  2. [Message 2]
-- **PROMPT GUIDELINE:** [Instruction for AI: e.g., "Write seriously, avoid passive voice, use technical metrics."]
-- **NO-GO AREA:** [Forbidden terms or tonalities]
+
+**COMPANY PROFILE:**
+- Industry & Activity: [What exactly does the company do?]
+- Founded & Size: [Year, employee count, location]
+- Core Products/Services: [Name them specifically]
+
+**STRATEGIC POSITION:**
+- USP: [The ONE unmistakable advantage - no buzzword, just facts]
+- Target Image: [What one sentence should be said about the brand?]
+- Market Role: [Market Leader / Challenger / Niche Expert / Price-Performance Winner]
+- Main Competitors: [2-3 names + what differentiates us]
+
+**TARGET GROUP MATRIX:**
+1. Primary Target: [Who? + Main Pain Point + Where reachable?]
+2. Secondary Target: [Who? + Trigger + Media consumption]
+3. Multipliers: [Journalists/Influencers - why should they report?]
+
+**KEY MESSAGES (with proof):**
+1. [Claim] → Proof: [Number/Fact/Certificate]
+2. [Claim] → Proof: [Number/Fact/Certificate]
+3. [Claim] → Proof: [Number/Fact/Certificate]
+
+**COMMUNICATION GOALS:**
+- Perception (Head): [What should they KNOW?]
+- Attitude (Heart): [What should they FEEL?]
+- Behavior (Hand): [What should they DO? Main CTA]
+
+**TONALITY & LANGUAGE STYLE:**
+- Sound Adjectives: [3-4 adjectives, e.g., "confident, inviting, expert"]
+- Language Style: [e.g., "Active, direct, sparse jargon, informal address"]
+- MUST-USE Terms: [Terms that should always be used]
+- FORBIDDEN: [No-go words and tonalities]
+
+**SWOT ESSENCE:**
+- Leverage Strength: [Which strength to play up in communication?]
+- Avoid Weakness: [Which topic not to address?]
+- Address Opportunity: [Which trend plays into our hands?]
 
 ### RULES:
-- Use extremely dense, precise language.
-- Remove all filler courtesy phrases.
-- The result must be formatted so it can be directly inserted as context into a system prompt.
-- Strictly adhere to ~500 tokens.`,
+- Use dense, precise language - but fill ALL sections completely.
+- No filler phrases, only facts and clear instructions.
+- The result must be directly usable as AI context.
+- Target size: 400-500 tokens. Better too detailed than too brief!`,
 };
 
 // ============================================================================
