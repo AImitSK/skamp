@@ -65,10 +65,15 @@ class MarkenDNAService {
       const snapshot = await getDocs(collectionRef);
       console.log('[MarkenDNA] getDocuments found', snapshot.docs.length, 'docs for', companyId);
 
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MarkenDNADocument));
+      return snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          // Fallback: type aus Dokument-ID ableiten (fuer alte Dokumente ohne type-Feld)
+          type: data.type || docSnap.id as MarkenDNADocumentType,
+          ...data
+        } as MarkenDNADocument;
+      });
     } catch (error) {
       console.error('[MarkenDNA] Fehler beim Laden der Marken-DNA Dokumente:', error);
       return [];
@@ -321,15 +326,39 @@ class MarkenDNAService {
     try {
       const documents = await this.getDocuments(companyId);
 
+      // Keine Dokumente gefunden
+      if (!documents || documents.length === 0) {
+        console.warn('[MarkenDNA] exportForAI: Keine Dokumente gefunden für', companyId);
+        return '';
+      }
+
+      // Nur gueltige Dokumente mit bekanntem Type filtern
+      const validDocs = documents.filter(doc => {
+        if (!doc.type || !MARKEN_DNA_DOCUMENTS[doc.type]) {
+          console.warn('[MarkenDNA] exportForAI: Ungueltiger Dokumenttyp:', doc.type, 'fuer doc.id:', doc.id);
+          return false;
+        }
+        return true;
+      });
+
+      if (validDocs.length === 0) {
+        console.warn('[MarkenDNA] exportForAI: Keine gueltigen Dokumente nach Filterung für', companyId);
+        return '';
+      }
+
       // Nach Reihenfolge sortieren
-      const sortedDocs = documents.sort((a, b) =>
+      const sortedDocs = validDocs.sort((a, b) =>
         MARKEN_DNA_DOCUMENTS[a.type].order - MARKEN_DNA_DOCUMENTS[b.type].order
       );
 
       const parts: string[] = [];
 
       sortedDocs.forEach(doc => {
-        parts.push(`# ${doc.title}\n\n${doc.plainText}\n`);
+        const title = doc.title || MARKEN_DNA_DOCUMENTS[doc.type]?.title || doc.type;
+        const content = doc.plainText || doc.content?.replace(/<[^>]*>/g, '') || '';
+        if (content.trim()) {
+          parts.push(`# ${title}\n\n${content}\n`);
+        }
       });
 
       return parts.join('\n---\n\n');
@@ -355,12 +384,19 @@ class MarkenDNAService {
     try {
       const documents = await this.getDocuments(companyId);
 
-      if (documents.length === 0) {
+      if (!documents || documents.length === 0) {
+        return '';
+      }
+
+      // Nur gueltige Dokumente mit Type und updatedAt
+      const validDocs = documents.filter(doc => doc.type && doc.updatedAt);
+
+      if (validDocs.length === 0) {
         return '';
       }
 
       // Nach Typ sortieren fuer konsistente Hashes
-      const sortedDocs = documents.sort((a, b) => a.type.localeCompare(b.type));
+      const sortedDocs = validDocs.sort((a, b) => a.type.localeCompare(b.type));
 
       // Hash-String erstellen
       const combined = sortedDocs
