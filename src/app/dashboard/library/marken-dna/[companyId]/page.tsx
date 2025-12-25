@@ -13,6 +13,7 @@ import {
   useUpdateMarkenDNADocument,
   useDeleteMarkenDNADocument,
 } from '@/lib/hooks/useMarkenDNA';
+import { useDNASynthese, useSynthesizeDNA } from '@/lib/hooks/useDNASynthese';
 import { MarkenDNADocumentType as MarkenDNADocType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
 import { Text } from '@/components/ui/text';
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { StatusCircles, MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
+import { DnaIcon } from '@/components/icons/DnaIcon';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -28,6 +30,7 @@ import {
   ClockIcon,
   XCircleIcon,
   TrashIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -75,6 +78,10 @@ export default function MarkenDNADetailPage() {
     companyId
   );
 
+  // DNA Synthese laden
+  const { data: dnaSynthese, isLoading: isLoadingSynthese } = useDNASynthese(companyId);
+  const { mutate: synthesize, isPending: isSynthesizing } = useSynthesizeDNA();
+
   // Mutations für Speichern und Löschen
   const { mutateAsync: createDocument } = useCreateMarkenDNADocument();
   const { mutateAsync: updateDocument } = useUpdateMarkenDNADocument();
@@ -82,6 +89,32 @@ export default function MarkenDNADetailPage() {
 
   // UI State
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
+
+  // DNA Synthese Handler
+  const handleSynthesize = () => {
+    if (!currentOrganization?.id || !company) {
+      toastService.error('Fehler: Nicht authentifiziert');
+      return;
+    }
+
+    synthesize(
+      {
+        companyId,
+        companyName: company.name,
+        organizationId: currentOrganization.id,
+        language: 'de',
+      },
+      {
+        onSuccess: () => {
+          toastService.success('DNA Synthese erfolgreich erstellt!');
+        },
+        onError: (error) => {
+          console.error('Synthese Fehler:', error);
+          toastService.error(`Fehler: ${error.message}`);
+        },
+      }
+    );
+  };
 
   // Speicherfunktion
   const handleSaveDocument = async (
@@ -305,6 +338,103 @@ export default function MarkenDNADetailPage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* DNA Synthese Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <DnaIcon className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900">DNA Synthese</h2>
+              <p className="text-sm text-zinc-600">
+                KI-optimierte Kurzform der 6 Marken-DNA Dokumente (~500 Tokens)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {dnaSynthese ? (
+              <>
+                <Badge color="green">
+                  <CheckCircleIcon className="h-4 w-4 mr-1" />
+                  Aktiv
+                </Badge>
+                <Button
+                  onClick={handleSynthesize}
+                  disabled={!isComplete || isSynthesizing}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  {isSynthesizing ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Generiere...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-4 w-4 mr-2" />
+                      Neu generieren
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleSynthesize}
+                disabled={!isComplete || isSynthesizing}
+                className={clsx(
+                  isComplete
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
+                )}
+              >
+                {isSynthesizing ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                    Generiere...
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="h-4 w-4 mr-2" />
+                    DNA synthetisieren
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Synthese Inhalt oder Hinweis */}
+        {dnaSynthese ? (
+          <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+            <div className="prose prose-sm max-w-none text-zinc-700 whitespace-pre-wrap">
+              {dnaSynthese.plainText}
+            </div>
+            <div className="mt-3 pt-3 border-t border-purple-200 flex items-center justify-between text-xs text-purple-600">
+              <span>
+                Erstellt: {dnaSynthese.synthesizedAt?.seconds
+                  ? new Date(dnaSynthese.synthesizedAt.seconds * 1000).toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '—'}
+              </span>
+              <span>~{Math.ceil((dnaSynthese.plainText?.length || 0) / 4)} Tokens</span>
+            </div>
+          </div>
+        ) : !isComplete ? (
+          <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <p className="text-sm text-amber-800">
+              <strong>Hinweis:</strong> Alle 6 Marken-DNA Dokumente müssen vollständig sein,
+              bevor die DNA Synthese erstellt werden kann.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {/* Documents Grid */}
