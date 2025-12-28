@@ -1,7 +1,7 @@
 // src/app/dashboard/library/marken-dna/[companyId]/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
@@ -13,7 +13,7 @@ import {
   useUpdateMarkenDNADocument,
   useDeleteMarkenDNADocument,
 } from '@/lib/hooks/useMarkenDNA';
-import { useDNASynthese, useSynthesizeDNA } from '@/lib/hooks/useDNASynthese';
+import { useDNASynthese, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { MarkenDNADocumentType as MarkenDNADocType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
 import { Text } from '@/components/ui/text';
@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
+import { DNASyntheseEditorModal } from '@/components/marken-dna/DNASyntheseEditorModal';
 import { MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import { DnaIcon } from '@/components/icons/DnaIcon';
 import {
@@ -34,6 +35,7 @@ import {
   SparklesIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  EllipsisVerticalIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -90,9 +92,27 @@ export default function MarkenDNADetailPage() {
   const { mutateAsync: updateDocument } = useUpdateMarkenDNADocument();
   const { mutateAsync: deleteDocument, isPending: isDeleting } = useDeleteMarkenDNADocument();
 
+  // Synthese Mutations
+  const { mutateAsync: updateSynthese } = useUpdateDNASynthese();
+  const { mutateAsync: deleteSynthese, isPending: isDeletingSynthese } = useDeleteDNASynthese();
+
   // UI State
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
   const [isSyntheseExpanded, setIsSyntheseExpanded] = useState(false);
+  const [isSyntheseEditorOpen, setIsSyntheseEditorOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Click-Outside Handler für Menüs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // DNA Synthese Handler
   const handleSynthesize = () => {
@@ -119,6 +139,40 @@ export default function MarkenDNADetailPage() {
         },
       }
     );
+  };
+
+  // DNA Synthese Update Handler
+  const handleUpdateSynthese = async (content: string) => {
+    if (!currentOrganization?.id || !user?.uid) {
+      toastService.error('Fehler: Nicht authentifiziert');
+      return;
+    }
+
+    await updateSynthese({
+      companyId,
+      data: {
+        content,
+        plainText: content,
+        manuallyEdited: true,
+      },
+      organizationId: currentOrganization.id,
+      userId: user.uid,
+    });
+    toastService.success('DNA Synthese aktualisiert');
+  };
+
+  // DNA Synthese Delete Handler
+  const handleDeleteSynthese = async () => {
+    if (!confirm('DNA Synthese wirklich löschen?')) return;
+
+    try {
+      await deleteSynthese({ companyId });
+      toastService.success('DNA Synthese gelöscht');
+      setIsSyntheseExpanded(false);
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      toastService.error('Fehler beim Löschen');
+    }
   };
 
   // Speicherfunktion
@@ -199,25 +253,6 @@ export default function MarkenDNADetailPage() {
     const doc = documents.find(d => d.type === docType);
     if (!doc) return 'missing';
     return doc.status as DocumentStatus;
-  };
-
-  // Hilfsfunktion: Dokument-Content abrufen
-  const getDocumentContent = (docType: MarkenDNADocumentType): string | undefined => {
-    const doc = documents.find(d => d.type === docType);
-    return doc?.content;
-  };
-
-  // Hilfsfunktion: Markdown zu Plain-Text für Vorschau
-  const stripMarkdown = (text: string): string => {
-    return text
-      .replace(/#{1,6}\s+/g, '') // Headers entfernen
-      .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold entfernen
-      .replace(/\*([^*]+)\*/g, '$1') // Italic entfernen
-      .replace(/^\s*[-*+]\s+/gm, '') // Liste entfernen
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links entfernen
-      .replace(/`([^`]+)`/g, '$1') // Code entfernen
-      .replace(/\n{2,}/g, ' ') // Mehrfache Zeilenumbrüche
-      .trim();
   };
 
   // Hilfsfunktion: Letzte Aktualisierung abrufen
@@ -436,23 +471,62 @@ export default function MarkenDNADetailPage() {
           {/* Toggle für Synthese-Inhalt */}
           {dnaSynthese && (
             <div className="mt-4">
-              <button
-                onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
-                className={clsx(
-                  'w-full flex items-center justify-between px-4 py-2 rounded-lg transition-all',
-                  'border border-purple-200 hover:border-purple-300',
-                  isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
-                )}
-              >
-                <span className="text-xs text-purple-600">
-                  ~{tokenCount} Tokens
-                </span>
-                {isSyntheseExpanded ? (
-                  <ChevronUpIcon className="h-4 w-4 text-purple-600" />
-                ) : (
-                  <ChevronDownIcon className="h-4 w-4 text-purple-600" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Toggle Button */}
+                <button
+                  onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
+                  className={clsx(
+                    'flex-1 flex items-center justify-between px-4 py-2 rounded-lg transition-all',
+                    'border border-purple-200 hover:border-purple-300',
+                    isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
+                  )}
+                >
+                  <span className="text-xs text-purple-600">
+                    ~{tokenCount} Tokens
+                  </span>
+                  {isSyntheseExpanded ? (
+                    <ChevronUpIcon className="h-4 w-4 text-purple-600" />
+                  ) : (
+                    <ChevronDownIcon className="h-4 w-4 text-purple-600" />
+                  )}
+                </button>
+
+                {/* 3-Punkte-Menü */}
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === 'synthese' ? null : 'synthese')}
+                    className="p-2 rounded-lg border border-purple-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                  >
+                    <EllipsisVerticalIcon className="h-4 w-4 text-purple-600" />
+                  </button>
+
+                  {openMenuId === 'synthese' && (
+                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-10">
+                      <button
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          setIsSyntheseEditorOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        Bearbeiten
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          handleDeleteSynthese();
+                        }}
+                        disabled={isDeletingSynthese}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Löschen
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Expandierter Inhalt */}
               <div
@@ -472,16 +546,15 @@ export default function MarkenDNADetailPage() {
 
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {DOCUMENT_TYPES.map(({ key, icon: Icon, color }) => {
+        {DOCUMENT_TYPES.map(({ key }) => {
           const status = getDocumentStatus(key);
-          const content = getDocumentContent(key);
           const updatedAt = getDocumentUpdatedAt(key);
 
           return (
             <div
               key={key}
               className={clsx(
-                'bg-white rounded-lg shadow-sm p-5 border-l-4 transition-all',
+                'bg-white rounded-lg shadow-sm p-4 border-l-4 transition-all',
                 'hover:shadow-md cursor-pointer',
                 status === 'completed' && 'border-l-green-500',
                 status === 'draft' && 'border-l-amber-500',
@@ -490,7 +563,7 @@ export default function MarkenDNADetailPage() {
               onClick={() => setEditingDocumentType(key)}
             >
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <StatusIcon status={status} />
                   <h3 className="font-medium text-zinc-900">
@@ -500,53 +573,55 @@ export default function MarkenDNADetailPage() {
                 <StatusBadge status={status} />
               </div>
 
-              {/* Content Preview */}
-              {content ? (
-                <p className="text-sm text-zinc-600 line-clamp-3 mb-3">
-                  {stripMarkdown(content).substring(0, 150)}...
-                </p>
-              ) : (
-                <p className="text-sm text-zinc-400 italic mb-3">
-                  {t('noContentYet')}
-                </p>
-              )}
-
               {/* Footer */}
-              <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
-                {updatedAt ? (
-                  <span className="text-xs text-zinc-500">
-                    {t('lastUpdated')}: {updatedAt}
-                  </span>
-                ) : (
-                  <span className="text-xs text-zinc-400">—</span>
-                )}
-                <div className="flex items-center gap-2">
-                  {status !== 'missing' && (
-                    <Button
-                      plain
-                      className="text-red-500 hover:text-red-700"
-                      disabled={isDeleting}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        if (confirm(t('confirmDeleteDocument'))) {
-                          handleDeleteDocument(key);
-                        }
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    plain
-                    className="text-primary hover:text-primary-dark"
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100">
+                <span className="text-xs text-zinc-500">
+                  {updatedAt ? updatedAt : '—'}
+                </span>
+
+                {/* 3-Punkte-Menü */}
+                <div className="relative">
+                  <button
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
-                      setEditingDocumentType(key);
+                      setOpenMenuId(openMenuId === key ? null : key);
                     }}
+                    className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"
                   >
-                    <PencilIcon className="h-4 w-4 mr-1" />
-                    {status === 'missing' ? t('actions.create') : t('actions.edit')}
-                  </Button>
+                    <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
+                  </button>
+
+                  {openMenuId === key && (
+                    <div className="absolute right-0 bottom-full mb-1 w-36 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-10">
+                      <button
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setOpenMenuId(null);
+                          setEditingDocumentType(key);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                        {status === 'missing' ? t('actions.create') : t('actions.edit')}
+                      </button>
+                      {status !== 'missing' && (
+                        <button
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            if (confirm(t('confirmDeleteDocument'))) {
+                              handleDeleteDocument(key);
+                            }
+                          }}
+                          disabled={isDeleting}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                          {t('actions.delete')}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -574,6 +649,16 @@ export default function MarkenDNADetailPage() {
           />
         );
       })()}
+
+      {/* DNA Synthese Editor Modal */}
+      {dnaSynthese && (
+        <DNASyntheseEditorModal
+          isOpen={isSyntheseEditorOpen}
+          onClose={() => setIsSyntheseEditorOpen(false)}
+          content={dnaSynthese.plainText || ''}
+          onSave={handleUpdateSynthese}
+        />
+      )}
     </div>
   );
 }
