@@ -77,9 +77,6 @@ describe('CompanyTable', () => {
 
   const defaultProps: CompanyTableProps = {
     companies: mockCompanies,
-    selectedIds: new Set(),
-    onSelectAll: jest.fn(),
-    onSelect: jest.fn(),
     onView: jest.fn(),
     onEdit: jest.fn(),
     onDelete: jest.fn(),
@@ -107,13 +104,6 @@ describe('CompanyTable', () => {
       expect(screen.getByText('Gamma Ltd')).toBeInTheDocument();
     });
 
-    it('zeigt Customer-Badges für alle Firmen', () => {
-      render(<CompanyTable {...defaultProps} />);
-
-      const badges = screen.getAllByText('results.customer');
-      expect(badges).toHaveLength(3);
-    });
-
     it('zeigt Aktualisierungsdatum für Companies mit updatedAt', () => {
       render(<CompanyTable {...defaultProps} />);
 
@@ -136,49 +126,6 @@ describe('CompanyTable', () => {
     });
   });
 
-  describe('Selection', () => {
-    it('zeigt Select-All Checkbox im Header', () => {
-      render(<CompanyTable {...defaultProps} />);
-
-      const checkboxes = screen.getAllByRole('checkbox');
-      expect(checkboxes.length).toBeGreaterThan(0);
-    });
-
-    it('ruft onSelectAll bei Klick auf Select-All Checkbox', () => {
-      const onSelectAll = jest.fn();
-      render(<CompanyTable {...defaultProps} onSelectAll={onSelectAll} />);
-
-      const checkboxes = screen.getAllByRole('checkbox');
-      const selectAllCheckbox = checkboxes[0]; // Erste Checkbox ist Select-All
-
-      fireEvent.click(selectAllCheckbox);
-
-      expect(onSelectAll).toHaveBeenCalledWith(true);
-    });
-
-    it('zeigt alle Companies als selected wenn selectedIds alle enthält', () => {
-      const selectedIds = new Set(['company-1', 'company-2', 'company-3']);
-      render(<CompanyTable {...defaultProps} selectedIds={selectedIds} />);
-
-      const checkboxes = screen.getAllByRole('checkbox');
-      // Prüfe dass mindestens einige Checkboxen gecheckt sind
-      const checkedBoxes = checkboxes.filter(cb => cb.getAttribute('aria-checked') === 'true');
-      expect(checkedBoxes.length).toBeGreaterThan(0);
-    });
-
-    it('ruft onSelect beim Klick auf Company Checkbox', () => {
-      const onSelect = jest.fn();
-      render(<CompanyTable {...defaultProps} onSelect={onSelect} />);
-
-      const checkboxes = screen.getAllByRole('checkbox');
-      // Zweite Checkbox ist die erste Company
-      const firstCompanyCheckbox = checkboxes[1];
-
-      fireEvent.click(firstCompanyCheckbox);
-
-      expect(onSelect).toHaveBeenCalledWith('company-1', true);
-    });
-  });
 
   describe('Sorting', () => {
     it('sortiert nach Name aufsteigend by default', () => {
@@ -291,14 +238,6 @@ describe('CompanyTable', () => {
       expect(screen.getByText('table.name')).toBeInTheDocument();
       expect(screen.getByText('table.status')).toBeInTheDocument();
       expect(screen.getByText('table.updated')).toBeInTheDocument();
-    });
-
-    it('zeigt keine Checkboxen im Header wenn keine Companies', () => {
-      render(<CompanyTable {...defaultProps} companies={[]} />);
-
-      const checkboxes = screen.getAllByRole('checkbox');
-      // Select-All Checkbox sollte vorhanden sein, aber keine weiteren
-      expect(checkboxes).toHaveLength(1);
     });
   });
 

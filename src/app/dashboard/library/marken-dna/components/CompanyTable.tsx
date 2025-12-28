@@ -2,8 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dropdown,
   DropdownButton,
@@ -24,9 +22,6 @@ import { CompanyEnhanced } from '@/types/crm-enhanced';
 
 export interface CompanyTableProps {
   companies: CompanyEnhanced[];
-  selectedIds: Set<string>;
-  onSelectAll: (checked: boolean) => void;
-  onSelect: (id: string, checked: boolean) => void;
   onView: (id: string) => void;
   onEdit: (company: CompanyEnhanced) => void;
   onDelete: (id: string, name: string) => void;
@@ -46,9 +41,6 @@ type SortDirection = 'asc' | 'desc';
  * ```tsx
  * <CompanyTable
  *   companies={customers}
- *   selectedIds={selectedCompanyIds}
- *   onSelectAll={handleSelectAll}
- *   onSelect={handleSelect}
  *   onView={(id) => router.push(`/marken-dna/${id}`)}
  *   onEdit={setEditingCompany}
  *   onDelete={handleDelete}
@@ -58,9 +50,6 @@ type SortDirection = 'asc' | 'desc';
  */
 export function CompanyTable({
   companies,
-  selectedIds,
-  onSelectAll,
-  onSelect,
   onView,
   onEdit,
   onDelete,
@@ -123,24 +112,16 @@ export function CompanyTable({
     );
   };
 
-  const allSelected = sortedCompanies.length > 0 && selectedIds.size === sortedCompanies.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < sortedCompanies.length;
-
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
       <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center">
           {/* Column 1: Name (sortable) */}
-          <div className="flex items-center w-[30%]">
-            <Checkbox
-              checked={allSelected}
-              indeterminate={someSelected}
-              onChange={(checked: boolean) => onSelectAll(checked)}
-            />
+          <div className="w-[30%]">
             <button
               onClick={() => handleSort('name')}
-              className="ml-4 flex items-center text-xs font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-700 transition-colors"
+              className="flex items-center text-xs font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-700 transition-colors"
             >
               {t('table.name')}
               <SortIcon field="name" />
@@ -189,24 +170,13 @@ export function CompanyTable({
             >
               <div className="flex items-center">
                 {/* Company Name */}
-                <div className="flex items-center w-[30%]">
-                  <Checkbox
-                    checked={selectedIds.has(company.id!)}
-                    onChange={(checked: boolean) => onSelect(company.id!, checked)}
-                  />
-                  <div className="ml-4 min-w-0 flex-1">
-                    <button
-                      onClick={() => onView(company.id!)}
-                      className="text-sm font-semibold text-zinc-900 hover:text-primary truncate block text-left"
-                    >
-                      {company.name}
-                    </button>
-                    <div className="mt-1">
-                      <Badge color="zinc" className="text-xs">
-                        {t('results.customer')}
-                      </Badge>
-                    </div>
-                  </div>
+                <div className="w-[30%]">
+                  <button
+                    onClick={() => onView(company.id!)}
+                    className="text-sm font-semibold text-zinc-900 hover:text-primary truncate block text-left"
+                  >
+                    {company.name}
+                  </button>
                 </div>
 
                 {/* Status Circles */}

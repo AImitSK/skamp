@@ -50,7 +50,6 @@ export default function MarkenDNAPage() {
   // UI State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'complete' | 'incomplete'>('all');
-  const [selectedCompanyIds, setSelectedCompanyIds] = useState<Set<string>>(new Set());
   const [editingCompany, setEditingCompany] = useState<CompanyEnhanced | null>(null);
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
 
@@ -97,24 +96,6 @@ export default function MarkenDNAPage() {
   }, [customers, searchTerm, filterStatus, markenDNAStatuses]);
 
   // Handler-Funktionen
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCompanyIds(new Set(filteredCustomers.map(c => c.id!)));
-    } else {
-      setSelectedCompanyIds(new Set());
-    }
-  };
-
-  const handleSelect = (id: string, checked: boolean) => {
-    const newSelected = new Set(selectedCompanyIds);
-    if (checked) {
-      newSelected.add(id);
-    } else {
-      newSelected.delete(id);
-    }
-    setSelectedCompanyIds(newSelected);
-  };
-
   const handleView = (id: string) => {
     router.push(`/dashboard/library/marken-dna/${id}`);
   };
@@ -241,37 +222,15 @@ export default function MarkenDNAPage() {
       </div>
 
       {/* Results Info */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <Text className="text-sm text-zinc-600">
           {filteredCustomers.length} {filteredCustomers.length === 1 ? t('results.customer') : t('results.customers')} {t('results.found')}
-          {selectedCompanyIds.size > 0 && (
-            <span className="ml-2">
-              · {selectedCompanyIds.size} {t('results.selected')}
-            </span>
-          )}
         </Text>
-        {selectedCompanyIds.size > 0 && (
-          <button
-            onClick={() => {
-              if (confirm(t('confirmBulkDelete', { count: selectedCompanyIds.size }))) {
-                // TODO: Bulk delete
-                toastService.success(tToast('markenDNA.allDocumentsDeleted'));
-                setSelectedCompanyIds(new Set());
-              }
-            }}
-            className="text-sm text-red-600 hover:text-red-700 underline"
-          >
-            {selectedCompanyIds.size} {t('actions.delete')}
-          </button>
-        )}
       </div>
 
       {/* Table */}
       <CompanyTable
         companies={filteredCustomers}
-        selectedIds={selectedCompanyIds}
-        onSelectAll={handleSelectAll}
-        onSelect={handleSelect}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
