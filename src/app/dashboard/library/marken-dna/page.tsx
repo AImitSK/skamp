@@ -100,11 +100,6 @@ export default function MarkenDNAPage() {
     router.push(`/dashboard/library/marken-dna/${id}`);
   };
 
-  const handleEdit = (company: CompanyEnhanced) => {
-    // TODO: Öffne Editor-Modal
-    console.log('Edit company:', company);
-  };
-
   const handleDelete = (id: string, name: string) => {
     if (confirm(t('confirmDelete', { companyName: name }))) {
       // TODO: Implement delete
@@ -232,7 +227,6 @@ export default function MarkenDNAPage() {
       <CompanyTable
         companies={filteredCustomers}
         onView={handleView}
-        onEdit={handleEdit}
         onDelete={handleDelete}
         getMarkenDNAStatus={getMarkenDNAStatus}
       />

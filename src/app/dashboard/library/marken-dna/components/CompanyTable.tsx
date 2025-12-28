@@ -7,12 +7,10 @@ import {
   DropdownButton,
   DropdownMenu,
   DropdownItem,
-  DropdownDivider,
 } from '@/components/ui/dropdown';
 import {
   EllipsisVerticalIcon,
   EyeIcon,
-  PencilIcon,
   TrashIcon,
   ChevronUpIcon,
   ChevronDownIcon,
@@ -23,7 +21,6 @@ import { CompanyEnhanced } from '@/types/crm-enhanced';
 export interface CompanyTableProps {
   companies: CompanyEnhanced[];
   onView: (id: string) => void;
-  onEdit: (company: CompanyEnhanced) => void;
   onDelete: (id: string, name: string) => void;
   getMarkenDNAStatus: (companyId: string) => Record<MarkenDNADocumentType, DocumentStatus>;
 }
@@ -42,7 +39,6 @@ type SortDirection = 'asc' | 'desc';
  * <CompanyTable
  *   companies={customers}
  *   onView={(id) => router.push(`/marken-dna/${id}`)}
- *   onEdit={setEditingCompany}
  *   onDelete={handleDelete}
  *   getMarkenDNAStatus={getMarkenDNAStatus}
  * />
@@ -51,7 +47,6 @@ type SortDirection = 'asc' | 'desc';
 export function CompanyTable({
   companies,
   onView,
-  onEdit,
   onDelete,
   getMarkenDNAStatus,
 }: CompanyTableProps) {
@@ -208,11 +203,6 @@ export function CompanyTable({
                         <EyeIcon className="h-4 w-4" />
                         {t('actions.view')}
                       </DropdownItem>
-                      <DropdownItem onClick={() => onEdit(company)}>
-                        <PencilIcon className="h-4 w-4" />
-                        {t('actions.edit')}
-                      </DropdownItem>
-                      <DropdownDivider />
                       <DropdownItem onClick={() => onDelete(company.id!, company.name)}>
                         <TrashIcon className="h-4 w-4" />
                         <span className="text-red-600">{t('actions.delete')}</span>

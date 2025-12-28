@@ -1,7 +1,7 @@
 // src/app/dashboard/library/marken-dna/[companyId]/page.tsx
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
@@ -105,7 +105,6 @@ export default function MarkenDNADetailPage() {
   const [isSyntheseExpanded, setIsSyntheseExpanded] = useState(false);
   const [isSyntheseEditorOpen, setIsSyntheseEditorOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // Bestätigungs-Dialog State
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
@@ -116,7 +115,10 @@ export default function MarkenDNADetailPage() {
   // Click-Outside Handler für Menüs
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as HTMLElement;
+      // Prüfe ob der Klick innerhalb eines Menüs ist
+      const isInsideMenu = target.closest('[data-menu]') !== null;
+      if (!isInsideMenu) {
         setOpenMenuId(null);
       }
     };
@@ -510,10 +512,10 @@ export default function MarkenDNADetailPage() {
 
               {/* 3-Punkte-Menü (nur wenn Synthese existiert) */}
               {dnaSynthese && (
-                <div className="relative" ref={menuRef}>
+                <div className="relative" data-menu>
                   <button
                     onClick={() => setOpenMenuId(openMenuId === 'synthese' ? null : 'synthese')}
-                    className="p-2 rounded-lg border border-purple-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                    className="h-9 w-9 flex items-center justify-center rounded-lg border border-purple-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
                   >
                     <EllipsisVerticalIcon className="h-4 w-4 text-purple-600" />
                   </button>
@@ -605,7 +607,7 @@ export default function MarkenDNADetailPage() {
                 </span>
 
                 {/* 3-Punkte-Menü */}
-                <div className="relative">
+                <div className="relative" data-menu>
                   <button
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();

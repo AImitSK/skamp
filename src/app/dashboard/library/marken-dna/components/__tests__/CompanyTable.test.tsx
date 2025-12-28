@@ -78,7 +78,6 @@ describe('CompanyTable', () => {
   const defaultProps: CompanyTableProps = {
     companies: mockCompanies,
     onView: jest.fn(),
-    onEdit: jest.fn(),
     onDelete: jest.fn(),
     getMarkenDNAStatus: mockGetMarkenDNAStatus,
   };
