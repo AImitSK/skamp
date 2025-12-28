@@ -174,8 +174,8 @@ describe('AI Sequence Prompts', () => {
         };
         const prompt = buildAISequencePrompt(context);
 
-        expect(prompt).toContain('WICHTIG:');
-        expect(prompt).toContain('Tonalität aus dieser DNA hat VORRANG');
+        expect(prompt).toContain('HARTE REGELN');
+        expect(prompt).toContain('BEHAUPTUNG → BEWEIS REGEL');
       });
     });
 
@@ -188,7 +188,7 @@ describe('AI Sequence Prompts', () => {
         const prompt = buildAISequencePrompt(context);
 
         expect(prompt).toContain('EXTRAHIERTE TONALITÄT: formal');
-        expect(prompt).toContain('TONALITÄTS-OVERRIDE AKTIV');
+        expect(prompt).toContain('MANUELLER OVERRIDE AKTIV');
       });
 
       it('should show override warning', () => {
@@ -198,9 +198,7 @@ describe('AI Sequence Prompts', () => {
         };
         const prompt = buildAISequencePrompt(context);
 
-        expect(prompt).toContain(
-          '⚠️ TONALITÄTS-OVERRIDE AKTIV: "modern" überschreibt DNA-Vorgabe'
-        );
+        expect(prompt).toContain('⚠️ MANUELLER OVERRIDE AKTIV: "modern"');
       });
 
       it('should not show override warning when no override', () => {
@@ -209,7 +207,7 @@ describe('AI Sequence Prompts', () => {
         };
         const prompt = buildAISequencePrompt(context);
 
-        expect(prompt).not.toContain('TONALITÄTS-OVERRIDE AKTIV');
+        expect(prompt).not.toContain('MANUELLER OVERRIDE AKTIV');
       });
 
       it('should handle null toneOverride', () => {
@@ -344,7 +342,7 @@ describe('AI Sequence Prompts', () => {
         const prompt = buildAISequencePrompt(context);
 
         expect(prompt).toContain('KONFLIKT-AUFLÖSUNG');
-        expect(prompt).toContain('EBENE 1 (Marken-DNA) überschreibt IMMER');
+        expect(prompt).toContain('EBENE 1 (Marken-DNA) überschreibt ALLES');
         expect(prompt).toContain('EBENE 2 (Score-Regeln)');
         expect(prompt).toContain('EBENE 3 (Projekt-Kontext)');
       });
@@ -360,7 +358,7 @@ describe('AI Sequence Prompts', () => {
         const context: AISequenceContext = {};
         const prompt = buildAISequencePrompt(context);
 
-        expect(prompt).toContain('Beispiel:');
+        expect(prompt).toContain('BEISPIEL-KONFLIKT:');
         expect(prompt).toContain('casual und modern');
       });
     });
