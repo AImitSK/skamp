@@ -10,8 +10,10 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: organizationId } = await params;
+
   return withAuth(request, async (req, auth: AuthContext) => {
     // Super-Admin Check
     const isSA = await isSuperAdmin(auth.userId);
@@ -25,7 +27,6 @@ export async function POST(
 
     try {
       const { tier } = await req.json();
-      const organizationId = params.id;
 
       // Validate tier
       if (!['STARTER', 'BUSINESS', 'AGENTUR'].includes(tier)) {

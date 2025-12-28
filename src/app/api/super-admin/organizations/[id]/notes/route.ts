@@ -11,8 +11,10 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: organizationId } = await params;
+
   return withAuth(request, async (req, auth: AuthContext) => {
     // Super-Admin Check
     const isSA = await isSuperAdmin(auth.userId);
@@ -26,7 +28,6 @@ export async function POST(
 
     try {
       const { note } = await req.json();
-      const organizationId = params.id;
 
       // Validate note
       if (!note || typeof note !== 'string' || note.trim().length === 0) {

@@ -39,16 +39,18 @@ function getMockAPIKey(organizationId: string, keyId: string) {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
+  const { keyId } = await params;
+
   return withAuth(request, async (request, context) => {
     console.log('=== API KEY DELETE - MOCK VERSION ===');
-    console.log('Key ID:', params.keyId);
+    console.log('Key ID:', keyId);
     console.log('Organization ID:', context.organizationId);
-    
+
     try {
-      const mockKey = getMockAPIKey(context.organizationId, params.keyId);
-      
+      const mockKey = getMockAPIKey(context.organizationId, keyId);
+
       if (!mockKey) {
         return APIMiddleware.handleError({
           name: 'APIError',
@@ -57,8 +59,8 @@ export async function DELETE(
           message: 'API key not found'
         });
       }
-      
-      console.log('Mock API Key deleted:', params.keyId);
+
+      console.log('Mock API Key deleted:', keyId);
       
       return APIMiddleware.successResponse({
         success: true,
@@ -83,18 +85,20 @@ export async function DELETE(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
+  const { keyId } = await params;
+
   return withAuth(request, async (request, context) => {
     console.log('=== API KEY UPDATE - MOCK VERSION ===');
-    console.log('Key ID:', params.keyId);
-    
+    console.log('Key ID:', keyId);
+
     try {
       const body = await request.json();
       console.log('Update request:', body);
-      
-      const mockKey = getMockAPIKey(context.organizationId, params.keyId);
-      
+
+      const mockKey = getMockAPIKey(context.organizationId, keyId);
+
       if (!mockKey) {
         return APIMiddleware.handleError({
           name: 'APIError',
@@ -103,16 +107,16 @@ export async function PUT(
           message: 'API key not found'
         });
       }
-      
+
       // Mock Update
       const updatedKey = {
         ...mockKey,
         ...body,
-        id: params.keyId, // Keep original ID
+        id: keyId, // Keep original ID
         updatedAt: new Date().toISOString()
       };
-      
-      console.log('Mock API Key updated:', params.keyId);
+
+      console.log('Mock API Key updated:', keyId);
       
       return APIMiddleware.successResponse(updatedKey);
       

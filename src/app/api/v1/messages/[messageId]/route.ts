@@ -52,9 +52,11 @@ async function createAuditLog(data: {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  { params }: { params: Promise<{ messageId: string }> }
 ) {
   try {
+    const { messageId } = await params;
+
     // 1. Authentifizierung (Firebase ID Token)
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -76,7 +78,6 @@ export async function DELETE(
     }
 
     const userId = decodedToken.uid;
-    const { messageId } = params;
 
     // 2. Query-Parameter für projectId
     const { searchParams } = new URL(request.url);
@@ -171,9 +172,11 @@ export async function DELETE(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  { params }: { params: Promise<{ messageId: string }> }
 ) {
   try {
+    const { messageId } = await params;
+
     // 1. Authentifizierung (Firebase ID Token)
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -195,7 +198,6 @@ export async function PATCH(
     }
 
     const userId = decodedToken.uid;
-    const { messageId } = params;
 
     // 2. Request Body
     const body = await request.json();

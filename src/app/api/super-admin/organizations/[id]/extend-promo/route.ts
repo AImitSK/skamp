@@ -10,8 +10,10 @@ import { accountTypeService } from '@/lib/organization/account-type-service';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: organizationId } = await params;
+
   return withAuth(request, async (req, auth: AuthContext) => {
     // Super-Admin Check
     const isSA = await isSuperAdmin(auth.userId);
@@ -25,7 +27,6 @@ export async function POST(
 
     try {
       const { months } = await req.json();
-      const organizationId = params.id;
 
       // Validate months
       if (typeof months !== 'number' || months <= 0) {

@@ -9,10 +9,10 @@ import admin from '@/lib/firebase/admin-init';
 // GET - Load Share-Link (Public Access)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { shareId: string } }
+  { params }: { params: Promise<{ shareId: string }> }
 ) {
   try {
-    const { shareId } = params;
+    const { shareId } = await params;
 
     if (!shareId) {
       return NextResponse.json(
@@ -92,10 +92,10 @@ export async function GET(
 // DELETE - Delete Share-Link (Authenticated)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { shareId: string } }
+  { params }: { params: Promise<{ shareId: string }> }
 ) {
   try {
-    const { shareId } = params;
+    const { shareId } = await params;
 
     if (!shareId) {
       return NextResponse.json(
