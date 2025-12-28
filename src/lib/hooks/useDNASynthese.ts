@@ -256,6 +256,10 @@ export function useSynthesizeDNA() {
       queryClient.invalidateQueries({
         queryKey: ['dnaSynthese', companyId],
       });
+      // Invalidiere isOutdated Query (damit Button verschwindet)
+      queryClient.invalidateQueries({
+        queryKey: ['dnaSynthese', 'isOutdated', companyId],
+      });
       // Invalidiere Marken-DNA Status
       queryClient.invalidateQueries({
         queryKey: ['markenDNA', 'status', companyId],
