@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
 import { DNASyntheseEditorModal } from '@/components/marken-dna/DNASyntheseEditorModal';
+import { DocumentEditorModal } from '@/components/marken-dna/DocumentEditorModal';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import { DnaIcon } from '@/components/icons/DnaIcon';
@@ -37,6 +38,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   EllipsisVerticalIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -98,7 +100,8 @@ export default function MarkenDNADetailPage() {
   const { mutateAsync: deleteSynthese, isPending: isDeletingSynthese } = useDeleteDNASynthese();
 
   // UI State
-  const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
+  const [chatDocumentType, setChatDocumentType] = useState<MarkenDNADocumentType | null>(null);
+  const [editorDocumentType, setEditorDocumentType] = useState<MarkenDNADocumentType | null>(null);
   const [isSyntheseExpanded, setIsSyntheseExpanded] = useState(false);
   const [isSyntheseEditorOpen, setIsSyntheseEditorOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -571,7 +574,7 @@ export default function MarkenDNADetailPage() {
                 status === 'draft' && 'border-l-amber-500',
                 status === 'missing' && 'border-l-zinc-200'
               )}
-              onClick={() => setEditingDocumentType(key)}
+              onClick={() => setChatDocumentType(key)}
             >
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -583,6 +586,11 @@ export default function MarkenDNADetailPage() {
                 </div>
                 <StatusBadge status={status} />
               </div>
+
+              {/* Beschreibung */}
+              <p className="mt-2 text-xs text-zinc-500 line-clamp-2">
+                {t(`descriptions.${key}`)}
+              </p>
 
               {/* Footer */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100">
@@ -603,18 +611,34 @@ export default function MarkenDNADetailPage() {
                   </button>
 
                   {openMenuId === key && (
-                    <div className="absolute right-0 bottom-full mb-1 w-36 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-10">
+                    <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                      {/* KI-Chat */}
                       <button
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           setOpenMenuId(null);
-                          setEditingDocumentType(key);
+                          setChatDocumentType(key);
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                       >
-                        <PencilIcon className="h-4 w-4" />
-                        {status === 'missing' ? t('actions.create') : t('actions.edit')}
+                        <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                        KI-Chat
                       </button>
+                      {/* Bearbeiten */}
+                      {status !== 'missing' && (
+                        <button
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            setEditorDocumentType(key);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                          Bearbeiten
+                        </button>
+                      )}
+                      {/* Löschen */}
                       {status !== 'missing' && (
                         <button
                           onClick={(e: React.MouseEvent) => {
@@ -626,7 +650,7 @@ export default function MarkenDNADetailPage() {
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
                           <TrashIcon className="h-4 w-4" />
-                          {t('actions.delete')}
+                          Löschen
                         </button>
                       )}
                     </div>
@@ -639,21 +663,21 @@ export default function MarkenDNADetailPage() {
       </div>
 
       {/* Chat Modal */}
-      {editingDocumentType && (() => {
-        const existingDoc = documents.find(d => d.type === editingDocumentType);
+      {chatDocumentType && (() => {
+        const existingDoc = documents.find(d => d.type === chatDocumentType);
         return (
           <MarkenDNAChatModal
-            key={`modal-${companyId}-${editingDocumentType}`}
+            key={`modal-${companyId}-${chatDocumentType}`}
             isOpen={true}
-            onClose={() => setEditingDocumentType(null)}
+            onClose={() => setChatDocumentType(null)}
             companyId={companyId}
             companyName={company.name}
-            documentType={editingDocumentType}
+            documentType={chatDocumentType}
             existingDocument={existingDoc?.content}
             existingChatHistory={existingDoc?.chatHistory}
             onSave={async (content: string, status: 'draft' | 'completed') => {
-              await handleSaveDocument(content, editingDocumentType, status);
-              setEditingDocumentType(null);
+              await handleSaveDocument(content, chatDocumentType, status);
+              setChatDocumentType(null);
             }}
           />
         );
@@ -668,6 +692,23 @@ export default function MarkenDNADetailPage() {
           onSave={handleUpdateSynthese}
         />
       )}
+
+      {/* Document Editor Modal */}
+      {editorDocumentType && (() => {
+        const existingDoc = documents.find(d => d.type === editorDocumentType);
+        return (
+          <DocumentEditorModal
+            isOpen={true}
+            onClose={() => setEditorDocumentType(null)}
+            documentType={editorDocumentType}
+            content={existingDoc?.content || ''}
+            onSave={async (content: string, status: 'draft' | 'completed') => {
+              await handleSaveDocument(content, editorDocumentType, status);
+              setEditorDocumentType(null);
+            }}
+          />
+        );
+      })()}
 
       {/* Bestätigungs-Dialog */}
       <Dialog

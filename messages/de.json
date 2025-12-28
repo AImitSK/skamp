@@ -11530,12 +11530,20 @@
       "allComplete": "Vollständig"
     },
     "documents": {
-      "briefing": "Briefing-Check",
-      "swot": "SWOT-Analyse",
-      "audience": "Zielgruppen-Radar",
-      "positioning": "Positionierungs-Diamant",
-      "goals": "Ziele-Setzer",
-      "messages": "Botschaften-Baukasten"
+      "briefing": "Unternehmensbasis",
+      "swot": "Potenzialanalyse",
+      "audience": "Zielgruppenprofil",
+      "positioning": "Markenidentität",
+      "goals": "Kommunikationsziele",
+      "messages": "Kernbotschaften"
+    },
+    "descriptions": {
+      "briefing": "Erfasst alle fundamentalen Fakten, Daten und Eckpunkte des Unternehmens.",
+      "swot": "Bewertet interne Stärken und Schwächen sowie externe Chancen und Risiken.",
+      "audience": "Definiert die relevanten Empfänger, Mittler und Absender der Kommunikation.",
+      "positioning": "Legt den USP, das Soll-Image sowie die Tonalität und Marktrolle fest.",
+      "goals": "Bestimmt messbare Erfolge auf Ebene von Wissen, Gefühl und Verhalten.",
+      "messages": "Formuliert belegbare Kernaussagen inklusive Beweisführung und Nutzenversprechen."
     },
     "modal": {
       "for": "für",

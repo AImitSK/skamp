@@ -11516,12 +11516,20 @@
       "allComplete": "Complete"
     },
     "documents": {
-      "briefing": "Briefing Check",
-      "swot": "SWOT Analysis",
-      "audience": "Audience Radar",
-      "positioning": "Positioning Diamond",
-      "goals": "Goal Setter",
-      "messages": "Message Builder"
+      "briefing": "Company Foundation",
+      "swot": "Potential Analysis",
+      "audience": "Target Group Profile",
+      "positioning": "Brand Identity",
+      "goals": "Communication Goals",
+      "messages": "Key Messages"
+    },
+    "descriptions": {
+      "briefing": "Captures all fundamental facts, data and key points of the company.",
+      "swot": "Evaluates internal strengths and weaknesses as well as external opportunities and threats.",
+      "audience": "Defines the relevant recipients, intermediaries and senders of communication.",
+      "positioning": "Establishes the USP, target image as well as tonality and market role.",
+      "goals": "Determines measurable success at the level of knowledge, emotion and behavior.",
+      "messages": "Formulates verifiable key statements including evidence and value proposition."
     },
     "modal": {
       "for": "for",
