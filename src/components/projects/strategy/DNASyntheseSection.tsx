@@ -1,24 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { DnaIcon } from '@/components/icons/DnaIcon';
 import { StatusCircles } from '@/components/marken-dna/StatusCircles';
-import type { CompanyMarkenDNAStatus } from '@/types/marken-dna';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
+import { DNASyntheseEditorModal } from '@/components/marken-dna/DNASyntheseEditorModal';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import type { CompanyMarkenDNAStatus } from '@/types/marken-dna';
+import clsx from 'clsx';
 
-// TODO: DNASynthese Type aus types/project-strategy.ts importieren wenn vorhanden
 interface DNASynthese {
   id: string;
   content: string;
   plainText?: string;
+  synthesizedAt?: { seconds: number };
   createdAt: any;
   updatedAt: any;
 }
@@ -30,9 +36,10 @@ interface DNASyntheseSectionProps {
   dnaSynthese?: DNASynthese | null;
   canSynthesize: boolean;
   markenDNAStatus?: CompanyMarkenDNAStatus;
+  isOutdated?: boolean;
   onSynthesize?: () => void;
   onDelete?: () => void;
-  onEdit?: (content: string) => void;
+  onEdit?: (content: string) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -43,6 +50,7 @@ export function DNASyntheseSection({
   dnaSynthese,
   canSynthesize,
   markenDNAStatus,
+  isOutdated = false,
   onSynthesize,
   onDelete,
   onEdit,
@@ -50,8 +58,41 @@ export function DNASyntheseSection({
 }: DNASyntheseSectionProps) {
   const t = useTranslations('markenDNA');
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(dnaSynthese?.content || '');
+
+  // UI State
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Click-Outside Handler für Menü
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isInsideMenu = target.closest('[data-menu]') !== null;
+      if (!isInsideMenu) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Token-Anzahl berechnen
+  const tokenCount = dnaSynthese?.plainText
+    ? Math.ceil(dnaSynthese.plainText.length / 4)
+    : 0;
+
+  // Erstellungsdatum formatieren
+  const createdDate = dnaSynthese?.synthesizedAt?.seconds
+    ? new Date(dnaSynthese.synthesizedAt.seconds * 1000).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
 
   const handleSynthesizeClick = () => {
     if (onSynthesize) {
@@ -60,156 +101,242 @@ export function DNASyntheseSection({
   };
 
   const handleDeleteClick = () => {
-    if (confirm(t('synthesis.confirmDelete'))) {
-      if (onDelete) {
-        onDelete();
-      }
-    }
+    setIsMenuOpen(false);
+    setShowDeleteConfirm(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleConfirmDelete = () => {
+    if (onDelete) {
+      onDelete();
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleEditClick = () => {
+    setIsMenuOpen(false);
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveEdit = async (content: string) => {
     if (onEdit) {
-      onEdit(editedContent);
+      await onEdit(content);
     }
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditedContent(dnaSynthese?.content || '');
-    setIsEditing(false);
+    setIsEditorOpen(false);
   };
 
   const handleCompleteMarkenDNA = () => {
-    router.push(`/dashboard/library/marken-dna?company=${companyId}`);
+    router.push(`/dashboard/library/marken-dna/${companyId}`);
   };
 
-  return (
-    <div className="bg-white rounded-lg border border-zinc-200">
-      {/* Header */}
-      <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <DnaIcon className="h-5 w-5 text-purple-600" />
-          <h3 className="text-base font-semibold text-zinc-900">DNA Synthese</h3>
-        </div>
+  // Wenn keine Synthese vorhanden ist
+  if (!dnaSynthese) {
+    return (
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-6 bg-gradient-to-r from-purple-50/50 to-white">
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <DnaIcon className="h-5 w-5 text-purple-600" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">
+                DNA Synthese
+              </h3>
+            </div>
 
-        {/* Dropdown Menu (nur wenn Synthese vorhanden) */}
-        {dnaSynthese && (
-          <Dropdown>
-            <DropdownButton
-              plain
-              className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <span className="sr-only">Aktionen</span>
-              <svg className="h-5 w-5 text-zinc-700" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-              </svg>
-            </DropdownButton>
-            <DropdownMenu anchor="bottom end">
-              <DropdownItem onClick={handleSynthesizeClick} disabled={!canSynthesize || isLoading}>
-                <DnaIcon className="h-4 w-4" />
-                <span>Neu synthetisieren</span>
-              </DropdownItem>
-              <DropdownDivider />
-              <DropdownItem onClick={handleDeleteClick} disabled={isLoading}>
-                <TrashIcon className="h-4 w-4" />
-                <span className="text-red-600">Löschen</span>
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        )}
-      </div>
+            <div className="flex-1" />
 
-      {/* Content */}
-      <div className="p-4">
-        {!dnaSynthese ? (
-          /* Noch nicht erstellt */
-          <div className="text-center py-6">
-            {canSynthesize ? (
-              <>
-                <p className="text-sm text-zinc-600 mb-4">
-                  Erstelle eine KI-optimierte Kurzform der Marken-DNA für {companyName}.
-                </p>
+            {/* Rechts: Status + Button */}
+            <div className="flex items-center gap-3">
+              {canSynthesize ? (
                 <Button
                   onClick={handleSynthesizeClick}
                   disabled={isLoading}
-                  className="bg-primary hover:bg-primary-hover text-white h-10 px-6 rounded-lg font-medium transition-colors"
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-sm"
                 >
-                  <DnaIcon className="h-4 w-4 mr-2" />
-                  DNA synthetisieren
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Generiere...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-4 w-4 mr-2" />
+                      Synthetisieren
+                    </>
+                  )}
                 </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-zinc-600 mb-4">
-                  Die Marken-DNA von {companyName} ist noch nicht vollständig.
-                </p>
-                {markenDNAStatus && (
-                  <div className="flex justify-center mb-4">
+              ) : (
+                <>
+                  {markenDNAStatus && (
                     <StatusCircles documents={markenDNAStatus.documents} size="sm" />
-                  </div>
-                )}
-                <Button
-                  onClick={handleCompleteMarkenDNA}
-                  className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-10 px-6 rounded-lg font-medium transition-colors"
-                >
-                  Marken-DNA vervollständigen
-                </Button>
-              </>
-            )}
+                  )}
+                  <Button
+                    onClick={handleCompleteMarkenDNA}
+                    className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 text-sm"
+                  >
+                    Marken-DNA vervollständigen
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-        ) : (
-          /* Synthese vorhanden */
-          <>
-            <div className="flex items-center gap-2 text-green-600 mb-3">
-              <CheckCircleIcon className="h-5 w-5" />
-              <span className="text-sm font-medium">DNA Synthese aktiv</span>
+
+          {!canSynthesize && (
+            <p className="mt-3 text-sm text-zinc-500 ml-14">
+              Alle 6 Dokumente der Marken-DNA werden benötigt, um eine Synthese zu erstellen.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Synthese vorhanden - kompaktes Layout
+  return (
+    <>
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-6 bg-gradient-to-r from-purple-50/50 to-white">
+          {/* Kompakte Zeile */}
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel + Datum */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                <DnaIcon className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-zinc-900">
+                  DNA Synthese
+                </h3>
+                {createdDate && (
+                  <p className="text-xs text-zinc-500">
+                    Erstellt: {createdDate}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {isEditing ? (
-              /* Bearbeitungsmodus */
-              <div className="space-y-3">
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm
-                           placeholder:text-zinc-300
-                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
-                           min-h-[300px] font-mono"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleSaveEdit}
-                    className="bg-primary hover:bg-primary-hover text-white h-10 px-6 rounded-lg font-medium transition-colors"
-                  >
-                    Speichern
-                  </Button>
-                  <Button
-                    onClick={handleCancelEdit}
-                    className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-10 px-6 rounded-lg font-medium transition-colors"
-                  >
-                    Abbrechen
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              /* Anzeigemodus */
-              <>
-                <div
-                  className="prose prose-sm max-w-none bg-gray-50 rounded p-4 border border-zinc-200"
-                  dangerouslySetInnerHTML={{ __html: dnaSynthese.content }}
-                />
+            {/* Mitte: Token-Toggle */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={clsx(
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all flex-shrink-0',
+                'border border-purple-200 hover:border-purple-300',
+                isExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
+              )}
+            >
+              <span className="text-xs text-purple-600 whitespace-nowrap">
+                ~{tokenCount} Tokens
+              </span>
+              {isExpanded ? (
+                <ChevronUpIcon className="h-4 w-4 text-purple-600" />
+              ) : (
+                <ChevronDownIcon className="h-4 w-4 text-purple-600" />
+              )}
+            </button>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Rechts: Neu generieren Button (nur wenn veraltet) + Menü */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isOutdated && (
                 <Button
-                  onClick={() => setIsEditing(true)}
-                  className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-10 px-4 rounded-lg font-medium transition-colors mt-3"
+                  onClick={handleSynthesizeClick}
+                  disabled={!canSynthesize || isLoading}
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-sm"
                 >
-                  <PencilIcon className="h-4 w-4 mr-1" />
-                  Bearbeiten
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Generiere...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-4 w-4 mr-2" />
+                      Neu generieren
+                    </>
+                  )}
                 </Button>
-              </>
+              )}
+
+              {/* 3-Punkte-Menü */}
+              <div className="relative" data-menu>
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="h-9 w-9 flex items-center justify-center rounded-lg border border-purple-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                >
+                  <EllipsisVerticalIcon className="h-4 w-4 text-purple-600" />
+                </button>
+
+                {isMenuOpen && (
+                  <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                    <button
+                      onClick={handleEditClick}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      Bearbeiten
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      Löschen
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Expandierter Inhalt */}
+          <div
+            className={clsx(
+              'overflow-hidden transition-all duration-300 ease-in-out',
+              isExpanded ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
             )}
-          </>
-        )}
+          >
+            <div className="bg-white rounded-lg border border-purple-200 p-5">
+              <DNASyntheseRenderer content={dnaSynthese.plainText || ''} />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Editor Modal */}
+      <DNASyntheseEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        content={dnaSynthese.plainText || ''}
+        onSave={handleSaveEdit}
+      />
+
+      {/* Lösch-Bestätigung */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        size="sm"
+      >
+        <DialogTitle>DNA Synthese löschen</DialogTitle>
+        <DialogBody>
+          <p className="text-zinc-600">
+            Möchtest du die DNA Synthese wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+          </p>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowDeleteConfirm(false)}>
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

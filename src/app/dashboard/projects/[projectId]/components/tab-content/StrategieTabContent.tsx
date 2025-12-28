@@ -4,12 +4,10 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
-import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA } from '@/lib/hooks/useDNASynthese';
+import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft } from '@/lib/hooks/useKernbotschaft';
 import { useTextMatrix } from '@/lib/hooks/useTextMatrix';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
-import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { Button } from '@/components/ui/button';
 import { toastService } from '@/lib/utils/toast';
 
 interface StrategieTabContentProps {
@@ -41,8 +39,10 @@ export function StrategieTabContent({
   const { data: kernbotschaft } = useKernbotschaft(projectId);
   const { data: textMatrix } = useTextMatrix(projectId);
 
-  // Synthese Mutation
+  // Synthese Mutations
   const { mutate: synthesize, isPending: isSynthesizing } = useSynthesizeDNA();
+  const { mutateAsync: updateSynthese } = useUpdateDNASynthese();
+  const { mutateAsync: deleteSynthese, isPending: isDeleting } = useDeleteDNASynthese();
 
   // Pruefe ob Synthese moeglich ist (alle 6 Dokumente vorhanden)
   const canSynthesize = markenDNAStatus?.isComplete ?? false;
@@ -74,6 +74,39 @@ export function StrategieTabContent({
     router.push(`/dashboard/library/marken-dna/${companyId}`);
   };
 
+  // Handler für Synthese Update
+  const handleUpdateSynthese = async (content: string) => {
+    if (!companyId || !userId) return;
+
+    try {
+      await updateSynthese({
+        companyId,
+        data: {
+          content,
+          plainText: content,
+          manuallyEdited: true,
+        },
+        organizationId,
+        userId,
+      });
+      toastService.success('DNA Synthese aktualisiert');
+    } catch (error) {
+      toastService.error('Fehler beim Aktualisieren');
+    }
+  };
+
+  // Handler für Synthese Löschen
+  const handleDeleteSynthese = async () => {
+    if (!companyId) return;
+
+    try {
+      await deleteSynthese({ companyId });
+      toastService.success('DNA Synthese gelöscht');
+    } catch (error) {
+      toastService.error('Fehler beim Löschen');
+    }
+  };
+
   // Falls projectId oder companyId fehlt, zeige Hinweis
   if (!projectId || !companyId) {
     return (
@@ -87,40 +120,7 @@ export function StrategieTabContent({
 
   return (
     <div className="space-y-6">
-      {/* Veraltet-Warnung */}
-      {isOutdated && dnaSynthese && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-amber-800">
-              DNA Synthese ist veraltet
-            </h4>
-            <p className="text-sm text-amber-700 mt-1">
-              Die Marken-DNA wurde geändert seit die Synthese erstellt wurde.
-              Bitte aktualisieren Sie die Synthese für optimale Ergebnisse.
-            </p>
-          </div>
-          <Button
-            onClick={handleSynthesize}
-            disabled={isSynthesizing}
-            className="bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
-          >
-            {isSynthesizing ? (
-              <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                Aktualisiere...
-              </>
-            ) : (
-              <>
-                <ArrowPathIcon className="h-4 w-4 mr-2" />
-                Aktualisieren
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
-      {/* DNA Synthese Section */}
+      {/* DNA Synthese Section - Kompakt mit Toggle */}
       <DNASyntheseSectionComponent
         projectId={projectId}
         companyId={companyId}
@@ -128,8 +128,11 @@ export function StrategieTabContent({
         dnaSynthese={dnaSynthese}
         canSynthesize={canSynthesize}
         markenDNAStatus={markenDNAStatus}
+        isOutdated={isOutdated ?? false}
         onSynthesize={handleSynthesize}
-        isLoading={isSynthesizing}
+        onEdit={handleUpdateSynthese}
+        onDelete={handleDeleteSynthese}
+        isLoading={isSynthesizing || isDeleting}
       />
 
       {/* TODO Phase 4.4: Kernbotschaft Chat */}
