@@ -524,12 +524,14 @@ Ansprechpartner:
 | [Name] | [Position] | [Abgeleitete Themen für Zitate] | [E-Mail/Tel] |
 
 ### REGELN:
-1. **[Behauptung] → [Beweis]** Struktur konsequent anwenden - keine unbelegten Aussagen
-2. **Zielgruppen-IDs (ZG1, ZG2, ZG3)** für alle Botschaften zuordnen
-3. **TONALITÄTS-OVERRIDE** muss so präzise sein, dass es als Leitplanke für alle KI-Texte dient
-4. **BLACKLIST** muss branchenspezifische Klischees enthalten, die der Positionierung schaden
-5. Zielgröße: 600-800 Tokens. Vollständigkeit vor Kürze!
-6. Ergebnis muss direkt als System-Prompt-Kontext verwendbar sein`,
+1. **KEINE EINLEITUNG:** Beginne direkt mit "#### 🧪 DNA SYNTHESE:" - keine Meta-Kommentare wie "Hier ist die Synthese..." oder "Okay, ich erstelle..."
+2. **[Behauptung] → [Beweis]** Struktur konsequent anwenden - keine unbelegten Aussagen
+3. **Zielgruppen-IDs (ZG1, ZG2, ZG3)** für alle Botschaften zuordnen
+4. **TONALITÄTS-OVERRIDE** muss so präzise sein, dass es als Leitplanke für alle KI-Texte dient
+5. **BLACKLIST** muss branchenspezifische Klischees enthalten, die der Positionierung schaden
+6. **ANSPRECHPARTNER:** NUR real existierende Personen aus den Eingabedaten verwenden. NIEMALS Personen erfinden! Wenn weniger als 3 Ansprechpartner vorhanden sind, verteile die Expertisen nur auf die real existierenden Personen. Bei 0 Ansprechpartnern: Sektion weglassen.
+7. Zielgröße: 600-800 Tokens. Vollständigkeit vor Kürze!
+8. Ergebnis muss direkt als System-Prompt-Kontext verwendbar sein`,
 
   en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents and contact persons into a highly efficient, AI-optimized short form (600-800 tokens).
 
@@ -606,12 +608,14 @@ Spokespersons:
 | [Name] | [Position] | [Derived topics for quotes] | [Email/Phone] |
 
 ### RULES:
-1. **[Claim] → [Proof]** structure consistently applied - no unsubstantiated statements
-2. **Target Group IDs (TG1, TG2, TG3)** assigned to all messages
-3. **TONALITY OVERRIDE** must be precise enough to serve as guardrails for all AI texts
-4. **BLACKLIST** must contain industry-specific clichés that harm positioning
-5. Target size: 600-800 tokens. Completeness over brevity!
-6. Result must be directly usable as system prompt context`,
+1. **NO INTRODUCTION:** Start directly with "#### 🧪 DNA SYNTHESIS:" - no meta-comments like "Here is the synthesis..." or "Okay, I'm creating..."
+2. **[Claim] → [Proof]** structure consistently applied - no unsubstantiated statements
+3. **Target Group IDs (TG1, TG2, TG3)** assigned to all messages
+4. **TONALITY OVERRIDE** must be precise enough to serve as guardrails for all AI texts
+5. **BLACKLIST** must contain industry-specific clichés that harm positioning
+6. **SPOKESPERSONS:** ONLY use real persons from input data. NEVER invent persons! If fewer than 3 spokespersons exist, distribute expertises only among actually existing persons. If 0 spokespersons: omit section.
+7. Target size: 600-800 tokens. Completeness over brevity!
+8. Result must be directly usable as system prompt context`,
 };
 
 // ============================================================================
