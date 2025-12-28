@@ -20,6 +20,7 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
+import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
 import { StatusCircles, MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import { DnaIcon } from '@/components/icons/DnaIcon';
 import {
@@ -31,6 +32,8 @@ import {
   XCircleIcon,
   TrashIcon,
   SparklesIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -89,6 +92,7 @@ export default function MarkenDNADetailPage() {
 
   // UI State
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
+  const [isSyntheseExpanded, setIsSyntheseExpanded] = useState(false);
 
   // DNA Synthese Handler
   const handleSynthesize = () => {
@@ -107,6 +111,7 @@ export default function MarkenDNADetailPage() {
       {
         onSuccess: () => {
           toastService.success('DNA Synthese erfolgreich erstellt!');
+          setIsSyntheseExpanded(true);
         },
         onError: (error) => {
           console.error('Synthese Fehler:', error);
@@ -297,6 +302,11 @@ export default function MarkenDNADetailPage() {
     messages: getDocumentStatus('messages'),
   };
 
+  // Token-Anzahl berechnen
+  const tokenCount = dnaSynthese?.plainText
+    ? Math.ceil(dnaSynthese.plainText.length / 4)
+    : 0;
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -311,80 +321,106 @@ export default function MarkenDNADetailPage() {
         </Button>
       </div>
 
-      {/* Company Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-zinc-900">{company.name}</h1>
-            <div className="mt-2 flex items-center gap-4">
-              <Badge color="zinc">{t('results.customer')}</Badge>
-              {isComplete ? (
-                <Badge color="green">{t('status.allComplete')}</Badge>
-              ) : (
-                <Badge color="amber">
-                  {completedCount}/6 {t('status.completed')}
-                </Badge>
-              )}
+      {/* Company Header + DNA Synthese (KOMBINIERT) */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Header Section */}
+        <div className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-zinc-900">{company.name}</h1>
+              <div className="mt-2 flex items-center gap-3">
+                <Badge color="zinc">{t('results.customer')}</Badge>
+                {isComplete ? (
+                  <Badge color="green">{t('status.allComplete')}</Badge>
+                ) : (
+                  <Badge color="amber">
+                    {completedCount}/6 {t('status.completed')}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Status Circles */}
-          <div className="flex items-center gap-2">
-            <StatusCircles
-              documents={statusMap}
-              size="lg"
-              clickable={true}
-              onCircleClick={(docType) => setEditingDocumentType(docType)}
-            />
+          {/* Status Circles mit Labels */}
+          <div className="mt-6">
+            <div className="flex items-center gap-1">
+              {DOCUMENT_TYPES.map(({ key }) => {
+                const status = getDocumentStatus(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setEditingDocumentType(key)}
+                    className={clsx(
+                      'flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all',
+                      'hover:bg-zinc-100 cursor-pointer group'
+                    )}
+                  >
+                    <div
+                      className={clsx(
+                        'w-4 h-4 rounded-full border-2 transition-all',
+                        'group-hover:scale-110',
+                        status === 'completed' && 'bg-green-500 border-green-500',
+                        status === 'draft' && 'bg-amber-500 border-amber-500',
+                        status === 'missing' && 'bg-white border-zinc-300'
+                      )}
+                    />
+                    <span className="text-[10px] text-zinc-500 group-hover:text-zinc-900">
+                      {t(`documents.${key}`).split('-')[0].trim()}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* DNA Synthese Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <DnaIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900">DNA Synthese</h2>
-              <p className="text-sm text-zinc-600">
-                KI-optimierte Kurzform der 6 Marken-DNA Dokumente (~500 Tokens)
-              </p>
-            </div>
-          </div>
+        {/* Divider */}
+        <div className="border-t border-zinc-200" />
 
-          <div className="flex items-center gap-3">
-            {dnaSynthese ? (
-              <>
-                <Badge color="green">
-                  <CheckCircleIcon className="h-4 w-4 mr-1" />
-                  Aktiv
-                </Badge>
-                <Button
-                  onClick={handleSynthesize}
-                  disabled={!isComplete || isSynthesizing}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  {isSynthesizing ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                      Generiere...
-                    </>
-                  ) : (
-                    <>
-                      <SparklesIcon className="h-4 w-4 mr-2" />
-                      Neu generieren
-                    </>
+        {/* DNA Synthese Section */}
+        <div className="p-6 bg-gradient-to-r from-purple-50/50 to-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <DnaIcon className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
+                  DNA Synthese
+                  {dnaSynthese && (
+                    <Badge color="green" className="text-xs">
+                      <CheckCircleIcon className="h-3 w-3 mr-1" />
+                      Aktiv
+                    </Badge>
                   )}
-                </Button>
-              </>
-            ) : (
+                </h2>
+                {dnaSynthese && (
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Erstellt: {dnaSynthese.synthesizedAt?.seconds
+                      ? new Date(dnaSynthese.synthesizedAt.seconds * 1000).toLocaleDateString('de-DE', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {!isComplete && !dnaSynthese && (
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  Alle 6 Dokumente benötigt
+                </span>
+              )}
               <Button
                 onClick={handleSynthesize}
                 disabled={!isComplete || isSynthesizing}
                 className={clsx(
+                  'text-sm',
                   isComplete
                     ? 'bg-purple-600 hover:bg-purple-700 text-white'
                     : 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
@@ -398,43 +434,56 @@ export default function MarkenDNADetailPage() {
                 ) : (
                   <>
                     <SparklesIcon className="h-4 w-4 mr-2" />
-                    DNA synthetisieren
+                    {dnaSynthese ? 'Neu generieren' : 'Synthetisieren'}
                   </>
                 )}
               </Button>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* Synthese Inhalt oder Hinweis */}
-        {dnaSynthese ? (
-          <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-            <div className="prose prose-sm max-w-none text-zinc-700 whitespace-pre-wrap">
-              {dnaSynthese.plainText}
+          {/* Toggle für Synthese-Inhalt */}
+          {dnaSynthese && (
+            <div className="mt-4">
+              <button
+                onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
+                className={clsx(
+                  'w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all',
+                  'border border-purple-200 hover:border-purple-300',
+                  isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
+                )}
+              >
+                <span className="text-sm font-medium text-purple-800 flex items-center gap-2">
+                  {isSyntheseExpanded ? (
+                    <>
+                      <ChevronUpIcon className="h-4 w-4" />
+                      Synthese ausblenden
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDownIcon className="h-4 w-4" />
+                      Synthese anzeigen
+                    </>
+                  )}
+                </span>
+                <span className="text-xs text-purple-600 bg-purple-200 px-2 py-0.5 rounded-full">
+                  ~{tokenCount} Tokens
+                </span>
+              </button>
+
+              {/* Expandierter Inhalt */}
+              <div
+                className={clsx(
+                  'overflow-hidden transition-all duration-300 ease-in-out',
+                  isSyntheseExpanded ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                )}
+              >
+                <div className="bg-white rounded-lg border border-purple-200 p-5">
+                  <DNASyntheseRenderer content={dnaSynthese.plainText || ''} />
+                </div>
+              </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-purple-200 flex items-center justify-between text-xs text-purple-600">
-              <span>
-                Erstellt: {dnaSynthese.synthesizedAt?.seconds
-                  ? new Date(dnaSynthese.synthesizedAt.seconds * 1000).toLocaleDateString('de-DE', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '—'}
-              </span>
-              <span>~{Math.ceil((dnaSynthese.plainText?.length || 0) / 4)} Tokens</span>
-            </div>
-          </div>
-        ) : !isComplete ? (
-          <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <p className="text-sm text-amber-800">
-              <strong>Hinweis:</strong> Alle 6 Marken-DNA Dokumente müssen vollständig sein,
-              bevor die DNA Synthese erstellt werden kann.
-            </p>
-          </div>
-        ) : null}
+          )}
+        </div>
       </div>
 
       {/* Documents Grid */}
