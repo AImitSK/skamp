@@ -247,12 +247,15 @@ function HeaderSection({ title }: { title: string }) {
 }
 
 function TonalitySection({ title, items }: { title?: string; items: string[] }) {
+  // Emoji aus Titel entfernen falls vorhanden
+  const cleanTitle = (title || 'TONALITÄTS-OVERRIDE').replace(/^⚡\s*/, '');
+
   return (
     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">⚡</span>
         <h4 className="font-semibold text-purple-800 text-sm">
-          {title || 'TONALITÄTS-OVERRIDE'}
+          {cleanTitle}
         </h4>
       </div>
       <div className="space-y-2">
@@ -299,6 +302,9 @@ function formatTonalityItem(item: string): React.ReactNode {
 }
 
 function BlacklistSection({ title, items, content }: { title?: string; items: string[]; content: string }) {
+  // Emoji aus Titel entfernen falls vorhanden
+  const cleanTitle = (title || 'BLACKLIST').replace(/^🚫\s*/, '');
+
   // Wenn items leer, versuche aus content zu parsen
   let displayItems = items;
   if (displayItems.length === 0 && content) {
@@ -313,7 +319,7 @@ function BlacklistSection({ title, items, content }: { title?: string; items: st
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">🚫</span>
         <h4 className="font-semibold text-red-800 text-sm">
-          {title || 'BLACKLIST'}
+          {cleanTitle}
         </h4>
       </div>
       <div className="flex flex-wrap gap-2">

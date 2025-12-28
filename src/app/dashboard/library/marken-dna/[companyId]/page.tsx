@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
 import { DNASyntheseEditorModal } from '@/components/marken-dna/DNASyntheseEditorModal';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import { DnaIcon } from '@/components/icons/DnaIcon';
 import {
@@ -103,6 +104,12 @@ export default function MarkenDNADetailPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Bestätigungs-Dialog State
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    type: 'synthese' | 'document';
+    documentType?: MarkenDNADocumentType;
+  } | null>(null);
+
   // Click-Outside Handler für Menüs
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -163,15 +170,26 @@ export default function MarkenDNADetailPage() {
 
   // DNA Synthese Delete Handler
   const handleDeleteSynthese = async () => {
-    if (!confirm('DNA Synthese wirklich löschen?')) return;
-
     try {
       await deleteSynthese({ companyId });
       toastService.success('DNA Synthese gelöscht');
       setIsSyntheseExpanded(false);
+      setDeleteConfirmation(null);
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       toastService.error('Fehler beim Löschen');
+    }
+  };
+
+  // Bestätigungs-Handler
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmation) return;
+
+    if (deleteConfirmation.type === 'synthese') {
+      await handleDeleteSynthese();
+    } else if (deleteConfirmation.type === 'document' && deleteConfirmation.documentType) {
+      await handleDeleteDocument(deleteConfirmation.documentType);
+      setDeleteConfirmation(null);
     }
   };
 
@@ -357,14 +375,13 @@ export default function MarkenDNADetailPage() {
       </div>
 
       {/* Company Header + DNA Synthese (KOMBINIERT) */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm">
         {/* Header Section */}
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-zinc-900">{company.name}</h1>
               <div className="mt-2 flex items-center gap-3">
-                <Badge color="zinc">{t('results.customer')}</Badge>
                 {isComplete ? (
                   <Badge color="green">{t('status.allComplete')}</Badge>
                 ) : (
@@ -412,14 +429,8 @@ export default function MarkenDNADetailPage() {
                 <DnaIcon className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
+                <h2 className="text-base font-semibold text-zinc-900">
                   DNA Synthese
-                  {dnaSynthese && (
-                    <Badge color="green" className="text-xs">
-                      <CheckCircleIcon className="h-3 w-3 mr-1" />
-                      Aktiv
-                    </Badge>
-                  )}
                 </h2>
                 {dnaSynthese && (
                   <p className="text-xs text-zinc-500 mt-0.5">
@@ -501,7 +512,7 @@ export default function MarkenDNADetailPage() {
                   </button>
 
                   {openMenuId === 'synthese' && (
-                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-10">
+                    <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
                       <button
                         onClick={() => {
                           setOpenMenuId(null);
@@ -515,7 +526,7 @@ export default function MarkenDNADetailPage() {
                       <button
                         onClick={() => {
                           setOpenMenuId(null);
-                          handleDeleteSynthese();
+                          setDeleteConfirmation({ type: 'synthese' });
                         }}
                         disabled={isDeletingSynthese}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -609,9 +620,7 @@ export default function MarkenDNADetailPage() {
                           onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             setOpenMenuId(null);
-                            if (confirm(t('confirmDeleteDocument'))) {
-                              handleDeleteDocument(key);
-                            }
+                            setDeleteConfirmation({ type: 'document', documentType: key });
                           }}
                           disabled={isDeleting}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -659,6 +668,37 @@ export default function MarkenDNADetailPage() {
           onSave={handleUpdateSynthese}
         />
       )}
+
+      {/* Bestätigungs-Dialog */}
+      <Dialog
+        open={deleteConfirmation !== null}
+        onClose={() => setDeleteConfirmation(null)}
+        size="sm"
+      >
+        <DialogTitle>
+          {deleteConfirmation?.type === 'synthese'
+            ? 'DNA Synthese löschen'
+            : 'Dokument löschen'}
+        </DialogTitle>
+        <DialogBody>
+          <p className="text-zinc-600">
+            {deleteConfirmation?.type === 'synthese'
+              ? 'Möchtest du die DNA Synthese wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
+              : `Möchtest du das Dokument "${deleteConfirmation?.documentType ? t(`documents.${deleteConfirmation.documentType}`) : ''}" wirklich löschen?`}
+          </p>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setDeleteConfirmation(null)}>
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
