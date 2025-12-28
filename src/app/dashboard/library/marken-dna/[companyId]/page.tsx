@@ -141,7 +141,7 @@ export default function MarkenDNADetailPage() {
       {
         onSuccess: () => {
           toastService.success('DNA Synthese erfolgreich erstellt!');
-          setIsSyntheseExpanded(true);
+          setIsSyntheseExpanded(false);
         },
         onError: (error) => {
           console.error('Synthese Fehler:', error);
@@ -424,19 +424,21 @@ export default function MarkenDNADetailPage() {
         {/* Divider */}
         <div className="border-t border-zinc-200" />
 
-        {/* DNA Synthese Section */}
+        {/* DNA Synthese Section - Kompakt */}
         <div className="p-6 bg-gradient-to-r from-purple-50/50 to-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
+          {/* Kompakte Zeile */}
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel + Datum */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
                 <DnaIcon className="h-5 w-5 text-purple-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-base font-semibold text-zinc-900">
                   DNA Synthese
                 </h2>
                 {dnaSynthese && (
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="text-xs text-zinc-500">
                     Erstellt: {dnaSynthese.synthesizedAt?.seconds
                       ? new Date(dnaSynthese.synthesizedAt.seconds * 1000).toLocaleDateString('de-DE', {
                           day: '2-digit',
@@ -451,12 +453,38 @@ export default function MarkenDNADetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Mitte: Token-Toggle (nur wenn Synthese existiert) */}
+            {dnaSynthese && (
+              <button
+                onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
+                className={clsx(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all flex-shrink-0',
+                  'border border-purple-200 hover:border-purple-300',
+                  isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
+                )}
+              >
+                <span className="text-xs text-purple-600 whitespace-nowrap">
+                  ~{tokenCount} Tokens
+                </span>
+                {isSyntheseExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-purple-600" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-purple-600" />
+                )}
+              </button>
+            )}
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Rechts: Warnung (optional) + Button + Menü */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               {!isComplete && !dnaSynthese && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded whitespace-nowrap">
                   Alle 6 Dokumente benötigt
                 </span>
               )}
+
               <Button
                 onClick={handleSynthesize}
                 disabled={!isComplete || isSynthesizing}
@@ -479,33 +507,9 @@ export default function MarkenDNADetailPage() {
                   </>
                 )}
               </Button>
-            </div>
-          </div>
 
-          {/* Toggle für Synthese-Inhalt */}
-          {dnaSynthese && (
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                {/* Toggle Button */}
-                <button
-                  onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
-                  className={clsx(
-                    'flex-1 flex items-center justify-between px-4 py-2 rounded-lg transition-all',
-                    'border border-purple-200 hover:border-purple-300',
-                    isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
-                  )}
-                >
-                  <span className="text-xs text-purple-600">
-                    ~{tokenCount} Tokens
-                  </span>
-                  {isSyntheseExpanded ? (
-                    <ChevronUpIcon className="h-4 w-4 text-purple-600" />
-                  ) : (
-                    <ChevronDownIcon className="h-4 w-4 text-purple-600" />
-                  )}
-                </button>
-
-                {/* 3-Punkte-Menü */}
+              {/* 3-Punkte-Menü (nur wenn Synthese existiert) */}
+              {dnaSynthese && (
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setOpenMenuId(openMenuId === 'synthese' ? null : 'synthese')}
@@ -540,18 +544,20 @@ export default function MarkenDNADetailPage() {
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
 
-              {/* Expandierter Inhalt */}
-              <div
-                className={clsx(
-                  'overflow-hidden transition-all duration-300 ease-in-out',
-                  isSyntheseExpanded ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
-                )}
-              >
-                <div className="bg-white rounded-lg border border-purple-200 p-5">
-                  <DNASyntheseRenderer content={dnaSynthese.plainText || ''} />
-                </div>
+          {/* Expandierter Inhalt */}
+          {dnaSynthese && (
+            <div
+              className={clsx(
+                'overflow-hidden transition-all duration-300 ease-in-out',
+                isSyntheseExpanded ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+              )}
+            >
+              <div className="bg-white rounded-lg border border-purple-200 p-5">
+                <DNASyntheseRenderer content={dnaSynthese.plainText || ''} />
               </div>
             </div>
           )}
