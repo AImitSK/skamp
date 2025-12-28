@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MarkenDNAChatModal } from '@/components/marken-dna/chat/MarkenDNAChatModal';
 import { DNASyntheseRenderer } from '@/components/marken-dna/DNASyntheseRenderer';
-import { StatusCircles, MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
+import { MarkenDNADocumentType, DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import { DnaIcon } from '@/components/icons/DnaIcon';
 import {
   ArrowLeftIcon,
@@ -339,37 +339,29 @@ export default function MarkenDNADetailPage() {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Status Circles mit Labels */}
-          <div className="mt-6">
-            <div className="flex items-center gap-1">
-              {DOCUMENT_TYPES.map(({ key }) => {
-                const status = getDocumentStatus(key);
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setEditingDocumentType(key)}
-                    className={clsx(
-                      'flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all',
-                      'hover:bg-zinc-100 cursor-pointer group'
-                    )}
-                  >
+            {/* Status Circles + Prozent (kompakt) */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {DOCUMENT_TYPES.map(({ key }) => {
+                  const status = getDocumentStatus(key);
+                  return (
                     <div
+                      key={key}
+                      title={t(`documents.${key}`)}
                       className={clsx(
-                        'w-4 h-4 rounded-full border-2 transition-all',
-                        'group-hover:scale-110',
+                        'w-3 h-3 rounded-full border-2',
                         status === 'completed' && 'bg-green-500 border-green-500',
                         status === 'draft' && 'bg-amber-500 border-amber-500',
                         status === 'missing' && 'bg-white border-zinc-300'
                       )}
                     />
-                    <span className="text-[10px] text-zinc-500 group-hover:text-zinc-900">
-                      {t(`documents.${key}`).split('-')[0].trim()}
-                    </span>
-                  </button>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <span className="text-sm font-medium text-zinc-600">
+                {Math.round((completedCount / 6) * 100)}%
+              </span>
             </div>
           </div>
         </div>
@@ -447,27 +439,19 @@ export default function MarkenDNADetailPage() {
               <button
                 onClick={() => setIsSyntheseExpanded(!isSyntheseExpanded)}
                 className={clsx(
-                  'w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all',
+                  'w-full flex items-center justify-between px-4 py-2 rounded-lg transition-all',
                   'border border-purple-200 hover:border-purple-300',
                   isSyntheseExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
                 )}
               >
-                <span className="text-sm font-medium text-purple-800 flex items-center gap-2">
-                  {isSyntheseExpanded ? (
-                    <>
-                      <ChevronUpIcon className="h-4 w-4" />
-                      Synthese ausblenden
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDownIcon className="h-4 w-4" />
-                      Synthese anzeigen
-                    </>
-                  )}
-                </span>
-                <span className="text-xs text-purple-600 bg-purple-200 px-2 py-0.5 rounded-full">
+                <span className="text-xs text-purple-600">
                   ~{tokenCount} Tokens
                 </span>
+                {isSyntheseExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-purple-600" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-purple-600" />
+                )}
               </button>
 
               {/* Expandierter Inhalt */}
