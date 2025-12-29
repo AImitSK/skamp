@@ -1,0 +1,345 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+  ChatBubbleLeftRightIcon,
+} from '@heroicons/react/24/outline';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import clsx from 'clsx';
+
+interface Kernbotschaft {
+  id: string;
+  content: string;
+  plainText?: string;
+  status: 'draft' | 'completed';
+  occasion?: string;
+  goal?: string;
+  keyMessage?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+interface KernbotschaftSectionProps {
+  projectId: string;
+  companyId: string;
+  kernbotschaft?: Kernbotschaft | null;
+  hasDNASynthese: boolean;
+  onOpenChat: () => void;
+  onDelete?: () => void;
+  isLoading?: boolean;
+}
+
+export function KernbotschaftSection({
+  projectId,
+  companyId,
+  kernbotschaft,
+  hasDNASynthese,
+  onOpenChat,
+  onDelete,
+  isLoading = false,
+}: KernbotschaftSectionProps) {
+  const t = useTranslations('markenDNA');
+
+  // UI State
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Click-Outside Handler für Menü
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isInsideMenu = target.closest('[data-menu-kernbotschaft]') !== null;
+      if (!isInsideMenu) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Status-Text
+  const statusText = kernbotschaft?.status === 'completed' ? 'Fertig' : 'Entwurf';
+
+  // Erstellungsdatum formatieren
+  const createdDate = kernbotschaft?.createdAt?.seconds
+    ? new Date(kernbotschaft.createdAt.seconds * 1000).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
+  const handleDeleteClick = () => {
+    setIsMenuOpen(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onDelete) {
+      onDelete();
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleEditClick = () => {
+    setIsMenuOpen(false);
+    onOpenChat();
+  };
+
+  // Wenn keine DNA Synthese vorhanden ist - Hinweis anzeigen
+  if (!hasDNASynthese) {
+    return (
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">
+                Kernbotschaft
+              </h3>
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Rechts: Inaktiver Button */}
+            <Button
+              disabled
+              className="border border-zinc-300 bg-zinc-100 text-zinc-400 text-sm cursor-not-allowed"
+            >
+              DNA Synthese erforderlich
+            </Button>
+          </div>
+
+          <p className="mt-3 text-sm text-zinc-500 ml-14">
+            Erstelle zuerst eine DNA Synthese, um die Kernbotschaft zu generieren.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Wenn keine Kernbotschaft vorhanden ist
+  if (!kernbotschaft) {
+    return (
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">
+                Kernbotschaft
+              </h3>
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Rechts: Erstellen Button */}
+            <Button
+              onClick={onOpenChat}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Lädt...
+                </>
+              ) : (
+                <>
+                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                  Mit KI erstellen
+                </>
+              )}
+            </Button>
+          </div>
+
+          <p className="mt-3 text-sm text-zinc-500 ml-14">
+            Erarbeite die Kernbotschaft im Dialog mit der KI.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Kernbotschaft vorhanden - kompaktes Layout mit Toggle
+  return (
+    <>
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
+          {/* Kompakte Zeile */}
+          <div className="flex items-center gap-4">
+            {/* Links: Icon + Titel + Datum */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-zinc-900">
+                  Kernbotschaft
+                </h3>
+                {createdDate && (
+                  <p className="text-xs text-zinc-500">
+                    Erstellt: {createdDate}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Mitte: Status-Toggle */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={clsx(
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all flex-shrink-0',
+                'border border-blue-200 hover:border-blue-300',
+                isExpanded ? 'bg-blue-100' : 'bg-blue-50 hover:bg-blue-100'
+              )}
+            >
+              <span
+                className={clsx(
+                  'text-xs whitespace-nowrap',
+                  kernbotschaft.status === 'completed' ? 'text-green-600' : 'text-blue-600'
+                )}
+              >
+                Status: {statusText}
+              </span>
+              {isExpanded ? (
+                <ChevronUpIcon className="h-4 w-4 text-blue-600" />
+              ) : (
+                <ChevronDownIcon className="h-4 w-4 text-blue-600" />
+              )}
+            </button>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Rechts: Weiterbearbeiten Button + Menü */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                onClick={onOpenChat}
+                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                    Lädt...
+                  </>
+                ) : (
+                  <>
+                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                    Weiterbearbeiten
+                  </>
+                )}
+              </Button>
+
+              {/* 3-Punkte-Menü */}
+              <div className="relative" data-menu-kernbotschaft>
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="h-9 w-9 flex items-center justify-center rounded-lg border border-blue-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                >
+                  <EllipsisVerticalIcon className="h-4 w-4 text-blue-600" />
+                </button>
+
+                {isMenuOpen && (
+                  <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                    <button
+                      onClick={handleEditClick}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      Bearbeiten
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      Löschen
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Expandierter Inhalt */}
+          <div
+            className={clsx(
+              'overflow-hidden transition-all duration-300 ease-in-out',
+              isExpanded ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+            )}
+          >
+            <div className="bg-white rounded-lg border border-blue-200 p-5">
+              {/* Anlass & Ziel wenn vorhanden */}
+              {(kernbotschaft.occasion || kernbotschaft.goal) && (
+                <div className="mb-4 pb-4 border-b border-zinc-200 grid grid-cols-2 gap-4">
+                  {kernbotschaft.occasion && (
+                    <div>
+                      <p className="text-xs font-medium text-zinc-500 mb-1">Anlass</p>
+                      <p className="text-sm text-zinc-900">{kernbotschaft.occasion}</p>
+                    </div>
+                  )}
+                  {kernbotschaft.goal && (
+                    <div>
+                      <p className="text-xs font-medium text-zinc-500 mb-1">Ziel</p>
+                      <p className="text-sm text-zinc-900">{kernbotschaft.goal}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Kernbotschaft Text */}
+              <div className="prose prose-sm max-w-none prose-zinc">
+                <p className="text-sm text-zinc-700 whitespace-pre-wrap">
+                  {kernbotschaft.plainText || kernbotschaft.content}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lösch-Bestätigung */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        size="sm"
+      >
+        <DialogTitle>Kernbotschaft löschen</DialogTitle>
+        <DialogBody>
+          <p className="text-zinc-600">
+            Möchtest du die Kernbotschaft wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+          </p>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowDeleteConfirm(false)}>
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
