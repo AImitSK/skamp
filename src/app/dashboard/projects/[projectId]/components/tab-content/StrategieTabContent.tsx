@@ -6,7 +6,6 @@ import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft, useCreateKernbotschaft, useUpdateKernbotschaft } from '@/lib/hooks/useKernbotschaft';
-import { useTextMatrix } from '@/lib/hooks/useTextMatrix';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
 import { toastService } from '@/lib/utils/toast';
@@ -39,7 +38,6 @@ export function StrategieTabContent({
   const { data: dnaSynthese } = useDNASynthese(companyId);
   const { data: isOutdated } = useIsDNASyntheseOutdated(companyId);
   const { data: kernbotschaft } = useKernbotschaft(projectId);
-  const { data: textMatrix } = useTextMatrix(projectId);
 
   // Synthese Mutations
   const { mutate: synthesize, isPending: isSynthesizing } = useSynthesizeDNA();
@@ -137,7 +135,7 @@ export function StrategieTabContent({
         isLoading={isSynthesizing || isDeleting}
       />
 
-      {/* TODO Phase 4.4: Kernbotschaft Chat */}
+      {/* Kernbotschaft Chat */}
       <KernbotschaftChat
         projectId={projectId}
         companyId={companyId}
@@ -147,28 +145,6 @@ export function StrategieTabContent({
         organizationId={organizationId}
         userId={userId}
       />
-
-      {/* TODO Phase 4: AI Sequenz Button */}
-      {kernbotschaft && dnaSynthese && !textMatrix && (
-        <AISequenzButton
-          projectId={projectId}
-          dnaSynthese={dnaSynthese}
-          kernbotschaft={kernbotschaft}
-        />
-      )}
-
-      {/* TODO Phase 4.5: Text-Matrix Section */}
-      {textMatrix && (
-        <TextMatrixSection
-          textMatrix={textMatrix}
-          onEdit={() => {
-            // TODO: Implementieren
-          }}
-          onRework={() => {
-            // TODO: Implementieren
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -329,40 +305,3 @@ function KernbotschaftChat({
   );
 }
 
-interface AISequenzButtonProps {
-  projectId: string;
-  dnaSynthese: any;
-  kernbotschaft: any;
-}
-
-function AISequenzButton(props: AISequenzButtonProps) {
-  return (
-    <div className="bg-white rounded-lg border border-zinc-200 p-6">
-      <h3 className="text-base font-semibold text-zinc-900 mb-2">
-        🧬 AI Sequenz
-      </h3>
-      <p className="text-sm text-zinc-600">
-        TODO Phase 4: AI Sequenz Button implementieren
-      </p>
-    </div>
-  );
-}
-
-interface TextMatrixSectionProps {
-  textMatrix: any;
-  onEdit: () => void;
-  onRework: () => void;
-}
-
-function TextMatrixSection(props: TextMatrixSectionProps) {
-  return (
-    <div className="bg-white rounded-lg border border-zinc-200 p-6">
-      <h3 className="text-base font-semibold text-zinc-900 mb-2">
-        📋 Text-Matrix
-      </h3>
-      <p className="text-sm text-zinc-600">
-        TODO Phase 4.5: Text-Matrix Section implementieren
-      </p>
-    </div>
-  );
-}
