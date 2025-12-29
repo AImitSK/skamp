@@ -20,8 +20,11 @@ import type { PromptLanguage } from '@/lib/ai/prompts/expert-mode';
  * Input Schema für den Experten-Assistenten Flow
  */
 const ExpertAssistantInputSchema = z.object({
-  /** Projekt-ID für Multi-Tenancy */
-  projectId: z.string().describe('ID des Projekts'),
+  /** Projekt-ID für Kernbotschaft */
+  projectId: z.string().describe('ID des Projekts (für Kernbotschaft)'),
+
+  /** Company-ID für DNA Synthese */
+  companyId: z.string().optional().describe('ID des Unternehmens (für DNA Synthese)'),
 
   /** Anfrage des Benutzers */
   userPrompt: z.string().describe('Anfrage des Benutzers'),
@@ -79,9 +82,16 @@ export const expertAssistantFlow = ai.defineFlow(
     outputSchema: ExpertAssistantOutputSchema,
   },
   async (input) => {
+    console.log('🚀 expertAssistantFlow gestartet:', {
+      projectId: input.projectId,
+      companyId: input.companyId,
+      promptLength: input.userPrompt?.length
+    });
+
     // Kontext aufbauen (lädt 🧪 DNA Synthese + 💬 Kernbotschaft)
     const context = await buildAIContext(
       input.projectId,
+      input.companyId,
       'expert',
       input.userPrompt
     );

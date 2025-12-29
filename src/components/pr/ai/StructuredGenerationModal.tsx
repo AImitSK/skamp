@@ -106,8 +106,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       prompt,
       context,
       selectedDocuments,
-      // AI Sequenz: projectId für Experten-Modus
-      projectId
+      // AI Sequenz: projectId + companyId für Experten-Modus
+      projectId,
+      companyId
     });
 
     // Wenn erfolgreich, zu Review wechseln
@@ -117,7 +118,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       // Bei Fehler zurück zu Content (error wird vom Hook gesetzt)
       setCurrentStep('content');
     }
-  }, [generate, generationMode, prompt, context, selectedDocuments]);
+  }, [generate, generationMode, prompt, context, selectedDocuments, projectId, companyId]);
 
   // Handler für Result-Verwendung
   const handleUseResult = useCallback(() => {

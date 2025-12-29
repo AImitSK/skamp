@@ -11,8 +11,10 @@ interface StructuredGenerateRequest {
   prompt: string;
   /** Modus: 'standard' (default) oder 'expert' (AI Sequenz) */
   mode?: 'standard' | 'expert';
-  /** Projekt-ID für Experten-Modus (lädt DNA Synthese + Kernbotschaft) */
+  /** Projekt-ID für Experten-Modus (lädt Kernbotschaft) */
   projectId?: string;
+  /** Company-ID für Experten-Modus (lädt DNA Synthese) */
+  companyId?: string;
   context?: {
     industry?: string;
     tone?: string;
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     try {
       // Request Body parsen
       const data: StructuredGenerateRequest = await req.json();
-      const { prompt, context, documentContext, mode, projectId } = data;
+      const { prompt, context, documentContext, mode, projectId, companyId } = data;
 
       // ══════════════════════════════════════════════════════════════
       // EXPERTEN-MODUS: AI Sequenz (DNA Synthese + Kernbotschaft)
@@ -48,9 +50,14 @@ export async function POST(request: NextRequest) {
 
         console.log('🧪 Experten-Modus: AI Sequenz mit Genkit Flow', {
           projectId,
+          companyId,
           promptLength: prompt?.length || 0,
           organizationId: auth.organizationId
         });
+
+        if (!companyId) {
+          console.warn('⚠️ Keine companyId übergeben - DNA Synthese wird nicht geladen');
+        }
 
         // AI Usage Limit Check
         const estimatedWords = estimateAIWords(prompt || '', 1000);
@@ -69,6 +76,7 @@ export async function POST(request: NextRequest) {
         // Expert Assistant Flow aufrufen (lädt DNA Synthese + Kernbotschaft automatisch)
         const expertResult = await expertAssistantFlow({
           projectId,
+          companyId,
           userPrompt: prompt || 'Erstelle eine Pressemeldung basierend auf der DNA Synthese und Kernbotschaft.',
           language: 'de',
           outputFormat: 'pressrelease'

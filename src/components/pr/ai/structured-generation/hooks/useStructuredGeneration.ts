@@ -29,8 +29,10 @@ export interface GenerateParams {
   context: GenerationContext;
   /** Ausgewählte Dokumente (Legacy, nicht mehr für Expert-Modus verwendet) */
   selectedDocuments: DocumentContext[];
-  /** Projekt-ID für Experten-Modus (AI Sequenz: DNA Synthese + Kernbotschaft) */
+  /** Projekt-ID für Experten-Modus (lädt Kernbotschaft) */
   projectId?: string;
+  /** Company-ID für Experten-Modus (lädt DNA Synthese) */
+  companyId?: string;
 }
 
 /**
@@ -77,7 +79,8 @@ export function useStructuredGeneration() {
     prompt,
     context,
     selectedDocuments,
-    projectId
+    projectId,
+    companyId
   }: GenerateParams): Promise<StructuredGenerateResponse | null> => {
     // Validierung für Experten-Modus: projectId erforderlich
     if (mode === 'expert' && !projectId) {
@@ -114,10 +117,11 @@ export function useStructuredGeneration() {
         };
       }
 
-      // EXPERTEN-MODUS: projectId + optionaler Prompt (AI Sequenz wird serverseitig geladen)
+      // EXPERTEN-MODUS: projectId + companyId + optionaler Prompt (AI Sequenz wird serverseitig geladen)
       if (mode === 'expert') {
         requestBody.mode = 'expert';
         requestBody.projectId = projectId;
+        requestBody.companyId = companyId;
         // Prompt nur senden wenn vorhanden
         if (prompt.trim()) {
           requestBody.prompt = prompt.trim();

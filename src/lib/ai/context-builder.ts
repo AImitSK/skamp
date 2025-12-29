@@ -47,7 +47,8 @@ export interface BuildAIContextOptions {
  * - **Standard-Modus**: Nutzt nur userPrompt, selectedOptions und template
  * - **Experten-Modus**: Laedt zusaetzlich DNA Synthese und Kernbotschaft
  *
- * @param projectId - ID des Projekts
+ * @param projectId - ID des Projekts (fuer Kernbotschaft)
+ * @param companyId - ID des Unternehmens (fuer DNA Synthese)
  * @param mode - Modus ('standard' oder 'expert')
  * @param userPrompt - Anfrage des Benutzers
  * @param options - Zusaetzliche Optionen (selectedOptions, template)
@@ -58,6 +59,7 @@ export interface BuildAIContextOptions {
  * // Standard-Modus
  * const context = await buildAIContext(
  *   projectId,
+ *   companyId,
  *   'standard',
  *   'Schreibe eine Pressemeldung ueber...',
  *   { selectedOptions: ['seo', 'formal'], template: 'press-release' }
@@ -66,6 +68,7 @@ export interface BuildAIContextOptions {
  * // Experten-Modus (laedt automatisch DNA Synthese + Kernbotschaft)
  * const expertContext = await buildAIContext(
  *   projectId,
+ *   companyId,
  *   'expert',
  *   'Schreibe eine Pressemeldung ueber...'
  * );
@@ -73,6 +76,7 @@ export interface BuildAIContextOptions {
  */
 export async function buildAIContext(
   projectId: string,
+  companyId: string | undefined,
   mode: 'standard' | 'expert',
   userPrompt: string,
   options?: BuildAIContextOptions
@@ -93,9 +97,17 @@ export async function buildAIContext(
       // - Kernbotschaften (Dachbotschaften)
       // - No-Go-Words (Blacklist)
       // - Zielgruppen-Definition
-      const dnaSynthese = await dnaSyntheseService.getSynthese(projectId);
-      if (dnaSynthese) {
-        context.dnaSynthese = dnaSynthese.plainText;
+      // WICHTIG: DNA Synthese gehoert zum Unternehmen (companyId), nicht zum Projekt!
+      if (companyId) {
+        const dnaSynthese = await dnaSyntheseService.getSynthese(companyId);
+        if (dnaSynthese) {
+          context.dnaSynthese = dnaSynthese.plainText;
+          console.log('✅ DNA Synthese geladen:', dnaSynthese.plainText?.substring(0, 100) + '...');
+        } else {
+          console.warn('⚠️ Keine DNA Synthese gefunden fuer companyId:', companyId);
+        }
+      } else {
+        console.warn('⚠️ Keine companyId uebergeben - DNA Synthese wird nicht geladen');
       }
 
       // 2. Kernbotschaft laden
@@ -107,6 +119,9 @@ export async function buildAIContext(
       const kernbotschaft = await kernbotschaftService.getKernbotschaftByProject(projectId);
       if (kernbotschaft) {
         context.kernbotschaft = kernbotschaft;
+        console.log('✅ Kernbotschaft geladen:', kernbotschaft.plainText?.substring(0, 100) + '...');
+      } else {
+        console.warn('⚠️ Keine Kernbotschaft gefunden fuer projectId:', projectId);
       }
     } catch (error) {
       console.error('Fehler beim Laden des Experten-Kontexts:', error);
