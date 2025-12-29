@@ -35,6 +35,28 @@ export interface StructuredGenerationModalProps {
   };
   organizationId?: string;
   dokumenteFolderId?: string;
+  /** Projekt-ID für Experten-Modus (AI Sequenz: DNA Synthese + Kernbotschaft) */
+  projectId?: string;
+  /** Company-ID des Kunden (für DNA Synthese) */
+  companyId?: string;
+}
+
+/**
+ * AI Sequenz Daten (DNA Synthese + Kernbotschaft)
+ */
+export interface AISequenzData {
+  /** DNA Synthese vorhanden? */
+  hasDNASynthese: boolean;
+  /** Kernbotschaft vorhanden? */
+  hasKernbotschaft: boolean;
+  /** DNA Synthese Vorschau (erste 200 Zeichen) */
+  dnaSynthesePreview?: string;
+  /** Kernbotschaft Anlass */
+  kernbotschaftOccasion?: string;
+  /** Kernbotschaft Ziel */
+  kernbotschaftGoal?: string;
+  /** Lädt gerade? */
+  isLoading: boolean;
 }
 
 /**
@@ -49,6 +71,10 @@ export interface ContextSetupStepProps {
   setGenerationMode: (mode: 'standard' | 'expert') => void;
   onClearDocuments?: () => void;
   onRemoveDocument?: (docId: string) => void;
+  /** AI Sequenz Daten für Experten-Modus */
+  aiSequenz?: AISequenzData;
+  /** Projekt-ID für Experten-Modus */
+  projectId?: string;
 }
 
 /**

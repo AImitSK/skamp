@@ -19,8 +19,11 @@ import {
   RocketLaunchIcon,
   BriefcaseIcon,
   ShoppingBagIcon,
-  NewspaperIcon
+  NewspaperIcon,
+  ExclamationTriangleIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
+import { DnaIcon } from '@/components/icons/DnaIcon';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
@@ -66,7 +69,9 @@ function ContextSetupStep({
   generationMode,
   setGenerationMode,
   onClearDocuments,
-  onRemoveDocument
+  onRemoveDocument,
+  aiSequenz,
+  projectId
 }: ContextSetupStepProps) {
   const t = useTranslations('pr.ai.structuredGeneration');
 
@@ -247,76 +252,108 @@ function ContextSetupStep({
         </>
       )}
 
-      {/* EXPERTEN-MODUS FELDER */}
-      {generationMode === 'expert' && onOpenDocumentPicker && (
-        <>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <DocumentTextIcon className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">{t('contextStep.documentsHeading')}</h4>
-            </div>
-
-            <p className="text-sm text-blue-700 mb-4">
-              {t('contextStep.documentsDescription')}
-            </p>
-
-          <Field>
-
-          {selectedDocuments && selectedDocuments.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircleIcon className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">
-                    {t('contextStep.documentsSelected', {
-                      count: selectedDocuments.length,
-                      plural: selectedDocuments.length !== 1 ? t('contextStep.documentsSelectedPlural') : ''
-                    })}
-                  </span>
+      {/* EXPERTEN-MODUS: AI Sequenz (DNA Synthese + Kernbotschaft) */}
+      {generationMode === 'expert' && (
+        <div className="space-y-4">
+          {/* Hinweis wenn kein Projekt ausgewählt */}
+          {!projectId && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-amber-900">Kein Projekt ausgewählt</h4>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Der Experten-Modus benötigt ein Projekt mit DNA Synthese und Kernbotschaft.
+                    Bitte wähle zuerst ein Projekt aus.
+                  </p>
                 </div>
-                <Button
-                  plain
-                  onClick={onOpenDocumentPicker}
-                  className="text-sm text-blue-700 hover:text-blue-800"
-                >
-                  {t('contextStep.changeButton')}
-                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* AI Sequenz Status */}
+          {projectId && aiSequenz && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <SparklesIcon className="h-5 w-5 text-purple-600" />
+                <h4 className="font-semibold text-purple-900">AI Sequenz - CeleroPress Formel</h4>
               </div>
 
-              <div className="grid grid-cols-1 gap-2">
-                {selectedDocuments.map(doc => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg hover:border-blue-200 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-blue-900 truncate">{doc.fileName.replace('.celero-doc', '')}</p>
-                      <p className="text-xs text-blue-600">{t('contextStep.wordCount', { count: doc.wordCount })}</p>
+              {aiSequenz.isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+                  <span className="ml-3 text-purple-700">Lade DNA Synthese und Kernbotschaft...</span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* DNA Synthese */}
+                  <div className={`p-4 rounded-lg border ${aiSequenz.hasDNASynthese ? 'bg-white border-purple-200' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <DnaIcon className={`h-5 w-5 ${aiSequenz.hasDNASynthese ? 'text-purple-600' : 'text-gray-400'}`} />
+                      <span className={`font-medium ${aiSequenz.hasDNASynthese ? 'text-purple-900' : 'text-gray-500'}`}>
+                        DNA Synthese
+                      </span>
+                      {aiSequenz.hasDNASynthese ? (
+                        <CheckCircleIcon className="h-4 w-4 text-green-500 ml-auto" />
+                      ) : (
+                        <ExclamationTriangleIcon className="h-4 w-4 text-amber-500 ml-auto" />
+                      )}
                     </div>
-                    {onRemoveDocument && (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveDocument(doc.id)}
-                        className="ml-3 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title={t('contextStep.removeDocumentTitle')}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                    {aiSequenz.hasDNASynthese ? (
+                      <p className="text-sm text-purple-700 line-clamp-2">{aiSequenz.dnaSynthesePreview}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Keine DNA Synthese vorhanden. Bitte zuerst erstellen.</p>
                     )}
                   </div>
-                ))}
-              </div>
+
+                  {/* Kernbotschaft */}
+                  <div className={`p-4 rounded-lg border ${aiSequenz.hasKernbotschaft ? 'bg-white border-purple-200' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ChatBubbleLeftRightIcon className={`h-5 w-5 ${aiSequenz.hasKernbotschaft ? 'text-blue-600' : 'text-gray-400'}`} />
+                      <span className={`font-medium ${aiSequenz.hasKernbotschaft ? 'text-blue-900' : 'text-gray-500'}`}>
+                        Kernbotschaft
+                      </span>
+                      {aiSequenz.hasKernbotschaft ? (
+                        <CheckCircleIcon className="h-4 w-4 text-green-500 ml-auto" />
+                      ) : (
+                        <ExclamationTriangleIcon className="h-4 w-4 text-amber-500 ml-auto" />
+                      )}
+                    </div>
+                    {aiSequenz.hasKernbotschaft ? (
+                      <div className="text-sm text-blue-700 space-y-1">
+                        {aiSequenz.kernbotschaftOccasion && (
+                          <p><strong>Anlass:</strong> {aiSequenz.kernbotschaftOccasion}</p>
+                        )}
+                        {aiSequenz.kernbotschaftGoal && (
+                          <p><strong>Ziel:</strong> {aiSequenz.kernbotschaftGoal}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Keine Kernbotschaft vorhanden. Bitte zuerst erstellen.</p>
+                    )}
+                  </div>
+
+                  {/* Status-Zusammenfassung */}
+                  {aiSequenz.hasDNASynthese && aiSequenz.hasKernbotschaft ? (
+                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">
+                        AI Sequenz vollständig - bereit zur Generierung
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-amber-600" />
+                      <span className="text-sm font-medium text-amber-800">
+                        AI Sequenz unvollständig - bitte fehlende Komponenten erstellen
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          ) : (
-            <Button
-              color="secondary"
-              onClick={onOpenDocumentPicker}
-              className="w-full"
-            >
-              <DocumentTextIcon className="h-5 w-5 mr-2" />
-              {t('contextStep.selectDocumentsButton')}
-            </Button>
           )}
-          </Field>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -44,12 +44,13 @@ import ModalFooter from './structured-generation/components/ModalFooter';
 import { useTemplates } from './structured-generation/hooks/useTemplates';
 import { useStructuredGeneration } from './structured-generation/hooks/useStructuredGeneration';
 import { useKeyboardShortcuts } from './structured-generation/hooks/useKeyboardShortcuts';
+import { useAISequenz } from './structured-generation/hooks/useAISequenz';
 import ContextSetupStep from './structured-generation/steps/ContextSetupStep';
 import ContentInputStep from './structured-generation/steps/ContentInputStep';
 import GenerationStepComponent from './structured-generation/steps/GenerationStep';
 import ReviewStep from './structured-generation/steps/ReviewStep';
 
-export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: StructuredGenerationModalProps) {
+export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId, projectId, companyId }: StructuredGenerationModalProps) {
   const { user } = useAuth();
   const t = useTranslations('pr.ai.structuredGeneration');
   const tToast = useTranslations('toasts');
@@ -59,6 +60,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
   // Generation Mode State
   const [generationMode, setGenerationMode] = useState<'standard' | 'expert'>('standard');
+
+  // AI Sequenz laden (DNA Synthese + Kernbotschaft) für Experten-Modus
+  const aiSequenz = useAISequenz(projectId, companyId);
 
   // Generation Data
   const [context, setContext] = useState<GenerationContext>({});
@@ -101,7 +105,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       mode: generationMode,
       prompt,
       context,
-      selectedDocuments
+      selectedDocuments,
+      // AI Sequenz: projectId für Experten-Modus
+      projectId
     });
 
     // Wenn erfolgreich, zu Review wechseln
@@ -208,14 +214,17 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
               <ContextSetupStep
                 context={context}
                 onChange={setContext}
-                // NEU: Dokumenten-Props
+                // Dokumenten-Props (Legacy, wird für Standard-Modus nicht mehr benötigt)
                 selectedDocuments={selectedDocuments}
                 onOpenDocumentPicker={() => setShowDocumentPicker(true)}
                 onClearDocuments={() => setSelectedDocuments([])}
                 onRemoveDocument={(docId) => setSelectedDocuments(prev => prev.filter(d => d.id !== docId))}
-                // NEU: Modus-Props
+                // Modus-Props
                 generationMode={generationMode}
                 setGenerationMode={handleModeChange}
+                // AI Sequenz für Experten-Modus (DNA Synthese + Kernbotschaft)
+                aiSequenz={aiSequenz}
+                projectId={projectId}
               />
             )}
 
@@ -265,7 +274,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
             onUseResult={handleUseResult}
             canGenerate={
               (generationMode === 'standard' && prompt.trim() !== '') ||
-              (generationMode === 'expert' && selectedDocuments.length > 0)
+              (generationMode === 'expert' && aiSequenz.hasDNASynthese && aiSequenz.hasKernbotschaft && !!projectId)
             }
             isGenerating={isGenerating}
           />

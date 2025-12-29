@@ -1335,6 +1335,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           }}
           organizationId={currentOrganization?.id}
           dokumenteFolderId={dokumenteFolderId}
+          projectId={selectedProjectId}
+          companyId={selectedProject?.customer?.id || selectedCompanyId}
         />
       )}
 

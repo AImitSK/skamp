@@ -1534,6 +1534,9 @@ export default function NewPRCampaignPage() {
             title: campaignTitle,
             content: ''
           }}
+          organizationId={currentOrganization?.id}
+          projectId={selectedProjectId}
+          companyId={selectedProject?.customer?.id || selectedCompanyId}
         />
       )}
 

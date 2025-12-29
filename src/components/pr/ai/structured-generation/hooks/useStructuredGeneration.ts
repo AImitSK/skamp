@@ -27,8 +27,10 @@ export interface GenerateParams {
   prompt: string;
   /** Generierungs-Kontext (Branche, Tonalität, Zielgruppe, etc.) */
   context: GenerationContext;
-  /** Ausgewählte Dokumente (erforderlich im Expert-Modus) */
+  /** Ausgewählte Dokumente (Legacy, nicht mehr für Expert-Modus verwendet) */
   selectedDocuments: DocumentContext[];
+  /** Projekt-ID für Experten-Modus (AI Sequenz: DNA Synthese + Kernbotschaft) */
+  projectId?: string;
 }
 
 /**
@@ -74,16 +76,25 @@ export function useStructuredGeneration() {
     mode,
     prompt,
     context,
-    selectedDocuments
+    selectedDocuments,
+    projectId
   }: GenerateParams): Promise<StructuredGenerateResponse | null> => {
-    // Validierung
-    const validation = validateInput(mode, prompt, context, selectedDocuments);
-    if (!validation.isValid) {
-      const errorMessage = validation.errorKey
-        ? t(validation.errorKey as any)
-        : t('validation.validationFailed');
-      setError(errorMessage);
+    // Validierung für Experten-Modus: projectId erforderlich
+    if (mode === 'expert' && !projectId) {
+      setError(t('validation.projectRequired'));
       return null;
+    }
+
+    // Validierung für Standard-Modus
+    if (mode === 'standard') {
+      const validation = validateInput(mode, prompt, context, selectedDocuments);
+      if (!validation.isValid) {
+        const errorMessage = validation.errorKey
+          ? t(validation.errorKey as any)
+          : t('validation.validationFailed');
+        setError(errorMessage);
+        return null;
+      }
     }
 
     setIsGenerating(true);
@@ -103,18 +114,16 @@ export function useStructuredGeneration() {
         };
       }
 
-      // EXPERTEN-MODUS: Dokumente + optionaler Prompt
+      // EXPERTEN-MODUS: projectId + optionaler Prompt (AI Sequenz wird serverseitig geladen)
       if (mode === 'expert') {
-        // Prompt nur senden wenn vorhanden, sonst Default
+        requestBody.mode = 'expert';
+        requestBody.projectId = projectId;
+        // Prompt nur senden wenn vorhanden
         if (prompt.trim()) {
           requestBody.prompt = prompt.trim();
         } else {
           requestBody.prompt = t('defaultPrompt');
         }
-
-        requestBody.documentContext = {
-          documents: selectedDocuments
-        };
       }
 
       // API-Call
