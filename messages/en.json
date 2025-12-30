@@ -11028,6 +11028,10 @@
       "contentTooShortForHeadlines": "Please enter some content in the press release first so the AI can generate headlines from it.",
       "noHeadlinesGenerated": "No headlines could be generated. Please try again."
     },
+    "video": {
+      "linkCopied": "Video link copied to clipboard",
+      "copyFailed": "Could not copy link"
+    },
     "authRequired": "Authentication required",
     "archiveError": "Error archiving",
     "autoReportingActivated": "Auto-reporting activated",
@@ -11628,6 +11632,29 @@
       "warning": {
         "title": "Warning",
         "message": "You are overriding the tone from the Brand DNA. This may lead to inconsistencies in brand communication."
+      }
+    }
+  },
+  "videoInfoCard": {
+    "fullscreen": "Fullscreen",
+    "copyLink": "Copy link",
+    "openYouTube": "Open on YouTube",
+    "title": "Tutorial Video",
+    "description": "Watch our tutorial video."
+  },
+  "markenDnaPage": {
+    "video": {
+      "title": "Brand DNA Tutorial",
+      "description": "Learn in 3 minutes how to create brand DNA for your customers and generate professional PR texts.",
+      "features": {
+        "crmSetup": "CRM Setup & Contacts",
+        "documents": "The 6 Strategy Documents",
+        "synthesis": "DNA Synthesis",
+        "projectUsage": "Usage in Projects"
+      },
+      "actions": {
+        "start": "Get Started",
+        "docs": "Documentation"
       }
     }
   }

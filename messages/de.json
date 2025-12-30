@@ -11042,6 +11042,10 @@
       "contentTooShortForHeadlines": "Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.",
       "noHeadlinesGenerated": "Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut."
     },
+    "video": {
+      "linkCopied": "Video-Link in Zwischenablage kopiert",
+      "copyFailed": "Link konnte nicht kopiert werden"
+    },
     "authRequired": "Authentifizierung erforderlich",
     "archiveError": "Fehler beim Archivieren",
     "autoReportingActivated": "Auto-Reporting aktiviert",
@@ -11642,6 +11646,29 @@
       "warning": {
         "title": "Achtung",
         "message": "Du überschreibst die Tonalität aus der Marken-DNA. Dies kann zu Inkonsistenzen in der Markenkommunikation führen."
+      }
+    }
+  },
+  "videoInfoCard": {
+    "fullscreen": "Vollbild",
+    "copyLink": "Link kopieren",
+    "openYouTube": "Auf YouTube öffnen",
+    "title": "Erklärvideo",
+    "description": "Schauen Sie sich unser Erklärvideo an."
+  },
+  "markenDnaPage": {
+    "video": {
+      "title": "Marken-DNA Erklärvideo",
+      "description": "Lernen Sie in 3 Minuten, wie Sie die Marken-DNA für Ihre Kunden erstellen und professionelle PR-Texte generieren.",
+      "features": {
+        "crmSetup": "CRM-Setup & Ansprechpartner",
+        "documents": "Die 6 Strategiedokumente",
+        "synthesis": "DNA-Synthese",
+        "projectUsage": "Nutzung in Projekten"
+      },
+      "actions": {
+        "start": "Jetzt starten",
+        "docs": "Dokumentation"
       }
     }
   }

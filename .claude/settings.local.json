@@ -88,12 +88,8 @@
       "Bash(del update-translations.py messagesde.json.backup messagesen.json.backup)",
       "Bash(del add_templates_validator.py)",
       "Bash(timeout 10 npm run:*)",
-      "Bash(touch:*)",
-      "Bash(Select-String -Pattern \"marken-dna\" -Context 2,2)",
-      "WebFetch(domain:skamp-git-feature-marken-dna-aimitsks-projects.vercel.app)",
-      "Bash(if not exist \"C:\\\\Users\\\\StefanKühne\\\\Desktop\\\\Projekte\\\\skamp\\\\src\\\\components\\\\marken-dna\\\\chat\\\\components\" mkdir \"C:\\\\Users\\\\StefanKühne\\\\Desktop\\\\Projekte\\\\skamp\\\\src\\\\components\\\\marken-dna\\\\chat\\\\components\")",
-      "Bash(Select-Object -First 50)",
-      "Bash(git reset:*)"
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -16,6 +16,7 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CompanyTable } from './components/CompanyTable';
 import { MarkenDNAEditorModal } from '@/components/marken-dna/MarkenDNAEditorModal';
+import { VideoInfoCard } from '@/components/ui/VideoInfoCard';
 import { toastService } from '@/lib/utils/toast';
 import { type MarkenDNADocumentType, type DocumentStatus } from '@/components/marken-dna/StatusCircles';
 import clsx from 'clsx';
@@ -32,6 +33,7 @@ export default function MarkenDNAPage() {
   const t = useTranslations('markenDNA');
   const tCommon = useTranslations('common');
   const tToast = useTranslations('toasts');
+  const tVideo = useTranslations('markenDnaPage.video');
   const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -131,6 +133,21 @@ export default function MarkenDNAPage() {
 
   return (
     <div>
+      {/* Video Tutorial Card */}
+      <VideoInfoCard
+        videoId="yTfquGkL4cg"
+        title={tVideo('title')}
+        description={tVideo('description')}
+        features={[
+          tVideo('features.crmSetup'),
+          tVideo('features.documents'),
+          tVideo('features.synthesis'),
+          tVideo('features.projectUsage')
+        ]}
+        variant="default"
+        className="mb-8"
+      />
+
       {/* Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
