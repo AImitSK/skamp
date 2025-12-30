@@ -409,6 +409,14 @@ export const expertAssistantFlow = ai.defineFlow(
       context.kernbotschaft
     );
 
+    // Debug: Zeige ob DNA/Kernbotschaft im Prompt enthalten sind
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('📝 System-Prompt Analyse:');
+    console.log('   - Enthält DNA Synthese:', systemPrompt.includes('DNA SYNTHESE START'));
+    console.log('   - Enthält Kernbotschaft:', systemPrompt.includes('KERNBOTSCHAFT:') || systemPrompt.includes('ANLASS:'));
+    console.log('   - Prompt-Länge:', systemPrompt.length, 'Zeichen');
+    console.log('═══════════════════════════════════════════════════════════════');
+
     // ══════════════════════════════════════════════════════════════
     // 3. GENERIERUNG MIT GEMINI 2.5 FLASH
     // ══════════════════════════════════════════════════════════════

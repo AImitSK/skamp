@@ -1,7 +1,14 @@
 // src/lib/ai/context-builder.ts
-import { dnaSyntheseService } from '@/lib/firebase/dna-synthese-service';
-import { kernbotschaftService } from '@/lib/firebase/kernbotschaft-service';
+/**
+ * WICHTIG: Dieser Code läuft in API Routes (Server-Kontext)!
+ * Daher MUSS der Firebase Admin SDK verwendet werden, nicht der Client SDK.
+ *
+ * Die Services (dnaSyntheseService, kernbotschaftService) verwenden den Client SDK,
+ * der in Server-Kontext nicht funktioniert. Deshalb laden wir hier direkt mit adminDb.
+ */
+import { adminDb } from '@/lib/firebase/admin-init';
 import { Kernbotschaft } from '@/types/kernbotschaft';
+import { DNASynthese } from '@/types/dna-synthese';
 
 /**
  * AI Context Interface
@@ -88,43 +95,74 @@ export async function buildAIContext(
   };
 
   // Im Experten-Modus: DNA Synthese und Kernbotschaft automatisch laden
+  // WICHTIG: Verwendet Firebase Admin SDK (adminDb), da dieser Code in API Routes läuft!
   if (mode === 'expert') {
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('🔍 buildAIContext: Lade Experten-Kontext (Admin SDK)');
+    console.log('   projectId:', projectId);
+    console.log('   companyId:', companyId);
+    console.log('═══════════════════════════════════════════════════════════════');
+
     try {
       // 1. DNA Synthese laden (bereits verdichtet auf ~500 Tokens)
-      // Die DNA Synthese enthaelt:
-      // - Tonalitaet (formal/casual/modern)
-      // - USP & Positionierung
-      // - Kernbotschaften (Dachbotschaften)
-      // - No-Go-Words (Blacklist)
-      // - Zielgruppen-Definition
       // WICHTIG: DNA Synthese gehoert zum Unternehmen (companyId), nicht zum Projekt!
+      // Firestore-Pfad: companies/{companyId}/markenDNA/synthesis
       if (companyId) {
-        const dnaSynthese = await dnaSyntheseService.getSynthese(companyId);
-        if (dnaSynthese) {
+        console.log('📥 Lade DNA Synthese fuer companyId:', companyId);
+        const syntheseRef = adminDb
+          .collection('companies')
+          .doc(companyId)
+          .collection('markenDNA')
+          .doc('synthesis');
+        const syntheseSnap = await syntheseRef.get();
+
+        if (syntheseSnap.exists) {
+          const dnaSynthese = { id: syntheseSnap.id, ...syntheseSnap.data() } as DNASynthese;
           context.dnaSynthese = dnaSynthese.plainText;
-          console.log('✅ DNA Synthese geladen:', dnaSynthese.plainText?.substring(0, 100) + '...');
+          console.log('✅ DNA Synthese geladen!');
+          console.log('   - ID:', dnaSynthese.id);
+          console.log('   - Laenge:', dnaSynthese.plainText?.length || 0, 'Zeichen');
+          console.log('   - Preview:', dnaSynthese.plainText?.substring(0, 200) + '...');
         } else {
-          console.warn('⚠️ Keine DNA Synthese gefunden fuer companyId:', companyId);
+          console.warn('⚠️ KEINE DNA Synthese gefunden!');
+          console.warn('   Firestore-Pfad: companies/' + companyId + '/markenDNA/synthesis');
         }
       } else {
-        console.warn('⚠️ Keine companyId uebergeben - DNA Synthese wird nicht geladen');
+        console.warn('⚠️ KEINE companyId uebergeben - DNA Synthese wird nicht geladen!');
       }
 
       // 2. Kernbotschaft laden
-      // Die Kernbotschaft enthaelt:
-      // - Anlass (Warum jetzt?)
-      // - Ziel (Was soll erreicht werden?)
-      // - Teilbotschaft (Projekt-spezifische Message)
-      // - Material/Fakten (Daten fuer dieses Projekt)
-      const kernbotschaft = await kernbotschaftService.getKernbotschaftByProject(projectId);
-      if (kernbotschaft) {
+      // Firestore-Pfad: projects/{projectId}/kernbotschaft/{id}
+      console.log('📥 Lade Kernbotschaft fuer projectId:', projectId);
+      const kernbotschaftRef = adminDb
+        .collection('projects')
+        .doc(projectId)
+        .collection('kernbotschaft');
+      const kernbotschaftSnap = await kernbotschaftRef.get();
+
+      if (!kernbotschaftSnap.empty) {
+        const firstDoc = kernbotschaftSnap.docs[0];
+        const kernbotschaft = { id: firstDoc.id, ...firstDoc.data() } as Kernbotschaft;
         context.kernbotschaft = kernbotschaft;
-        console.log('✅ Kernbotschaft geladen:', kernbotschaft.plainText?.substring(0, 100) + '...');
+        console.log('✅ Kernbotschaft geladen!');
+        console.log('   - ID:', kernbotschaft.id);
+        console.log('   - Anlass:', kernbotschaft.occasion || '(nicht gesetzt)');
+        console.log('   - Ziel:', kernbotschaft.goal || '(nicht gesetzt)');
+        console.log('   - PlainText Laenge:', kernbotschaft.plainText?.length || 0, 'Zeichen');
+        console.log('   - Preview:', kernbotschaft.plainText?.substring(0, 200) + '...');
       } else {
-        console.warn('⚠️ Keine Kernbotschaft gefunden fuer projectId:', projectId);
+        console.warn('⚠️ KEINE Kernbotschaft gefunden!');
+        console.warn('   Firestore-Pfad: projects/' + projectId + '/kernbotschaft/...');
       }
+
+      console.log('═══════════════════════════════════════════════════════════════');
+      console.log('📊 ZUSAMMENFASSUNG buildAIContext:');
+      console.log('   - DNA Synthese vorhanden:', !!context.dnaSynthese);
+      console.log('   - Kernbotschaft vorhanden:', !!context.kernbotschaft);
+      console.log('═══════════════════════════════════════════════════════════════');
+
     } catch (error) {
-      console.error('Fehler beim Laden des Experten-Kontexts:', error);
+      console.error('❌ FEHLER beim Laden des Experten-Kontexts:', error);
       // Context wird trotz Fehler zurueckgegeben (Graceful Degradation)
     }
   }
