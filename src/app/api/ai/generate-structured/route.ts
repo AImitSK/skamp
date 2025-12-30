@@ -83,27 +83,24 @@ export async function POST(request: NextRequest) {
         });
 
         // AI Usage tracken
+        const outputText = expertResult.structured.headline +
+          expertResult.structured.leadParagraph +
+          expertResult.structured.bodyParagraphs.join(' ');
         try {
-          await trackAIUsage(auth.organizationId, prompt || '', expertResult.content);
+          await trackAIUsage(auth.organizationId, prompt || '', outputText);
         } catch (trackingError) {
           console.error('⚠️ Failed to track AI usage:', trackingError);
         }
 
-        // Response im erwarteten Format
+        // Response im strukturierten Format (wie generatePressReleaseStructuredFlow)
+        const rawText = `${expertResult.structured.headline}\n\n${expertResult.structured.leadParagraph}\n\n${expertResult.structured.bodyParagraphs.join('\n\n')}`;
+
         return NextResponse.json({
           success: true,
-          structured: {
-            headline: 'Pressemeldung', // Wird aus Content extrahiert
-            leadParagraph: expertResult.content.substring(0, 300),
-            bodyParagraphs: [expertResult.content],
-            quote: null,
-            cta: null,
-            hashtags: [],
-            socialOptimized: false
-          },
-          headline: 'Pressemeldung',
-          htmlContent: `<div>${expertResult.content.replace(/\n/g, '<br/>')}</div>`,
-          rawText: expertResult.content,
+          structured: expertResult.structured,
+          headline: expertResult.structured.headline,
+          htmlContent: expertResult.structured.htmlContent,
+          rawText,
           aiProvider: 'genkit-expert',
           timestamp: new Date().toISOString(),
           usedDNASynthese: expertResult.usedDNASynthese,
