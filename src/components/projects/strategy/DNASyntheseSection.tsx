@@ -216,30 +216,29 @@ export function DNASyntheseSection({
               </div>
             </div>
 
-            {/* Mitte: Token-Toggle */}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={clsx(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all flex-shrink-0',
-                'border border-purple-200 hover:border-purple-300',
-                isExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
-              )}
-            >
-              <span className="text-xs text-purple-600 whitespace-nowrap">
-                ~{tokenCount} Tokens
-              </span>
-              {isExpanded ? (
-                <ChevronUpIcon className="h-4 w-4 text-purple-600" />
-              ) : (
-                <ChevronDownIcon className="h-4 w-4 text-purple-600" />
-              )}
-            </button>
-
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: 3-Punkte-Menü */}
+            {/* Rechts: Token-Toggle + 3-Punkte-Menü */}
             <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Token-Toggle */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={clsx(
+                  'h-9 flex items-center gap-2 px-3 rounded-lg transition-all',
+                  'border border-purple-200 hover:border-purple-300',
+                  isExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
+                )}
+              >
+                <span className="text-xs text-purple-600 whitespace-nowrap">
+                  ~{tokenCount} Tokens
+                </span>
+                {isExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-purple-600" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-purple-600" />
+                )}
+              </button>
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu>
                 <button

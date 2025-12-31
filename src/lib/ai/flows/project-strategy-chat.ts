@@ -29,6 +29,7 @@ export const ProjectStrategyChatOutputSchema = z.object({
   document: z.string().optional(),      // Extrahiertes [DOCUMENT]...[/DOCUMENT]
   progress: z.number().optional(),       // Extrahiertes [PROGRESS:XX]
   suggestions: z.array(z.string()).optional(), // Extrahierte [SUGGESTIONS]
+  status: z.enum(['draft', 'completed']).optional(), // Status fuer Speicherung
 });
 
 export type ProjectStrategyChatInput = z.infer<typeof ProjectStrategyChatInputSchema>;
@@ -68,11 +69,18 @@ export const projectStrategyChatFlow = ai.defineFlow(
     const responseText = response.text;
 
     // Strukturierte Daten aus Response extrahieren
+    const document = extractDocument(responseText);
+    const progress = extractProgress(responseText);
+
+    // Status bestimmen: completed wenn Dokument vorhanden oder Progress >= 100
+    const status = document || (progress && progress >= 100) ? 'completed' : 'draft';
+
     return {
       response: responseText,
-      document: extractDocument(responseText),
-      progress: extractProgress(responseText),
+      document,
+      progress,
       suggestions: extractSuggestions(responseText),
+      status,
     };
   }
 );

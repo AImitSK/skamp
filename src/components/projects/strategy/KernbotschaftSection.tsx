@@ -213,53 +213,34 @@ export function KernbotschaftSection({
               </div>
             </div>
 
-            {/* Mitte: Status-Toggle */}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={clsx(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all flex-shrink-0',
-                'border border-blue-200 hover:border-blue-300',
-                isExpanded ? 'bg-blue-100' : 'bg-blue-50 hover:bg-blue-100'
-              )}
-            >
-              <span
-                className={clsx(
-                  'text-xs whitespace-nowrap',
-                  kernbotschaft.status === 'completed' ? 'text-green-600' : 'text-blue-600'
-                )}
-              >
-                Status: {statusText}
-              </span>
-              {isExpanded ? (
-                <ChevronUpIcon className="h-4 w-4 text-blue-600" />
-              ) : (
-                <ChevronDownIcon className="h-4 w-4 text-blue-600" />
-              )}
-            </button>
-
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Weiterbearbeiten Button + Menü */}
+            {/* Rechts: Status-Toggle + 3-Punkte-Menü */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                onClick={onOpenChat}
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                    Lädt...
-                  </>
-                ) : (
-                  <>
-                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                    Weiterbearbeiten
-                  </>
+              {/* Status-Toggle */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={clsx(
+                  'h-9 flex items-center gap-2 px-3 rounded-lg transition-all',
+                  'border border-blue-200 hover:border-blue-300',
+                  isExpanded ? 'bg-blue-100' : 'bg-blue-50 hover:bg-blue-100'
                 )}
-              </Button>
-
+              >
+                <span
+                  className={clsx(
+                    'text-xs whitespace-nowrap',
+                    kernbotschaft.status === 'completed' ? 'text-green-600' : 'text-blue-600'
+                  )}
+                >
+                  Status: {statusText}
+                </span>
+                {isExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-blue-600" />
+                )}
+              </button>
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu-kernbotschaft>
                 <button
@@ -270,7 +251,18 @@ export function KernbotschaftSection({
                 </button>
 
                 {isMenuOpen && (
-                  <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                  <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onOpenChat();
+                      }}
+                      disabled={isLoading}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                    >
+                      <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                      KI-Chat
+                    </button>
                     <button
                       onClick={handleEditClick}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"

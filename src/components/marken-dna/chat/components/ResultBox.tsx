@@ -39,8 +39,9 @@ export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps)
   // Markdown-Formatierung entfernen
   const cleanMarkdown = (text: string) => {
     return text
-      .replace(/^#{1,6}\s*/g, '')  // ## Headers entfernen
-      .replace(/^\s*[-*]\s*/g, '') // - und * Listenpunkte entfernen
+      .replace(/^#{1,6}\s*/gm, '')  // ## Headers entfernen (multiline)
+      .replace(/^\s*[-*]\s+/gm, '') // - und * Listenpunkte entfernen (multiline, mit Leerzeichen dahinter)
+      .replace(/^\*\s*/gm, '')      // Alleinstehende * am Zeilenanfang entfernen
       .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold** → bold
       .replace(/\*([^*]+)\*/g, '$1')     // *italic* → italic
       .replace(/`([^`]+)`/g, '$1')       // `code` → code
