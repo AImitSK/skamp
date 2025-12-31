@@ -117,7 +117,11 @@ export function StrategieTabContent({
   };
 
   // Handler für Kernbotschaft speichern (Create oder Update)
-  const handleSaveKernbotschaft = async (content: string, status: 'draft' | 'completed') => {
+  const handleSaveKernbotschaft = async (
+    content: string,
+    status: 'draft' | 'completed',
+    chatHistory: Array<{ role: 'user' | 'assistant'; content: string }>
+  ) => {
     if (!userId || !projectId || !companyId) {
       toastService.error('Nicht authentifiziert');
       return;
@@ -133,6 +137,7 @@ export function StrategieTabContent({
             content,
             plainText: content.replace(/<[^>]*>/g, ''),
             status,
+            chatHistory, // Chat-Historie speichern
           },
           organizationId,
           userId,
@@ -150,6 +155,7 @@ export function StrategieTabContent({
             content,
             plainText: content.replace(/<[^>]*>/g, ''),
             status,
+            chatHistory, // Chat-Historie speichern
           },
           organizationId,
           userId,

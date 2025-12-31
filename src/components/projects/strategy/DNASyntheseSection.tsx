@@ -256,7 +256,7 @@ export function DNASyntheseSection({
                         handleSynthesizeClick();
                       }}
                       disabled={!canSynthesize || isLoading}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <SparklesIcon className="h-4 w-4" />
                       Neu generieren

@@ -258,7 +258,7 @@ export function KernbotschaftSection({
                         onOpenChat();
                       }}
                       disabled={isLoading}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                     >
                       <ChatBubbleLeftRightIcon className="h-4 w-4" />
                       KI-Chat

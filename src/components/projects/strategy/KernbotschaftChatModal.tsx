@@ -19,7 +19,7 @@ interface KernbotschaftChatModalProps {
   dnaSynthese?: string;
   existingKernbotschaft?: string;
   existingChatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  onSave: (content: string, status: 'draft' | 'completed') => Promise<void>;
+  onSave: (content: string, status: 'draft' | 'completed', chatHistory: Array<{ role: 'user' | 'assistant'; content: string }>) => Promise<void>;
 }
 
 /**
@@ -142,7 +142,9 @@ export function KernbotschaftChatModal({
 
     setIsSaving(true);
     try {
-      await onSave(currentDocument, documentStatus);
+      // Chat-Historie aus messages extrahieren (nur role und content)
+      const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
+      await onSave(currentDocument, documentStatus, chatHistory);
       toastService.success('Kernbotschaft gespeichert');
       onClose();
     } catch (error) {
