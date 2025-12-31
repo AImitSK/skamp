@@ -719,3 +719,252 @@ Basierend auf dem Feedback: Reduzierung von 5 auf 3 Tags:
 ### Phase 5: Persistenz
 14. [ ] Wiedereinstieg-Logik
 15. [ ] WelcomeBackBox
+
+---
+
+## Anhang: Implementierungsanalyse
+
+### Bestandsaufnahme der aktuellen Komponenten
+
+#### A. Chat-Modals (Container)
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `MarkenDNAChatModal.tsx` | **ANPASSEN** | Toolbox-Parser in AIMessage integrieren |
+| `KernbotschaftChatModal.tsx` | **ANPASSEN** | Gleiche Änderungen wie MarkenDNAChatModal |
+
+**Kritische Funktionen die erhalten bleiben müssen:**
+- ✅ `useGenkitChat` Hook Integration
+- ✅ Sidebar-Toggle & DocumentSidebar
+- ✅ Bestätigungs-Dialoge (Restart, Close)
+- ✅ Escape-Keyboard-Handler
+- ✅ Auto-Sidebar bei `documentStatus === 'completed'`
+- ✅ `onSave` Callback mit chatHistory
+
+#### B. Message-Komponenten
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `components/AIMessage.tsx` | **STARK ANPASSEN** | Parser für neue Tags hinzufügen |
+| `components/UserMessage.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+| `components/ChatMessages.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+| `components/LoadingIndicator.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+| `components/ResultBox.tsx` | **ERSETZEN** | Wird durch PhaseStatusBox etc. ersetzt |
+
+**AIMessage.tsx - Detaillierte Änderungen:**
+
+```tsx
+// AKTUELL: Nur [DOCUMENT] Tag
+const documentMatch = content.match(/\[DOCUMENT\]([\s\S]*?)\[\/DOCUMENT\]/);
+
+// NEU: Alle Toolbox-Tags parsen
+const roadmapMatch = content.match(/\[ROADMAP\]([\s\S]*?)\[\/ROADMAP\]/);
+const phaseStatusMatch = content.match(/\[PHASE_STATUS[^\]]*\]([\s\S]*?)\[\/PHASE_STATUS\]/);
+const resultMatch = content.match(/\[RESULT[^\]]*\]([\s\S]*?)\[\/RESULT\]/);
+const finalMatch = content.match(/\[FINAL\]([\s\S]*?)\[\/FINAL\]/);
+```
+
+**Rückwärtskompatibilität:** `[DOCUMENT]` Tag weiterhin unterstützen für bestehende Chats!
+
+#### C. Input & Actions
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `components/ChatInput.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+| `components/ActionBubbles.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+| `components/ChatHeader.tsx` | **BEIBEHALTEN** | Keine Änderungen nötig |
+
+#### D. Sidebar
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `components/DocumentSidebar.tsx` | **OPTIONAL ANPASSEN** | Inline-Edit Icons (Phase 4) |
+
+#### E. Hooks
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `useGenkitChat.ts` | **ANPASSEN** | Neue Felder für Phase-Status parsen |
+
+**useGenkitChat.ts - Neue Return-Werte:**
+
+```tsx
+// AKTUELL
+return {
+  document,
+  progress,
+  suggestedPrompts,
+  documentStatus,
+};
+
+// NEU (zusätzlich)
+return {
+  document,
+  progress,
+  suggestedPrompts,
+  documentStatus,
+  currentPhase,      // NEU: Aktuelle Phase (1-4)
+  phaseItems,        // NEU: Items der aktuellen Phase mit Status
+};
+```
+
+#### F. Backend (Flows & API)
+
+| Datei | Status | Änderungen |
+|-------|--------|------------|
+| `project-strategy-chat.ts` | **STARK ANPASSEN** | Prompt mit neuen Tags erweitern |
+| `api/ai-chat/project-strategy/route.ts` | **BEIBEHALTEN** | Keine Änderungen nötig |
+
+**project-strategy-chat.ts - Prompt-Änderungen:**
+
+```typescript
+// AKTUELL (Zeile 152-163)
+AUSGABE-FORMAT:
+Wenn du die Kernbotschaft erstellst, nutze:
+[DOCUMENT]...[/DOCUMENT]
+Fortschritt: [PROGRESS:XX]
+
+// NEU
+AUSGABE-FORMAT:
+Pro Antwort EINE dieser Boxen:
+[ROADMAP]...[/ROADMAP] - Am Anfang
+[PHASE_STATUS phase="X" title="..."]...[/PHASE_STATUS] - Während der Phasen
+[RESULT phase="X" title="..."]...[/RESULT] - Zur Bestätigung
+[FINAL]...[/FINAL] - Am Ende
+```
+
+---
+
+### Neue Komponenten (zu erstellen)
+
+**Ordner:** `src/components/marken-dna/chat/toolbox/`
+
+| Komponente | Zweck | Priorität |
+|------------|-------|-----------|
+| `ProgressCircle.tsx` | Kreis-Komponente (open/active/done) | P1 |
+| `ProgressLine.tsx` | Verbindungslinie | P1 |
+| `RoadmapBox.tsx` | Horizontale Phasen-Übersicht | P1 |
+| `PhaseStatusBox.tsx` | Vertikale ToDo-Liste mit Status | P1 |
+| `ResultConfirmBox.tsx` | Ergebnis mit Ja/Anpassen Buttons | P1 |
+| `FinalSummaryBox.tsx` | Gesamtübersicht | P2 |
+| `WelcomeBackBox.tsx` | Wiedereinstieg | P3 |
+| `index.ts` | Barrel Export | P1 |
+
+---
+
+### Abhängigkeiten & Risiken
+
+#### Kritische Abhängigkeiten
+
+```
+KernbotschaftChatModal
+    └── useGenkitChat (Hook)
+           └── /api/ai-chat/project-strategy (API)
+                  └── projectStrategyChatFlow (Genkit Flow)
+                         └── buildProjectStrategyPrompt() ← HIER ÄNDERN
+
+MarkenDNAChatModal
+    └── useGenkitChat (Hook)
+           └── /api/ai-chat/marken-dna (API)
+                  └── markenDNAChatFlow ← OPTIONAL SPÄTER ANPASSEN
+```
+
+#### Risiken
+
+| Risiko | Wahrscheinlichkeit | Maßnahme |
+|--------|-------------------|----------|
+| KI vergisst Tags | Hoch | Strikte Beispiele im Prompt, Fallback auf Markdown |
+| Bestehende Chats brechen | Mittel | `[DOCUMENT]` Tag weiterhin unterstützen |
+| Performance bei vielen Boxen | Niedrig | Lazy Rendering, nur aktuelle Box rendern |
+| Button-Callbacks funktionieren nicht | Niedrig | Props durch alle Ebenen durchreichen |
+
+---
+
+### Migrations-Strategie
+
+#### Phase 1: Parallel-Implementierung (Empfohlen)
+
+1. Neue Toolbox-Komponenten in `/toolbox/` erstellen
+2. AIMessage.tsx erweitern (nicht ersetzen)
+3. Prompt anpassen aber `[DOCUMENT]` behalten
+4. Testen mit Feature-Flag
+
+```tsx
+// In AIMessage.tsx
+const USE_TOOLBOX = true; // Feature-Flag
+
+if (USE_TOOLBOX && roadmapMatch) {
+  return <RoadmapBox content={roadmapMatch[1]} />;
+}
+
+// Fallback auf altes Verhalten
+if (documentMatch) {
+  return <ResultBox content={documentMatch[1]} />;
+}
+```
+
+#### Phase 2: Vollständige Migration
+
+1. Feature-Flag entfernen
+2. Alte ResultBox.tsx deprecaten (nicht löschen)
+3. Prompt-Fallback für `[DOCUMENT]` entfernen
+
+---
+
+### Datei-für-Datei Änderungsübersicht
+
+```
+src/components/marken-dna/chat/
+├── components/
+│   ├── AIMessage.tsx          ← ANPASSEN (Parser erweitern)
+│   ├── UserMessage.tsx        ← BEIBEHALTEN
+│   ├── ChatMessages.tsx       ← BEIBEHALTEN
+│   ├── ChatInput.tsx          ← BEIBEHALTEN
+│   ├── ChatHeader.tsx         ← BEIBEHALTEN
+│   ├── ActionBubbles.tsx      ← BEIBEHALTEN
+│   ├── DocumentSidebar.tsx    ← SPÄTER ANPASSEN (Inline-Edit)
+│   ├── LoadingIndicator.tsx   ← BEIBEHALTEN
+│   ├── ResultBox.tsx          ← DEPRECATEN (nach Migration)
+│   └── index.ts               ← ANPASSEN (neue Exports)
+│
+├── toolbox/                   ← NEU ERSTELLEN
+│   ├── ProgressCircle.tsx
+│   ├── ProgressLine.tsx
+│   ├── RoadmapBox.tsx
+│   ├── PhaseStatusBox.tsx
+│   ├── ResultConfirmBox.tsx
+│   ├── FinalSummaryBox.tsx
+│   ├── WelcomeBackBox.tsx
+│   └── index.ts
+│
+├── MarkenDNAChatModal.tsx     ← SPÄTER ANPASSEN
+├── index.ts                   ← ANPASSEN (neue Exports)
+└── ...
+
+src/hooks/marken-dna/
+└── useGenkitChat.ts           ← ANPASSEN (neue Return-Werte)
+
+src/lib/ai/flows/
+└── project-strategy-chat.ts   ← ANPASSEN (Prompt mit neuen Tags)
+
+src/components/projects/strategy/
+└── KernbotschaftChatModal.tsx ← SPÄTER ANPASSEN
+```
+
+---
+
+### Geschätzte Änderungsumfänge
+
+| Komponente | Zeilen Code | Komplexität |
+|------------|-------------|-------------|
+| AIMessage.tsx | +80 Zeilen | Mittel |
+| useGenkitChat.ts | +30 Zeilen | Niedrig |
+| project-strategy-chat.ts | +50 Zeilen (Prompt) | Hoch (KI-Verhalten) |
+| ProgressCircle.tsx | ~40 Zeilen | Niedrig |
+| ProgressLine.tsx | ~20 Zeilen | Niedrig |
+| RoadmapBox.tsx | ~80 Zeilen | Mittel |
+| PhaseStatusBox.tsx | ~100 Zeilen | Mittel |
+| ResultConfirmBox.tsx | ~120 Zeilen | Mittel (Buttons) |
+| FinalSummaryBox.tsx | ~60 Zeilen | Niedrig |
+
+**Gesamt:** ~580 neue Zeilen Code + ~160 Zeilen Anpassungen
