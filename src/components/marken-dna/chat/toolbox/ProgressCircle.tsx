@@ -25,7 +25,7 @@ interface ProgressCircleProps {
  */
 export function ProgressCircle({
   status,
-  size = 'sm',
+  size = 'md',
   className = ''
 }: ProgressCircleProps) {
   // Größen: sm = 12px (w-3 h-3), md = 16px (w-4 h-4)

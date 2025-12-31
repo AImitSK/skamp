@@ -46,12 +46,12 @@ export function PhaseStatusBox({
     <div
       className={`
         rounded-lg border border-zinc-200 bg-zinc-50/50
-        px-4 py-3 max-w-md
+        px-4 py-3
         ${className}
       `}
     >
       {/* Header */}
-      <div className="text-xs font-medium text-zinc-500 mb-3">
+      <div className="text-sm font-medium text-zinc-500 mb-3">
         Phase {phase}: {title}
       </div>
 
@@ -68,13 +68,13 @@ export function PhaseStatusBox({
 
             {/* Item-Zeile */}
             <div className="flex items-start gap-2">
-              <ProgressCircle status={item.status} className="mt-0.5" />
+              <ProgressCircle status={item.status} className="mt-1" />
               <div className="flex-1 min-w-0">
-                <span className="text-xs text-zinc-700">
+                <span className="text-sm text-zinc-700">
                   {item.label}
                 </span>
                 {item.value && (
-                  <span className="text-xs text-zinc-500 ml-1">
+                  <span className="text-sm text-zinc-500 ml-1">
                     → {item.value}
                   </span>
                 )}

@@ -38,12 +38,12 @@ export function RoadmapBox({ phases, className = '' }: RoadmapBoxProps) {
     <div
       className={`
         rounded-lg border border-zinc-200 bg-zinc-50/50
-        px-4 py-3 max-w-md
+        px-4 py-3
         ${className}
       `}
     >
       {/* Header */}
-      <div className="text-xs font-medium text-zinc-500 mb-3">
+      <div className="text-sm font-medium text-zinc-500 mb-3">
         Roadmap
       </div>
 
@@ -68,7 +68,7 @@ export function RoadmapBox({ phases, className = '' }: RoadmapBoxProps) {
         <div className="flex">
           {phases.map((phase) => (
             <div key={phase.id} className="flex-1 last:flex-none">
-              <span className="text-xs text-zinc-600">
+              <span className="text-sm text-zinc-600">
                 {phase.shortTitle || phase.title}
               </span>
             </div>
@@ -82,7 +82,7 @@ export function RoadmapBox({ phases, className = '' }: RoadmapBoxProps) {
           <div key={phase.id}>
             <div className="flex items-center gap-2">
               <ProgressCircle status={phase.status} />
-              <span className="text-xs text-zinc-600">
+              <span className="text-sm text-zinc-600">
                 Phase {phase.id}: {phase.shortTitle || phase.title}
                 {phase.status === 'done' && ' ✓'}
                 {phase.status === 'active' && ' ← aktuell'}

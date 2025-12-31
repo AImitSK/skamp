@@ -48,20 +48,20 @@ export function ResultConfirmBox({
     <div
       className={`
         rounded-lg border border-green-200 bg-green-50/50
-        px-4 py-3 max-w-md
+        px-4 py-3
         ${className}
       `}
     >
       {/* Header */}
-      <div className="text-xs font-medium text-green-700 mb-3">
+      <div className="text-sm font-medium text-green-700 mb-3">
         Phase {phase}: {title} - Ergebnis
       </div>
 
       {/* Items als Key-Value Grid */}
       <div className="space-y-1 mb-3">
         {items.map((item, index) => (
-          <div key={index} className="flex text-xs">
-            <span className="text-zinc-500 w-24 flex-shrink-0">
+          <div key={index} className="flex text-sm">
+            <span className="text-zinc-500 w-32 flex-shrink-0">
               {item.label}
             </span>
             <span className="text-zinc-700">
@@ -76,7 +76,7 @@ export function ResultConfirmBox({
 
       {/* Buttons */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-600">
+        <span className="text-sm text-zinc-600">
           Stimmt das?
         </span>
         <div className="flex gap-2">
@@ -85,14 +85,14 @@ export function ResultConfirmBox({
               onClick={onAdjust}
               className="
                 inline-flex items-center gap-1
-                px-3 py-1.5 rounded-md
-                text-xs font-medium
+                px-4 py-2 rounded-md
+                text-sm font-medium
                 text-zinc-600 bg-white border border-zinc-300
                 hover:bg-zinc-50
                 transition-colors
               "
             >
-              <PencilIcon className="w-3 h-3" />
+              <PencilIcon className="w-4 h-4" />
               Anpassen
             </button>
           )}
@@ -101,14 +101,14 @@ export function ResultConfirmBox({
               onClick={onConfirm}
               className="
                 inline-flex items-center gap-1
-                px-3 py-1.5 rounded-md
-                text-xs font-medium
+                px-4 py-2 rounded-md
+                text-sm font-medium
                 text-white bg-green-600
                 hover:bg-green-700
                 transition-colors
               "
             >
-              <CheckIcon className="w-3 h-3" />
+              <CheckIcon className="w-4 h-4" />
               Ja
             </button>
           )}
