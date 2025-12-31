@@ -568,14 +568,154 @@ REGELN:
 
 ---
 
-## Nächste Schritte
+## Feedback & Optimierungen
 
-1. [ ] ProgressCircle Komponente erstellen und testen
-2. [ ] Box-Komponenten implementieren
-3. [ ] Parser in AIMessage erweitern
-4. [ ] Prompt mit Beispielen anpassen
-5. [ ] Button-Interaktion implementieren
-6. [ ] Mobile-Ansicht testen
-7. [ ] Animationen hinzufügen
-8. [ ] Wiedereinstieg-Logik
-9. [ ] Integration testen
+### Stärken des Konzepts
+
+| Element | Warum es funktioniert |
+|---------|----------------------|
+| Progress-Line | Gibt Sicherheit und Fortschritts-Gefühl, erinnert an Projektmanagement-Tools |
+| Kompaktheit (text-xs) | Verhindert Formular-Feeling, Chat bleibt Chat mit "Status-Badges" |
+| RESULT-Box mit Bestätigung | Psychologisch wichtig: User muss "Ja" sagen bevor KI weitermacht |
+| Wiedereinstieg-Logik | Wichtig für UX bei Tab-Wechsel oder Session-Timeout |
+
+### Gefahrenzonen
+
+#### 1. Prompt-Komplexität
+**Problem:** Zu viele verschiedene Tags ([ROADMAP], [TODO], [RESULT], [SUMMARY], [FINAL]) - KI kann bei langen Konversationen Tags vergessen.
+
+**Lösung:** Strikte Regel im Prompt:
+```
+WICHTIG: Gib pro Antwort immer exakt EINE Toolbox-Box aus.
+```
+
+#### 2. Tag-Reduktion
+**Idee:** [TODO] und [SUMMARY] zu einer einzigen [PHASE_STATUS] Box zusammenfassen:
+
+```
+[PHASE_STATUS phase="1" title="DER ANLASS" status="active"]
+(●) Thema: Produktlaunch Feature X
+(◐) News-Hook: (wird geklärt...)
+(○) Zeitbezug: -
+[/PHASE_STATUS]
+```
+
+Das macht es der KI einfacher und reduziert Fehlerquellen.
+
+#### 3. Animationen dezent halten
+Animationen sollten subtil sein. Wenn bei jeder Antwort Kreise hüpfen, wirkt es nervös.
+
+```css
+/* Sehr dezent - nur 0.15s, kaum merklich */
+@keyframes subtlePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }  /* Nur 10% größer, nicht 20% */
+  100% { transform: scale(1); }
+}
+```
+
+### Fehlende Features
+
+#### 1. Sofortiges Feedback beim Laden ("Anti-Ghosting")
+**Problem:** Während KI generiert, sieht User nur LoadingIndicator.
+
+**Lösung:** Box der aktuellen Phase sofort clientseitig zeigen (auch wenn Inhalt noch leer):
+
+```tsx
+// Beim Senden sofort optimistische Box zeigen
+function onSendMessage(message: string) {
+  // Sofort leere Box anzeigen
+  setOptimisticPhaseBox({
+    phase: currentPhase,
+    status: 'loading',
+    items: currentItems  // Bisherige Items behalten
+  });
+
+  // Dann API-Call
+  await sendToAPI(message);
+}
+```
+
+#### 2. Inline-Edit in RESULT-Box
+**Upgrade-Idee:** Werte in der RESULT-Box sollten kleine Edit-Icons haben:
+
+```
+┌─ Phase 1: Ergebnis ────────────────────┐
+│                                        │
+│ Thema      Produktlaunch Feature X [✏️]│
+│ News-Hook  20% Zeitersparnis       [✏️]│
+│                                        │
+│ ────────────────────────────────────── │
+│ Stimmt das?          [Ja] [Anpassen]   │
+└────────────────────────────────────────┘
+```
+
+Klick auf [✏️] → Sidebar öffnet sich mit Textfeld für diesen Wert.
+
+#### 3. Token-Effizienz im Prompt
+**Problem:** Lange Beispiele im System-Prompt füllen Kontext-Fenster.
+
+**Lösung:** Beispiele extrem kurz halten:
+```
+TAGS (jeweils EINE pro Antwort):
+[ROADMAP]...[/ROADMAP] - Phasen-Übersicht
+[PHASE_STATUS phase="X"]...[/PHASE_STATUS] - Aktueller Stand
+[RESULT phase="X"]...[/RESULT] - Zur Bestätigung
+[FINAL]...[/FINAL] - Gesamtübersicht am Ende
+```
+
+---
+
+## Vereinfachte Tag-Struktur
+
+Basierend auf dem Feedback: Reduzierung von 5 auf 3 Tags:
+
+| Alt | Neu | Zweck |
+|-----|-----|-------|
+| `[ROADMAP]` | `[ROADMAP]` | Bleibt (nur am Anfang) |
+| `[TODO]` + `[SUMMARY]` | `[PHASE_STATUS]` | Kombiniert: zeigt offene + erledigte Items |
+| `[RESULT]` | `[RESULT]` | Bleibt (zur Bestätigung) |
+| `[FINAL]` | `[FINAL]` | Bleibt (am Ende) |
+
+### Neues [PHASE_STATUS] Format
+
+```
+[PHASE_STATUS phase="1" title="DER ANLASS"]
+(●) Thema: Produktlaunch Feature X
+(◐) News-Hook: 20% Zeitersparnis (wird geklärt)
+(○) Zeitbezug
+[/PHASE_STATUS]
+```
+
+- `(●)` = erledigt mit Wert
+- `(◐)` = in Bearbeitung mit Teilwert
+- `(○)` = noch offen
+
+---
+
+## Nächste Schritte (Priorisiert)
+
+### Phase 1: Foundation (Zuerst!)
+1. [ ] Message-Komponenten (User/AI) sauber aufsetzen
+2. [ ] ProgressCircle Komponente erstellen
+3. [ ] ProgressLine Komponente erstellen
+
+### Phase 2: Kern-Boxen
+4. [ ] RoadmapBox implementieren
+5. [ ] PhaseStatusBox implementieren (kombiniert TODO+SUMMARY)
+6. [ ] ResultConfirmBox implementieren
+
+### Phase 3: Prompt-Anpassung
+7. [ ] Vereinfachte Tag-Struktur in Prompt einbauen
+8. [ ] "Eine Box pro Antwort" Regel hinzufügen
+9. [ ] Kurze Beispiele statt lange
+
+### Phase 4: UX-Feinschliff
+10. [ ] Optimistisches Rendering (Anti-Ghosting)
+11. [ ] Dezente Animationen
+12. [ ] Mobile-Ansicht
+13. [ ] Inline-Edit Icons (optional)
+
+### Phase 5: Persistenz
+14. [ ] Wiedereinstieg-Logik
+15. [ ] WelcomeBackBox
