@@ -43,6 +43,8 @@ export interface VideoInfoCardProps {
   variant?: 'default' | 'compact' | 'hero';
   /** Zusaetzliche CSS-Klassen */
   className?: string;
+  /** Optional: Close-Handler fuer ausblendbare Karte */
+  onClose?: () => void;
 }
 
 /**
@@ -71,7 +73,8 @@ export function VideoInfoCard({
   primaryAction,
   secondaryAction,
   variant = 'default',
-  className = ''
+  className = '',
+  onClose
 }: VideoInfoCardProps) {
   const t = useTranslations(i18nNamespace);
   const tCommon = useTranslations('videoInfoCard');
@@ -132,11 +135,23 @@ export function VideoInfoCard({
       {/* Hauptkarte */}
       <div
         className={`
-          bg-white rounded-xl border border-zinc-200 shadow-sm
+          rounded-xl border border-zinc-200 shadow-sm relative
+          bg-gradient-to-r from-blue-50/50 to-white
           ${variantClasses[variant]}
           ${className}
         `}
       >
+        {/* Close-Button oben rechts */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors z-10"
+            title={tCommon('close')}
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        )}
+
         <div className={`grid grid-cols-1 ${gridClasses[variant]}`}>
           {/* Video-Bereich */}
           <div className={variant === 'compact' ? 'lg:col-span-2' : ''}>
@@ -212,8 +227,8 @@ export function VideoInfoCard({
             )}
           </div>
 
-          {/* Info-Bereich */}
-          <div className={`flex flex-col ${variant === 'compact' ? 'lg:col-span-3' : ''}`}>
+          {/* Info-Bereich (vertikal zentriert) */}
+          <div className={`flex flex-col justify-center ${variant === 'compact' ? 'lg:col-span-3' : ''}`}>
             {/* Titel */}
             <h3 className={`
               font-semibold text-zinc-900

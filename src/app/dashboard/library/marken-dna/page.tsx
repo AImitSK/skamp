@@ -54,6 +54,21 @@ export default function MarkenDNAPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'complete' | 'incomplete'>('all');
   const [editingCompany, setEditingCompany] = useState<CompanyEnhanced | null>(null);
   const [editingDocumentType, setEditingDocumentType] = useState<MarkenDNADocumentType | null>(null);
+  const [showVideoCard, setShowVideoCard] = useState(true);
+
+  // Video-Karte Sichtbarkeit aus localStorage laden
+  useEffect(() => {
+    const hidden = localStorage.getItem('markenDNA_videoCard_hidden');
+    if (hidden === 'true') {
+      setShowVideoCard(false);
+    }
+  }, []);
+
+  // Video-Karte ausblenden und in localStorage speichern
+  const handleCloseVideoCard = () => {
+    setShowVideoCard(false);
+    localStorage.setItem('markenDNA_videoCard_hidden', 'true');
+  };
 
   // Nur Kunden filtern (type: 'customer')
   const customers = useMemo(() => {
@@ -134,19 +149,22 @@ export default function MarkenDNAPage() {
   return (
     <div>
       {/* Video Tutorial Card */}
-      <VideoInfoCard
-        videoId="yTfquGkL4cg"
-        title={tVideo('title')}
-        description={tVideo('description')}
-        features={[
-          tVideo('features.crmSetup'),
-          tVideo('features.documents'),
-          tVideo('features.synthesis'),
-          tVideo('features.projectUsage')
-        ]}
-        variant="default"
-        className="mb-8"
-      />
+      {showVideoCard && (
+        <VideoInfoCard
+          videoId="yTfquGkL4cg"
+          title={tVideo('title')}
+          description={tVideo('description')}
+          features={[
+            tVideo('features.crmSetup'),
+            tVideo('features.documents'),
+            tVideo('features.synthesis'),
+            tVideo('features.projectUsage')
+          ]}
+          variant="default"
+          className="mb-8"
+          onClose={handleCloseVideoCard}
+        />
+      )}
 
       {/* Toolbar */}
       <div className="mb-6">
