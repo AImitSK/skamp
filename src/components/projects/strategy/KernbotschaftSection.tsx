@@ -229,12 +229,7 @@ export function KernbotschaftSection({
                   isExpanded ? 'bg-blue-100' : 'bg-blue-50 hover:bg-blue-100'
                 )}
               >
-                <span
-                  className={clsx(
-                    'text-xs whitespace-nowrap',
-                    isCompleted ? 'text-green-600' : 'text-blue-600'
-                  )}
-                >
+                <span className="text-xs whitespace-nowrap text-blue-600">
                   Status: {statusText}
                 </span>
                 {isExpanded ? (
