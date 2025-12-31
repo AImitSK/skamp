@@ -12,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { KernbotschaftRenderer } from './KernbotschaftRenderer';
+import { KernbotschaftEditorModal } from './KernbotschaftEditorModal';
 import clsx from 'clsx';
 
 interface Kernbotschaft {
@@ -32,6 +34,7 @@ interface KernbotschaftSectionProps {
   kernbotschaft?: Kernbotschaft | null;
   hasDNASynthese: boolean;
   onOpenChat: () => void;
+  onEdit?: (content: string) => Promise<void>;
   onDelete?: () => void;
   isLoading?: boolean;
 }
@@ -42,15 +45,17 @@ export function KernbotschaftSection({
   kernbotschaft,
   hasDNASynthese,
   onOpenChat,
+  onEdit,
   onDelete,
   isLoading = false,
 }: KernbotschaftSectionProps) {
   const t = useTranslations('markenDNA');
 
-  // UI State
-  const [isExpanded, setIsExpanded] = useState(false);
+  // UI State - Default ausgeklappt wenn Kernbotschaft vorhanden
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   // Click-Outside Handler für Menü
   useEffect(() => {
@@ -93,7 +98,14 @@ export function KernbotschaftSection({
 
   const handleEditClick = () => {
     setIsMenuOpen(false);
-    onOpenChat();
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveEdit = async (content: string) => {
+    if (onEdit) {
+      await onEdit(content);
+    }
+    setIsEditorOpen(false);
   };
 
   // Wenn keine DNA Synthese vorhanden ist - Hinweis anzeigen
@@ -305,16 +317,20 @@ export function KernbotschaftSection({
                 </div>
               )}
 
-              {/* Kernbotschaft Text */}
-              <div className="prose prose-sm max-w-none prose-zinc">
-                <p className="text-sm text-zinc-700 whitespace-pre-wrap">
-                  {kernbotschaft.plainText || kernbotschaft.content}
-                </p>
-              </div>
+              {/* Kernbotschaft Text - mit Markdown-Formatierung */}
+              <KernbotschaftRenderer content={kernbotschaft.plainText || kernbotschaft.content} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Editor Modal */}
+      <KernbotschaftEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        content={kernbotschaft.plainText || kernbotschaft.content}
+        onSave={handleSaveEdit}
+      />
 
       {/* Lösch-Bestätigung */}
       <Dialog

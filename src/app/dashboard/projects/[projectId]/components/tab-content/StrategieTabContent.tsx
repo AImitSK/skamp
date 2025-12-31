@@ -210,6 +210,20 @@ export function StrategieTabContent({
         kernbotschaft={kernbotschaft}
         hasDNASynthese={hasDNASynthese}
         onOpenChat={() => setIsChatOpen(true)}
+        onEdit={async (content: string) => {
+          if (!kernbotschaft?.id || !userId) return;
+          await updateKernbotschaft({
+            projectId,
+            id: kernbotschaft.id,
+            data: {
+              content,
+              plainText: content.replace(/<[^>]*>/g, ''),
+            },
+            organizationId,
+            userId,
+          });
+          toastService.success('Kernbotschaft aktualisiert');
+        }}
         onDelete={handleDeleteKernbotschaft}
         isLoading={isDeletingKernbotschaft}
       />

@@ -238,28 +238,8 @@ export function DNASyntheseSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Neu generieren Button (nur wenn veraltet) + Menü */}
+            {/* Rechts: 3-Punkte-Menü */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {isOutdated && (
-                <Button
-                  onClick={handleSynthesizeClick}
-                  disabled={!canSynthesize || isLoading}
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-sm"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                      Generiere...
-                    </>
-                  ) : (
-                    <>
-                      <SparklesIcon className="h-4 w-4 mr-2" />
-                      Neu generieren
-                    </>
-                  )}
-                </Button>
-              )}
-
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu>
                 <button
@@ -270,7 +250,18 @@ export function DNASyntheseSection({
                 </button>
 
                 {isMenuOpen && (
-                  <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                  <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-50">
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleSynthesizeClick();
+                      }}
+                      disabled={!canSynthesize || isLoading}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <SparklesIcon className="h-4 w-4" />
+                      Neu generieren
+                    </button>
                     <button
                       onClick={handleEditClick}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
