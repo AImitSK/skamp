@@ -39,9 +39,8 @@ export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps)
   // Markdown-Formatierung entfernen
   const cleanMarkdown = (text: string) => {
     return text
-      .replace(/^#{1,6}\s*/gm, '')  // ## Headers entfernen (multiline)
-      .replace(/^\s*[-*]\s+/gm, '') // - und * Listenpunkte entfernen (multiline, mit Leerzeichen dahinter)
-      .replace(/^\*\s*/gm, '')      // Alleinstehende * am Zeilenanfang entfernen
+      .replace(/^#{1,6}\s*/gm, '')       // ## Headers entfernen
+      .replace(/^\s*[-*•]\s*/gm, '')     // Alle Listenpunkte am Zeilenanfang entfernen (-, *, •)
       .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold** → bold
       .replace(/\*([^*]+)\*/g, '$1')     // *italic* → italic
       .replace(/`([^`]+)`/g, '$1')       // `code` → code
@@ -49,15 +48,18 @@ export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps)
   };
 
   // Content parsen: Zeilen mit ":" werden als Key-Value behandelt
+  // Wenn ein Key ohne Value ist, wird die nächste Zeile als Value verwendet
   const parseContent = (text: string) => {
     const lines = text.split('\n').filter(line => line.trim());
+    const result: Array<{ type: 'kv' | 'text'; key?: string; value?: string; text?: string; isHeader?: boolean }> = [];
 
-    return lines.map((line, index) => {
+    let i = 0;
+    while (i < lines.length) {
       // Erst Markdown bereinigen
-      const cleanLine = cleanMarkdown(line);
+      const cleanLine = cleanMarkdown(lines[i]);
 
       // Erste Zeile oder Zeilen die mit "Phase" beginnen sind Überschriften
-      const isHeader = index === 0 || cleanLine.toLowerCase().startsWith('phase');
+      const isHeader = result.length === 0 || cleanLine.toLowerCase().startsWith('phase');
 
       // Prüfe ob es ein Key-Value Paar ist (enthält ":")
       const colonIndex = cleanLine.indexOf(':');
@@ -65,14 +67,28 @@ export function ResultBox({ title, content, icon = 'document' }: ResultBoxProps)
       if (colonIndex > 0 && colonIndex < 30) {
         // Key-Value Paar
         const key = cleanLine.substring(0, colonIndex).trim();
-        const value = cleanLine.substring(colonIndex + 1).trim();
+        let value = cleanLine.substring(colonIndex + 1).trim();
 
-        return { type: 'kv' as const, key, value, isHeader };
-      } else {
-        // Normale Zeile
-        return { type: 'text' as const, text: cleanLine, isHeader };
+        // Wenn Value leer ist, nächste Zeile(n) als Value verwenden
+        if (!value && i + 1 < lines.length) {
+          const nextLine = cleanMarkdown(lines[i + 1]);
+          // Nächste Zeile nur verwenden wenn sie kein neuer Key ist
+          if (!nextLine.includes(':') || nextLine.indexOf(':') >= 30) {
+            value = nextLine;
+            i++; // Nächste Zeile überspringen
+          }
+        }
+
+        result.push({ type: 'kv', key, value, isHeader });
+      } else if (cleanLine) {
+        // Normale Zeile (nur wenn nicht leer)
+        result.push({ type: 'text', text: cleanLine, isHeader });
       }
-    });
+
+      i++;
+    }
+
+    return result;
   };
 
   const parsedContent = parseContent(content);
