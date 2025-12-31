@@ -154,6 +154,18 @@ export function KernbotschaftChatModal({
     }
   };
 
+  // Toolbox-Callbacks für Phase-Bestätigung
+  const handleConfirmResult = (phase: number, content: string) => {
+    // User bestätigt Phase-Ergebnis → Sende Bestätigung an Chat
+    sendMessage(`Ja, Phase ${phase} ist korrekt. Weiter zur nächsten Phase.`);
+    toastService.success(`Phase ${phase} bestätigt`);
+  };
+
+  const handleAdjustResult = (phase: number) => {
+    // User will Ergebnis anpassen → Frage was geändert werden soll
+    sendMessage(`Ich möchte Phase ${phase} anpassen.`);
+  };
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={handleCloseWithWarning}>
@@ -202,7 +214,12 @@ export function KernbotschaftChatModal({
                 )}
 
                 {/* Chat Messages Area */}
-                <ChatMessages messages={chatMessages} isLoading={isLoading} />
+                <ChatMessages
+                  messages={chatMessages}
+                  isLoading={isLoading}
+                  onConfirmResult={handleConfirmResult}
+                  onAdjustResult={handleAdjustResult}
+                />
 
                 {/* Input Area */}
                 <div className="bg-zinc-50">

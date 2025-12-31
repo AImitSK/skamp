@@ -15,6 +15,8 @@ export interface ChatMessage {
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
+  onConfirmResult?: (phase: number, content: string) => void;
+  onAdjustResult?: (phase: number) => void;
 }
 
 /**
@@ -32,7 +34,12 @@ interface ChatMessagesProps {
  * - LoadingIndicator während KI generiert
  * - Copy & Regenerate Actions (in AIMessage)
  */
-export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  isLoading,
+  onConfirmResult,
+  onAdjustResult,
+}: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-Scroll zu neuen Messages
@@ -71,6 +78,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
                 content={message.content}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={() => handleRegenerate(message.id)}
+                onConfirmResult={onConfirmResult}
+                onAdjustResult={onAdjustResult}
               />
             );
           }

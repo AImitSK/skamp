@@ -82,7 +82,7 @@ export const projectStrategyChatFlow = ai.defineFlow(
     const currentPhase = extractCurrentPhase(responseText);
 
     // Status bestimmen: completed wenn Dokument vorhanden oder Progress >= 100
-    const status = document || (progress && progress >= 100) ? 'completed' : 'draft';
+    const status: 'draft' | 'completed' = document || (progress && progress >= 100) ? 'completed' : 'draft';
 
     return {
       response: responseText,
