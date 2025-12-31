@@ -6,11 +6,22 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { ResultBox } from './ResultBox';
+import {
+  RoadmapBox,
+  parseRoadmapContent,
+  PhaseStatusBox,
+  parsePhaseAttributes,
+  parsePhaseStatusContent,
+  ResultConfirmBox,
+  parseResultContent,
+} from '../toolbox';
 
 interface AIMessageProps {
   content: string;
   onRegenerate?: () => void;
   onCopy?: () => void;
+  onConfirmResult?: (phase: number, content: string) => void;
+  onAdjustResult?: (phase: number) => void;
 }
 
 /**
@@ -18,50 +29,135 @@ interface AIMessageProps {
  *
  * Features:
  * - Markdown-Rendering für Haupt-Content
- * - Extrahiert [DOCUMENT] Markup und zeigt es in ResultBox
+ * - Toolbox-Boxen für strukturierte Ausgaben:
+ *   - [ROADMAP] → RoadmapBox
+ *   - [PHASE_STATUS] → PhaseStatusBox
+ *   - [RESULT] → ResultConfirmBox
+ *   - [FINAL] → FinalSummaryBox (TODO)
+ * - Rückwärtskompatibel: [DOCUMENT] → ResultBox
  * - Icon-Buttons rechts unten (nur Icons mit Tooltip)
- * - Clean Design ohne Border
  *
- * Design-Referenz: docs/planning/marken-dna/08-CHAT-UI-KONZEPT.md
- *
- * @example
- * ```tsx
- * <AIMessage
- *   content="Perfekt! Golf & Gastronomie...\n\n[DOCUMENT]\n## Phase 1\n...\n[/DOCUMENT]"
- *   onCopy={() => copyToClipboard()}
- *   onRegenerate={() => regenerate()}
- * />
- * ```
+ * Design-Referenz: docs/planning/marken-dna/CHAT-TOOLBOX-KONZEPT.md
  */
-export function AIMessage({ content, onRegenerate, onCopy }: AIMessageProps) {
-  // Extrahiere Dokument-Inhalt aus [DOCUMENT]...[/DOCUMENT]
+export function AIMessage({
+  content,
+  onRegenerate,
+  onCopy,
+  onConfirmResult,
+  onAdjustResult,
+}: AIMessageProps) {
+  // ============================================================================
+  // TOOLBOX-TAGS PARSEN
+  // ============================================================================
+
+  // [ROADMAP]...[/ROADMAP]
+  const roadmapMatch = content.match(/\[ROADMAP\]([\s\S]*?)\[\/ROADMAP\]/);
+  const roadmapContent = roadmapMatch ? roadmapMatch[1].trim() : null;
+
+  // [PHASE_STATUS phase="X" title="..."]...[/PHASE_STATUS]
+  const phaseStatusMatch = content.match(/\[PHASE_STATUS([^\]]*)\]([\s\S]*?)\[\/PHASE_STATUS\]/);
+  const phaseStatusAttrs = phaseStatusMatch ? parsePhaseAttributes(phaseStatusMatch[1]) : null;
+  const phaseStatusContent = phaseStatusMatch ? phaseStatusMatch[2].trim() : null;
+
+  // [RESULT phase="X" title="..."]...[/RESULT]
+  const resultMatch = content.match(/\[RESULT([^\]]*)\]([\s\S]*?)\[\/RESULT\]/);
+  const resultAttrs = resultMatch ? parsePhaseAttributes(resultMatch[1]) : null;
+  const resultContent = resultMatch ? resultMatch[2].trim() : null;
+
+  // [FINAL]...[/FINAL] (TODO: FinalSummaryBox)
+  const finalMatch = content.match(/\[FINAL\]([\s\S]*?)\[\/FINAL\]/);
+  const finalContent = finalMatch ? finalMatch[1].trim() : null;
+
+  // ============================================================================
+  // LEGACY: [DOCUMENT] für Rückwärtskompatibilität
+  // ============================================================================
   const documentMatch = content.match(/\[DOCUMENT\]([\s\S]*?)\[\/DOCUMENT\]/);
   const documentContent = documentMatch ? documentMatch[1].trim() : null;
 
-  // Content ohne Meta-Tags für Anzeige
+  // ============================================================================
+  // CONTENT BEREINIGEN (alle Tags entfernen)
+  // ============================================================================
   const cleanContent = content
-    .replace(/\[DOCUMENT\][\s\S]*?\[\/DOCUMENT\]/g, '')  // [DOCUMENT]...[/DOCUMENT]
-    .replace(/\[PROGRESS:\d+\]/g, '')                     // [PROGRESS:50]
-    .replace(/\[SUGGESTIONS\][\s\S]*?\[\/SUGGESTIONS\]/g, '') // [SUGGESTIONS]...[/SUGGESTIONS]
-    .replace(/\[\/?SUGGESTIONS\]/g, '')                   // [SUGGESTIONS] oder [/SUGGESTIONS] alleine
-    .replace(/\[STATUS:[^\]]+\]/g, '')                    // [STATUS:completed], [STATUS:draft], etc.
-    .replace(/\[\/?DOCUMENT\]/g, '')                      // [DOCUMENT] oder [/DOCUMENT] alleine
+    // Neue Toolbox-Tags
+    .replace(/\[ROADMAP\][\s\S]*?\[\/ROADMAP\]/g, '')
+    .replace(/\[PHASE_STATUS[^\]]*\][\s\S]*?\[\/PHASE_STATUS\]/g, '')
+    .replace(/\[RESULT[^\]]*\][\s\S]*?\[\/RESULT\]/g, '')
+    .replace(/\[FINAL\][\s\S]*?\[\/FINAL\]/g, '')
+    // Legacy-Tags
+    .replace(/\[DOCUMENT\][\s\S]*?\[\/DOCUMENT\]/g, '')
+    .replace(/\[PROGRESS:\d+\]/g, '')
+    .replace(/\[SUGGESTIONS\][\s\S]*?\[\/SUGGESTIONS\]/g, '')
+    .replace(/\[\/?SUGGESTIONS\]/g, '')
+    .replace(/\[STATUS:[^\]]+\]/g, '')
+    .replace(/\[\/?DOCUMENT\]/g, '')
+    .replace(/\[\/?ROADMAP\]/g, '')
+    .replace(/\[\/?PHASE_STATUS[^\]]*\]/g, '')
+    .replace(/\[\/?RESULT[^\]]*\]/g, '')
+    .replace(/\[\/?FINAL\]/g, '')
     .trim();
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
   return (
     <div className="mb-6 max-w-3xl">
-      {/* Hauptinhalt: Markdown */}
-      <div className="prose prose-sm max-w-none prose-zinc
-                      prose-headings:font-semibold prose-headings:text-zinc-900
-                      prose-p:text-zinc-700 prose-p:leading-relaxed
-                      prose-strong:text-zinc-900 prose-strong:font-semibold
-                      prose-ul:my-2 prose-li:my-0.5 prose-li:text-zinc-700
-                      prose-li:marker:text-zinc-400">
-        <ReactMarkdown>{cleanContent}</ReactMarkdown>
-      </div>
+      {/* Hauptinhalt: Markdown (nur wenn vorhanden) */}
+      {cleanContent && (
+        <div className="prose prose-sm max-w-none prose-zinc
+                        prose-headings:font-semibold prose-headings:text-zinc-900
+                        prose-p:text-zinc-700 prose-p:leading-relaxed
+                        prose-strong:text-zinc-900 prose-strong:font-semibold
+                        prose-ul:my-2 prose-li:my-0.5 prose-li:text-zinc-700
+                        prose-li:marker:text-zinc-400">
+          <ReactMarkdown>{cleanContent}</ReactMarkdown>
+        </div>
+      )}
 
-      {/* Result-Box: Falls [DOCUMENT] vorhanden */}
-      {documentContent && (
+      {/* Toolbox: RoadmapBox */}
+      {roadmapContent && (
+        <div className="mt-3">
+          <RoadmapBox phases={parseRoadmapContent(roadmapContent)} />
+        </div>
+      )}
+
+      {/* Toolbox: PhaseStatusBox */}
+      {phaseStatusContent && phaseStatusAttrs && (
+        <div className="mt-3">
+          <PhaseStatusBox
+            phase={phaseStatusAttrs.phase}
+            title={phaseStatusAttrs.title}
+            items={parsePhaseStatusContent(phaseStatusContent)}
+          />
+        </div>
+      )}
+
+      {/* Toolbox: ResultConfirmBox */}
+      {resultContent && resultAttrs && (
+        <div className="mt-3">
+          <ResultConfirmBox
+            phase={resultAttrs.phase}
+            title={resultAttrs.title}
+            items={parseResultContent(resultContent)}
+            onConfirm={onConfirmResult ? () => onConfirmResult(resultAttrs.phase, resultContent) : undefined}
+            onAdjust={onAdjustResult ? () => onAdjustResult(resultAttrs.phase) : undefined}
+          />
+        </div>
+      )}
+
+      {/* Toolbox: FinalSummaryBox (TODO) */}
+      {finalContent && (
+        <div className="mt-3">
+          {/* TODO: FinalSummaryBox implementieren */}
+          <ResultBox
+            title="Zusammenfassung"
+            content={finalContent}
+            icon="document"
+          />
+        </div>
+      )}
+
+      {/* Legacy: ResultBox für [DOCUMENT] (Rückwärtskompatibilität) */}
+      {documentContent && !roadmapContent && !phaseStatusContent && !resultContent && (
         <div className="mt-3">
           <ResultBox
             title="Phasen-Ergebnis"
