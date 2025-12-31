@@ -136,7 +136,7 @@ export function VideoInfoCard({
       <div
         className={`
           rounded-xl border border-zinc-200 shadow-sm relative
-          bg-gradient-to-r from-blue-50/50 to-white
+          bg-gradient-to-r from-blue-100 to-white
           ${variantClasses[variant]}
           ${className}
         `}
