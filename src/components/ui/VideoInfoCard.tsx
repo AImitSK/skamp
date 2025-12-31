@@ -210,15 +210,14 @@ export function VideoInfoCard({
               <div className="flex items-center gap-2 mt-3">
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
                 >
                   <ClipboardIcon className="w-4 h-4" />
                   {tCommon('copyLink')}
                 </button>
-                <span className="text-zinc-300">|</span>
                 <button
                   onClick={handleOpenYouTube}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
                 >
                   <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                   {tCommon('openYouTube')}
