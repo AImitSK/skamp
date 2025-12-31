@@ -70,8 +70,10 @@ export function KernbotschaftSection({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Status-Text
-  const statusText = kernbotschaft?.status === 'completed' ? 'Fertig' : 'Entwurf';
+  // Status-Text (Aufwärtskompatibilität: wenn Inhalt vorhanden, als fertig behandeln)
+  const isCompleted = kernbotschaft?.status === 'completed' ||
+    (kernbotschaft?.content && kernbotschaft.content.length > 100);
+  const statusText = isCompleted ? 'Fertig' : 'Entwurf';
 
   // Erstellungsdatum formatieren
   const createdDate = kernbotschaft?.createdAt?.seconds
@@ -230,7 +232,7 @@ export function KernbotschaftSection({
                 <span
                   className={clsx(
                     'text-xs whitespace-nowrap',
-                    kernbotschaft.status === 'completed' ? 'text-green-600' : 'text-blue-600'
+                    isCompleted ? 'text-green-600' : 'text-blue-600'
                   )}
                 >
                   Status: {statusText}
