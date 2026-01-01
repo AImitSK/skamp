@@ -26,17 +26,10 @@ export const ProjectStrategyChatInputSchema = z.object({
 
 export const ProjectStrategyChatOutputSchema = z.object({
   response: z.string(),
-  document: z.string().optional(),      // Extrahiertes [DOCUMENT]...[/DOCUMENT] (Legacy)
+  document: z.string().optional(),      // Extrahiertes [DOCUMENT]...[/DOCUMENT]
   progress: z.number().optional(),       // Extrahiertes [PROGRESS:XX]
   suggestions: z.array(z.string()).optional(), // Extrahierte [SUGGESTIONS]
   status: z.enum(['draft', 'completed']).optional(), // Status fuer Speicherung
-  // Neue Toolbox-Felder
-  currentPhase: z.number().optional(),   // Aktuelle Phase (1-4)
-  phaseResult: z.object({
-    phase: z.number(),
-    title: z.string(),
-    content: z.string(),
-  }).optional(),                         // Extrahiertes [RESULT]
 });
 
 export type ProjectStrategyChatInput = z.infer<typeof ProjectStrategyChatInputSchema>;
@@ -78,11 +71,9 @@ export const projectStrategyChatFlow = ai.defineFlow(
     // Strukturierte Daten aus Response extrahieren
     const document = extractDocument(responseText);
     const progress = extractProgress(responseText);
-    const phaseResult = extractResult(responseText);
-    const currentPhase = extractCurrentPhase(responseText);
 
     // Status bestimmen: completed wenn Dokument vorhanden oder Progress >= 100
-    const status: 'draft' | 'completed' = document || (progress && progress >= 100) ? 'completed' : 'draft';
+    const status = document || (progress && progress >= 100) ? 'completed' : 'draft';
 
     return {
       response: responseText,
@@ -90,8 +81,6 @@ export const projectStrategyChatFlow = ai.defineFlow(
       progress,
       suggestions: extractSuggestions(responseText),
       status,
-      currentPhase,
-      phaseResult,
     };
   }
 );
@@ -134,198 +123,86 @@ ${dnaSynthese}
     ? `
 
 DEIN ZIEL:
-Erarbeite die spezifische Strategie für DIESES PROJEKT durch 4 Phasen.
+Erarbeite die spezifische Strategie für DIESES PROJEKT.
 
-DIE 4 PHASEN:
+FRAGEN:
 
-Phase 1 - DER ANLASS (News-Hook):
-- Worüber berichten wir? (Produktneuheit, Personalie, Event?)
-- Was macht das Thema nachrichtenrelevant?
-- Gibt es einen Zeitbezug?
+1. DER ANLASS (News-Hook):
+   - Worüber berichten wir? (Produktneuheit, Personalie, Event?)
+   - Was macht das Thema nachrichtenrelevant?
 
-Phase 2 - DAS MASSNAHMENZIEL (INTERN - nie im Endergebnis!):
-- Was soll dieser Text konkret erreichen?
-- Klicks? Anmeldungen? Imagepflege?
-- WICHTIG: Diese Ziele sind INTERNE Erfolgskennzahlen!
+2. DAS MASSNAHMENZIEL:
+   - Was soll dieser Text konkret erreichen?
+   - Klicks? Anmeldungen? Imagepflege?
 
-Phase 3 - DIE TEILBOTSCHAFT:
-- Welches spezifische Detail soll kommuniziert werden?
-- Was ist der Hauptvorteil für die Zielgruppe?
+3. DIE TEILBOTSCHAFT:
+   - Welches spezifische Detail soll kommuniziert werden?
+   - z.B. "Das neue Feature spart 20% Zeit"
 
-Phase 4 - DAS MATERIAL:
-- Welche Fakten, Zitate oder Daten gibt es?
-- Gibt es Zitate vom Geschäftsführer?
+4. DAS MATERIAL:
+   - Welche Fakten, Zitate oder Daten gibt es?
+   - Gibt es Zitate vom Geschäftsführer?
 
-============================================================
-KRITISCHE REGELN - UNBEDINGT BEFOLGEN:
-============================================================
+REGELN:
+- Stelle 1-2 Fragen auf einmal
+- Fasse Antworten zusammen
+- Generiere am Ende die Projekt-Kernbotschaft
 
-1. REIHENFOLGE JEDER ANTWORT:
-   Erst Toolbox-Box(en), DANN die Frage am Ende.
-   Die Frage muss IMMER das Letzte sein, was der User sieht.
-
-2. TAG-PFLICHT:
-   JEDE Antwort MUSS mindestens einen Toolbox-Tag enthalten.
-   Ohne Tags ist die Antwort ungültig.
-
-3. KONTEXT-TRENNUNG (SEHR WICHTIG):
-   Phase-2-Ziele (Anmeldungen, Downloads, Klicks) sind INTERNE Metriken.
-   Diese Zahlen dürfen NIEMALS im finalen [DOCUMENT] erscheinen!
-
-   FALSCH: "Melde dich an (Ziel: 20 Anmeldungen)"
-   RICHTIG: "Melde dich jetzt an und entdecke die neuen Möglichkeiten"
-
-4. QUALITÄTS-CHECK VOR [DOCUMENT]:
-   Prüfe: Enthält der Text interne Zielzahlen? → Entfernen!
-   Prüfe: Klingt der Text wie Werbung für den Kunden, nicht wie interne Notizen?
-
-============================================================
-TOOLBOX-TAGS:
-============================================================
-
-AM ANFANG (erste Nachricht):
-[ROADMAP]
-(○) Phase 1: DER ANLASS
-(○) Phase 2: DAS MASSNAHMENZIEL
-(○) Phase 3: DIE TEILBOTSCHAFT
-(○) Phase 4: DAS MATERIAL
-[/ROADMAP]
-
-Worüber berichten wir? Was macht es nachrichtenrelevant?
-
-WÄHREND DER PHASEN:
-[PHASE_STATUS phase="1" title="DER ANLASS"]
-(●) Thema: Produktlaunch Feature X
-(◐) News-Hook: wird geklärt...
-(○) Zeitbezug
-[/PHASE_STATUS]
-
-Was macht das Thema nachrichtenrelevant?
-
-Status-Symbole: (○) offen | (◐) in Bearbeitung | (●) erledigt
-
-PHASE ABGESCHLOSSEN - zur Bestätigung:
-[RESULT phase="1" title="DER ANLASS"]
-Thema: Produktlaunch Feature X
-News-Hook: 20% Zeitersparnis
-[/RESULT]
-
-NACH ALLEN 4 PHASEN:
-[FINAL]
-1. Anlass: Produktlaunch Feature X
-2. Ziel: Bekanntheit steigern (KEINE Zahlen hier!)
-3. Botschaft: "20% schneller arbeiten"
-4. Material: CEO-Zitat, Statistik
-[/FINAL]
-
-Soll ich die Kernbotschaft jetzt generieren?
-
-FINALES DOKUMENT (nach Bestätigung):
+AUSGABE-FORMAT:
+Wenn du die Kernbotschaft erstellst, nutze:
 [DOCUMENT]
 ## Projekt-Kernbotschaft
-
-[Professioneller Werbetext OHNE interne Zielzahlen]
+...
 [/DOCUMENT]
 
-[PROGRESS:100]
+Fortschritt: [PROGRESS:XX]
+
+Vorschläge:
+[SUGGESTIONS]
+...
+[/SUGGESTIONS]
 `
     : `
 
 YOUR GOAL:
-Develop the specific strategy for THIS PROJECT through 4 phases.
+Develop the specific strategy for THIS PROJECT.
 
-THE 4 PHASES:
+QUESTIONS:
 
-Phase 1 - THE OCCASION (News Hook):
-- What are we reporting about? (Product launch, personnel, event?)
-- What makes this topic newsworthy?
-- Is there a time reference?
+1. THE OCCASION (News Hook):
+   - What are we reporting about? (Product launch, personnel, event?)
+   - What makes this topic newsworthy?
 
-Phase 2 - THE MEASURE GOAL (INTERNAL - never in final output!):
-- What should this text specifically achieve?
-- Clicks? Sign-ups? Image maintenance?
-- IMPORTANT: These goals are INTERNAL success metrics!
+2. THE MEASURE GOAL:
+   - What should this text specifically achieve?
+   - Clicks? Sign-ups? Image maintenance?
 
-Phase 3 - THE SUB-MESSAGE:
-- What specific detail should be communicated?
-- What is the main benefit for the target audience?
+3. THE SUB-MESSAGE:
+   - What specific detail should be communicated?
+   - e.g. "The new feature saves 20% time"
 
-Phase 4 - THE MATERIAL:
-- What facts, quotes or data are available?
-- Are there quotes from the CEO?
+4. THE MATERIAL:
+   - What facts, quotes or data are available?
+   - Are there quotes from the CEO?
 
-============================================================
-CRITICAL RULES - MUST FOLLOW:
-============================================================
+RULES:
+- Ask 1-2 questions at a time
+- Summarize answers
+- Generate the project key message at the end
 
-1. ORDER OF EVERY RESPONSE:
-   First Toolbox box(es), THEN the question at the end.
-   The question must ALWAYS be the last thing the user sees.
-
-2. TAG REQUIREMENT:
-   EVERY response MUST contain at least one Toolbox tag.
-   Without tags, the response is invalid.
-
-3. CONTEXT SEPARATION (VERY IMPORTANT):
-   Phase 2 goals (sign-ups, downloads, clicks) are INTERNAL metrics.
-   These numbers must NEVER appear in the final [DOCUMENT]!
-
-   WRONG: "Sign up now (Goal: 20 sign-ups)"
-   RIGHT: "Sign up now and discover the new possibilities"
-
-4. QUALITY CHECK BEFORE [DOCUMENT]:
-   Check: Does the text contain internal target numbers? → Remove!
-   Check: Does the text sound like advertising for the customer, not internal notes?
-
-============================================================
-TOOLBOX TAGS:
-============================================================
-
-AT THE START (first message):
-[ROADMAP]
-(○) Phase 1: THE OCCASION
-(○) Phase 2: THE MEASURE GOAL
-(○) Phase 3: THE SUB-MESSAGE
-(○) Phase 4: THE MATERIAL
-[/ROADMAP]
-
-What are we reporting about? What makes it newsworthy?
-
-DURING PHASES:
-[PHASE_STATUS phase="1" title="THE OCCASION"]
-(●) Topic: Product launch Feature X
-(◐) News Hook: being clarified...
-(○) Time reference
-[/PHASE_STATUS]
-
-What makes this topic newsworthy?
-
-Status symbols: (○) open | (◐) in progress | (●) completed
-
-PHASE COMPLETED - for confirmation:
-[RESULT phase="1" title="THE OCCASION"]
-Topic: Product launch Feature X
-News Hook: 20% time savings
-[/RESULT]
-
-AFTER ALL 4 PHASES:
-[FINAL]
-1. Occasion: Product launch Feature X
-2. Goal: Increase awareness (NO numbers here!)
-3. Message: "20% faster work"
-4. Material: CEO quote, Statistics
-[/FINAL]
-
-Should I generate the key message now?
-
-FINAL DOCUMENT (after confirmation):
+OUTPUT FORMAT:
+When creating the key message, use:
 [DOCUMENT]
 ## Project Key Message
-
-[Professional marketing text WITHOUT internal target numbers]
+...
 [/DOCUMENT]
 
-[PROGRESS:100]
+Progress: [PROGRESS:XX]
+
+Suggestions:
+[SUGGESTIONS]
+...
+[/SUGGESTIONS]
 `;
 
   return prompt;
@@ -358,37 +235,4 @@ function extractSuggestions(text: string): string[] | undefined {
     .split('\n')
     .map(s => s.trim())
     .filter(s => s.length > 0);
-}
-
-/**
- * Extrahiert Ergebnis aus [RESULT phase="X" title="..."]...[/RESULT] Tags
- */
-function extractResult(text: string): { phase: number; title: string; content: string } | undefined {
-  const match = text.match(/\[RESULT\s+phase="(\d+)"\s+title="([^"]+)"\]([\s\S]*?)\[\/RESULT\]/);
-  if (!match) return undefined;
-
-  return {
-    phase: parseInt(match[1], 10),
-    title: match[2],
-    content: match[3].trim(),
-  };
-}
-
-/**
- * Extrahiert aktuelle Phase aus [PHASE_STATUS] oder [RESULT] Tags
- */
-function extractCurrentPhase(text: string): number | undefined {
-  // Zuerst RESULT prüfen (höhere Priorität)
-  const resultMatch = text.match(/\[RESULT\s+phase="(\d+)"/);
-  if (resultMatch) {
-    return parseInt(resultMatch[1], 10);
-  }
-
-  // Dann PHASE_STATUS prüfen
-  const statusMatch = text.match(/\[PHASE_STATUS\s+phase="(\d+)"/);
-  if (statusMatch) {
-    return parseInt(statusMatch[1], 10);
-  }
-
-  return undefined;
 }
