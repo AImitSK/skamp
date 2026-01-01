@@ -183,7 +183,7 @@ export function DNASyntheseSection({
           </div>
 
           {!canSynthesize && (
-            <p className="mt-3 text-sm text-zinc-500 ml-14">
+            <p className="mt-2 text-sm text-zinc-500 ml-12">
               Alle 6 Dokumente der Marken-DNA werden benötigt, um eine Synthese zu erstellen.
             </p>
           )}

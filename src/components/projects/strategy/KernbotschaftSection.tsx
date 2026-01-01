@@ -137,7 +137,7 @@ export function KernbotschaftSection({
             </Button>
           </div>
 
-          <p className="mt-3 text-sm text-zinc-500 ml-14">
+          <p className="mt-2 text-sm text-zinc-500 ml-12">
             Erstelle zuerst eine DNA Synthese, um die Kernbotschaft zu generieren.
           </p>
         </div>
@@ -183,7 +183,7 @@ export function KernbotschaftSection({
             </Button>
           </div>
 
-          <p className="mt-3 text-sm text-zinc-500 ml-14">
+          <p className="mt-2 text-sm text-zinc-500 ml-12">
             Erarbeite die Kernbotschaft im Dialog mit der KI.
           </p>
         </div>
