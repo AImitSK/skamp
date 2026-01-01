@@ -116,14 +116,19 @@ export function KernbotschaftSection({
       <div className="bg-white rounded-lg border border-zinc-200">
         <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
           <div className="flex items-center gap-4">
-            {/* Links: Icon + Titel */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
+            {/* Links: Icon + Titel + Beschreibung */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="text-base font-semibold text-zinc-900">
-                Kernbotschaft
-              </h3>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-zinc-900">
+                  Kernbotschaft
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Erstelle zuerst eine DNA Synthese, um die Kernbotschaft zu generieren.
+                </p>
+              </div>
             </div>
 
             <div className="flex-1" />
@@ -136,10 +141,6 @@ export function KernbotschaftSection({
               DNA Synthese erforderlich
             </Button>
           </div>
-
-          <p className="mt-2 text-sm text-zinc-500 ml-12">
-            Erstelle zuerst eine DNA Synthese, um die Kernbotschaft zu generieren.
-          </p>
         </div>
       </div>
     );
@@ -151,14 +152,19 @@ export function KernbotschaftSection({
       <div className="bg-white rounded-lg border border-zinc-200">
         <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
           <div className="flex items-center gap-4">
-            {/* Links: Icon + Titel */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
+            {/* Links: Icon + Titel + Beschreibung */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
               </div>
-              <h3 className="text-base font-semibold text-zinc-900">
-                Kernbotschaft
-              </h3>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-zinc-900">
+                  Kernbotschaft
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Erarbeite die Kernbotschaft im Dialog mit der KI.
+                </p>
+              </div>
             </div>
 
             <div className="flex-1" />
@@ -182,10 +188,6 @@ export function KernbotschaftSection({
               )}
             </Button>
           </div>
-
-          <p className="mt-2 text-sm text-zinc-500 ml-12">
-            Erarbeite die Kernbotschaft im Dialog mit der KI.
-          </p>
         </div>
       </div>
     );
