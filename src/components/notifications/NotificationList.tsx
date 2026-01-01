@@ -14,7 +14,7 @@ import {
 import clsx from 'clsx';
 
 export function NotificationList() {
-  const t = useTranslations('notifications');
+  const t = useTranslations('dashboard.notifications');
   const {
     notifications,
     loading,

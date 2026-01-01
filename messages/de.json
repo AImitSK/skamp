@@ -1189,28 +1189,28 @@
         "pressRelease": "Pressemeldung",
         "previewTab": "Vorschau",
         "preview": {
+          "workflowActive": "PDF-Freigabe-Workflow aktiv",
+          "workflowDescription": "Die Kampagne ist zur Kundenfreigabe bereitgestellt. Sie können die freigegebenen Links für Team und Kunde öffnen.",
+          "openTeamLink": "Team-Link öffnen",
+          "openCustomerLink": "Kunden-Link öffnen",
+          "livePreview": "Live-Vorschau",
+          "pdfPreviewTitle": "PDF-Vorschau",
+          "pdfCreatedForApproval": "PDF für Freigabe erstellt",
+          "generatingPdf": "PDF wird erstellt...",
+          "generatePdf": "PDF generieren",
+          "pdfLocked": "PDF gesperrt",
+          "editingNotPossible": "Bearbeitung nicht möglich",
+          "previewPdf": "Vorschau-PDF",
           "approvalPdf": "Freigabe-PDF",
           "current": "Aktuell",
-          "download": "Download",
-          "editingNotPossible": "Bearbeitung nicht möglich",
-          "generatePdf": "PDF generieren",
-          "generatingPdf": "PDF wird erstellt...",
-          "livePreview": "Live-Vorschau",
-          "noPdfCreated": "Noch keine PDF-Version erstellt",
-          "noPdfHint": "Klicken Sie auf \"PDF generieren\" um eine Vorschau zu erstellen",
-          "openCustomerLink": "Kunden-Link öffnen",
-          "openTeamLink": "Team-Link öffnen",
-          "pdfCreatedForApproval": "PDF für Freigabe erstellt",
-          "pdfLocked": "PDF-Erstellung gesperrt",
-          "pdfPreviewTitle": "PDF-Vorschau und Versionen",
-          "pdfVersionHistory": "PDF-Versionen Historie",
-          "previewPdf": "Vorschau PDF",
-          "statusApproved": "Freigegeben",
-          "statusDraft": "Entwurf",
-          "statusPending": "Freigabe angefordert",
-          "workflowActive": "Freigabe-Workflow aktiv",
           "workflowActiveShort": "Workflow aktiv",
-          "workflowDescription": "Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet."
+          "statusDraft": "Entwurf",
+          "statusApproved": "Freigegeben",
+          "statusPending": "Ausstehend",
+          "download": "Herunterladen",
+          "noPdfCreated": "Noch keine PDF erstellt",
+          "noPdfHint": "Klicken Sie auf 'PDF generieren', um eine Vorschau zu erstellen",
+          "pdfVersionHistory": "PDF-Versionen-Historie"
         }
       }
     },
@@ -1282,7 +1282,18 @@
       "clickToEdit": "Zum Bearbeiten klicken",
       "noVisualAgency": "Key Visual nicht verfügbar",
       "noVisualCustomer": "Kein Key Visual",
-      "title": "Key Visual"
+      "title": "Key Visual",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "add": "Key Visual hinzufügen",
+      "clickToSelect": "Klicken zum Auswählen",
+      "selectClientFirst": "Bitte wählen Sie zuerst einen Kunden aus",
+      "uploadAnyway": "Trotzdem hochladen",
+      "cancel": "Abbrechen",
+      "smartRouterUploadTitle": "Smart Upload läuft",
+      "smartRouterUploadMessage": "Datei wird intelligent in das Projekt-Medienverzeichnis hochgeladen...",
+      "cropperLoadingTitle": "Bild wird geladen",
+      "cropperLoadingMessage": "Bereite Bild für den Zuschnitt vor..."
     },
     "keywordInput": {
       "add": "Hinzufügen",
@@ -1807,6 +1818,15 @@
       "titleRequired": "Titel ist erforderlich",
       "unknownReason": "unbekannt",
       "userNotAvailable": "User nicht verfügbar"
+    },
+    "pdf": {
+      "current": "Aktuelle PDF",
+      "download": "PDF herunterladen",
+      "status": {
+        "pendingCustomer": "Warte auf Kundenfreigabe",
+        "rejected": "Abgelehnt",
+        "approved": "Freigegeben"
+      }
     }
   },
   "common": {
@@ -11029,6 +11049,19 @@
           "message": "Variable '{variableName}' ist nicht definiert"
         }
       }
+    },
+    "selector": {
+      "title": "Vorlage auswählen",
+      "categories": {
+        "system": "System-Vorlagen",
+        "custom": "Eigene Vorlagen"
+      },
+      "card": {
+        "preview": "Vorschau",
+        "thumbnailGenerating": "Vorschau wird erstellt..."
+      },
+      "description": "Beschreibung",
+      "templatesAvailable": "{count, plural, =0 {Keine Vorlagen} =1 {1 Vorlage} other {# Vorlagen}} verfügbar"
     }
   },
   "toasts": {
@@ -11217,7 +11250,7 @@
     "ownerCannotBeRemoved": "Der Owner kann nicht entfernt werden",
     "ownerTransferError": "Fehler beim Übertragen der Owner-Rolle",
     "ownerTransferred": "{name} ist jetzt der neue Owner",
-    "pipelinePdfGenerated": "Pipeline-PDF erfolgreich generiert",
+    "pipelinePdfGenerated": "Pipeline-PDF wurde erstellt",
     "priorityChanged": "Priorität erfolgreich geändert",
     "priorityChangeError": "Fehler beim Ändern der Priorität",
     "statusChanged": "Status erfolgreich geändert",
@@ -11319,11 +11352,11 @@
     },
     "documentSaved": "Dokument wurde erfolgreich gespeichert",
     "keyVisual": {
-      "fileTooLarge": "Datei zu groß (max 10MB)",
-      "imageFileOnly": "Nur Bilddateien sind erlaubt",
-      "imageLoadError": "Fehler beim Laden des Bildes",
+      "imageFileOnly": "Bitte nur Bilddateien hochladen (JPEG, PNG, WebP)",
+      "fileTooLarge": "Datei ist zu groß (max. 10 MB)",
+      "uploaded": "Key Visual wurde hochgeladen",
       "uploadError": "Fehler beim Hochladen des Key Visuals",
-      "uploaded": "Key Visual erfolgreich hochgeladen"
+      "imageLoadError": "Fehler beim Laden des Bildes"
     },
     "branding": {
       "fileTooLarge": "Die Datei darf maximal 5MB groß sein",
@@ -11670,6 +11703,35 @@
       "actions": {
         "start": "Jetzt starten",
         "docs": "Dokumentation"
+      }
+    }
+  },
+  "prTools": {
+    "campaignContext": {
+      "success": {
+        "pdfGenerated": "PDF wurde erfolgreich erstellt",
+        "approvalDisabled": "Kundenfreigabe wurde deaktiviert",
+        "approvalEnabled": "Kundenfreigabe wurde aktiviert",
+        "approvalContactUpdated": "Freigabe-Kontakt wurde aktualisiert",
+        "assetsAdded": "{count, plural, =1 {1 Medium} other {# Medien}} hinzugefügt",
+        "assetRemoved": "Medium entfernt",
+        "templateSelected": "Vorlage \"{templateName}\" ausgewählt",
+        "templateSelectedGeneric": "Vorlage wurde ausgewählt"
+      },
+      "errors": {
+        "loadFailed": "Kampagne konnte nicht geladen werden",
+        "fillRequiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
+        "campaignIdNotFound": "Kampagnen-ID nicht gefunden",
+        "pdfGenerationFailed": "PDF-Erstellung fehlgeschlagen",
+        "validation": {
+          "customerRequired": "Kunde ist erforderlich",
+          "titleRequired": "Titel ist erforderlich",
+          "contentRequired": "Inhalt ist erforderlich",
+          "approvalContactRequired": "Freigabe-Kontakt ist erforderlich wenn Kundenfreigabe aktiviert ist"
+        }
+      },
+      "warnings": {
+        "disableApprovalToRemoveContact": "Bitte deaktivieren Sie zuerst die Kundenfreigabe, bevor Sie den Kontakt entfernen"
       }
     }
   }

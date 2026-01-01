@@ -66,7 +66,7 @@ function formatRelativeTime(date: Date, t: (key: string, params?: any) => string
 
 export function NotificationItem({ notification, onMarkAsRead, onDelete }: NotificationItemProps) {
   const router = useRouter();
-  const t = useTranslations('notifications');
+  const t = useTranslations('dashboard.notifications');
   const Icon = iconMap[notification.type as keyof typeof iconMap];
   const colorClasses = NOTIFICATION_COLORS[notification.type as keyof typeof NOTIFICATION_COLORS];
 

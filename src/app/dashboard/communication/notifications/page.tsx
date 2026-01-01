@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const t = useTranslations('notifications');
+  const t = useTranslations('dashboard.notifications');
 
   return (
     <div className="h-full flex flex-col">

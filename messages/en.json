@@ -1189,28 +1189,28 @@
         "pressRelease": "Press Release",
         "previewTab": "Preview",
         "preview": {
+          "workflowActive": "PDF Approval Workflow Active",
+          "workflowDescription": "The campaign is ready for customer approval. You can open the shared links for team and customer.",
+          "openTeamLink": "Open team link",
+          "openCustomerLink": "Open customer link",
+          "livePreview": "Live Preview",
+          "pdfPreviewTitle": "PDF Preview",
+          "pdfCreatedForApproval": "PDF created for approval",
+          "generatingPdf": "Generating PDF...",
+          "generatePdf": "Generate PDF",
+          "pdfLocked": "PDF locked",
+          "editingNotPossible": "Editing not possible",
+          "previewPdf": "Preview PDF",
           "approvalPdf": "Approval PDF",
           "current": "Current",
-          "download": "Download",
-          "editingNotPossible": "Editing not possible",
-          "generatePdf": "Generate PDF",
-          "generatingPdf": "Generating PDF...",
-          "livePreview": "Live Preview",
-          "noPdfCreated": "No PDF version created yet",
-          "noPdfHint": "Click \"Generate PDF\" to create a preview",
-          "openCustomerLink": "Open Customer Link",
-          "openTeamLink": "Open Team Link",
-          "pdfCreatedForApproval": "PDF created for approval",
-          "pdfLocked": "PDF generation locked",
-          "pdfPreviewTitle": "PDF Preview and Versions",
-          "pdfVersionHistory": "PDF Version History",
-          "previewPdf": "Preview PDF",
-          "statusApproved": "Approved",
-          "statusDraft": "Draft",
-          "statusPending": "Approval requested",
-          "workflowActive": "Approval Workflow Active",
           "workflowActiveShort": "Workflow active",
-          "workflowDescription": "The campaign is in the approval process. Links have been sent."
+          "statusDraft": "Draft",
+          "statusApproved": "Approved",
+          "statusPending": "Pending",
+          "download": "Download",
+          "noPdfCreated": "No PDF created yet",
+          "noPdfHint": "Click 'Generate PDF' to create a preview",
+          "pdfVersionHistory": "PDF Version History"
         }
       }
     },
@@ -1282,7 +1282,18 @@
       "clickToEdit": "Click to edit",
       "noVisualAgency": "Key Visual not available",
       "noVisualCustomer": "No Key Visual",
-      "title": "Key Visual"
+      "title": "Key Visual",
+      "edit": "Edit",
+      "remove": "Remove",
+      "add": "Add key visual",
+      "clickToSelect": "Click to select",
+      "selectClientFirst": "Please select a client first",
+      "uploadAnyway": "Upload anyway",
+      "cancel": "Cancel",
+      "smartRouterUploadTitle": "Smart Upload in Progress",
+      "smartRouterUploadMessage": "File is being intelligently uploaded to project media directory...",
+      "cropperLoadingTitle": "Loading Image",
+      "cropperLoadingMessage": "Preparing image for cropping..."
     },
     "keywordInput": {
       "add": "Add",
@@ -1807,6 +1818,15 @@
       "titleRequired": "Title is required",
       "unknownReason": "unknown",
       "userNotAvailable": "User not available"
+    },
+    "pdf": {
+      "current": "Current PDF",
+      "download": "Download PDF",
+      "status": {
+        "pendingCustomer": "Pending customer approval",
+        "rejected": "Rejected",
+        "approved": "Approved"
+      }
     }
   },
   "common": {
@@ -11015,6 +11035,19 @@
           "message": "Variable '{variableName}' is not defined"
         }
       }
+    },
+    "selector": {
+      "title": "Select template",
+      "categories": {
+        "system": "System templates",
+        "custom": "Custom templates"
+      },
+      "card": {
+        "preview": "Preview",
+        "thumbnailGenerating": "Generating preview..."
+      },
+      "description": "Description",
+      "templatesAvailable": "{count, plural, =0 {No templates} =1 {1 template} other {# templates}} available"
     }
   },
   "toasts": {
@@ -11203,7 +11236,7 @@
     "ownerCannotBeRemoved": "Owner cannot be removed",
     "ownerTransferError": "Error transferring owner role",
     "ownerTransferred": "{name} is now the new owner",
-    "pipelinePdfGenerated": "Pipeline PDF successfully generated",
+    "pipelinePdfGenerated": "Pipeline PDF generated",
     "priorityChanged": "Priority successfully changed",
     "priorityChangeError": "Error changing priority",
     "statusChanged": "Status successfully changed",
@@ -11305,11 +11338,11 @@
     },
     "documentSaved": "Document successfully saved",
     "keyVisual": {
-      "fileTooLarge": "File too large (max 10MB)",
-      "imageFileOnly": "Only image files are allowed",
-      "imageLoadError": "Error loading image",
+      "imageFileOnly": "Please upload only image files (JPEG, PNG, WebP)",
+      "fileTooLarge": "File is too large (max. 10 MB)",
+      "uploaded": "Key visual uploaded",
       "uploadError": "Error uploading key visual",
-      "uploaded": "Key visual successfully uploaded"
+      "imageLoadError": "Error loading image"
     },
     "branding": {
       "fileTooLarge": "File must not exceed 5MB",
@@ -11656,6 +11689,35 @@
       "actions": {
         "start": "Get Started",
         "docs": "Documentation"
+      }
+    }
+  },
+  "prTools": {
+    "campaignContext": {
+      "success": {
+        "pdfGenerated": "PDF generated successfully",
+        "approvalDisabled": "Customer approval disabled",
+        "approvalEnabled": "Customer approval enabled",
+        "approvalContactUpdated": "Approval contact updated",
+        "assetsAdded": "{count, plural, =1 {1 asset} other {# assets}} added",
+        "assetRemoved": "Asset removed",
+        "templateSelected": "Template \"{templateName}\" selected",
+        "templateSelectedGeneric": "Template selected"
+      },
+      "errors": {
+        "loadFailed": "Failed to load campaign",
+        "fillRequiredFields": "Please fill all required fields",
+        "campaignIdNotFound": "Campaign ID not found",
+        "pdfGenerationFailed": "PDF generation failed",
+        "validation": {
+          "customerRequired": "Customer is required",
+          "titleRequired": "Title is required",
+          "contentRequired": "Content is required",
+          "approvalContactRequired": "Approval contact is required when customer approval is enabled"
+        }
+      },
+      "warnings": {
+        "disableApprovalToRemoveContact": "Please disable customer approval before removing the contact"
       }
     }
   }
