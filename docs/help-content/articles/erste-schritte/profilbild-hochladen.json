@@ -1,0 +1,51 @@
+{
+  "_type": "helpArticle",
+  "title": "Profilbild hochladen",
+  "titleEn": "Upload Profile Picture",
+  "slug": {
+    "current": "profilbild-hochladen"
+  },
+  "excerpt": "Lade ein persönliches Profilbild hoch, damit dein Team dich besser erkennen kann. Quadratischer Zuschnitt, max. 10MB.",
+  "excerptEn": "Upload a personal profile picture so your team can recognize you better. Square crop, max. 10MB.",
+  "category": "erste-schritte",
+  "onboardingStep": "1.3",
+  "keywords": [
+    "Profilbild",
+    "Avatar",
+    "Bild hochladen",
+    "Foto",
+    "Profile Picture",
+    "Upload",
+    "Zuschneiden",
+    "Crop"
+  ],
+  "content": {
+    "de": "# Profilbild hochladen\n\nEin persönliches Profilbild hilft deinem Team, dich sofort zu erkennen – in Projektlisten, im Chat, bei Freigaben und überall dort, wo du mit Kollegen zusammenarbeitest. Das Bild wird automatisch auf 512×512 Pixel optimiert und quadratisch zugeschnitten.\n\n## Voraussetzungen\n\n- Du bist im Dashboard eingeloggt\n- Du hast eine Bilddatei (JPG, PNG oder WebP, max. 10MB)\n- Optional: Ein quadratisches Foto für optimale Darstellung\n\n## Profilbild hochladen\n\n### Schritt 1: Profilseite öffnen\n\nKlicke in der Sidebar links auf **Admin** und dann auf **Profil**.\n\n[Screenshot: Navigation zu Admin → Profil]\n\n### Schritt 2: Bild auswählen\n\nKlicke im Bereich \"Profilbild\" auf den Button **Hochladen** (oder **Ändern**, falls du bereits ein Bild hast).\n\n[Screenshot: Profilbild-Bereich mit Upload-Button]\n\n> **Hinweis:** Es öffnet sich ein Datei-Dialog, in dem du eine Bilddatei von deinem Computer auswählen kannst.\n\n### Schritt 3: Bildausschnitt wählen\n\nNach der Auswahl erscheint ein Zuschnitt-Tool. Ziehe die Ecken des Auswahlbereichs, um den gewünschten Bildausschnitt festzulegen.\n\n[Screenshot: Image Cropper mit Auswahlbereich]\n\n- Der Ausschnitt ist **immer quadratisch** (1:1 Verhältnis)\n- Eine kreisförmige Vorschau zeigt, wie dein Avatar später aussehen wird\n- Du kannst den Ausschnitt beliebig verschieben und skalieren\n\n### Schritt 4: Hochladen bestätigen\n\nKlicke auf **Zuschneiden & Speichern**, um das Bild hochzuladen.\n\n[Screenshot: Bestätigen-Button im Cropper]\n\n> **✅ Erfolg:** Du siehst die Meldung \"Profilbild erfolgreich aktualisiert!\"\n\nDein neues Profilbild wird **sofort überall in CeleroPress sichtbar**:\n\n- In der oberen Navigationsleiste\n- Bei Kommentaren und Notizen\n- In Projektlisten (Teammitglieder-Spalte)\n- Im Team-Bereich der Einstellungen\n- Bei Freigabe-Kommentaren\n\n## Profilbild ändern\n\nDu kannst dein Profilbild jederzeit ändern:\n\n1. Gehe zu **Admin → Profil**\n2. Klicke auf **Ändern** (statt \"Hochladen\")\n3. Wähle ein neues Bild und schneide es zu\n4. Das alte Bild wird automatisch ersetzt\n\n## Profilbild entfernen\n\nFalls du dein Profilbild wieder entfernen möchtest:\n\n1. Gehe zu **Admin → Profil**\n2. Klicke auf **Entfernen** (rechts neben dem \"Ändern\"-Button)\n3. Dein Avatar zeigt jetzt deine Initialen (z.B. \"SK\" für Stefan Kühne)\n\n[Screenshot: Avatar mit Initialen nach dem Entfernen]\n\n## Technische Details\n\n### Erlaubte Dateiformate\n\n- **JPG/JPEG** – Optimal für Fotos\n- **PNG** – Gut für Grafiken mit transparentem Hintergrund (wird aber quadratisch)\n- **WebP** – Modernes Format mit kleiner Dateigröße\n\n### Dateigröße\n\n- **Maximum:** 10MB für die Original-Datei (vor dem Zuschneiden)\n- **Nach Zuschnitt:** Automatisch optimiert auf 512×512 Pixel (ca. 50-150KB)\n\n### Speicherort (Multi-Tenancy)\n\nDein Profilbild wird in Firebase Storage gespeichert unter:\n\n```\norganizations/{organizationId}/profiles/{userId}/avatar.{extension}\n```\n\n- **Organisationsübergreifend:** Jede Organisation sieht nur ihre eigenen Mitglieder-Avatare\n- **Sicherheit:** Nur authentifizierte Nutzer deiner Organisation können dein Bild sehen\n\n## Häufige Fragen\n\n**Warum wird mein Bild nicht sofort angezeigt?**\n\nAktualisiere die Seite mit `Strg + R` (Windows) oder `Cmd + R` (Mac). In seltenen Fällen kann es bis zu 1 Minute dauern, bis das Bild überall sichtbar ist.\n\n**Kann ich ein rechteckiges Bild hochladen?**\n\nJa, du kannst jedes Format hochladen. Der Cropper schneidet es automatisch quadratisch zu. Wähle einfach den besten Ausschnitt aus.\n\n**Werden meine Kollegen benachrichtigt, wenn ich mein Bild ändere?**\n\nNein, es gibt keine Benachrichtigung. Die Änderung ist sofort sichtbar, aber diskret.\n\n**Was passiert mit meinem alten Profilbild?**\n\nEs wird automatisch gelöscht und durch das neue ersetzt. Es gibt keine Versionierung.\n\n**Sehen externe Freigabe-Empfänger mein Profilbild?**\n\nJa, wenn du Kommentare in einer Freigabe hinterlässt, sehen externe Kunden dein Profilbild und deinen Namen.\n\n## Nächste Schritte\n\n- [E-Mail-Verifizierung](/help/e-mail-verifizierung) – Bestätige deine E-Mail-Adresse\n- [Zwei-Faktor-Authentifizierung](/help/zwei-faktor-authentifizierung) – Schütze deinen Account zusätzlich\n- [Branding einrichten](/help/branding-einrichten) – Logo und Farben für deine Organisation",
+    "en": "# Upload Profile Picture\n\nA personal profile picture helps your team recognize you instantly – in project lists, chats, approvals, and everywhere you collaborate with colleagues. The image is automatically optimized to 512×512 pixels and cropped to a square.\n\n## Prerequisites\n\n- You are logged into the dashboard\n- You have an image file (JPG, PNG or WebP, max. 10MB)\n- Optional: A square photo for optimal display\n\n## Upload Profile Picture\n\n### Step 1: Open Profile Page\n\nClick on **Admin** in the left sidebar, then select **Profile**.\n\n[Screenshot: Navigation to Admin → Profile]\n\n### Step 2: Select Image\n\nIn the \"Profile Picture\" section, click the **Upload** button (or **Change** if you already have a picture).\n\n[Screenshot: Profile Picture section with Upload button]\n\n> **Note:** A file dialog will open where you can select an image file from your computer.\n\n### Step 3: Choose Image Crop\n\nAfter selection, a cropping tool appears. Drag the corners of the selection area to define the desired image crop.\n\n[Screenshot: Image Cropper with selection area]\n\n- The crop is **always square** (1:1 ratio)\n- A circular preview shows how your avatar will look\n- You can move and scale the crop freely\n\n### Step 4: Confirm Upload\n\nClick **Crop & Save** to upload the image.\n\n[Screenshot: Confirm button in Cropper]\n\n> **✅ Success:** You'll see the message \"Profile picture successfully updated!\"\n\nYour new profile picture will be **immediately visible everywhere in CeleroPress**:\n\n- In the top navigation bar\n- With comments and notes\n- In project lists (team members column)\n- In the settings team section\n- With approval comments\n\n## Change Profile Picture\n\nYou can change your profile picture at any time:\n\n1. Go to **Admin → Profile**\n2. Click **Change** (instead of \"Upload\")\n3. Select a new image and crop it\n4. The old image will be automatically replaced\n\n## Remove Profile Picture\n\nIf you want to remove your profile picture:\n\n1. Go to **Admin → Profile**\n2. Click **Remove** (to the right of the \"Change\" button)\n3. Your avatar now shows your initials (e.g., \"SK\" for Stefan Kühne)\n\n[Screenshot: Avatar with initials after removal]\n\n## Technical Details\n\n### Allowed File Formats\n\n- **JPG/JPEG** – Optimal for photos\n- **PNG** – Good for graphics with transparent background (will be squared though)\n- **WebP** – Modern format with small file size\n\n### File Size\n\n- **Maximum:** 10MB for the original file (before cropping)\n- **After Crop:** Automatically optimized to 512×512 pixels (approx. 50-150KB)\n\n### Storage Location (Multi-Tenancy)\n\nYour profile picture is stored in Firebase Storage at:\n\n```\norganizations/{organizationId}/profiles/{userId}/avatar.{extension}\n```\n\n- **Cross-Organization:** Each organization only sees their own member avatars\n- **Security:** Only authenticated users in your organization can see your picture\n\n## Frequently Asked Questions\n\n**Why isn't my image displayed immediately?**\n\nRefresh the page with `Ctrl + R` (Windows) or `Cmd + R` (Mac). In rare cases, it can take up to 1 minute for the image to be visible everywhere.\n\n**Can I upload a rectangular image?**\n\nYes, you can upload any format. The cropper will automatically crop it to a square. Just choose the best crop.\n\n**Will my colleagues be notified when I change my picture?**\n\nNo, there's no notification. The change is immediately visible but discreet.\n\n**What happens to my old profile picture?**\n\nIt's automatically deleted and replaced by the new one. There's no versioning.\n\n**Do external approval recipients see my profile picture?**\n\nYes, if you leave comments in an approval, external clients will see your profile picture and name.\n\n## Next Steps\n\n- [Email Verification](/help/e-mail-verifizierung) – Verify your email address\n- [Two-Factor Authentication](/help/zwei-faktor-authentifizierung) – Secure your account additionally\n- [Set Up Branding](/help/branding-einrichten) – Logo and colors for your organization"
+  },
+  "tips": [
+    {
+      "tip": "Verwende ein quadratisches Foto (z.B. 1000×1000 Pixel) für die beste Qualität – dann musst du weniger zuschneiden.",
+      "tipEn": "Use a square photo (e.g., 1000×1000 pixels) for best quality – you'll need less cropping."
+    },
+    {
+      "tip": "Dein Gesicht sollte mindestens 60% des Bildausschnitts einnehmen, damit es auch in kleinen Avataren gut erkennbar ist.",
+      "tipEn": "Your face should occupy at least 60% of the crop area so it's clearly visible even in small avatars."
+    },
+    {
+      "tip": "Falls du kein Foto hochlädst, zeigt CeleroPress automatisch deine Initialen in einem farbigen Kreis – das funktioniert auch gut!",
+      "tipEn": "If you don't upload a photo, CeleroPress automatically shows your initials in a colored circle – this works great too!"
+    },
+    {
+      "tip": "Dein Profilbild wird auch in externen Freigaben angezeigt – wähle also ein professionelles Foto.",
+      "tipEn": "Your profile picture is also displayed in external approvals – so choose a professional photo."
+    }
+  ],
+  "videos": [],
+  "relatedArticles": [
+    "profil-einrichten",
+    "e-mail-verifizierung",
+    "zwei-faktor-authentifizierung",
+    "branding-einrichten"
+  ]
+}

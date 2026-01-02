@@ -1,0 +1,61 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'crm'",
+  "mappings": [
+    {
+      "pageName": "CRM - Verlage",
+      "routes": [
+        "/dashboard/contacts/crm?tab=companies&type=publisher",
+        "/dashboard/contacts/crm?type=publisher"
+      ],
+      "mainArticle": "verlag-anlegen",
+      "quickTips": [
+        { "tip": "Verlage sind Medienhäuser, an die du Pressemeldungen sendest", "tipEn": "Publishers are media houses you send press releases to" },
+        { "tip": "Nutze den Import für größere Datenmengen", "tipEn": "Use import for larger data sets" },
+        { "tip": "Verknüpfe Journalisten mit ihren Verlagen für bessere Organisation", "tipEn": "Link journalists to their publishers for better organization" }
+      ],
+      "additionalArticles": ["verlag-bearbeiten", "verlage-importieren", "journalist-mit-verlag-verknuepfen"]
+    },
+    {
+      "pageName": "CRM - Journalisten",
+      "routes": [
+        "/dashboard/contacts/crm?tab=contacts",
+        "/dashboard/contacts/crm/contacts"
+      ],
+      "mainArticle": "journalist-anlegen",
+      "quickTips": [
+        { "tip": "Verknüpfe Journalisten mit Verlagen und Publikationen", "tipEn": "Link journalists to publishers and publications" },
+        { "tip": "Nutze Tags zur Kategorisierung nach Themengebieten", "tipEn": "Use tags to categorize by topic areas" },
+        { "tip": "Importiere bestehende Kontaktlisten per CSV", "tipEn": "Import existing contact lists via CSV" }
+      ],
+      "additionalArticles": ["journalist-mit-verlag-verknuepfen", "journalist-mit-publikation-verknuepfen", "journalisten-importieren", "journalisten-exportieren"]
+    },
+    {
+      "pageName": "Verteilerlisten",
+      "routes": [
+        "/dashboard/contacts/lists",
+        "/dashboard/contacts/distribution-lists"
+      ],
+      "mainArticle": "verteiler-erstellen",
+      "quickTips": [
+        { "tip": "Erstelle themenspezifische Verteiler für bessere Relevanz", "tipEn": "Create topic-specific lists for better relevance" },
+        { "tip": "Dynamische Filter aktualisieren sich automatisch", "tipEn": "Dynamic filters update automatically" },
+        { "tip": "Verteiler können in mehreren Projekten wiederverwendet werden", "tipEn": "Lists can be reused in multiple projects" }
+      ],
+      "additionalArticles": ["journalisten-zum-verteiler-hinzufuegen", "dynamische-filter", "verteiler-im-projekt-nutzen"]
+    },
+    {
+      "pageName": "Verteiler-Details",
+      "routes": [
+        "/dashboard/contacts/lists/*",
+        "/dashboard/contacts/distribution-lists/*"
+      ],
+      "mainArticle": "journalisten-zum-verteiler-hinzufuegen",
+      "quickTips": [
+        { "tip": "Füge Journalisten einzeln oder per Mehrfachauswahl hinzu", "tipEn": "Add journalists individually or via multiple selection" },
+        { "tip": "Nutze dynamische Filter für automatische Aktualisierung", "tipEn": "Use dynamic filters for automatic updates" },
+        { "tip": "Prüfe die Verteiler-Statistiken vor dem Versand", "tipEn": "Check list statistics before sending" }
+      ],
+      "additionalArticles": ["dynamische-filter", "verteiler-erstellen", "verteiler-im-projekt-nutzen"]
+    }
+  ]
+}

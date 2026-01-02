@@ -1,0 +1,49 @@
+{
+  "_type": "helpArticle",
+  "title": "Willkommen bei CeleroPress",
+  "titleEn": "Welcome to CeleroPress",
+  "slug": { "current": "willkommen-bei-celeropress" },
+  "excerpt": "Dein Schnelleinstieg in CeleroPress: Lerne die wichtigsten Bereiche kennen und starte sofort produktiv.",
+  "excerptEn": "Your quick start guide to CeleroPress: Learn the key areas and start working productively right away.",
+  "category": "erste-schritte",
+  "onboardingStep": "1.1",
+  "keywords": [
+    "einstieg",
+    "start",
+    "dashboard",
+    "navigation",
+    "übersicht",
+    "willkommen",
+    "erste-schritte",
+    "onboarding"
+  ],
+  "content": {
+    "de": "# Willkommen bei CeleroPress\n\nCeleroPress ist deine professionelle PR-Management-Software. Von der Kontaktverwaltung über die Pressemeldungserstellung bis zum Versand und Monitoring - alles an einem Ort.\n\n## Dein Dashboard\n\nNach dem Login landest du direkt auf deinem Dashboard. Hier findest du:\n\n- **Meine Aufgaben**: Alle deine aktuellen Tasks auf einen Blick\n- **Benachrichtigungen**: Wichtige Updates zu Freigaben, E-Mails und mehr\n- **E-Mail Performance**: Statistiken zu deinen versendeten Kampagnen\n- **PR-Monitoring**: Aktuelle Veröffentlichungen und automatische Fundstellen\n\n[Screenshot: Dashboard mit allen Widgets]\n\n## Die Hauptnavigation\n\nIn der oberen Navigationsleiste findest du alle Bereiche von CeleroPress:\n\n### CRM (Kontakte)\nHier verwaltest du deine Medienkontakte:\n- **Unternehmen**: Verlage und Medienhäuser\n- **Personen**: Journalisten und Redakteure\n- **Verteilerlisten**: Empfängergruppen für den Versand\n\n### Bibliothek\nDeine zentrale Medienverwaltung:\n- **Publikationen**: Zeitungen, Magazine, Online-Portale\n- **Textbausteine**: Wiederverwendbare Texte wie \"Über uns\" oder Pressekontakt\n- **Medien**: Bilder, PDFs und Videos\n- **Marken-DNA**: Markenwerte und Tonalität für die KI-Unterstützung\n\n### Projekte\nDer zentrale Arbeitsbereich für deine PR-Kampagnen. Hier erstellst du Pressemeldungen, holst Freigaben ein und versendest an deine Verteiler.\n\n### Analytics\nÜberwache den Erfolg deiner Kampagnen mit Monitoring und automatischem Reporting.\n\n[Screenshot: Navigationsleiste mit Dropdown-Menüs]\n\n## Schnellzugriffe\n\nIn der rechten oberen Ecke findest du:\n\n- **Inbox**: Zentrale Nachrichtenübersicht mit Antworten von Journalisten\n- **Benachrichtigungen**: Echtzeit-Updates zu deinen Projekten\n- **Einstellungen**: Team, E-Mail-Konfiguration, Branding und mehr\n- **Profil**: Persönliche Einstellungen und Logout\n\n## Der typische PR-Workflow\n\nSo arbeitest du mit CeleroPress:\n\n1. **Vorbereitung**: Kontakte importieren, Verteiler erstellen, Marken-DNA pflegen\n2. **Projekt erstellen**: Neue Kampagne anlegen, Strategie definieren\n3. **Pressemeldung schreiben**: Mit KI-Unterstützung oder manuell\n4. **Freigabe einholen**: Freigabe-Link an Kunden senden\n5. **Versand**: E-Mail an Verteiler senden\n6. **Monitoring**: Erfolg messen und Clippings erfassen\n\n## Nächste Schritte\n\nJetzt bist du bereit, loszulegen! Wir empfehlen dir, als erstes:\n\n1. Dein **Profil einzurichten** (Name, Bild, Kontaktdaten)\n2. Die **E-Mail-Verifizierung** abzuschließen\n3. Deinen ersten **Kunden oder Verlag** anzulegen\n\n[Screenshot: Erste Schritte Checkliste]",
+    "en": "# Welcome to CeleroPress\n\nCeleroPress is your professional PR management software. From contact management to press release creation, distribution, and monitoring - everything in one place.\n\n## Your Dashboard\n\nAfter logging in, you'll land directly on your dashboard. Here you'll find:\n\n- **My Tasks**: All your current tasks at a glance\n- **Notifications**: Important updates about approvals, emails, and more\n- **Email Performance**: Statistics for your sent campaigns\n- **PR Monitoring**: Current publications and automatic findings\n\n[Screenshot: Dashboard with all widgets]\n\n## Main Navigation\n\nIn the top navigation bar, you'll find all areas of CeleroPress:\n\n### CRM (Contacts)\nManage your media contacts here:\n- **Companies**: Publishers and media houses\n- **People**: Journalists and editors\n- **Distribution Lists**: Recipient groups for distribution\n\n### Library\nYour central media management:\n- **Publications**: Newspapers, magazines, online portals\n- **Boilerplates**: Reusable texts like \"About Us\" or press contact\n- **Media**: Images, PDFs, and videos\n- **Brand DNA**: Brand values and tone of voice for AI support\n\n### Projects\nThe central workspace for your PR campaigns. Create press releases, get approvals, and send to your distribution lists.\n\n### Analytics\nMonitor the success of your campaigns with monitoring and automatic reporting.\n\n[Screenshot: Navigation bar with dropdown menus]\n\n## Quick Access\n\nIn the top right corner, you'll find:\n\n- **Inbox**: Central message overview with journalist responses\n- **Notifications**: Real-time updates about your projects\n- **Settings**: Team, email configuration, branding, and more\n- **Profile**: Personal settings and logout\n\n## The Typical PR Workflow\n\nHow to work with CeleroPress:\n\n1. **Preparation**: Import contacts, create distribution lists, maintain Brand DNA\n2. **Create Project**: Set up new campaign, define strategy\n3. **Write Press Release**: With AI support or manually\n4. **Get Approval**: Send approval link to clients\n5. **Distribution**: Send email to distribution list\n6. **Monitoring**: Measure success and capture clippings\n\n## Next Steps\n\nNow you're ready to get started! We recommend first:\n\n1. Setting up your **profile** (name, photo, contact details)\n2. Completing **email verification**\n3. Creating your first **client or publisher**\n\n[Screenshot: First steps checklist]"
+  },
+  "tips": [
+    {
+      "tip": "Nutze die Tastenkombination Strg+K (Cmd+K auf Mac), um schnell zwischen Bereichen zu wechseln.",
+      "tipEn": "Use the keyboard shortcut Ctrl+K (Cmd+K on Mac) to quickly switch between areas."
+    },
+    {
+      "tip": "Das Dashboard zeigt dir automatisch nur relevante Daten für deine aktuelle Organisation an.",
+      "tipEn": "The dashboard automatically shows you only relevant data for your current organization."
+    },
+    {
+      "tip": "Klicke auf das Logo oben links, um jederzeit zum Dashboard zurueckzukehren.",
+      "tipEn": "Click the logo in the top left to return to the dashboard at any time."
+    },
+    {
+      "tip": "In den Einstellungen kannst du das Branding anpassen, sodass CeleroPress in deinen Firmenfarben erscheint.",
+      "tipEn": "In settings, you can customize the branding so CeleroPress appears in your company colors."
+    }
+  ],
+  "videos": [],
+  "relatedArticles": [
+    "dashboard-übersicht",
+    "erste-pressemitteilung",
+    "profil-einrichten",
+    "e-mail-verifizierung"
+  ]
+}

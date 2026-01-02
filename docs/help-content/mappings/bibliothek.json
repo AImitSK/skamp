@@ -1,0 +1,87 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'bibliothek'",
+  "mappings": [
+    {
+      "pageName": "Publikationen",
+      "routes": [
+        "/dashboard/library/publications",
+        "/dashboard/library/publications/*"
+      ],
+      "mainArticle": "publikation-anlegen",
+      "quickTips": [
+        { "tip": "Publikationen sind Medien wie Magazine, Zeitungen oder Online-Portale", "tipEn": "Publications are media like magazines, newspapers or online portals" },
+        { "tip": "Verknüpfe Publikationen mit Verlagen für bessere Organisation", "tipEn": "Link publications to publishers for better organization" },
+        { "tip": "Nutze Tags zur thematischen Kategorisierung", "tipEn": "Use tags for thematic categorization" }
+      ],
+      "additionalArticles": ["publikation-dem-verlag-zuordnen", "publikation-bearbeiten"]
+    },
+    {
+      "pageName": "Textbausteine",
+      "routes": [
+        "/dashboard/library/boilerplates",
+        "/dashboard/library/boilerplates/*"
+      ],
+      "mainArticle": "textbaustein-erstellen",
+      "quickTips": [
+        { "tip": "Erstelle Bausteine für wiederkehrende Textabschnitte", "tipEn": "Create blocks for recurring text sections" },
+        { "tip": "Boilerplates werden automatisch in Pressemeldungen eingefuegt", "tipEn": "Boilerplates are automatically inserted into press releases" },
+        { "tip": "Halte Pressekontakt-Daten immer aktuell", "tipEn": "Keep press contact data always up to date" }
+      ],
+      "additionalArticles": ["boilerplate-ueber-den-kunden", "boilerplate-pressekontakt", "textbausteine-in-projekten-nutzen"]
+    },
+    {
+      "pageName": "Medien",
+      "routes": [
+        "/dashboard/library/media",
+        "/dashboard/library/media/*"
+      ],
+      "mainArticle": "medien-hochladen",
+      "quickTips": [
+        { "tip": "Unterstuetzte Formate: JPG, PNG, PDF, DOCX und mehr", "tipEn": "Supported formats: JPG, PNG, PDF, DOCX and more" },
+        { "tip": "Nutze Ordner zur thematischen Organisation", "tipEn": "Use folders for thematic organization" },
+        { "tip": "Medien koennen direkt in Pressemeldungen eingebunden werden", "tipEn": "Media can be embedded directly in press releases" }
+      ],
+      "additionalArticles": ["medien-organisieren", "medien-teilen"]
+    },
+    {
+      "pageName": "Marken-DNA",
+      "routes": [
+        "/dashboard/library/marken-dna"
+      ],
+      "mainArticle": "marken-dna-verstehen",
+      "quickTips": [
+        { "tip": "Die Marken-DNA ist das Fundament fuer KI-generierte Inhalte", "tipEn": "Brand DNA is the foundation for AI-generated content" },
+        { "tip": "Je detaillierter die DNA, desto besser die KI-Ergebnisse", "tipEn": "The more detailed the DNA, the better the AI results" },
+        { "tip": "Aktualisiere die DNA bei groesseren Markenveraenderungen", "tipEn": "Update DNA for major brand changes" }
+      ],
+      "additionalArticles": ["marken-dna-unternehmensbasis", "marken-dna-markenidentitaet", "marken-dna-kernbotschaften"]
+    },
+    {
+      "pageName": "Marken-DNA Editor",
+      "routes": [
+        "/dashboard/library/marken-dna/*"
+      ],
+      "mainArticle": "marken-dna-unternehmensbasis",
+      "quickTips": [
+        { "tip": "Arbeite die Module der Reihe nach durch", "tipEn": "Work through the modules in order" },
+        { "tip": "Nutze die KI-Analyse fuer automatische Vorschlaege", "tipEn": "Use AI analysis for automatic suggestions" },
+        { "tip": "Die Synthese fasst alle Module zusammen", "tipEn": "The synthesis combines all modules" }
+      ],
+      "additionalArticles": ["marken-dna-potenzialanalyse", "marken-dna-zielgruppenprofil", "marken-dna-kommunikationsziele", "marken-dna-synthese"]
+    },
+    {
+      "pageName": "Datenbank",
+      "routes": [
+        "/dashboard/library/database",
+        "/dashboard/library/database/*"
+      ],
+      "mainArticle": "datenbank-nutzen",
+      "quickTips": [
+        { "tip": "Die Datenbank speichert Fakten fuer KI-Zugriff", "tipEn": "The database stores facts for AI access" },
+        { "tip": "Strukturiere Eintraege nach Kategorien", "tipEn": "Structure entries by categories" },
+        { "tip": "Aktualisiere Zahlen und Fakten regelmaessig", "tipEn": "Update numbers and facts regularly" }
+      ],
+      "additionalArticles": ["fachbegriffe-ki-uebersetzungen"]
+    }
+  ]
+}

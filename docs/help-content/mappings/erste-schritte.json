@@ -1,0 +1,81 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'erste-schritte'",
+  "mappings": [
+    {
+      "pageName": "Dashboard",
+      "routes": ["/dashboard"],
+      "mainArticle": "willkommen-bei-celeropress",
+      "quickTips": [
+        { "tip": "Klicke auf das ?-Icon rechts oben für kontextbezogene Hilfe", "tipEn": "Click the ? icon in the top right for contextual help" },
+        { "tip": "Die linke Sidebar zeigt alle Hauptbereiche der Software", "tipEn": "The left sidebar shows all main areas of the software" },
+        { "tip": "Nutze die Tastenkombination Cmd/Ctrl+K für die Schnellsuche", "tipEn": "Use Cmd/Ctrl+K for quick search" }
+      ],
+      "additionalArticles": ["profil-einrichten", "branding-einrichten"]
+    },
+    {
+      "pageName": "Profil",
+      "routes": ["/dashboard/admin/profile"],
+      "mainArticle": "profil-einrichten",
+      "quickTips": [
+        { "tip": "Ein Profilbild macht dich für dein Team erkennbar", "tipEn": "A profile picture makes you recognizable to your team" },
+        { "tip": "Verifiziere deine E-Mail für alle Funktionen", "tipEn": "Verify your email for all features" },
+        { "tip": "Aktiviere 2FA für mehr Sicherheit", "tipEn": "Enable 2FA for more security" }
+      ],
+      "additionalArticles": ["profilbild-hochladen", "email-verifizierung", "zwei-faktor-authentifizierung"]
+    },
+    {
+      "pageName": "Branding-Einstellungen",
+      "routes": ["/dashboard/settings/branding"],
+      "mainArticle": "branding-einrichten",
+      "quickTips": [
+        { "tip": "Nutze ein PNG mit transparentem Hintergrund für dein Logo", "tipEn": "Use a PNG with transparent background for your logo" },
+        { "tip": "Das Logo erscheint in PDFs und Freigabe-Links", "tipEn": "The logo appears in PDFs and approval links" }
+      ],
+      "additionalArticles": ["willkommen-bei-celeropress"]
+    },
+    {
+      "pageName": "Team-Einstellungen",
+      "routes": ["/dashboard/settings/team"],
+      "mainArticle": "team-einladen",
+      "quickTips": [
+        { "tip": "Einladungen sind 7 Tage gültig", "tipEn": "Invitations are valid for 7 days" },
+        { "tip": "Nur Owner können Team-Mitglieder verwalten", "tipEn": "Only owners can manage team members" },
+        { "tip": "Ausstehende Einladungen zählen nicht zum Limit", "tipEn": "Pending invitations don't count towards the limit" }
+      ],
+      "additionalArticles": ["branding-einrichten"]
+    },
+    {
+      "pageName": "Domain-Einstellungen",
+      "routes": ["/dashboard/settings/domain", "/dashboard/settings/domains"],
+      "mainArticle": "versand-domain-authentifizieren",
+      "quickTips": [
+        { "tip": "DNS-Änderungen brauchen bis zu 48 Stunden", "tipEn": "DNS changes take up to 48 hours" },
+        { "tip": "Nutze die Kopier-Buttons um Tippfehler zu vermeiden", "tipEn": "Use the copy buttons to avoid typos" },
+        { "tip": "Teste die Zustellbarkeit nach der Verifizierung", "tipEn": "Test deliverability after verification" }
+      ],
+      "additionalArticles": ["email-absender-einrichten"]
+    },
+    {
+      "pageName": "E-Mail-Einstellungen",
+      "routes": ["/dashboard/settings/email"],
+      "mainArticle": "email-absender-einrichten",
+      "quickTips": [
+        { "tip": "Erstelle separate Adressen für verschiedene Kunden", "tipEn": "Create separate addresses for different clients" },
+        { "tip": "Aktiviere Inbox um Antworten zu empfangen", "tipEn": "Enable Inbox to receive replies" },
+        { "tip": "Die erste Adresse wird automatisch Standard", "tipEn": "The first address becomes default automatically" }
+      ],
+      "additionalArticles": ["email-signatur-erstellen", "versand-domain-authentifizieren"]
+    },
+    {
+      "pageName": "CRM - Unternehmen",
+      "routes": ["/dashboard/contacts/crm", "/dashboard/contacts/crm/companies", "/dashboard/contacts/crm?tab=companies"],
+      "mainArticle": "kunde-anlegen",
+      "quickTips": [
+        { "tip": "Nur der Anzeigename ist Pflichtfeld", "tipEn": "Only the display name is required" },
+        { "tip": "Nutze Tags zur besseren Organisation", "tipEn": "Use tags for better organization" },
+        { "tip": "Unterscheide zwischen Kunden und Verlagen", "tipEn": "Distinguish between clients and publishers" }
+      ],
+      "additionalArticles": ["willkommen-bei-celeropress"]
+    }
+  ]
+}
