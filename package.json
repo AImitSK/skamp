@@ -29,7 +29,11 @@
     "genkit:dev": "genkit start -- npx tsx --watch src/genkit-server.ts",
     "genkit:ui:start": "genkit start -- npx tsx --watch src/genkit-server.ts",
     "genkit:flow": "genkit flow:run",
-    "sanity:typegen": "sanity schema extract --path=src/sanity/extract.json && sanity typegen generate && rm ./src/sanity/extract.json"
+    "sanity:typegen": "sanity schema extract --path=src/sanity/extract.json && sanity typegen generate && rm ./src/sanity/extract.json",
+    "import:help-articles": "npx tsx scripts/import-help-articles.ts",
+    "import:help-articles:dry": "npx tsx scripts/import-help-articles.ts --dry-run",
+    "import:help-mappings": "npx tsx scripts/import-help-mappings.ts",
+    "import:help-mappings:dry": "npx tsx scripts/import-help-mappings.ts --dry-run"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.18",

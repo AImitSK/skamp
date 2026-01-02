@@ -37,6 +37,11 @@ const portableTextComponents = {
         {children}
       </p>
     ),
+    h1: ({ children }: { children: React.ReactNode }) => (
+      <h1 className="mt-8 mb-6 text-2xl font-bold text-gray-900 dark:text-white first:mt-0">
+        {children}
+      </h1>
+    ),
     h2: ({ children }: { children: React.ReactNode }) => (
       <h2 className="mt-8 mb-4 text-xl font-semibold text-gray-900 dark:text-white first:mt-0">
         {children}
