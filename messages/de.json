@@ -11734,5 +11734,27 @@
         "disableApprovalToRemoveContact": "Bitte deaktivieren Sie zuerst die Kundenfreigabe, bevor Sie den Kontakt entfernen"
       }
     }
+  },
+  "help": {
+    "panel": {
+      "title": "Hilfe",
+      "close": "Schließen",
+      "open": "Hilfe öffnen",
+      "shortcut": "Hilfe (F1)",
+      "noContent": "Für diese Seite ist noch keine Hilfe verfügbar."
+    },
+    "sections": {
+      "faq": "FAQ",
+      "tips": "Tipps",
+      "video": "Video-Tutorial",
+      "relatedArticles": "Verwandte Artikel"
+    },
+    "support": {
+      "title": "Brauchst du Hilfe?",
+      "description": "Unser Support-Team hilft dir gerne weiter.",
+      "contactButton": "Support kontaktieren"
+    },
+    "readMore": "Mehr lesen",
+    "watchVideo": "Video ansehen"
   }
 }

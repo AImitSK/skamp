@@ -82,6 +82,7 @@ import React, { useState } from "react";
 import clsx from 'clsx';
 import * as Headless from '@headlessui/react';
 import { Toaster } from '@/lib/utils/toast';
+import { HelpProvider, HelpButton, HelpPanel } from '@/components/help';
 
 // Navigation Interface Definitions
 interface NavigationChild {
@@ -508,6 +509,7 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute>
+    <HelpProvider>
       <OrganizationProvider>
         <CrmDataProvider>
           <StackedLayout
@@ -851,8 +853,12 @@ export default function DashboardLayout({
           <Toaster />
           <MobileMenu />
           </StackedLayout>
+          {/* Hilfe-System */}
+          <HelpButton />
+          <HelpPanel />
         </CrmDataProvider>
       </OrganizationProvider>
+    </HelpProvider>
     </ProtectedRoute>
   );
 }

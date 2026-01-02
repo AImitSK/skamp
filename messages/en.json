@@ -11720,5 +11720,27 @@
         "disableApprovalToRemoveContact": "Please disable customer approval before removing the contact"
       }
     }
+  },
+  "help": {
+    "panel": {
+      "title": "Help",
+      "close": "Close",
+      "open": "Open help",
+      "shortcut": "Help (F1)",
+      "noContent": "No help available for this page yet."
+    },
+    "sections": {
+      "faq": "FAQ",
+      "tips": "Tips",
+      "video": "Video Tutorial",
+      "relatedArticles": "Related Articles"
+    },
+    "support": {
+      "title": "Need help?",
+      "description": "Our support team is happy to assist you.",
+      "contactButton": "Contact Support"
+    },
+    "readMore": "Read more",
+    "watchVideo": "Watch video"
   }
 }
