@@ -1,6 +1,6 @@
 # Hilfe-Artikel Checkliste
 
-> Stand: 2026-01-02 | Fortschritt: 11/95 Artikel
+> Stand: 2026-01-02 | Fortschritt: 43/95 Artikel
 
 ---
 
@@ -46,30 +46,30 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Verlag anlegen | 🔴 Hoch | `crm/verlag-anlegen.json` |
-| [ ] | Verlag bearbeiten | 🟡 Mittel | `crm/verlag-bearbeiten.json` |
-| [ ] | Verlage importieren | 🟡 Mittel | `crm/verlage-importieren.json` |
+| [x] | Verlag anlegen | 🔴 Hoch | `crm/verlag-anlegen.json` |
+| [x] | Verlag bearbeiten | 🟡 Mittel | `crm/verlag-bearbeiten.json` |
+| [x] | Verlage importieren | 🟡 Mittel | `crm/verlage-importieren.json` |
 
 ### Journalisten
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Journalist anlegen | 🔴 Hoch | `crm/journalist-anlegen.json` |
-| [ ] | Journalist mit Verlag verknüpfen | 🔴 Hoch | `crm/journalist-mit-verlag-verknuepfen.json` |
-| [ ] | Journalist mit Publikation verknüpfen | 🔴 Hoch | `crm/journalist-mit-publikation-verknuepfen.json` |
-| [ ] | Journalisten importieren | 🟡 Mittel | `crm/journalisten-importieren.json` |
-| [ ] | Journalisten exportieren | 🟢 Niedrig | `crm/journalisten-exportieren.json` |
+| [x] | Journalist anlegen | 🔴 Hoch | `crm/journalist-anlegen.json` |
+| [x] | Journalist mit Verlag verknüpfen | 🔴 Hoch | `crm/journalist-mit-verlag-verknuepfen.json` |
+| [x] | Journalist mit Publikation verknüpfen | 🔴 Hoch | `crm/journalist-mit-publikation-verknuepfen.json` |
+| [x] | Journalisten importieren | 🟡 Mittel | `crm/journalisten-importieren.json` |
+| [x] | Journalisten exportieren | 🟢 Niedrig | `crm/journalisten-exportieren.json` |
 
 ### Verteilerlisten
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Verteiler erstellen | 🔴 Hoch | `crm/verteiler-erstellen.json` |
-| [ ] | Journalisten zum Verteiler hinzufügen | 🔴 Hoch | `crm/journalisten-zum-verteiler-hinzufuegen.json` |
-| [ ] | Dynamische Filter | 🟡 Mittel | `crm/dynamische-filter.json` |
-| [ ] | Verteiler im Projekt nutzen | 🟡 Mittel | `crm/verteiler-im-projekt-nutzen.json` |
+| [x] | Verteiler erstellen | 🔴 Hoch | `crm/verteiler-erstellen.json` |
+| [x] | Journalisten zum Verteiler hinzufügen | 🔴 Hoch | `crm/journalisten-zum-verteiler-hinzufuegen.json` |
+| [x] | Dynamische Filter | 🟡 Mittel | `crm/dynamische-filter.json` |
+| [x] | Verteiler im Projekt nutzen | 🟡 Mittel | `crm/verteiler-im-projekt-nutzen.json` |
 
-**Fortschritt: 0/12**
+**Fortschritt: 12/12** ✅
 
 ---
 
@@ -79,48 +79,48 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Publikation anlegen | 🔴 Hoch | `bibliothek/publikation-anlegen.json` |
-| [ ] | Publikation dem Verlag zuordnen | 🔴 Hoch | `bibliothek/publikation-dem-verlag-zuordnen.json` |
-| [ ] | Publikation bearbeiten | 🟡 Mittel | `bibliothek/publikation-bearbeiten.json` |
+| [x] | Publikation anlegen | 🔴 Hoch | `bibliothek/publikation-anlegen.json` |
+| [x] | Publikation dem Verlag zuordnen | 🔴 Hoch | `bibliothek/publikation-dem-verlag-zuordnen.json` |
+| [x] | Publikation bearbeiten | 🟡 Mittel | `bibliothek/publikation-bearbeiten.json` |
 
 ### Textbausteine (Boilerplates)
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Textbaustein erstellen | 🔴 Hoch | `bibliothek/textbaustein-erstellen.json` |
-| [ ] | Boilerplate "Über den Kunden" | 🔴 Hoch | `bibliothek/boilerplate-ueber-den-kunden.json` |
-| [ ] | Boilerplate "Pressekontakt" | 🔴 Hoch | `bibliothek/boilerplate-pressekontakt.json` |
-| [ ] | Textbausteine in Projekten nutzen | 🟡 Mittel | `bibliothek/textbausteine-in-projekten-nutzen.json` |
+| [x] | Textbaustein erstellen | 🔴 Hoch | `bibliothek/textbaustein-erstellen.json` |
+| [x] | Boilerplate "Über den Kunden" | 🔴 Hoch | `bibliothek/boilerplate-ueber-den-kunden.json` |
+| [x] | Boilerplate "Pressekontakt" | 🔴 Hoch | `bibliothek/boilerplate-pressekontakt.json` |
+| [x] | Textbausteine in Projekten nutzen | 🟡 Mittel | `bibliothek/textbausteine-in-projekten-nutzen.json` |
 
 ### Medien
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Medien hochladen | 🔴 Hoch | `bibliothek/medien-hochladen.json` |
-| [ ] | Medien organisieren | 🟡 Mittel | `bibliothek/medien-organisieren.json` |
-| [ ] | Medien teilen | 🟡 Mittel | `bibliothek/medien-teilen.json` |
+| [x] | Medien hochladen | 🔴 Hoch | `bibliothek/medien-hochladen.json` |
+| [x] | Medien organisieren | 🟡 Mittel | `bibliothek/medien-organisieren.json` |
+| [x] | Medien teilen | 🟡 Mittel | `bibliothek/medien-teilen.json` |
 
 ### Marken-DNA
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Marken-DNA verstehen | 🔴 Hoch | `bibliothek/marken-dna-verstehen.json` |
-| [ ] | Unternehmensbasis erfassen | 🔴 Hoch | `bibliothek/marken-dna-unternehmensbasis.json` |
-| [ ] | Potenzialanalyse durchführen | 🟡 Mittel | `bibliothek/marken-dna-potenzialanalyse.json` |
-| [ ] | Zielgruppenprofil erstellen | 🔴 Hoch | `bibliothek/marken-dna-zielgruppenprofil.json` |
-| [ ] | Markenidentität definieren | 🔴 Hoch | `bibliothek/marken-dna-markenidentitaet.json` |
-| [ ] | Kommunikationsziele festlegen | 🟡 Mittel | `bibliothek/marken-dna-kommunikationsziele.json` |
-| [ ] | Kernbotschaften formulieren | 🔴 Hoch | `bibliothek/marken-dna-kernbotschaften.json` |
-| [ ] | DNA Synthese erzeugen | 🔴 Hoch | `bibliothek/marken-dna-synthese-erzeugen.json` |
-| [ ] | Fachbegriffe für KI-Übersetzungen | 🟡 Mittel | `bibliothek/fachbegriffe-ki-uebersetzungen.json` |
+| [x] | Marken-DNA verstehen | 🔴 Hoch | `bibliothek/marken-dna-verstehen.json` |
+| [x] | Unternehmensbasis erfassen | 🔴 Hoch | `bibliothek/marken-dna-unternehmensbasis.json` |
+| [x] | Potenzialanalyse durchführen | 🟡 Mittel | `bibliothek/marken-dna-potenzialanalyse.json` |
+| [x] | Zielgruppenprofil erstellen | 🔴 Hoch | `bibliothek/marken-dna-zielgruppenprofil.json` |
+| [x] | Markenidentität definieren | 🔴 Hoch | `bibliothek/marken-dna-markenidentitaet.json` |
+| [x] | Kommunikationsziele festlegen | 🟡 Mittel | `bibliothek/marken-dna-kommunikationsziele.json` |
+| [x] | Kernbotschaften formulieren | 🔴 Hoch | `bibliothek/marken-dna-kernbotschaften.json` |
+| [x] | DNA Synthese erzeugen | 🔴 Hoch | `bibliothek/marken-dna-synthese.json` |
+| [x] | Fachbegriffe für KI-Übersetzungen | 🟡 Mittel | `bibliothek/fachbegriffe-ki-uebersetzungen.json` |
 
 ### Datenbank
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Datenbank nutzen | 🟢 Niedrig | `bibliothek/datenbank-nutzen.json` |
+| [x] | Datenbank nutzen | 🟢 Niedrig | `bibliothek/datenbank-nutzen.json` |
 
-**Fortschritt: 0/21**
+**Fortschritt: 20/20** ✅
 
 ---
 
@@ -312,10 +312,10 @@
 
 | Priorität | Anzahl | Status |
 |-----------|--------|--------|
-| 🔴 Hoch | 42 | 0/42 |
-| 🟡 Mittel | 40 | 0/40 |
-| 🟢 Niedrig | 13 | 0/13 |
-| **Gesamt** | **95** | **0/95** |
+| 🔴 Hoch | 42 | 22/42 |
+| 🟡 Mittel | 40 | 18/40 |
+| 🟢 Niedrig | 13 | 3/13 |
+| **Gesamt** | **95** | **43/95** |
 
 ---
 
@@ -325,29 +325,29 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PHASE 1: GRUNDEINRICHTUNG (einmalig)                                │
 ├─────────────────────────────────────────────────────────────────────┤
-│ □ Profil einrichten (Bild, Daten, E-Mail-Verifizierung, 2FA)       │
-│ □ Branding einrichten                                               │
-│ □ Team einladen                                                     │
-│ □ Versand-Domain authentifizieren                                   │
-│ □ E-Mail-Absender + Signatur einrichten                            │
+│ ☑ Profil einrichten (Bild, Daten, E-Mail-Verifizierung, 2FA)       │
+│ ☑ Branding einrichten                                               │
+│ ☑ Team einladen                                                     │
+│ ☑ Versand-Domain authentifizieren                                   │
+│ ☑ E-Mail-Absender + Signatur einrichten                            │
 └─────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PHASE 2: KUNDE & KONTAKTE                                           │
 ├─────────────────────────────────────────────────────────────────────┤
-│ □ Kunde anlegen (oder sich selbst)                                  │
-│ □ Verlag anlegen                                                    │
-│ □ Publikationen erstellen (→ Bibliothek)                           │
-│ □ Journalisten anlegen + Verlag/Publikation zuordnen               │
-│ □ Verteilerliste erstellen                                          │
+│ ☑ Kunde anlegen (oder sich selbst)                                  │
+│ ☑ Verlag anlegen                                                    │
+│ ☑ Publikationen erstellen (→ Bibliothek)                           │
+│ ☑ Journalisten anlegen + Verlag/Publikation zuordnen               │
+│ ☑ Verteilerliste erstellen                                          │
 └─────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PHASE 3: CONTENT-GRUNDLAGEN                                         │
 ├─────────────────────────────────────────────────────────────────────┤
-│ □ Boilerplates anlegen (Über Kunden, Pressekontakt)                │
-│ □ Fachbegriffe für KI-Übersetzungen eingeben                       │
-│ □ Marken-DNA erstellen:                                             │
+│ ☑ Boilerplates anlegen (Über Kunden, Pressekontakt)                │
+│ ☑ Fachbegriffe für KI-Übersetzungen eingeben                       │
+│ ☑ Marken-DNA erstellen:                                             │
 │   • Unternehmensbasis                                               │
 │   • Potenzialanalyse                                                │
 │   • Zielgruppenprofil                                               │
@@ -410,14 +410,14 @@
 
 ## Empfohlene Reihenfolge für Artikel-Erstellung
 
-### Phase 1: Onboarding-Artikel (11 Artikel)
+### Phase 1: Onboarding-Artikel (11 Artikel) ✅
 Alle "Erste Schritte" zuerst – damit neue User starten können.
 
-### Phase 2: Kern-Workflow (25 Artikel)
+### Phase 2: Kern-Workflow (25 Artikel) - In Arbeit
 Die wichtigsten Artikel für den Pressemeldungs-Workflow:
-- CRM: Verlag, Publikation, Journalist, Verteiler
-- Bibliothek: Boilerplates, Marken-DNA
-- Projekte: Erstellen, Pressemeldung, KI, Freigabe, Versand
+- ✅ CRM: Verlag, Publikation, Journalist, Verteiler
+- ✅ Bibliothek: Boilerplates, Marken-DNA
+- ⏳ Projekte: Erstellen, Pressemeldung, KI, Freigabe, Versand
 
 ### Phase 3: Details & Erweiterungen (46 Artikel)
 Alle 🟡 Mittel Priorität
