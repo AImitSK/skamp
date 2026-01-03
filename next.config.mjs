@@ -17,11 +17,12 @@ const nextConfig = {
   },
 
   // Subdomain Routing: support.celeropress.com → /support
+  // Wichtig: _next, api und statische Assets ausschließen
   async rewrites() {
     return {
       beforeFiles: [
         {
-          source: '/:path*',
+          source: '/((?!_next|api|favicon.ico|robots.txt|sitemap.xml).*)',
           has: [{ type: 'host', value: 'support.celeropress.com' }],
           destination: '/support/:path*',
         },
