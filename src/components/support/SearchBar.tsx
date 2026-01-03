@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { useSupportPath } from './SupportContext'
 
 interface SearchBarProps {
   locale: string
@@ -13,11 +14,12 @@ interface SearchBarProps {
 export function SearchBar({ locale, placeholder, defaultValue }: SearchBarProps) {
   const [query, setQuery] = useState(defaultValue || '')
   const router = useRouter()
+  const { buildPath } = useSupportPath()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
-      router.push(`/support/${locale}/search?q=${encodeURIComponent(query)}`)
+      router.push(buildPath(`/${locale}/search?q=${encodeURIComponent(query)}`))
     }
   }
 

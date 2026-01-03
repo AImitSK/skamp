@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
+import { useSupportPath } from './SupportContext'
 
 interface ArticleCardProps {
   title: string
@@ -18,9 +21,11 @@ export function ArticleCard({
   locale,
   onboardingStep,
 }: ArticleCardProps) {
+  const { buildPath } = useSupportPath()
+
   return (
     <Link
-      href={`/support/${locale}/${categorySlug}/${slug}`}
+      href={buildPath(`/${locale}/${categorySlug}/${slug}`)}
       className="group flex items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700
                  hover:border-primary-300 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-zinc-750 transition-all"
     >

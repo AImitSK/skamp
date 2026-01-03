@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import {
   RocketLaunchIcon,
@@ -9,6 +11,7 @@ import {
   Cog6ToothIcon,
   UserIcon,
 } from '@heroicons/react/24/outline'
+import { useSupportPath } from './SupportContext'
 
 interface CategoryCardProps {
   title: string
@@ -39,6 +42,7 @@ export function CategoryCard({
   articleCount,
   locale,
 }: CategoryCardProps) {
+  const { buildPath } = useSupportPath()
   const IconComponent = icon ? iconMap[icon] || FolderIcon : FolderIcon
 
   const articleText =
@@ -48,7 +52,7 @@ export function CategoryCard({
 
   return (
     <Link
-      href={`/support/${locale}/${slug}`}
+      href={buildPath(`/${locale}/${slug}`)}
       className="group block p-6 bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-zinc-700
                  hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg transition-all"
     >

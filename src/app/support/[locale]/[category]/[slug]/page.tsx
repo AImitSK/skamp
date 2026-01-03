@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { ArrowLeftIcon, HomeIcon } from '@heroicons/react/24/outline'
 import { ArticleContent } from '@/components/support/ArticleContent'
+import { SupportLink } from '@/components/support/SupportContext'
 import { getHelpArticle } from '@/sanity/help-queries'
 
 interface PageProps {
@@ -42,20 +42,20 @@ export default async function ArticlePage({ params }: PageProps) {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 mb-6">
-          <Link
-            href={`/support/${locale}`}
+          <SupportLink
+            href={`/${locale}`}
             className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <HomeIcon className="h-4 w-4" />
             <span className="sr-only">{homeText}</span>
-          </Link>
+          </SupportLink>
           <span>/</span>
-          <Link
-            href={`/support/${locale}/${category}`}
+          <SupportLink
+            href={`/${locale}/${category}`}
             className="hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             {article.category?.title || category}
-          </Link>
+          </SupportLink>
           <span>/</span>
           <span className="text-gray-900 dark:text-white truncate max-w-[200px]">
             {article.title}
@@ -63,13 +63,13 @@ export default async function ArticlePage({ params }: PageProps) {
         </nav>
 
         {/* Back Button */}
-        <Link
-          href={`/support/${locale}/${category}`}
+        <SupportLink
+          href={`/${locale}/${category}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           {backText}
-        </Link>
+        </SupportLink>
 
         {/* Article Header */}
         <div className="mb-8">

@@ -4,6 +4,7 @@ import { PortableText } from 'next-sanity'
 import { image } from '@/sanity/image'
 import Link from 'next/link'
 import { LightBulbIcon } from '@heroicons/react/24/outline'
+import { useSupportPath } from './SupportContext'
 
 interface Tip {
   text: string
@@ -132,6 +133,8 @@ export function ArticleContent({
   locale,
   categorySlug,
 }: ArticleContentProps) {
+  const { buildPath } = useSupportPath()
+
   return (
     <div className="space-y-8">
       {/* Main Content */}
@@ -201,7 +204,7 @@ export function ArticleContent({
             {relatedArticles.map((article, index) => (
               <li key={index}>
                 <Link
-                  href={`/support/${locale}/${article.category?.slug || categorySlug}/${article.slug}`}
+                  href={buildPath(`/${locale}/${article.category?.slug || categorySlug}/${article.slug}`)}
                   className="text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   {article.title}

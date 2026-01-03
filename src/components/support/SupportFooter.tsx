@@ -1,8 +1,16 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSupportPath } from './SupportContext'
 
 export function SupportFooter() {
   const currentYear = new Date().getFullYear()
+  const { isSubdomain } = useSupportPath()
+
+  // Auf Subdomain absolute URLs zur Hauptdomain verwenden
+  const homeHref = isSubdomain ? 'https://celeropress.com' : '/'
+  const pricingHref = isSubdomain ? 'https://celeropress.com/pricing' : '/pricing'
 
   return (
     <footer className="bg-gray-50 dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800">
@@ -25,13 +33,13 @@ export function SupportFooter() {
           {/* Links */}
           <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-zinc-400">
             <Link
-              href="/"
+              href={homeHref}
               className="hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Startseite
             </Link>
             <Link
-              href="/pricing"
+              href={pricingHref}
               className="hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Preise

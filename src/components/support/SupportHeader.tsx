@@ -10,18 +10,26 @@ import {
   DropdownItem,
   DropdownMenu,
 } from '@/components/ui/dropdown'
+import { useSupportPath } from './SupportContext'
 
 export function SupportHeader() {
   const pathname = usePathname()
+  const { buildPath, isSubdomain } = useSupportPath()
 
   // Ermittle aktuelle Sprache aus dem Pfad
-  const currentLocale = pathname.includes('/support/en') ? 'en' : 'de'
+  const pathWithoutSupport = pathname.replace('/support', '')
+  const currentLocale = pathWithoutSupport.includes('/en') ? 'en' : 'de'
 
   // Erstelle den Pfad für die andere Sprache
   const switchLocalePath = (newLocale: string) => {
     if (currentLocale === newLocale) return pathname
-    return pathname.replace(`/support/${currentLocale}`, `/support/${newLocale}`)
+    // Ersetze nur die Locale im Pfad
+    const newPath = pathWithoutSupport.replace(`/${currentLocale}`, `/${newLocale}`)
+    return buildPath(newPath)
   }
+
+  // Logo-Link: Auf Subdomain zur Hauptseite, sonst zur Root
+  const logoHref = isSubdomain ? 'https://celeropress.com' : '/'
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border-b border-gray-200 dark:border-zinc-800">
@@ -29,7 +37,7 @@ export function SupportHeader() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={logoHref} className="flex items-center gap-2">
               <Image
                 src="/logo_skamp.svg"
                 alt="CeleroPress"
@@ -40,7 +48,7 @@ export function SupportHeader() {
             </Link>
             <div className="h-6 w-px bg-gray-300 dark:bg-zinc-700" />
             <Link
-              href={`/support/${currentLocale}`}
+              href={buildPath(`/${currentLocale}`)}
               className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
             >
               {currentLocale === 'de' ? 'Hilfe-Center' : 'Help Center'}
@@ -74,7 +82,7 @@ export function SupportHeader() {
 
             {/* Login Link */}
             <Link
-              href="/login"
+              href={isSubdomain ? 'https://celeropress.com/login' : '/login'}
               className="text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
             >
               {currentLocale === 'de' ? 'Anmelden' : 'Sign in'}

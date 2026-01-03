@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { ArticleCard } from '@/components/support/ArticleCard'
+import { SupportLink } from '@/components/support/SupportContext'
 import { client } from '@/sanity/client'
 
 interface PageProps {
@@ -59,13 +59,13 @@ export default async function CategoryPage({ params }: PageProps) {
     <div className="py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <Link
-          href={`/support/${locale}`}
+        <SupportLink
+          href={`/${locale}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           {backText}
-        </Link>
+        </SupportLink>
 
         {/* Header */}
         <div className="mb-8">

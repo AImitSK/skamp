@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
 import { ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { SearchBar } from '@/components/support/SearchBar'
 import { ArticleCard } from '@/components/support/ArticleCard'
+import { SupportLink } from '@/components/support/SupportContext'
 import { searchHelpArticles } from '@/sanity/help-queries'
 
 interface PageProps {
@@ -63,13 +63,13 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
     <div className="py-12">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Back Link */}
-        <Link
-          href={`/support/${locale}`}
+        <SupportLink
+          href={`/${locale}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           {t.backToHelp}
-        </Link>
+        </SupportLink>
 
         {/* Header */}
         <div className="mb-8">
@@ -119,12 +119,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                 <p className="text-gray-600 dark:text-zinc-400 mb-6">
                   {t.noResultsDescription}
                 </p>
-                <Link
-                  href={`/support/${locale}`}
+                <SupportLink
+                  href={`/${locale}`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
                 >
                   {t.browseCategories}
-                </Link>
+                </SupportLink>
               </div>
             )}
           </div>
