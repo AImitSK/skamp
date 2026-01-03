@@ -1,6 +1,6 @@
 # Hilfe-Artikel Checkliste
 
-> Stand: 2026-01-02 | Fortschritt: 43/95 Artikel
+> Stand: 2026-01-03 | Fortschritt: 84/95 Artikel
 
 ---
 
@@ -130,94 +130,94 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Projekt erstellen | 🔴 Hoch | `projekte/projekt-erstellen.json` |
-| [ ] | Projekt-Übersicht | 🔴 Hoch | `projekte/projekt-uebersicht.json` |
-| [ ] | Projekt-Einstellungen | 🟡 Mittel | `projekte/projekt-einstellungen.json` |
+| [x] | Projekt erstellen | 🔴 Hoch | `projekte/projekt-erstellen.json` |
+| [x] | Projekt-Übersicht | 🔴 Hoch | `projekte/projekt-uebersicht.json` |
+| [x] | Projekt-Einstellungen | 🟡 Mittel | `projekte/projekt-einstellungen.json` |
 
 ### Tasks
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Tasks verstehen | 🔴 Hoch | `projekte/tasks-verstehen.json` |
-| [ ] | Task erstellen | 🔴 Hoch | `projekte/task-erstellen.json` |
-| [ ] | Task-Status | 🟡 Mittel | `projekte/task-status.json` |
-| [ ] | Kanban-Board | 🟡 Mittel | `projekte/kanban-board.json` |
+| [x] | Tasks verstehen | 🔴 Hoch | `projekte/tasks-verstehen.json` |
+| [x] | Task erstellen | 🔴 Hoch | `projekte/task-erstellen.json` |
+| [x] | Task-Status | 🟡 Mittel | `projekte/task-status.json` |
+| [x] | Kanban-Board | 🟡 Mittel | `projekte/kanban-board.json` |
 
 ### Strategie
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Strategie definieren | 🟡 Mittel | `projekte/strategie-definieren.json` |
-| [ ] | Kernbotschaft entwickeln | 🔴 Hoch | `projekte/kernbotschaft-entwickeln.json` |
+| [x] | Strategie definieren | 🟡 Mittel | `projekte/strategie-definieren.json` |
+| [x] | Kernbotschaft entwickeln | 🔴 Hoch | `projekte/kernbotschaft-entwickeln.json` |
 
 ### Daten & Medien
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Projekt-Daten | 🟡 Mittel | `projekte/projekt-daten.json` |
-| [ ] | Medien Assets hochladen | 🔴 Hoch | `projekte/medien-assets-hochladen.json` |
-| [ ] | Dokumente verwalten | 🟡 Mittel | `projekte/dokumente-verwalten.json` |
+| [x] | Projekt-Daten | 🟡 Mittel | `projekte/projekt-daten.json` |
+| [x] | Medien Assets hochladen | 🔴 Hoch | `projekte/medien-assets-hochladen.json` |
+| [x] | Dokumente verwalten | 🟡 Mittel | `projekte/dokumente-verwalten.json` |
 
 ### Verteiler
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Verteiler auswählen | 🔴 Hoch | `projekte/verteiler-auswaehlen.json` |
-| [ ] | Verteiler bearbeiten | 🟡 Mittel | `projekte/verteiler-bearbeiten.json` |
+| [x] | Verteiler auswählen | 🔴 Hoch | `projekte/verteiler-auswaehlen.json` |
+| [x] | Verteiler bearbeiten | 🟡 Mittel | `projekte/verteiler-bearbeiten.json` |
 
 ### Pressemeldung
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Pressemeldung erstellen | 🔴 Hoch | `projekte/pressemeldung-erstellen.json` |
-| [ ] | Text mit KI-Assistent schreiben | 🔴 Hoch | `projekte/text-mit-ki-assistent-schreiben.json` |
-| [ ] | Text manuell bearbeiten | 🟡 Mittel | `projekte/text-manuell-bearbeiten.json` |
-| [ ] | Keywords einstellen | 🟡 Mittel | `projekte/keywords-einstellen.json` |
-| [ ] | Text auf Keywords optimieren | 🟡 Mittel | `projekte/text-auf-keywords-optimieren.json` |
-| [ ] | Key Visual erzeugen/auswählen | 🔴 Hoch | `projekte/key-visual-erzeugen.json` |
-| [ ] | Textbausteine auswählen | 🟡 Mittel | `projekte/textbausteine-auswaehlen.json` |
-| [ ] | Medien-Anhänge auswählen | 🟡 Mittel | `projekte/medien-anhaenge-auswaehlen.json` |
-| [ ] | Vorlagen nutzen | 🟡 Mittel | `projekte/vorlagen-nutzen.json` |
+| [x] | Pressemeldung erstellen | 🔴 Hoch | `projekte/pressemeldung-erstellen.json` |
+| [x] | Text mit KI-Assistent schreiben | 🔴 Hoch | `projekte/text-mit-ki-assistent-schreiben.json` |
+| [x] | Text manuell bearbeiten | 🟡 Mittel | `projekte/text-manuell-bearbeiten.json` |
+| [x] | Keywords einstellen | 🟡 Mittel | `projekte/keywords-einstellen.json` |
+| [x] | Text auf Keywords optimieren | 🟡 Mittel | `projekte/text-auf-keywords-optimieren.json` |
+| [x] | Key Visual erzeugen/auswählen | 🔴 Hoch | `projekte/key-visual-erzeugen.json` |
+| [x] | Textbausteine auswählen | 🟡 Mittel | `projekte/textbausteine-auswaehlen.json` |
+| [x] | Medien-Anhänge auswählen | 🟡 Mittel | `projekte/medien-anhaenge-auswaehlen.json` |
+| [x] | Vorlagen nutzen | 🟡 Mittel | `projekte/vorlagen-nutzen.json` |
 
 ### KI-Assistenten
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | KI-Assistent nutzen | 🔴 Hoch | `projekte/ki-assistent-nutzen.json` |
-| [ ] | Marken-DNA für KI | 🟡 Mittel | `projekte/marken-dna-fuer-ki.json` |
-| [ ] | Übersetzungen mit KI | 🔴 Hoch | `projekte/uebersetzungen-mit-ki.json` |
+| [x] | KI-Assistent nutzen | 🔴 Hoch | `projekte/ki-assistent-nutzen.json` |
+| [x] | Marken-DNA für KI | 🟡 Mittel | `projekte/marken-dna-fuer-ki.json` |
+| [x] | Übersetzungen mit KI | 🔴 Hoch | `projekte/uebersetzungen-mit-ki.json` |
 
 ### Freigabe
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Freigabe-Workflow verstehen | 🔴 Hoch | `projekte/freigabe-workflow.json` |
-| [ ] | Freigabe-Einstellungen | 🔴 Hoch | `projekte/freigabe-einstellungen.json` |
-| [ ] | Freigabe-Link erstellen | 🔴 Hoch | `projekte/freigabe-link-erstellen.json` |
-| [ ] | Freigabe-Center (Kundensicht) | 🟡 Mittel | `projekte/freigabe-center-kundensicht.json` |
-| [ ] | Feedback/Änderungen bearbeiten | 🔴 Hoch | `projekte/feedback-aenderungen-bearbeiten.json` |
-| [ ] | Freigabe-Status | 🟡 Mittel | `projekte/freigabe-status.json` |
+| [x] | Freigabe-Workflow verstehen | 🔴 Hoch | `projekte/freigabe-workflow.json` |
+| [x] | Freigabe-Einstellungen | 🔴 Hoch | `projekte/freigabe-einstellungen.json` |
+| [x] | Freigabe-Link erstellen | 🔴 Hoch | `projekte/freigabe-link-erstellen.json` |
+| [x] | Freigabe-Center (Kundensicht) | 🟡 Mittel | `projekte/freigabe-center-kundensicht.json` |
+| [x] | Feedback/Änderungen bearbeiten | 🔴 Hoch | `projekte/feedback-aenderungen-bearbeiten.json` |
+| [x] | Freigabe-Status | 🟡 Mittel | `projekte/freigabe-status.json` |
 
 ### Versand
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Versand vorbereiten | 🔴 Hoch | `projekte/versand-vorbereiten.json` |
-| [ ] | E-Mail-Versand | 🔴 Hoch | `projekte/email-versand.json` |
-| [ ] | Versand planen | 🟡 Mittel | `projekte/versand-planen.json` |
-| [ ] | Versand-Tracking | 🟡 Mittel | `projekte/versand-tracking.json` |
+| [x] | Versand vorbereiten | 🔴 Hoch | `projekte/versand-vorbereiten.json` |
+| [x] | E-Mail-Versand | 🔴 Hoch | `projekte/email-versand.json` |
+| [x] | Versand planen | 🟡 Mittel | `projekte/versand-planen.json` |
+| [x] | Versand-Tracking | 🟡 Mittel | `projekte/versand-tracking.json` |
 
 ### Monitoring
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Projekt-Monitoring | 🟡 Mittel | `projekte/projekt-monitoring.json` |
-| [ ] | E-Mail-Performance überwachen | 🔴 Hoch | `projekte/email-performance-ueberwachen.json` |
-| [ ] | Automatische Clippings (RSS) | 🟡 Mittel | `projekte/automatische-clippings-rss.json` |
-| [ ] | Manuelle Clippings | 🟡 Mittel | `projekte/manuelle-clippings.json` |
-| [ ] | AVE berechnen | 🟢 Niedrig | `projekte/ave-berechnen.json` |
+| [x] | Projekt-Monitoring | 🟡 Mittel | `projekte/projekt-monitoring.json` |
+| [x] | E-Mail-Performance überwachen | 🔴 Hoch | `projekte/email-performance-ueberwachen.json` |
+| [x] | Automatische Clippings (RSS) | 🟡 Mittel | `projekte/automatische-clippings-rss.json` |
+| [x] | Manuelle Clippings | 🟡 Mittel | `projekte/manuelle-clippings.json` |
+| [x] | AVE berechnen | 🟢 Niedrig | `projekte/ave-berechnen.json` |
 
-**Fortschritt: 0/43**
+**Fortschritt: 41/43** ✅
 
 ---
 
@@ -312,10 +312,10 @@
 
 | Priorität | Anzahl | Status |
 |-----------|--------|--------|
-| 🔴 Hoch | 42 | 22/42 |
-| 🟡 Mittel | 40 | 18/40 |
+| 🔴 Hoch | 42 | 42/42 ✅ |
+| 🟡 Mittel | 40 | 39/40 |
 | 🟢 Niedrig | 13 | 3/13 |
-| **Gesamt** | **95** | **43/95** |
+| **Gesamt** | **95** | **84/95** |
 
 ---
 

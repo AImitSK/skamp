@@ -292,7 +292,7 @@ npm run import:help-mappings -- --category=crm
 - [x] erste-schritte (7 Mappings)
 - [x] crm (4 Mappings)
 - [x] bibliothek (6 Mappings)
-- [ ] projekte
+- [x] projekte (10 Mappings)
 - [ ] analytics
 - [ ] kommunikation
 - [ ] einstellungen

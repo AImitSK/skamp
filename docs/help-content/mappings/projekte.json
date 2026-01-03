@@ -1,0 +1,136 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'projekte'",
+  "mappings": [
+    {
+      "pageName": "Projektliste",
+      "routes": [
+        "/dashboard/projects"
+      ],
+      "mainArticle": "projekt-erstellen",
+      "quickTips": [
+        { "tip": "Nutze Kanban oder Listenansicht je nach Vorliebe", "tipEn": "Use Kanban or list view based on your preference" },
+        { "tip": "Filter nach Status oder Kunde fuer bessere Uebersicht", "tipEn": "Filter by status or client for better overview" },
+        { "tip": "Klicke auf ein Projekt fuer die Detailansicht", "tipEn": "Click on a project for the detail view" }
+      ],
+      "additionalArticles": ["projekt-uebersicht", "projekt-einstellungen"]
+    },
+    {
+      "pageName": "Projekt-Uebersicht",
+      "routes": [
+        "/dashboard/projects/*"
+      ],
+      "mainArticle": "projekt-uebersicht",
+      "quickTips": [
+        { "tip": "Die Pipeline zeigt den aktuellen Projektfortschritt", "tipEn": "The pipeline shows current project progress" },
+        { "tip": "Tabs fuehren zu den verschiedenen Arbeitsbereichen", "tipEn": "Tabs lead to different work areas" },
+        { "tip": "Das Activity-Log zeigt alle Aenderungen", "tipEn": "The activity log shows all changes" }
+      ],
+      "additionalArticles": ["projekt-erstellen", "projekt-einstellungen", "tasks-verstehen"]
+    },
+    {
+      "pageName": "Projekt-Tasks",
+      "routes": [
+        "/dashboard/projects/*/tasks"
+      ],
+      "mainArticle": "tasks-verstehen",
+      "quickTips": [
+        { "tip": "Tasks koennen per Drag & Drop verschoben werden", "tipEn": "Tasks can be moved via drag & drop" },
+        { "tip": "Checklisten erhoehen automatisch den Fortschritt", "tipEn": "Checklists automatically increase progress" },
+        { "tip": "Weist Tasks Team-Mitgliedern zu fuer klare Verantwortung", "tipEn": "Assign tasks to team members for clear responsibility" }
+      ],
+      "additionalArticles": ["task-erstellen", "task-status", "kanban-board"]
+    },
+    {
+      "pageName": "Projekt-Strategie",
+      "routes": [
+        "/dashboard/projects/*/strategy"
+      ],
+      "mainArticle": "strategie-definieren",
+      "quickTips": [
+        { "tip": "Die DNA-Synthese wird automatisch aus der Marken-DNA generiert", "tipEn": "DNA synthesis is automatically generated from brand DNA" },
+        { "tip": "Kernbotschaften werden vom KI-Chat unterstuetzt", "tipEn": "Key messages are supported by AI chat" },
+        { "tip": "Aktualisiere die Synthese bei Marken-DNA-Aenderungen", "tipEn": "Update synthesis when brand DNA changes" }
+      ],
+      "additionalArticles": ["kernbotschaft-entwickeln", "marken-dna-fuer-ki"]
+    },
+    {
+      "pageName": "Projekt-Daten",
+      "routes": [
+        "/dashboard/projects/*/data"
+      ],
+      "mainArticle": "projekt-daten",
+      "quickTips": [
+        { "tip": "Ordner werden automatisch erstellt (Dokumente, Medien, Pressemappen)", "tipEn": "Folders are created automatically (documents, media, press kits)" },
+        { "tip": "Celero-Dokumente unterstuetzen Echtzeit-Kollaboration", "tipEn": "Celero documents support real-time collaboration" },
+        { "tip": "Drag & Drop funktioniert auch auf Ordner", "tipEn": "Drag & drop also works on folders" }
+      ],
+      "additionalArticles": ["medien-assets-hochladen", "dokumente-verwalten"]
+    },
+    {
+      "pageName": "Projekt-Verteiler",
+      "routes": [
+        "/dashboard/projects/*/distribution-list"
+      ],
+      "mainArticle": "verteiler-auswaehlen",
+      "quickTips": [
+        { "tip": "Master-Listen bleiben mit dem CRM synchronisiert", "tipEn": "Master lists stay synchronized with CRM" },
+        { "tip": "Custom-Listen sind projekt-spezifisch und unabhaengig", "tipEn": "Custom lists are project-specific and independent" },
+        { "tip": "Pruefe die Kontaktanzahl vor dem Versand", "tipEn": "Check contact count before sending" }
+      ],
+      "additionalArticles": ["verteiler-bearbeiten", "verteiler-erstellen"]
+    },
+    {
+      "pageName": "Pressemeldung",
+      "routes": [
+        "/dashboard/projects/*/press-release",
+        "/dashboard/pr-tools/campaigns/campaigns/edit/*"
+      ],
+      "mainArticle": "pressemeldung-erstellen",
+      "quickTips": [
+        { "tip": "Auto-Save speichert automatisch nach 1 Sekunde Pause", "tipEn": "Auto-save saves automatically after 1 second pause" },
+        { "tip": "Nutze die Text Matrix fuer KI-gestuetzte Texterstellung", "tipEn": "Use Text Matrix for AI-assisted writing" },
+        { "tip": "Key Visual ist das Hauptbild der Pressemeldung", "tipEn": "Key Visual is the main image of the press release" }
+      ],
+      "additionalArticles": ["text-mit-ki-assistent-schreiben", "key-visual-erzeugen", "textbausteine-auswaehlen"]
+    },
+    {
+      "pageName": "Freigabe",
+      "routes": [
+        "/dashboard/projects/*/approval"
+      ],
+      "mainArticle": "freigabe-workflow",
+      "quickTips": [
+        { "tip": "Freigabe-Links sind standardmaessig 14 Tage gueltig", "tipEn": "Approval links are valid for 14 days by default" },
+        { "tip": "Waehle den passenden Workflow fuer dein Team", "tipEn": "Choose the right workflow for your team" },
+        { "tip": "Erinnerungen werden automatisch versendet", "tipEn": "Reminders are sent automatically" }
+      ],
+      "additionalArticles": ["freigabe-einstellungen", "freigabe-link-erstellen", "feedback-aenderungen-bearbeiten"]
+    },
+    {
+      "pageName": "Versand",
+      "routes": [
+        "/dashboard/projects/*/distribution"
+      ],
+      "mainArticle": "versand-vorbereiten",
+      "quickTips": [
+        { "tip": "Pruefe Betreff, Absender und Verteiler vor dem Versand", "tipEn": "Check subject, sender and list before sending" },
+        { "tip": "Geplanter Versand fuer optimalen Zeitpunkt nutzen", "tipEn": "Use scheduled sending for optimal timing" },
+        { "tip": "Test-E-Mail an dich selbst vor dem Massenversand", "tipEn": "Test email to yourself before mass sending" }
+      ],
+      "additionalArticles": ["email-versand", "versand-planen", "versand-tracking"]
+    },
+    {
+      "pageName": "Projekt-Monitoring",
+      "routes": [
+        "/dashboard/projects/*/monitoring"
+      ],
+      "mainArticle": "projekt-monitoring",
+      "quickTips": [
+        { "tip": "Pruefe das Dashboard taeglich in den ersten 3 Tagen", "tipEn": "Check dashboard daily in the first 3 days" },
+        { "tip": "Match-Score ueber 80% ist meist korrekt", "tipEn": "Match score above 80% is usually correct" },
+        { "tip": "Kombiniere Auto-Funde mit manueller Erfassung", "tipEn": "Combine auto-finds with manual recording" }
+      ],
+      "additionalArticles": ["email-performance-ueberwachen", "automatische-clippings-rss", "manuelle-clippings", "ave-berechnen"]
+    }
+  ]
+}
