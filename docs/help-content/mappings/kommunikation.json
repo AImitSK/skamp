@@ -1,0 +1,44 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'kommunikation'",
+  "mappings": [
+    {
+      "pageName": "Inbox",
+      "routes": [
+        "/dashboard/communication/inbox"
+      ],
+      "mainArticle": "inbox-verstehen",
+      "quickTips": [
+        { "tip": "Neue Nachrichten werden oben angezeigt", "tipEn": "New messages appear at the top" },
+        { "tip": "Klicke auf eine Nachricht für Details", "tipEn": "Click a message for details" },
+        { "tip": "Nutze Tastenkürzel für schnelle Navigation", "tipEn": "Use keyboard shortcuts for quick navigation" }
+      ],
+      "additionalArticles": ["eingehende-anfragen-bearbeiten", "interne-notizen-nutzen"]
+    },
+    {
+      "pageName": "Benachrichtigungen",
+      "routes": [
+        "/dashboard/communication/notifications"
+      ],
+      "mainArticle": "benachrichtigungen",
+      "quickTips": [
+        { "tip": "Aktiviere E-Mail-Benachrichtigungen für wichtige Events", "tipEn": "Enable email notifications for important events" },
+        { "tip": "Archiviere gelesene Benachrichtigungen", "tipEn": "Archive read notifications" },
+        { "tip": "Passe deine Präferenzen in den Einstellungen an", "tipEn": "Adjust your preferences in settings" }
+      ],
+      "additionalArticles": []
+    },
+    {
+      "pageName": "Projekt-Detail (Chat-Tab)",
+      "routes": [
+        "/dashboard/projects/*"
+      ],
+      "mainArticle": "projekt-chat",
+      "quickTips": [
+        { "tip": "@-Erwähnungen benachrichtigen Team-Mitglieder", "tipEn": "@-mentions notify team members" },
+        { "tip": "Nutze den Chat für schnelle Abstimmungen", "tipEn": "Use chat for quick discussions" },
+        { "tip": "Alle Nachrichten bleiben beim Projekt gespeichert", "tipEn": "All messages are saved with the project" }
+      ],
+      "additionalArticles": ["interne-notizen-nutzen"]
+    }
+  ]
+}

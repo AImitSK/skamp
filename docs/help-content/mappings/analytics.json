@@ -1,0 +1,44 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'analytics'",
+  "mappings": [
+    {
+      "pageName": "Monitoring-Dashboard",
+      "routes": [
+        "/dashboard/analytics/monitoring"
+      ],
+      "mainArticle": "monitoring-dashboard",
+      "quickTips": [
+        { "tip": "Nur versendete Kampagnen erscheinen hier", "tipEn": "Only sent campaigns appear here" },
+        { "tip": "Klicke auf eine Zeile für Details", "tipEn": "Click a row for details" },
+        { "tip": "Nutze die Suche für schnellen Zugriff", "tipEn": "Use search for quick access" }
+      ],
+      "additionalArticles": ["kennzahlen-verstehen", "projekt-monitoring"]
+    },
+    {
+      "pageName": "Kampagnen-Monitoring Detail",
+      "routes": [
+        "/dashboard/analytics/monitoring/*"
+      ],
+      "mainArticle": "projekt-monitoring",
+      "quickTips": [
+        { "tip": "Wechsle zwischen den Tabs für verschiedene Ansichten", "tipEn": "Switch between tabs for different views" },
+        { "tip": "Auto-Reporting spart Zeit bei regelmäßigen Reports", "tipEn": "Auto-reporting saves time for regular reports" },
+        { "tip": "Prüfe die Clipping-Vorschläge täglich", "tipEn": "Check clipping suggestions daily" }
+      ],
+      "additionalArticles": ["automatisches-reporting-einrichten", "email-performance-ueberwachen", "manuelle-clippings"]
+    },
+    {
+      "pageName": "Reporting-Übersicht",
+      "routes": [
+        "/dashboard/analytics/reporting"
+      ],
+      "mainArticle": "reporting-erstellen",
+      "quickTips": [
+        { "tip": "Pausiere Reportings statt sie zu löschen", "tipEn": "Pause reportings instead of deleting them" },
+        { "tip": "Teste mit 'Jetzt senden' vor dem ersten automatischen Versand", "tipEn": "Test with 'Send now' before first automatic send" },
+        { "tip": "Max. 3 Empfänger pro Auto-Reporting", "tipEn": "Max 3 recipients per auto-reporting" }
+      ],
+      "additionalArticles": ["automatisches-reporting-einrichten", "kennzahlen-verstehen"]
+    }
+  ]
+}

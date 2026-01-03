@@ -1,6 +1,6 @@
 # Hilfe-Artikel Checkliste
 
-> Stand: 2026-01-03 | Fortschritt: 84/95 Artikel
+> Stand: 2026-01-03 | Fortschritt: 93/95 Artikel
 
 ---
 
@@ -225,12 +225,12 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Monitoring-Dashboard | 🟡 Mittel | `analytics/monitoring-dashboard.json` |
-| [ ] | Reporting erstellen | 🟡 Mittel | `analytics/reporting-erstellen.json` |
-| [ ] | Automatisches Reporting einrichten | 🔴 Hoch | `analytics/automatisches-reporting-einrichten.json` |
-| [ ] | Kennzahlen verstehen | 🟢 Niedrig | `analytics/kennzahlen-verstehen.json` |
+| [x] | Monitoring-Dashboard | 🟡 Mittel | `analytics/monitoring-dashboard.json` |
+| [x] | Reporting erstellen | 🟡 Mittel | `analytics/reporting-erstellen.json` |
+| [x] | Automatisches Reporting einrichten | 🔴 Hoch | `analytics/automatisches-reporting-einrichten.json` |
+| [x] | Kennzahlen verstehen | 🟢 Niedrig | `analytics/kennzahlen-verstehen.json` |
 
-**Fortschritt: 0/4**
+**Fortschritt: 4/4** ✅
 
 ---
 
@@ -238,13 +238,13 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Inbox verstehen | 🟡 Mittel | `kommunikation/inbox-verstehen.json` |
-| [ ] | Eingehende Anfragen bearbeiten | 🔴 Hoch | `kommunikation/eingehende-anfragen-bearbeiten.json` |
-| [ ] | Interne Notizen nutzen | 🟡 Mittel | `kommunikation/interne-notizen-nutzen.json` |
-| [ ] | Projekt-Chat | 🟡 Mittel | `kommunikation/projekt-chat.json` |
-| [ ] | Benachrichtigungen | 🟢 Niedrig | `kommunikation/benachrichtigungen.json` |
+| [x] | Inbox verstehen | 🟡 Mittel | `kommunikation/inbox-verstehen.json` |
+| [x] | Eingehende Anfragen bearbeiten | 🔴 Hoch | `kommunikation/eingehende-anfragen-bearbeiten.json` |
+| [x] | Interne Notizen nutzen | 🟡 Mittel | `kommunikation/interne-notizen-nutzen.json` |
+| [x] | Projekt-Chat | 🟡 Mittel | `kommunikation/projekt-chat.json` |
+| [x] | Benachrichtigungen | 🟢 Niedrig | `kommunikation/benachrichtigungen.json` |
 
-**Fortschritt: 0/5**
+**Fortschritt: 5/5** ✅
 
 ---
 
@@ -313,9 +313,9 @@
 | Priorität | Anzahl | Status |
 |-----------|--------|--------|
 | 🔴 Hoch | 42 | 42/42 ✅ |
-| 🟡 Mittel | 40 | 39/40 |
-| 🟢 Niedrig | 13 | 3/13 |
-| **Gesamt** | **95** | **84/95** |
+| 🟡 Mittel | 40 | 42/40 ✅ |
+| 🟢 Niedrig | 13 | 4/13 |
+| **Gesamt** | **95** | **93/95** |
 
 ---
 
