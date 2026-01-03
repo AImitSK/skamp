@@ -22,9 +22,9 @@ const nextConfig = {
     return {
       beforeFiles: [
         {
-          source: '/((?!_next|api|favicon.ico|robots.txt|sitemap.xml).*)',
+          source: '/:path((?!_next|api|favicon.ico|robots.txt|sitemap.xml).*)',
           has: [{ type: 'host', value: 'support.celeropress.com' }],
-          destination: '/support/:path*',
+          destination: '/support/:path',
         },
       ],
     }
