@@ -16,6 +16,19 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Subdomain Routing: support.celeropress.com → /support
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'support.celeropress.com' }],
+          destination: '/support/:path*',
+        },
+      ],
+    }
+  },
+
   // Webpack Config für Genkit/Node.js Kompatibilität
   webpack: (config, { isServer }) => {
     if (!isServer) {
