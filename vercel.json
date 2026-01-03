@@ -1,26 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "support.celeropress.com"
-        }
-      ],
-      "destination": "/support"
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "support.celeropress.com"
-        }
-      ],
-      "destination": "/support/:path*"
-    }
-  ],
   "functions": {
     "src/app/api/generate-pdf/route.ts": {
       "maxDuration": 30
