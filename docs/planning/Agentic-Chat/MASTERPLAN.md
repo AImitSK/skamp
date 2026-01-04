@@ -120,8 +120,23 @@ AI generiert Text-Tags              AI ruft Tools auf
 > Prompts und Agent-Logik
 
 ### 3.1 Prompt-Dateien erstellen
-> ✅ **Inline implementiert** in `src/lib/ai/agentic/prompts/prompt-loader.ts`
-> Entscheidung: Inline statt .md-Dateien für bessere Typsicherheit und einfacheres Deployment
+> ✅ **Modulare Dateistruktur** in `src/lib/ai/agentic/prompts/`
+> Jeder Spezialist hat eine eigene Datei für bessere Wartbarkeit
+
+**Dateistruktur:**
+```
+src/lib/ai/agentic/prompts/
+├── index.ts                    # Barrel-Exports
+├── prompt-loader.ts            # loadSpecialistPrompt() + Helpers
+├── orchestrator.ts             # Orchestrator-Prompt (aktuell nicht verwendet)
+├── briefing-specialist.ts      # Briefing-Check Spezialist
+├── swot-specialist.ts          # SWOT-Analyse Spezialist
+├── audience-specialist.ts      # Zielgruppen-Radar Spezialist
+├── positioning-specialist.ts   # Positionierungs-Designer Spezialist
+├── goals-specialist.ts         # Ziele-Setzer Spezialist
+├── messages-specialist.ts      # Botschaften-Baukasten Spezialist
+└── project-wizard.ts           # Projekt-Kernbotschaft Spezialist
+```
 
 - [x] **3.1.1** `briefing_specialist` Prompt (DE + EN)
 - [x] **3.1.2** `swot_specialist` Prompt (DE + EN)
@@ -130,7 +145,7 @@ AI generiert Text-Tags              AI ruft Tools auf
 - [x] **3.1.5** `goals_specialist` Prompt (DE + EN)
 - [x] **3.1.6** `messages_specialist` Prompt (DE + EN)
 - [x] **3.1.7** `project_wizard` Prompt (DE + EN)
-- [x] **3.1.8** `orchestrator` Prompt (DE + EN)
+- [x] **3.1.8** `orchestrator` Prompt (DE + EN) - **Prompt existiert, wird aber aktuell nicht verwendet**
 
 ### 3.2 Prompt-Loader
 - [x] **3.2.1** `loadSpecialistPrompt(type, language, companyName)` Funktion
@@ -150,29 +165,42 @@ AI generiert Text-Tags              AI ruft Tools auf
 ---
 
 ## Phase 4: Orchestrator
-> CSO-Agent für Routing und State-Management
+> ⏭️ **ÜBERSPRUNGEN** - UI übernimmt das Routing
 
-### 4.1 Orchestrator-Flow
-- [ ] **4.1.1** `orchestratorFlow.ts` erstellen
-- [ ] **4.1.2** `skill_handoff` implementieren
-  - Agent-Wechsel mit Kontext-Übergabe
-- [ ] **4.1.3** Master-Roadmap (alle 6 Dokumente)
-- [ ] **4.1.4** Completeness-Score Tracking
+### Architektur-Entscheidung (2025-01-04)
 
-### 4.2 State-Management
-- [ ] **4.2.1** Session-State Design (Firestore oder Memory)
-- [ ] **4.2.2** Agent-History für Kontext-Erhalt
-- [ ] **4.2.3** Document-Status Sync mit Firestore
+**Ursprüngliches Konzept:** Der Orchestrator sollte als "Router" fungieren und entscheiden, welcher Spezialist aktiv wird.
 
-### 4.3 DNA-Synthese Trigger
-- [ ] **4.3.1** Auto-Erkennung: Alle 6 Docs `completed`
-- [ ] **4.3.2** Synthese-Button via `skill_suggestions`
+**Realität:** Die UI übernimmt das Routing:
+- User klickt auf Dokument-Card → entsprechender Spezialist wird geladen
+- Kein automatisches Routing durch KI notwendig
 
-### 4.4 Tests
-- [ ] **4.4.1** Orchestrator Routing Tests
-- [ ] **4.4.2** Handoff Tests (Kontext-Übergabe)
+**Konsequenz:**
+- Der Orchestrator-Prompt existiert, wird aber **nicht verwendet**
+- Die Routing-Logik ist in der UI (documentType → specialistType Mapping)
+- Der Orchestrator könnte zukünftig für eine "Übersichts"-Funktion genutzt werden
 
-**Exit-Kriterium:** Orchestrator routet korrekt zwischen Spezialisten
+### Mapping: UI → Spezialist
+```typescript
+// src/lib/ai/agentic/types.ts
+DOCUMENT_TO_SPECIALIST = {
+  briefing: 'briefing_specialist',
+  swot: 'swot_specialist',
+  audience: 'audience_specialist',
+  positioning: 'positioning_specialist',
+  goals: 'goals_specialist',
+  messages: 'messages_specialist',
+}
+
+// Kernbotschaft (Strategie-Tab) → project_wizard
+```
+
+### Was bleibt für später (optional)
+- [ ] **4.1** Orchestrator als Übersichts-Agent (zeigt Gesamtfortschritt)
+- [ ] **4.2** Orchestrator als Berater (empfiehlt nächsten Schritt)
+- [ ] **4.3** DNA-Synthese Trigger (wenn alle 6 fertig)
+
+**Exit-Kriterium:** ~~Orchestrator routet korrekt~~ → UI übernimmt Routing ✅
 
 ---
 
@@ -180,22 +208,25 @@ AI generiert Text-Tags              AI ruft Tools auf
 > Altes System durch neues ersetzen
 
 ### 5.1 Feature-Flag
-- [ ] **5.1.1** `FEATURE_AGENTIC_CHAT` Flag einführen
-- [ ] **5.1.2** Parallelbetrieb: Alt + Neu
+- [x] **5.1.1** ~~`FEATURE_AGENTIC_CHAT` Flag einführen~~ → Direkter Umstieg ohne Flag
+- [x] **5.1.2** ~~Parallelbetrieb: Alt + Neu~~ → Nicht nötig
 
 ### 5.2 UI-Migration
-- [ ] **5.2.1** `MarkenDNAChatModal` → `AgenticChatModal` wechseln
-- [ ] **5.2.2** Alte Toolbox-Komponenten entfernen
-- [ ] **5.2.3** Navigation/Routing anpassen
+- [x] **5.2.1** `MarkenDNAChatModal` nutzt jetzt `useAgenticChat`
+  - Mapping über `getSpecialistForDocument(documentType)`
+- [x] **5.2.2** `KernbotschaftChatModal` nutzt jetzt `useAgenticChat`
+  - Direkt `project_wizard` als Spezialist
+- [ ] **5.2.3** Alte Toolbox-Komponenten entfernen (nach Tests)
+- [ ] **5.2.4** Navigation/Routing prüfen
 
 ### 5.3 API-Migration
 - [ ] **5.3.1** `/api/ai-chat/marken-dna` deprecaten
-- [ ] **5.3.2** `/api/ai-chat/agentic` als Standard
+- [x] **5.3.2** `/api/ai-chat/agentic` als Standard
 
-### 5.4 Cleanup
+### 5.4 Cleanup (nach Tests)
 - [ ] **5.4.1** Alte `useGenkitChat.ts` entfernen
 - [ ] **5.4.2** Alte Tag-Parsing Funktionen entfernen
-- [ ] **5.4.3** Feature-Flag entfernen
+- [ ] **5.4.3** Alte Flows entfernen (`markenDNAChat`, `projectStrategyChat`)
 
 **Exit-Kriterium:** Neues System produktiv, altes entfernt
 
@@ -210,8 +241,8 @@ AI generiert Text-Tags              AI ruft Tools auf
 - [ ] **6.1.3** E2E-Test: Kompletter Briefing-Flow
 
 ### 6.2 Manuelle Tests
-- [ ] **6.2.1** Alle 6 Dokumenttypen durchspielen
-- [ ] **6.2.2** Orchestrator-Wechsel testen
+- [ ] **6.2.1** Alle 6 Dokumenttypen durchspielen (Marken-DNA)
+- [ ] **6.2.2** Kernbotschaft im Strategie-Tab testen (project_wizard)
 - [ ] **6.2.3** Edge-Cases (Abbruch, Neustart, etc.)
 
 ### 6.3 Performance
@@ -273,14 +304,14 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 | Phase | Status | Beginn | Ende | Notizen |
 |-------|--------|--------|------|---------|
 | 0 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Branch + Masterplan erstellt |
-| 1 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | 7 Skills + Flow + API-Route + Prompts |
+| 1 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | 7 Skills + Flow + API-Route |
 | 2 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Toolbox-Komponenten + Hook + Modal |
-| 3 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Prompts inline in prompt-loader.ts |
-| 4 | ⏳ Ausstehend | - | - | |
-| 5 | ⏳ Ausstehend | - | - | |
+| 3 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Modulare Prompt-Dateien (1 pro Spezialist) |
+| 4 | ⏭️ Übersprungen | 2025-01-04 | 2025-01-04 | UI übernimmt Routing, Orchestrator nicht nötig |
+| 5 | 🚧 In Arbeit | 2025-01-04 | - | Modals umgestellt auf useAgenticChat |
 | 6 | ⏳ Ausstehend | - | - | |
 | 7 | ⏳ Ausstehend | - | - | |
 
 ---
 
-**Nächster Schritt:** Phase 4 (Orchestrator) - Agent-Routing und Handoff-Logik implementieren
+**Nächster Schritt:** Phase 6 (Testing) - Manuelles Testen aller Dokumenttypen im neuen System
