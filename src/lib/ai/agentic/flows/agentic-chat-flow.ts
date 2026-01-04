@@ -85,19 +85,23 @@ export const agenticChatFlow = ai.defineFlow(
     // Debug-Logging
     console.log('[AgenticFlow] specialistType:', input.specialistType);
     console.log('[AgenticFlow] tools count:', tools?.length ?? 0);
+    console.log('[AgenticFlow] tools:', tools?.map(t => t?.name ?? 'undefined'));
     console.log('[AgenticFlow] messages count:', formattedMessages.length);
+    console.log('[AgenticFlow] first message:', formattedMessages[0]);
 
-    // 4. Generieren mit Tools
+    // 4. Generieren - TEMPORÄR ohne Tools zum Debuggen
+    console.log('[AgenticFlow] Calling ai.generate...');
     const response = await ai.generate({
       model: gemini25FlashModel,
       system: systemPrompt,
       messages: formattedMessages.length > 0 ? formattedMessages : undefined,
       prompt: formattedMessages.length === 0 ? 'Starte den Prozess.' : undefined,
-      tools: tools?.length > 0 ? tools : undefined,
+      // tools: tools?.length > 0 ? tools : undefined, // TEMPORÄR DEAKTIVIERT
       config: {
         temperature: 0.7,
       },
     });
+    console.log('[AgenticFlow] ai.generate completed successfully');
 
     // 5. Tool-Calls extrahieren
     const toolCalls: ToolCall[] = [];
