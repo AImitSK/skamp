@@ -155,6 +155,35 @@
     "subtitle": "Welcome to the CeleroPress Academy! Here you'll find everything you need to get the most out of your PR software.",
     "title": "CeleroPress Academy"
   },
+  "agenticChat": {
+    "emptyState": {
+      "title": "Start a chat to get started.",
+      "description": "The AI will guide you through the process and ask targeted questions."
+    },
+    "loading": "Writing...",
+    "inputPlaceholder": "Enter message...",
+    "modal": {
+      "title": "AI Assistant",
+      "for": "for",
+      "aiAssistant": "AI Assistant",
+      "currentAgent": "Current Agent",
+      "document": "Document",
+      "noContent": "No document created yet",
+      "noContentDescription": "The document will appear here once the AI starts creating it.",
+      "editPlaceholder": "Edit document..."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "preview": "Preview",
+      "edit": "Edit"
+    },
+    "status": {
+      "draft": "Draft",
+      "completed": "Completed"
+    }
+  },
   "admin": {
     "api": {
       "createModal": {
@@ -11060,6 +11089,9 @@
       "imageGenerationPolicyViolation": "The image could not be generated because the content violates the guidelines. Please choose a different image suggestion.",
       "contentTooShortForHeadlines": "Please enter some content in the press release first so the AI can generate headlines from it.",
       "noHeadlinesGenerated": "No headlines could be generated. Please try again."
+    },
+    "agenticChat": {
+      "error": "Chat error: {error}"
     },
     "video": {
       "linkCopied": "Video link copied to clipboard",

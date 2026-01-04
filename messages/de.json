@@ -155,6 +155,35 @@
     "subtitle": "Willkommen in der CeleroPress Academy! Hier findest du alles, was du brauchst, um das Maximum aus deiner PR-Software herauszuholen.",
     "title": "CeleroPress Academy"
   },
+  "agenticChat": {
+    "emptyState": {
+      "title": "Starte einen Chat, um loszulegen.",
+      "description": "Die KI führt dich durch den Prozess und stellt gezielte Fragen."
+    },
+    "loading": "Schreibt...",
+    "inputPlaceholder": "Nachricht eingeben...",
+    "modal": {
+      "title": "KI-Assistent",
+      "for": "für",
+      "aiAssistant": "KI-Assistent",
+      "currentAgent": "Aktueller Agent",
+      "document": "Dokument",
+      "noContent": "Noch kein Dokument erstellt",
+      "noContentDescription": "Das Dokument wird hier angezeigt, sobald die KI mit der Erstellung beginnt.",
+      "editPlaceholder": "Dokument bearbeiten..."
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "saving": "Speichere...",
+      "preview": "Vorschau",
+      "edit": "Bearbeiten"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "completed": "Fertig"
+    }
+  },
   "admin": {
     "api": {
       "createModal": {
@@ -11074,6 +11103,9 @@
       "imageGenerationPolicyViolation": "Das Bild konnte nicht generiert werden, da der Inhalt gegen die Richtlinien verstößt. Bitte wählen Sie einen anderen Bildvorschlag.",
       "contentTooShortForHeadlines": "Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.",
       "noHeadlinesGenerated": "Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut."
+    },
+    "agenticChat": {
+      "error": "Chat-Fehler: {error}"
     },
     "video": {
       "linkCopied": "Video-Link in Zwischenablage kopiert",

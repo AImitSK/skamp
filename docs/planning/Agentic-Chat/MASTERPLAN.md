@@ -76,37 +76,43 @@ AI generiert Text-Tags              AI ruft Tools auf
 > UI-Komponenten für Tool-Call Rendering
 
 ### 2.1 Toolbox-Infrastruktur
-- [ ] **2.1.1** `ToolboxRenderer.tsx` - Parst `toolCalls[]` aus Response
-- [ ] **2.1.2** Tool-Call Type Definitionen
-- [ ] **2.1.3** Toolbox-Context für State-Management
+- [x] **2.1.1** `ToolboxRenderer.tsx` - Parst `toolCalls[]` aus Response
+  - Implementiert als `toolboxReducer` in `types.ts`
+- [x] **2.1.2** Tool-Call Type Definitionen
+  - `ToolboxState`, `ToolboxAction` in `src/components/agentic-chat/toolbox/types.ts`
+- [x] **2.1.3** Toolbox-Context für State-Management
+  - Via `useReducer` in `useAgenticChat.ts`
 
 ### 2.2 UI-Komponenten
-- [ ] **2.2.1** `RoadmapBox.tsx` - Horizontale Phasen-Anzeige
+- [x] **2.2.1** `RoadmapBox.tsx` - Horizontale Phasen-Anzeige
   - Rendert `skill_roadmap` Calls
   - Zeigt aktive Phase, erledigte Phasen
-- [ ] **2.2.2** `TodoList.tsx` - Vertikale Checkliste
+- [x] **2.2.2** `TodoList.tsx` - Vertikale Checkliste
   - Rendert `skill_todos` Calls
   - Status-Icons: ○ (open), ◐ (partial), ● (done)
-- [ ] **2.2.3** `SuggestionBubbles.tsx` - Quick-Reply Buttons
+- [x] **2.2.3** `SuggestionBubbles.tsx` - Quick-Reply Buttons
   - Rendert `skill_suggestions` Calls
   - Klickbar → sendet als User-Message
-- [ ] **2.2.4** `ConfirmBox.tsx` - Bestätigungs-Dialog
+- [x] **2.2.4** `ConfirmBox.tsx` - Bestätigungs-Dialog
   - Rendert `skill_confirm` Calls
-  - Buttons: [Ja] / [Anpassen]
-- [ ] **2.2.5** `DocumentSidebar.tsx` anpassen
-  - Rendert `skill_sidebar` Calls
+  - Buttons: [Ja, abschließen] / [Anpassen]
+- [x] **2.2.5** `DocumentSidebar.tsx` anpassen
+  - In `AgenticChatModal.tsx` integriert (Split-View rechts)
   - Live-Updates während Chat
 
 ### 2.3 Integration in Chat-Modal
-- [ ] **2.3.1** `useAgenticChat.ts` Hook (ersetzt `useGenkitChat.ts`)
-- [ ] **2.3.2** `AgenticChatModal.tsx` (neues Modal)
-- [ ] **2.3.3** `ChatMessages.tsx` erweitern für Tool-Rendering
+- [x] **2.3.1** `useAgenticChat.ts` Hook (ersetzt `useGenkitChat.ts`)
+  - `src/hooks/agentic-chat/useAgenticChat.ts`
+- [x] **2.3.2** `AgenticChatModal.tsx` (neues Modal)
+  - `src/components/agentic-chat/AgenticChatModal.tsx`
+- [x] **2.3.3** `AgenticChatInterface.tsx` für Tool-Rendering
+  - `src/components/agentic-chat/AgenticChatInterface.tsx`
 
 ### 2.4 Tests
 - [ ] **2.4.1** Unit-Tests für Toolbox-Komponenten
 - [ ] **2.4.2** Snapshot-Tests für UI-States
 
-**Exit-Kriterium:** Frontend rendert alle Tool-Calls korrekt
+**Exit-Kriterium:** Frontend rendert alle Tool-Calls korrekt ✅ (Tests ausstehend)
 
 ---
 
@@ -258,9 +264,9 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 | Phase | Status | Beginn | Ende | Notizen |
 |-------|--------|--------|------|---------|
 | 0 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Branch + Masterplan erstellt |
-| 1 | 🚧 In Arbeit | 2025-01-04 | - | 7 Skills + Flow + API-Route implementiert |
-| 2 | ⏳ Ausstehend | - | - | |
-| 3 | ⏳ Ausstehend | - | - | |
+| 1 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | 7 Skills + Flow + API-Route + Prompts |
+| 2 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Toolbox-Komponenten + Hook + Modal |
+| 3 | ⏳ Ausstehend | - | - | Prompts bereits in Phase 1 erstellt |
 | 4 | ⏳ Ausstehend | - | - | |
 | 5 | ⏳ Ausstehend | - | - | |
 | 6 | ⏳ Ausstehend | - | - | |
@@ -268,4 +274,4 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 
 ---
 
-**Nächster Schritt:** Phase 0 abschließen (Planungsdokumente finalisieren)
+**Nächster Schritt:** Phase 3 (Spezialisten-Agenten) - Prompts bereits vorhanden, ggf. verfeinern
