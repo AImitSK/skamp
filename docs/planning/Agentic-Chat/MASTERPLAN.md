@@ -120,23 +120,32 @@ AI generiert Text-Tags              AI ruft Tools auf
 > Prompts und Agent-Logik
 
 ### 3.1 Prompt-Dateien erstellen
-- [ ] **3.1.1** `prompts/specialists/briefing_specialist.md`
-- [ ] **3.1.2** `prompts/specialists/swot_specialist.md`
-- [ ] **3.1.3** `prompts/specialists/audience_specialist.md`
-- [ ] **3.1.4** `prompts/specialists/positioning_specialist.md`
-- [ ] **3.1.5** `prompts/specialists/goals_specialist.md`
-- [ ] **3.1.6** `prompts/specialists/messages_specialist.md`
-- [ ] **3.1.7** `prompts/specialists/project_wizard.md`
+> ✅ **Inline implementiert** in `src/lib/ai/agentic/prompts/prompt-loader.ts`
+> Entscheidung: Inline statt .md-Dateien für bessere Typsicherheit und einfacheres Deployment
+
+- [x] **3.1.1** `briefing_specialist` Prompt (DE + EN)
+- [x] **3.1.2** `swot_specialist` Prompt (DE + EN)
+- [x] **3.1.3** `audience_specialist` Prompt (DE + EN)
+- [x] **3.1.4** `positioning_specialist` Prompt (DE + EN)
+- [x] **3.1.5** `goals_specialist` Prompt (DE + EN)
+- [x] **3.1.6** `messages_specialist` Prompt (DE + EN)
+- [x] **3.1.7** `project_wizard` Prompt (DE + EN)
+- [x] **3.1.8** `orchestrator` Prompt (DE + EN)
 
 ### 3.2 Prompt-Loader
-- [ ] **3.2.1** `loadSpecialistPrompt(type: string)` Funktion
-- [ ] **3.2.2** Skill-Mapping pro Spezialist (wer darf was)
+- [x] **3.2.1** `loadSpecialistPrompt(type, language, companyName)` Funktion
+  - Implementiert in `prompt-loader.ts`
+- [x] **3.2.2** Skill-Mapping pro Spezialist (`AGENT_SKILLS` in `types.ts`)
+  - Orchestrator: dna_lookup, roadmap, suggestions
+  - Briefing: url_crawler, roadmap, todos, confirm, sidebar, suggestions
+  - Alle anderen: dna_lookup, roadmap, todos, confirm, sidebar, suggestions
+- [x] **3.2.3** `canAgentUseSkill(agentType, skillName)` Helper
 
 ### 3.3 Tests
 - [ ] **3.3.1** Prompt-Validierung (keine alten Tags erlaubt)
 - [ ] **3.3.2** Skill-Permission Tests
 
-**Exit-Kriterium:** Alle 7 Spezialisten mit korrekten Prompts und Skill-Zuweisungen
+**Exit-Kriterium:** Alle 7 Spezialisten mit korrekten Prompts und Skill-Zuweisungen ✅
 
 ---
 
@@ -266,7 +275,7 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 | 0 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Branch + Masterplan erstellt |
 | 1 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | 7 Skills + Flow + API-Route + Prompts |
 | 2 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Toolbox-Komponenten + Hook + Modal |
-| 3 | ⏳ Ausstehend | - | - | Prompts bereits in Phase 1 erstellt |
+| 3 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Prompts inline in prompt-loader.ts |
 | 4 | ⏳ Ausstehend | - | - | |
 | 5 | ⏳ Ausstehend | - | - | |
 | 6 | ⏳ Ausstehend | - | - | |
@@ -274,4 +283,4 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 
 ---
 
-**Nächster Schritt:** Phase 3 (Spezialisten-Agenten) - Prompts bereits vorhanden, ggf. verfeinern
+**Nächster Schritt:** Phase 4 (Orchestrator) - Agent-Routing und Handoff-Logik implementieren
