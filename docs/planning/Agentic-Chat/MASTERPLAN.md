@@ -38,29 +38,29 @@ AI generiert Text-Tags              AI ruft Tools auf
 > Skills als Genkit Tools definieren
 
 ### 1.1 Basis-Infrastruktur
-- [ ] **1.1.1** Neuen Flow erstellen: `src/lib/ai/flows/agentic-chat.ts`
-- [ ] **1.1.2** Tool-Registry Pattern einführen
-- [ ] **1.1.3** API-Route erstellen: `/api/ai-chat/agentic/route.ts`
+- [x] **1.1.1** Neuen Flow erstellen: `src/lib/ai/agentic/flows/agentic-chat-flow.ts`
+- [x] **1.1.2** Tool-Registry Pattern einführen: `src/lib/ai/agentic/skills/index.ts`
+- [x] **1.1.3** API-Route erstellen: `/api/ai-chat/agentic/route.ts`
 
 ### 1.2 UI & Prozess-Skills
-- [ ] **1.2.1** `skill_roadmap` - Phasen-Anzeige
+- [x] **1.2.1** `skill_roadmap` - Phasen-Anzeige
   - `showRoadmap(phases: string[])`
   - `completePhase(phaseIndex: number)`
-- [ ] **1.2.2** `skill_todos` - Checkliste
+- [x] **1.2.2** `skill_todos` - Checkliste
   - `updateTodoStatus(items: TodoItem[])`
-- [ ] **1.2.3** `skill_suggestions` - Quick-Replies
+- [x] **1.2.3** `skill_suggestions` - Quick-Replies
   - `updateSuggestions(prompts: string[])`
-- [ ] **1.2.4** `skill_confirm` - Bestätigungs-Box
+- [x] **1.2.4** `skill_confirm` - Bestätigungs-Box
   - `requestApproval(title: string, summary: Record<string, string>)`
 
 ### 1.3 Recherche & Daten-Skills
-- [ ] **1.3.1** `skill_url_crawler` - Webseiten analysieren
-  - `analyzeUrl(url: string)` via Jina AI / Firecrawl
-- [ ] **1.3.2** `skill_dna_lookup` - DNA-Kontext laden
+- [x] **1.3.1** `skill_url_crawler` - Webseiten analysieren
+  - `analyzeUrl(url: string)` via Jina AI Reader
+- [x] **1.3.2** `skill_dna_lookup` - DNA-Kontext laden
   - `fetchDnaContext(companyId: string, docType?: string)`
 
 ### 1.4 Sidebar & Dokumenten-Skills
-- [ ] **1.4.1** `skill_sidebar` - Live-Dokument-Updates
+- [x] **1.4.1** `skill_sidebar` - Live-Dokument-Updates
   - `updateDraft(content: string)`
   - `finalizeDocument(content: string)`
 
@@ -68,7 +68,7 @@ AI generiert Text-Tags              AI ruft Tools auf
 - [ ] **1.5.1** Unit-Tests für jeden Skill
 - [ ] **1.5.2** Integration-Test: Tool-Calls in Flow
 
-**Exit-Kriterium:** Alle 7 Skills als Genkit Tools definiert, Tests grün
+**Exit-Kriterium:** Alle 7 Skills als Genkit Tools definiert ✅, Tests ausstehend
 
 ---
 
@@ -257,8 +257,8 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4 
 
 | Phase | Status | Beginn | Ende | Notizen |
 |-------|--------|--------|------|---------|
-| 0 | 🚧 In Arbeit | 2025-01-04 | - | Branch + Masterplan erstellt |
-| 1 | ⏳ Ausstehend | - | - | |
+| 0 | ✅ Abgeschlossen | 2025-01-04 | 2025-01-04 | Branch + Masterplan erstellt |
+| 1 | 🚧 In Arbeit | 2025-01-04 | - | 7 Skills + Flow + API-Route implementiert |
 | 2 | ⏳ Ausstehend | - | - | |
 | 3 | ⏳ Ausstehend | - | - | |
 | 4 | ⏳ Ausstehend | - | - | |
