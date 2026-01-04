@@ -36,6 +36,16 @@ function Copyright() {
   )
 }
 
+function FooterLinks() {
+  return (
+    <div className="flex gap-x-6 text-sm/6 text-gray-950">
+      <a href="https://support.celeropress.com" className="hover:text-gray-700">
+        Support
+      </a>
+    </div>
+  )
+}
+
 export function Footer() {
   return (
     <footer>
@@ -44,10 +54,15 @@ export function Footer() {
         <Container>
           <CallToAction />
           <PlusGrid className="pb-16">
-            <PlusGridRow className="flex justify-between">
+            <PlusGridRow className="flex justify-between items-center">
               <div>
                 <PlusGridItem className="py-3">
                   <Logo className="h-9" />
+                </PlusGridItem>
+              </div>
+              <div>
+                <PlusGridItem className="py-3">
+                  <FooterLinks />
                 </PlusGridItem>
               </div>
               <div>
