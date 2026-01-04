@@ -32,12 +32,16 @@ const client = createClient({
 const ARTICLES_DIR = path.join(process.cwd(), 'docs/help-content/articles')
 const CATEGORIES_MAP: Record<string, string> = {}
 
-// Parse inline Markdown (**fett**, *kursiv*) zu Portable Text spans
-function parseInlineMarkdown(text: string): { _type: string; _key: string; text: string; marks: string[] }[] {
+// Parse inline Markdown (**fett**, *kursiv*, [links](url)) zu Portable Text spans
+function parseInlineMarkdown(text: string): {
+  spans: { _type: string; _key: string; text: string; marks: string[] }[];
+  markDefs: { _type: string; _key: string; href: string }[];
+} {
   const spans: { _type: string; _key: string; text: string; marks: string[] }[] = []
+  const markDefs: { _type: string; _key: string; href: string }[] = []
 
-  // Regex für **fett** und *kursiv*
-  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g
+  // Regex für **fett**, *kursiv* und [links](url)
+  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|\[([^\]]+)\]\(([^)]+)\))/g
   let lastIndex = 0
   let match
 
@@ -57,6 +61,11 @@ function parseInlineMarkdown(text: string): { _type: string; _key: string; text:
     } else if (match[3]) {
       // *kursiv*
       spans.push({ _type: 'span', _key: generateKey(), text: match[3], marks: ['em'] })
+    } else if (match[4] && match[5]) {
+      // [link text](url)
+      const linkKey = generateKey()
+      markDefs.push({ _type: 'link', _key: linkKey, href: match[5] })
+      spans.push({ _type: 'span', _key: generateKey(), text: match[4], marks: [linkKey] })
     }
 
     lastIndex = match.index + match[0].length
@@ -72,7 +81,7 @@ function parseInlineMarkdown(text: string): { _type: string; _key: string; text:
     spans.push({ _type: 'span', _key: generateKey(), text, marks: [] })
   }
 
-  return spans
+  return { spans, markDefs }
 }
 
 // Markdown zu Portable Text konvertieren
@@ -87,12 +96,13 @@ function markdownToPortableText(markdown: string): unknown[] {
     if (currentParagraph.length > 0) {
       const text = currentParagraph.join(' ').trim()
       if (text) {
+        const { spans, markDefs } = parseInlineMarkdown(text)
         blocks.push({
           _type: 'block',
           _key: generateKey(),
           style: 'normal',
-          markDefs: [],
-          children: parseInlineMarkdown(text)
+          markDefs,
+          children: spans
         })
       }
       currentParagraph = []
@@ -103,52 +113,57 @@ function markdownToPortableText(markdown: string): unknown[] {
     // Überschriften (Reihenfolge wichtig: ### vor ## vor #)
     if (line.startsWith('### ')) {
       flushParagraph()
+      const { spans, markDefs } = parseInlineMarkdown(line.slice(4).trim())
       blocks.push({
         _type: 'block',
         _key: generateKey(),
         style: 'h3',
-        markDefs: [],
-        children: parseInlineMarkdown(line.slice(4).trim())
+        markDefs,
+        children: spans
       })
     } else if (line.startsWith('## ')) {
       flushParagraph()
+      const { spans, markDefs } = parseInlineMarkdown(line.slice(3).trim())
       blocks.push({
         _type: 'block',
         _key: generateKey(),
         style: 'h2',
-        markDefs: [],
-        children: parseInlineMarkdown(line.slice(3).trim())
+        markDefs,
+        children: spans
       })
     } else if (line.startsWith('# ')) {
       flushParagraph()
+      const { spans, markDefs } = parseInlineMarkdown(line.slice(2).trim())
       blocks.push({
         _type: 'block',
         _key: generateKey(),
         style: 'h1',
-        markDefs: [],
-        children: parseInlineMarkdown(line.slice(2).trim())
+        markDefs,
+        children: spans
       })
     } else if (line.startsWith('- ') || line.startsWith('* ')) {
       flushParagraph()
+      const { spans, markDefs } = parseInlineMarkdown(line.slice(2).trim())
       blocks.push({
         _type: 'block',
         _key: generateKey(),
         style: 'normal',
         listItem: 'bullet',
         level: 1,
-        markDefs: [],
-        children: parseInlineMarkdown(line.slice(2).trim())
+        markDefs,
+        children: spans
       })
     } else if (/^\d+\. /.test(line)) {
       flushParagraph()
+      const { spans, markDefs } = parseInlineMarkdown(line.replace(/^\d+\. /, '').trim())
       blocks.push({
         _type: 'block',
         _key: generateKey(),
         style: 'normal',
         listItem: 'number',
         level: 1,
-        markDefs: [],
-        children: parseInlineMarkdown(line.replace(/^\d+\. /, '').trim())
+        markDefs,
+        children: spans
       })
     } else if (line.trim() === '') {
       flushParagraph()
