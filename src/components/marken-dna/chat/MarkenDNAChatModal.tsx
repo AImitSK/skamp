@@ -7,7 +7,9 @@ import { ChatMessages, ChatMessage } from './components/ChatMessages';
 import { ChatInput } from './components/ChatInput';
 import { ActionBubbles } from './components/ActionBubbles';
 import { DocumentSidebar } from './components/DocumentSidebar';
-import { useGenkitChat } from '@/hooks/marken-dna/useGenkitChat';
+import { useAgenticChat } from '@/hooks/agentic-chat/useAgenticChat';
+import { getSpecialistForDocument } from '@/lib/ai/agentic/types';
+import type { MarkenDNADocumentType as AgenticDocType } from '@/lib/ai/agentic/types';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
 
@@ -48,7 +50,9 @@ export function MarkenDNAChatModal({
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // useGenkitChat Hook Integration
+  // useAgenticChat Hook Integration (Agentic Architecture)
+  const specialistType = getSpecialistForDocument(documentType as AgenticDocType);
+
   const {
     messages,
     input,
@@ -57,13 +61,16 @@ export function MarkenDNAChatModal({
     sendMessage,
     document: currentDocument,
     documentStatus,
-  } = useGenkitChat({
-    flowName: 'markenDNAChat',
-    documentType,
+  } = useAgenticChat({
+    initialSpecialist: specialistType,
     companyId,
     companyName,
-    existingDocument,
+    documentType,
     existingChatHistory,
+    onDocumentComplete: (doc) => {
+      // Dokument wurde finalisiert
+      toastService.success('Dokument fertiggestellt!');
+    },
   });
 
   // Dokumenttyp-Titel Mapping

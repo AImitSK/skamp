@@ -7,7 +7,7 @@ import { ChatMessages, ChatMessage } from '@/components/marken-dna/chat/componen
 import { ChatInput } from '@/components/marken-dna/chat/components/ChatInput';
 import { ActionBubbles } from '@/components/marken-dna/chat/components/ActionBubbles';
 import { DocumentSidebar } from '@/components/marken-dna/chat/components/DocumentSidebar';
-import { useGenkitChat } from '@/hooks/marken-dna/useGenkitChat';
+import { useAgenticChat } from '@/hooks/agentic-chat/useAgenticChat';
 import { toastService } from '@/lib/utils/toast';
 
 interface KernbotschaftChatModalProps {
@@ -49,7 +49,7 @@ export function KernbotschaftChatModal({
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // useGenkitChat Hook für Project Strategy Chat
+  // useAgenticChat Hook für Project Strategy Chat (Agentic Architecture)
   const {
     messages,
     input,
@@ -58,14 +58,16 @@ export function KernbotschaftChatModal({
     sendMessage,
     document: currentDocument,
     documentStatus,
-  } = useGenkitChat({
-    flowName: 'projectStrategyChat',
+  } = useAgenticChat({
+    initialSpecialist: 'project_wizard',
     companyId,
     companyName,
-    projectId,
-    dnaSynthese,
-    existingDocument: existingKernbotschaft,
+    documentType: 'kernbotschaft',
     existingChatHistory,
+    onDocumentComplete: (doc) => {
+      // Kernbotschaft wurde finalisiert
+      toastService.success('Kernbotschaft fertiggestellt!');
+    },
   });
 
   // Automatisch Sidebar öffnen wenn Status 'completed' wird

@@ -114,6 +114,37 @@ export type SpecialistType =
   | 'orchestrator';
 
 /**
+ * Marken-DNA Dokumenttypen (UI-Ebene)
+ */
+export type MarkenDNADocumentType =
+  | 'briefing'
+  | 'swot'
+  | 'audience'
+  | 'positioning'
+  | 'goals'
+  | 'messages';
+
+/**
+ * Mapping: DocumentType → SpecialistType
+ * Wird verwendet um vom UI-Dokumenttyp zum richtigen Spezialisten zu kommen
+ */
+export const DOCUMENT_TO_SPECIALIST: Record<MarkenDNADocumentType, SpecialistType> = {
+  briefing: 'briefing_specialist',
+  swot: 'swot_specialist',
+  audience: 'audience_specialist',
+  positioning: 'positioning_specialist',
+  goals: 'goals_specialist',
+  messages: 'messages_specialist',
+};
+
+/**
+ * Helper-Funktion um den Spezialisten für einen Dokumenttyp zu bekommen
+ */
+export function getSpecialistForDocument(documentType: MarkenDNADocumentType): SpecialistType {
+  return DOCUMENT_TO_SPECIALIST[documentType];
+}
+
+/**
  * Skill-Berechtigungen pro Agent
  */
 export const AGENT_SKILLS: Record<SpecialistType, SkillName[]> = {
