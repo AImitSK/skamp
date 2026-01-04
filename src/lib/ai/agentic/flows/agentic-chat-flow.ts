@@ -90,14 +90,14 @@ export const agenticChatFlow = ai.defineFlow(
     console.log('[AgenticFlow] filtered messages:', formattedMessages.length);
     console.log('[AgenticFlow] first message:', formattedMessages[0]);
 
-    // 4. Generieren - TEMPORÄR ohne Tools zum Debuggen
+    // 4. Generieren mit Tools
     console.log('[AgenticFlow] Calling ai.generate...');
     const response = await ai.generate({
       model: gemini25FlashModel,
       system: systemPrompt,
       messages: formattedMessages.length > 0 ? formattedMessages : undefined,
       prompt: formattedMessages.length === 0 ? 'Starte den Prozess.' : undefined,
-      // tools: tools?.length > 0 ? tools : undefined, // TEMPORÄR DEAKTIVIERT
+      tools: tools?.length > 0 ? tools : undefined,
       config: {
         temperature: 0.7,
       },
