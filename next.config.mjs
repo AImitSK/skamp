@@ -16,6 +16,22 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Redirect: Alte Academy-URLs auf Support-Seite umleiten
+  async redirects() {
+    return [
+      {
+        source: '/dashboard/academy/documentation/:path*',
+        destination: '/support',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/academy/:path*',
+        destination: '/support',
+        permanent: true,
+      },
+    ]
+  },
+
   // Subdomain Routing: support.celeropress.com → /support
   // Wichtig: _next, api und statische Assets (Dateien mit Endungen) ausschließen
   async rewrites() {

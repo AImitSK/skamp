@@ -33,7 +33,7 @@ export function HelpFAQ({ article }: HelpFAQProps) {
           </p>
         )}
         <Link
-          href={`/dashboard/academy/documentation/${article.category.slug}/${article.slug}`}
+          href={`/support/de/${article.category.slug}/${article.slug}`}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
         >
           {t('readMore')}

@@ -292,7 +292,7 @@ const userMenuItems: UserMenuItem[] = [
   },
   {
     nameKey: "documentation",
-    href: "/dashboard/academy/documentation",
+    href: "/support",
     icon: BookOpenIcon,
   },
 ];
