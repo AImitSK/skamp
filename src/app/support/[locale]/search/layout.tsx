@@ -4,10 +4,10 @@ import { getHelpCategoriesWithArticles } from '@/sanity/help-queries'
 
 interface LayoutProps {
   children: React.ReactNode
-  params: Promise<{ locale: string; category: string }>
+  params: Promise<{ locale: string }>
 }
 
-export default async function CategoryLayout({ children, params }: LayoutProps) {
+export default async function SearchLayout({ children, params }: LayoutProps) {
   const { locale } = await params
   const categories = await getHelpCategoriesWithArticles(locale)
 

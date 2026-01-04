@@ -1,104 +1,122 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { SupportLink } from './SupportContext'
-import { ChevronLeftIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { SupportLink, useSupportPath } from './SupportContext'
 import clsx from 'clsx'
 
 interface Article {
-  _id: string
   title: string
   slug: string
   onboardingStep?: string
 }
 
 interface Category {
+  _id: string
   title: string
   slug: string
-  description?: string
+  articles: Article[]
 }
 
 interface SupportSidebarProps {
-  category: Category
-  articles: Article[]
+  categories: Category[]
   locale: string
-  currentSlug?: string
 }
 
-export function SupportSidebar({
-  category,
-  articles,
-  locale,
-}: Omit<SupportSidebarProps, 'currentSlug'>) {
+export function SupportSidebar({ categories, locale }: SupportSidebarProps) {
   const pathname = usePathname()
-  const backText = locale === 'de' ? 'Alle Kategorien' : 'All Categories'
+  const router = useRouter()
+  const { buildPath } = useSupportPath()
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Extract current slug from pathname: /support/de/category/slug or /de/category/slug
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(buildPath(`/${locale}/search?q=${encodeURIComponent(searchQuery)}`))
+    }
+  }
+
+  const searchPlaceholder = locale === 'de' ? 'Suchen...' : 'Search...'
+
+  // Extract current category and article slug from pathname
   const pathParts = pathname.split('/')
-  const currentSlug = pathParts.length >= 4 ? pathParts[pathParts.length - 1] : undefined
+  // Patterns: /support/de/category/slug or /de/category/slug (subdomain)
+  const currentCategorySlug = pathParts.length >= 3 ? pathParts[pathParts.length - 2] : undefined
+  const currentArticleSlug = pathParts.length >= 4 ? pathParts[pathParts.length - 1] : undefined
 
   return (
     <nav className="flex flex-col">
-      {/* Back link */}
-      <SupportLink
-        href={`/${locale}`}
-        className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors"
-      >
-        <ChevronLeftIcon className="h-4 w-4" />
-        {backText}
-      </SupportLink>
+      {/* Search */}
+      <form onSubmit={handleSearch} className="relative mb-6">
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-zinc-500" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-zinc-700
+                     bg-white dark:bg-zinc-800 text-gray-900 dark:text-white
+                     placeholder:text-gray-400 dark:placeholder:text-zinc-500
+                     focus:border-primary-500 focus:ring-1 focus:ring-primary-500
+                     focus:outline-none transition-colors"
+        />
+      </form>
 
-      {/* Category header */}
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {category.title}
-        </h2>
-        {category.description && (
-          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-            {category.description}
-          </p>
-        )}
-      </div>
+      {/* Categories */}
+      <div className="space-y-6">
+      {categories.map((category) => {
+        const isCategoryActive = currentCategorySlug === category.slug
 
-      {/* Articles list */}
-      <div className="space-y-1">
-        {articles.map((article) => {
-          const isActive = currentSlug === article.slug
-
-          return (
+        return (
+          <div key={category._id}>
+            {/* Category Header */}
             <SupportLink
-              key={article._id}
-              href={`/${locale}/${category.slug}/${article.slug}`}
+              href={`/${locale}/${category.slug}`}
               className={clsx(
-                'block rounded-lg px-3 py-2 text-sm transition-colors',
-                isActive
-                  ? 'bg-primary-50 text-primary-700 font-medium dark:bg-primary-900/20 dark:text-primary-400'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white'
+                'block text-sm font-semibold mb-2 transition-colors',
+                isCategoryActive
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : 'text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400'
               )}
             >
-              <span className="flex items-center gap-2">
-                {article.onboardingStep && (
-                  <span className={clsx(
-                    'text-xs font-medium',
-                    isActive
-                      ? 'text-primary-600 dark:text-primary-400'
-                      : 'text-gray-400 dark:text-zinc-500'
-                  )}>
-                    {article.onboardingStep}
-                  </span>
-                )}
-                <span className="truncate">{article.title}</span>
-              </span>
+              {category.title}
             </SupportLink>
-          )
-        })}
-      </div>
 
-      {/* Article count */}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-        <p className="text-xs text-gray-500 dark:text-zinc-500">
-          {articles.length} {locale === 'de' ? 'Artikel' : 'Articles'}
-        </p>
+            {/* Articles */}
+            {category.articles && category.articles.length > 0 && (
+              <div className="space-y-0.5 ml-3 border-l border-gray-200 dark:border-zinc-700">
+                {category.articles.map((article, index) => {
+                  const isActive = isCategoryActive && currentArticleSlug === article.slug
+
+                  return (
+                    <SupportLink
+                      key={`${category._id}-${article.slug}-${index}`}
+                      href={`/${locale}/${category.slug}/${article.slug}`}
+                      className={clsx(
+                        'block pl-3 py-1 text-sm transition-colors border-l-2 -ml-px',
+                        isActive
+                          ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium'
+                          : 'border-transparent text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-zinc-500'
+                      )}
+                    >
+                      {article.onboardingStep && (
+                        <span className={clsx(
+                          'mr-1.5 text-xs',
+                          isActive ? 'text-primary-500' : 'text-gray-400 dark:text-zinc-500'
+                        )}>
+                          {article.onboardingStep}
+                        </span>
+                      )}
+                      {article.title}
+                    </SupportLink>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
       </div>
     </nav>
   )

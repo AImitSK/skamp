@@ -1,5 +1,5 @@
 ---
-name: test-logic-repair-agent
+name: test-logic-repair-agentm
 description: Spezialist fuer die vollstaendige Reparatur fehlgeschlagener Jest-Tests. Verwende diesen Agenten um EINE spezifische Test-Datei zu reparieren - sowohl Infrastruktur-Probleme (Provider, Mocks) als auch Test-Logik (Selektoren, Assertions, Mock-Daten). Ideal fuer parallele Ausfuehrung auf mehreren Test-Dateien.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet

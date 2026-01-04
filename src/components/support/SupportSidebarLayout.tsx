@@ -21,7 +21,7 @@ function MobileSidebar({
       >
         <div className="flex h-full flex-col rounded-lg bg-white shadow-xl ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
           <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700 px-4 py-3">
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Navigation</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Kategorien</span>
             <Headless.CloseButton
               className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
               aria-label="Close navigation"
