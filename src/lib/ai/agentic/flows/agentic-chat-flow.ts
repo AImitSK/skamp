@@ -75,18 +75,25 @@ export const agenticChatFlow = ai.defineFlow(
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
 
-    // 3. Nachrichten formatieren
-    const formattedMessages = input.messages.map(msg => ({
+    // 3. Nachrichten formatieren (mit Fallback für leere Messages)
+    const messagesToFormat = input.messages || [];
+    const formattedMessages = messagesToFormat.map(msg => ({
       role: msg.role === 'assistant' ? ('model' as const) : ('user' as const),
-      content: [{ text: msg.content }],
+      content: [{ text: msg.content || '' }],
     }));
+
+    // Debug-Logging
+    console.log('[AgenticFlow] specialistType:', input.specialistType);
+    console.log('[AgenticFlow] tools count:', tools?.length ?? 0);
+    console.log('[AgenticFlow] messages count:', formattedMessages.length);
 
     // 4. Generieren mit Tools
     const response = await ai.generate({
       model: gemini25FlashModel,
       system: systemPrompt,
-      messages: formattedMessages,
-      tools,
+      messages: formattedMessages.length > 0 ? formattedMessages : undefined,
+      prompt: formattedMessages.length === 0 ? 'Starte den Prozess.' : undefined,
+      tools: tools?.length > 0 ? tools : undefined,
       config: {
         temperature: 0.7,
       },
