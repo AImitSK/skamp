@@ -1,6 +1,6 @@
 # Hilfe-Artikel Checkliste
 
-> Stand: 2026-01-04 | Fortschritt: 93/108 Artikel
+> Stand: 2026-01-04 | Fortschritt: 107/108 Artikel
 
 ---
 
@@ -254,44 +254,44 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Team-Mitglieder verwalten | 🔴 Hoch | `einstellungen/team-mitglieder-verwalten.json` |
-| [ ] | Rollen & Berechtigungen | 🟡 Mittel | `einstellungen/rollen-und-berechtigungen.json` |
+| [x] | Team-Mitglieder verwalten | 🔴 Hoch | `einstellungen/team-mitglieder-verwalten.json` |
+| [x] | Rollen & Berechtigungen | 🟡 Mittel | `einstellungen/rollen-und-berechtigungen.json` |
 
 ### Branding
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Logo hochladen | 🟡 Mittel | `einstellungen/logo-hochladen.json` |
-| [ ] | Farben anpassen | 🟢 Niedrig | `einstellungen/farben-anpassen.json` |
+| [x] | Logo hochladen | 🟡 Mittel | `einstellungen/logo-hochladen.json` |
+| [~] | Farben anpassen | 🟢 Niedrig | ⚠️ Feature nicht implementiert |
 
 ### E-Mail
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | E-Mail-Konfiguration | 🔴 Hoch | `einstellungen/email-konfiguration.json` |
-| [ ] | E-Mail-Signatur verwalten | 🟡 Mittel | `einstellungen/email-signatur-verwalten.json` |
+| [x] | E-Mail-Konfiguration | 🔴 Hoch | `einstellungen/email-konfiguration.json` |
+| [x] | E-Mail-Signatur verwalten | 🟡 Mittel | `einstellungen/email-signatur-verwalten.json` |
 
 ### Domains
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Eigene Domain einrichten | 🟡 Mittel | `einstellungen/eigene-domain-einrichten.json` |
-| [ ] | DNS-Einstellungen | 🟢 Niedrig | `einstellungen/dns-einstellungen.json` |
+| [x] | Eigene Domain einrichten | 🟡 Mittel | `einstellungen/eigene-domain-einrichten.json` |
+| [x] | DNS-Einstellungen | 🟢 Niedrig | `einstellungen/dns-einstellungen.json` |
 
 ### Templates
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | PDF-Templates anpassen | 🟢 Niedrig | `einstellungen/pdf-templates-anpassen.json` |
+| [x] | PDF-Templates anpassen | 🟢 Niedrig | `einstellungen/pdf-templates-anpassen.json` |
 
 ### Import/Export
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Daten importieren | 🟡 Mittel | `einstellungen/daten-importieren.json` |
-| [ ] | Daten exportieren | 🟢 Niedrig | `einstellungen/daten-exportieren.json` |
+| [x] | Daten importieren | 🟡 Mittel | `einstellungen/daten-importieren.json` |
+| [x] | Daten exportieren | 🟢 Niedrig | `einstellungen/daten-exportieren.json` |
 
-**Fortschritt: 0/11**
+**Fortschritt: 10/11** (1 Feature nicht implementiert)
 
 ---
 
@@ -299,12 +299,12 @@
 
 | Status | Thema | Priorität | Datei |
 |--------|-------|-----------|-------|
-| [ ] | Profil bearbeiten | 🟡 Mittel | `account/profil-bearbeiten.json` |
-| [ ] | Passwort ändern | 🟡 Mittel | `account/passwort-aendern.json` |
-| [ ] | Subscription/Billing | 🟡 Mittel | `account/subscription-billing.json` |
-| [ ] | API-Keys verwalten | 🟢 Niedrig | `account/api-keys-verwalten.json` |
+| [x] | Profil bearbeiten | 🟡 Mittel | `account/profil-bearbeiten.json` |
+| [x] | Passwort ändern | 🟡 Mittel | `account/passwort-aendern.json` |
+| [x] | Subscription/Billing | 🟡 Mittel | `account/subscription-billing.json` |
+| [x] | API-Keys verwalten | 🟢 Niedrig | `account/api-keys-verwalten.json` |
 
-**Fortschritt: 0/4**
+**Fortschritt: 4/4** ✅
 
 ---
 

@@ -1,0 +1,52 @@
+{
+  "_type": "helpArticle",
+  "title": "PDF-Templates anpassen",
+  "titleEn": "Customize PDF Templates",
+  "slug": {
+    "current": "pdf-templates-anpassen"
+  },
+  "excerpt": "Passe das Design deiner PDF-Pressemeldungen mit eigenen Templates an oder erstelle komplett neue Vorlagen (Premium-Feature).",
+  "excerptEn": "Customize the design of your PDF press releases with your own templates or create completely new layouts (Premium feature).",
+  "category": "einstellungen",
+  "onboardingStep": null,
+  "keywords": [
+    "PDF",
+    "Templates",
+    "Vorlagen",
+    "Design",
+    "Anpassen",
+    "Premium",
+    "Branding",
+    "Layout",
+    "HTML",
+    "CSS"
+  ],
+  "content": {
+    "de": "# PDF-Templates anpassen\n\nMit der PDF-Template-Funktion kannst du das Erscheinungsbild deiner Pressemeldungen im PDF-Format individuell gestalten. CeleroPress bietet drei Standard-Templates sowie die Möglichkeit, eigene Templates zu erstellen und hochzuladen.\n\n> **Premium-Feature:** Das Erstellen und Hochladen eigener Templates ist nur im Premium-Plan verfügbar.\n\n## Voraussetzungen\n\n- Premium-Abonnement (für eigene Templates)\n- Berechtigung: Admin oder Owner\n- Grundkenntnisse in HTML/CSS (für Custom Templates)\n\n## Standard-Templates nutzen\n\nCeleroPress bietet drei professionelle Standard-Templates:\n\n### 1. Modern Professional\nKlares, minimalistisches Design für Business-Kommunikation. Nutzt Roboto-Schriftart und dezente Farben.\n\n**Ideal für:** Unternehmens-PR, formelle Ankündigungen\n\n### 2. Classic Elegant\nTraditionelles Design mit Serif-Typografie. Verwendet Times New Roman.\n\n**Ideal für:** Etablierte Unternehmen, offizielle Statements\n\n### 3. Creative Bold\nLebendiges Design mit starken Farben für kreative Branchen.\n\n**Ideal für:** Kreativagenturen, Startup-Kommunikation\n\n## Template-Vorschau\n\n1. Öffne **Einstellungen → Templates**\n2. Klicke auf das Menü neben einem Template\n3. Wähle **Vorschau**\n\n## Templates vergleichen\n\n1. Klicke auf **Vergleichen** (oben rechts)\n2. Wähle bis zu 3 Templates aus\n3. Vergleiche Layout, Farbschema und Typografie nebeneinander\n\n## Eigenes Template hochladen (Premium)\n\n**Unterstützte Formate:** HTML, CSS, ZIP\n**Maximale Dateigröße:** 10 MB\n\n**Wichtige Template-Variablen:**\n- {{companyName}} - Unternehmensname\n- {{title}} - Titel der Pressemeldung\n- {{content}} - Hauptinhalt\n- {{date}} - Datum\n- {{footerText}} - Footer-Text\n\n### Upload-Schritte\n\n1. Klicke auf **Hochladen**\n2. Wähle deine Datei aus\n3. Gib Template-Name und Beschreibung ein\n4. System validiert automatisch\n5. Klicke auf **Hochladen**\n\n## Template im Editor erstellen\n\n1. Klicke auf **Erstellen**\n2. **HTML-Tab:** Schreibe dein Template\n3. **CSS-Tab:** Gestalte das Design\n4. **Variablen-Tab:** Definiere Custom-Variablen\n5. **Vorschau-Tab:** Prüfe das Ergebnis\n6. Klicke auf **Speichern**\n\n## Template bearbeiten\n\n**Nur Custom Templates können bearbeitet werden.**\n\n1. Klicke auf das Menü neben einem Custom Template\n2. Wähle **Bearbeiten**\n3. Nehme Änderungen vor\n4. Klicke auf **Speichern**\n\n## Template löschen\n\n1. Klicke auf das Menü neben einem Custom Template\n2. Wähle **Löschen**\n3. Bestätige die Löschung\n\n> System-Templates können nicht gelöscht werden.\n\n## Template-Struktur\n\n### Layout\n- Header-Höhe, Footer-Höhe\n- Seitenränder (top, right, bottom, left)\n- Spalten (1 oder 2)\n- Seitenformat (A4, Letter, A3)\n\n### Typografie\n- Primäre und sekundäre Schriftart\n- Basis-Schriftgröße\n- Zeilenhöhe\n\n### Farbschema\n- Primary, Secondary, Accent\n- Text, Background, Border\n\n## Best Practices\n\n1. **Logo:** Volle Auflösung (min. 300 DPI)\n2. **Farben:** Exakte Corporate Design Farben\n3. **Schriften:** Web-sichere Schriften oder Google Fonts\n4. **Testen:** Mit verschiedenen Textlängen prüfen\n\n## Häufige Fragen\n\n**Wie viele Templates kann ich erstellen?**\nPremium-Nutzer können unbegrenzt Templates erstellen.\n\n**Was passiert bei Fehlern?**\nFallback auf Modern Professional Template.",
+    "en": "# Customize PDF Templates\n\nWith the PDF template feature, you can design the appearance of your press releases in PDF format. CeleroPress offers three standard templates plus the option to create and upload your own.\n\n> **Premium Feature:** Creating and uploading custom templates is only available in the Premium plan.\n\n## Requirements\n\n- Premium subscription (for custom templates)\n- Permission: Admin or Owner\n- Basic HTML/CSS knowledge (for custom templates)\n\n## Standard Templates\n\nCeleroPress offers three professional standard templates:\n\n### 1. Modern Professional\nClean, minimalist design for business communication. Uses Roboto font.\n\n**Ideal for:** Corporate PR, formal announcements\n\n### 2. Classic Elegant\nTraditional design with serif typography. Uses Times New Roman.\n\n**Ideal for:** Established companies, official statements\n\n### 3. Creative Bold\nVibrant design with strong colors for creative industries.\n\n**Ideal for:** Creative agencies, startup communication\n\n## Template Preview\n\n1. Open **Settings → Templates**\n2. Click the menu next to a template\n3. Select **Preview**\n\n## Compare Templates\n\n1. Click **Compare** (top right)\n2. Select up to 3 templates\n3. Compare layout, color scheme and typography side by side\n\n## Upload Custom Template (Premium)\n\n**Supported Formats:** HTML, CSS, ZIP\n**Maximum File Size:** 10 MB\n\n**Required Template Variables:**\n- {{companyName}} - Company name\n- {{title}} - Press release title\n- {{content}} - Main content\n- {{date}} - Date\n- {{footerText}} - Footer text\n\n### Upload Steps\n\n1. Click **Upload**\n2. Select your file\n3. Enter template name and description\n4. System validates automatically\n5. Click **Upload**\n\n## Create Template in Editor\n\n1. Click **Create**\n2. **HTML Tab:** Write your template\n3. **CSS Tab:** Design the layout\n4. **Variables Tab:** Define custom variables\n5. **Preview Tab:** Check the result\n6. Click **Save**\n\n## Edit Template\n\n**Only custom templates can be edited.**\n\n1. Click the menu next to a custom template\n2. Select **Edit**\n3. Make your changes\n4. Click **Save**\n\n## Delete Template\n\n1. Click the menu next to a custom template\n2. Select **Delete**\n3. Confirm deletion\n\n> System templates cannot be deleted.\n\n## Template Structure\n\n### Layout\n- Header height, Footer height\n- Page margins (top, right, bottom, left)\n- Columns (1 or 2)\n- Page format (A4, Letter, A3)\n\n### Typography\n- Primary and secondary font\n- Base font size\n- Line height\n\n### Color Scheme\n- Primary, Secondary, Accent\n- Text, Background, Border\n\n## Best Practices\n\n1. **Logo:** Full resolution (min. 300 DPI)\n2. **Colors:** Exact corporate design colors\n3. **Fonts:** Web-safe fonts or Google Fonts\n4. **Testing:** Check with different text lengths\n\n## FAQ\n\n**How many templates can I create?**\nPremium users can create unlimited templates.\n\n**What happens on errors?**\nFallback to Modern Professional template."
+  },
+  "tips": [
+    {
+      "tip": "Teste dein Custom Template mit verschiedenen Textlängen und Bildgrößen.",
+      "tipEn": "Test your custom template with different text lengths and image sizes."
+    },
+    {
+      "tip": "Nutze CSS-Variablen für Farben und Abstände.",
+      "tipEn": "Use CSS variables for colors and spacing."
+    },
+    {
+      "tip": "Die Vorschau zeigt Beispieldaten - teste mit echten Inhalten.",
+      "tipEn": "The preview shows sample data - test with real content."
+    },
+    {
+      "tip": "Speichere regelmäßig im Template-Editor.",
+      "tipEn": "Save regularly in the template editor."
+    }
+  ],
+  "videos": [],
+  "relatedArticles": [
+    "branding-einrichten",
+    "vorlagen-nutzen",
+    "pressemeldung-erstellen"
+  ]
+}
