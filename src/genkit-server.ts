@@ -16,7 +16,9 @@ export { textTransformFlow } from './lib/ai/flows/text-transform';
 export { analyzeKeywordSEOFlow } from './lib/ai/flows/analyze-keyword-seo';
 export { emailInsightsFlow } from './lib/ai/flows/email-insights';
 export { emailResponseFlow } from './lib/ai/flows/email-response';
+export { markenDNAChatFlow } from './lib/ai/flows/marken-dna-chat';
 export * from './lib/ai/evaluators/merge-quality-evaluators';
+export * from './lib/ai/evaluators/marken-dna-chat-evaluators';
 export * from './lib/ai/evaluators/headline-quality-evaluators';
 export * from './lib/ai/evaluators/press-release-structured-evaluators';
 export * from './lib/ai/evaluators/text-transform-evaluators';
@@ -24,6 +26,6 @@ export * from './lib/ai/evaluators/seo-keyword-evaluators';
 export * from './lib/ai/evaluators/email-insights-evaluators';
 
 console.log('✅ Genkit Server gestartet!');
-console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO, emailInsights, emailResponse');
-console.log('📊 Evaluators registriert: merge-quality, headline-quality, pr-structured-quality, text-transform-quality, seo-keyword-quality, email-insights-quality');
+console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO, emailInsights, emailResponse, markenDNAChat');
+console.log('📊 Evaluators registriert: merge-quality, headline-quality, pr-structured-quality, text-transform-quality, seo-keyword-quality, email-insights-quality, marken-dna-chat-quality');
 console.log('🌐 Developer UI: http://localhost:4002 (oder anderer Port)');

@@ -1,14 +1,13 @@
 {
   "mcpServers": {
     "genkit": {
+      "type": "stdio",
       "command": "genkit",
       "args": [
         "mcp",
         "--no-update-notification"
       ],
-      "env": {
-        "GENKIT_ENV": "dev"
-      }
+      "env": {}
     }
   }
 }
