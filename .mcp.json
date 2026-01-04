@@ -8,6 +8,10 @@
         "--no-update-notification"
       ],
       "env": {}
+    },
+    "Sanity": {
+      "type": "http",
+      "url": "https://mcp.sanity.io"
     }
   }
 }

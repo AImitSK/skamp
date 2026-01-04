@@ -21,8 +21,11 @@ interface RelatedArticle {
   category?: { slug: string }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PortableTextContent = any
+
 interface ArticleContentProps {
-  content: unknown
+  content: PortableTextContent
   tips?: Tip[]
   videos?: Video[]
   relatedArticles?: RelatedArticle[]
@@ -33,27 +36,27 @@ interface ArticleContentProps {
 // Portable Text Komponenten für Support-Artikel
 const portableTextComponents = {
   block: {
-    normal: ({ children }: { children: React.ReactNode }) => (
+    normal: ({ children }: { children?: React.ReactNode }) => (
       <p className="my-4 text-base text-gray-700 dark:text-zinc-300 first:mt-0 last:mb-0">
         {children}
       </p>
     ),
-    h1: ({ children }: { children: React.ReactNode }) => (
+    h1: ({ children }: { children?: React.ReactNode }) => (
       <h1 className="mt-8 mb-6 text-2xl font-bold text-gray-900 dark:text-white first:mt-0">
         {children}
       </h1>
     ),
-    h2: ({ children }: { children: React.ReactNode }) => (
+    h2: ({ children }: { children?: React.ReactNode }) => (
       <h2 className="mt-8 mb-4 text-xl font-semibold text-gray-900 dark:text-white first:mt-0">
         {children}
       </h2>
     ),
-    h3: ({ children }: { children: React.ReactNode }) => (
+    h3: ({ children }: { children?: React.ReactNode }) => (
       <h3 className="mt-6 mb-3 text-lg font-medium text-gray-900 dark:text-white">
         {children}
       </h3>
     ),
-    blockquote: ({ children }: { children: React.ReactNode }) => (
+    blockquote: ({ children }: { children?: React.ReactNode }) => (
       <blockquote className="my-6 border-l-4 border-primary-500 pl-4 text-gray-600 dark:text-zinc-400 italic">
         {children}
       </blockquote>
@@ -79,40 +82,40 @@ const portableTextComponents = {
     },
   },
   list: {
-    bullet: ({ children }: { children: React.ReactNode }) => (
+    bullet: ({ children }: { children?: React.ReactNode }) => (
       <ul className="my-4 list-disc pl-6 text-gray-700 dark:text-zinc-300 space-y-2">
         {children}
       </ul>
     ),
-    number: ({ children }: { children: React.ReactNode }) => (
+    number: ({ children }: { children?: React.ReactNode }) => (
       <ol className="my-4 list-decimal pl-6 text-gray-700 dark:text-zinc-300 space-y-2">
         {children}
       </ol>
     ),
   },
   listItem: {
-    bullet: ({ children }: { children: React.ReactNode }) => (
+    bullet: ({ children }: { children?: React.ReactNode }) => (
       <li>{children}</li>
     ),
-    number: ({ children }: { children: React.ReactNode }) => (
+    number: ({ children }: { children?: React.ReactNode }) => (
       <li>{children}</li>
     ),
   },
   marks: {
-    strong: ({ children }: { children: React.ReactNode }) => (
+    strong: ({ children }: { children?: React.ReactNode }) => (
       <strong className="font-semibold text-gray-900 dark:text-white">
         {children}
       </strong>
     ),
-    em: ({ children }: { children: React.ReactNode }) => (
+    em: ({ children }: { children?: React.ReactNode }) => (
       <em className="italic">{children}</em>
     ),
-    code: ({ children }: { children: React.ReactNode }) => (
+    code: ({ children }: { children?: React.ReactNode }) => (
       <code className="px-1.5 py-0.5 text-sm bg-gray-100 dark:bg-zinc-800 rounded font-mono">
         {children}
       </code>
     ),
-    link: ({ value, children }: { value?: { href?: string }; children: React.ReactNode }) => {
+    link: ({ value, children }: { value?: { href?: string }; children?: React.ReactNode }) => {
       const href = value?.href || '#'
 
       return (
@@ -144,7 +147,7 @@ export function ArticleContent({
       {/* Main Content */}
       {content && (
         <div className="prose dark:prose-invert max-w-none">
-          <PortableText value={content as never} components={portableTextComponents} />
+          <PortableText value={content} components={portableTextComponents} />
         </div>
       )}
 

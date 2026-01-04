@@ -1,8 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { ArticleCard } from '@/components/support/ArticleCard'
-import { SupportLink } from '@/components/support/SupportContext'
 import { client } from '@/sanity/client'
 
 interface PageProps {
@@ -53,61 +51,51 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound()
   }
 
-  const backText = locale === 'de' ? 'Zurück' : 'Back'
-
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <SupportLink
-          href={`/${locale}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeftIcon className="h-4 w-4" />
-          {backText}
-        </SupportLink>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            {categoryData.title}
-          </h1>
-          {categoryData.description && (
-            <p className="text-gray-600 dark:text-zinc-400 mt-2">
-              {categoryData.description}
-            </p>
-          )}
-        </div>
-
-        {/* Articles */}
-        <div className="space-y-3">
-          {categoryData.articles?.length > 0 ? (
-            categoryData.articles.map((article: {
-              _id: string
-              title: string
-              slug: string
-              excerpt?: string
-              onboardingStep?: string
-            }) => (
-              <ArticleCard
-                key={article._id}
-                title={article.title}
-                excerpt={article.excerpt}
-                slug={article.slug}
-                categorySlug={category}
-                locale={locale}
-                onboardingStep={article.onboardingStep}
-              />
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-zinc-400 text-center py-8">
-              {locale === 'de'
-                ? 'Noch keine Artikel in dieser Kategorie.'
-                : 'No articles in this category yet.'}
-            </p>
-          )}
-        </div>
+    <>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          {categoryData.title}
+        </h1>
+        {categoryData.description && (
+          <p className="text-gray-600 dark:text-zinc-400 mt-2">
+            {categoryData.description}
+          </p>
+        )}
+        <p className="text-sm text-gray-500 dark:text-zinc-500 mt-2">
+          {categoryData.articles?.length || 0} {locale === 'de' ? 'Artikel' : 'Articles'}
+        </p>
       </div>
-    </div>
+
+      {/* Articles */}
+      <div className="space-y-3">
+        {categoryData.articles?.length > 0 ? (
+          categoryData.articles.map((article: {
+            _id: string
+            title: string
+            slug: string
+            excerpt?: string
+            onboardingStep?: string
+          }) => (
+            <ArticleCard
+              key={article._id}
+              title={article.title}
+              excerpt={article.excerpt}
+              slug={article.slug}
+              categorySlug={category}
+              locale={locale}
+              onboardingStep={article.onboardingStep}
+            />
+          ))
+        ) : (
+          <p className="text-gray-500 dark:text-zinc-400 text-center py-8">
+            {locale === 'de'
+              ? 'Noch keine Artikel in dieser Kategorie.'
+              : 'No articles in this category yet.'}
+          </p>
+        )}
+      </div>
+    </>
   )
 }

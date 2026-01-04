@@ -8,6 +8,15 @@ interface PageProps {
   params: Promise<{ locale: string }>
 }
 
+interface Category {
+  _id: string
+  title: string
+  description?: string
+  slug: string
+  icon?: string
+  articles?: unknown[]
+}
+
 const validLocales = ['de', 'en']
 
 export async function generateMetadata({
@@ -75,7 +84,7 @@ export default async function SupportHomePage({ params }: PageProps) {
             {t.categories}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category) => (
+            {categories.map((category: Category) => (
               <CategoryCard
                 key={category._id}
                 title={category.title}
