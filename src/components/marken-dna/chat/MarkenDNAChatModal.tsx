@@ -8,8 +8,8 @@ import { ChatInput } from './components/ChatInput';
 import { ActionBubbles } from './components/ActionBubbles';
 import { DocumentSidebar } from './components/DocumentSidebar';
 import { useAgenticChat } from '@/hooks/agentic-chat/useAgenticChat';
-import { getSpecialistForDocument } from '@/lib/ai/agentic/types';
-import type { MarkenDNADocumentType as AgenticDocType } from '@/lib/ai/agentic/types';
+import { getSpecialistForDocument } from '@/lib/ai/agentic/specialist-mapping';
+import type { MarkenDNADocumentType as AgenticDocType } from '@/lib/ai/agentic/specialist-mapping';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
 

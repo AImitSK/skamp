@@ -103,46 +103,21 @@ export interface ToolCall {
 // AGENT TYPES
 // ============================================================================
 
-export type SpecialistType =
-  | 'briefing_specialist'
-  | 'swot_specialist'
-  | 'audience_specialist'
-  | 'positioning_specialist'
-  | 'goals_specialist'
-  | 'messages_specialist'
-  | 'project_wizard'
-  | 'orchestrator';
+// Import und Re-Export der Client-sicheren Types aus specialist-mapping.ts
+// Diese können sowohl auf Server als auch Client verwendet werden
+import type {
+  SpecialistType as SpecialistTypeImport,
+  MarkenDNADocumentType as MarkenDNADocumentTypeImport,
+} from './specialist-mapping';
 
-/**
- * Marken-DNA Dokumenttypen (UI-Ebene)
- */
-export type MarkenDNADocumentType =
-  | 'briefing'
-  | 'swot'
-  | 'audience'
-  | 'positioning'
-  | 'goals'
-  | 'messages';
+// Re-Export für externe Nutzung
+export type SpecialistType = SpecialistTypeImport;
+export type MarkenDNADocumentType = MarkenDNADocumentTypeImport;
 
-/**
- * Mapping: DocumentType → SpecialistType
- * Wird verwendet um vom UI-Dokumenttyp zum richtigen Spezialisten zu kommen
- */
-export const DOCUMENT_TO_SPECIALIST: Record<MarkenDNADocumentType, SpecialistType> = {
-  briefing: 'briefing_specialist',
-  swot: 'swot_specialist',
-  audience: 'audience_specialist',
-  positioning: 'positioning_specialist',
-  goals: 'goals_specialist',
-  messages: 'messages_specialist',
-};
-
-/**
- * Helper-Funktion um den Spezialisten für einen Dokumenttyp zu bekommen
- */
-export function getSpecialistForDocument(documentType: MarkenDNADocumentType): SpecialistType {
-  return DOCUMENT_TO_SPECIALIST[documentType];
-}
+export {
+  DOCUMENT_TO_SPECIALIST,
+  getSpecialistForDocument,
+} from './specialist-mapping';
 
 /**
  * Skill-Berechtigungen pro Agent
