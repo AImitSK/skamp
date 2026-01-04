@@ -1,6 +1,6 @@
 # Hilfe-Artikel Checkliste
 
-> Stand: 2026-01-03 | Fortschritt: 93/95 Artikel
+> Stand: 2026-01-04 | Fortschritt: 93/108 Artikel
 
 ---
 
@@ -217,7 +217,7 @@
 | [x] | Manuelle Clippings | 🟡 Mittel | `projekte/manuelle-clippings.json` |
 | [x] | AVE berechnen | 🟢 Niedrig | `projekte/ave-berechnen.json` |
 
-**Fortschritt: 41/43** ✅
+**Fortschritt: 41/41** ✅
 
 ---
 

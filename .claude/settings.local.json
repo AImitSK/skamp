@@ -92,7 +92,10 @@
       "Bash(git stash:*)",
       "Bash(npm run import:help-articles:*)",
       "Bash(npm run import:help-mappings:*)",
-      "WebFetch(domain:vercel.com)"
+      "WebFetch(domain:vercel.com)",
+      "Bash(netstat:*)",
+      "mcp__genkit__lookup_genkit_docs",
+      "Bash(claude mcp:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

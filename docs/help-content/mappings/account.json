@@ -1,0 +1,48 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'account'",
+  "mappings": [
+    {
+      "pageName": "Profil bearbeiten",
+      "routes": ["/dashboard/admin/profile"],
+      "mainArticle": "profil-einrichten",
+      "quickTips": [
+        { "tip": "Änderungen werden sofort gespeichert", "tipEn": "Changes are saved immediately" },
+        { "tip": "Dein Name erscheint in E-Mail-Signaturen", "tipEn": "Your name appears in email signatures" },
+        { "tip": "Aktiviere 2FA für mehr Sicherheit", "tipEn": "Enable 2FA for more security" }
+      ],
+      "additionalArticles": ["profilbild-hochladen", "zwei-faktor-authentifizierung", "email-verifizierung"]
+    },
+    {
+      "pageName": "Billing & Subscription",
+      "routes": ["/dashboard/admin/billing"],
+      "mainArticle": "willkommen-bei-celeropress",
+      "quickTips": [
+        { "tip": "Upgrade jederzeit möglich", "tipEn": "Upgrade possible anytime" },
+        { "tip": "Rechnungen werden per E-Mail gesendet", "tipEn": "Invoices are sent via email" },
+        { "tip": "Jahresabos sparen bis zu 20%", "tipEn": "Annual plans save up to 20%" }
+      ],
+      "additionalArticles": []
+    },
+    {
+      "pageName": "API-Schlüssel",
+      "routes": ["/dashboard/admin/api"],
+      "mainArticle": "willkommen-bei-celeropress",
+      "quickTips": [
+        { "tip": "API-Keys niemals öffentlich teilen", "tipEn": "Never share API keys publicly" },
+        { "tip": "Erstelle separate Keys pro Integration", "tipEn": "Create separate keys per integration" },
+        { "tip": "Deaktivierte Keys können nicht reaktiviert werden", "tipEn": "Disabled keys cannot be reactivated" }
+      ],
+      "additionalArticles": []
+    },
+    {
+      "pageName": "Integrationen",
+      "routes": ["/dashboard/admin/integrations"],
+      "mainArticle": "willkommen-bei-celeropress",
+      "quickTips": [
+        { "tip": "Verbinde externe Tools wie Slack oder Zapier", "tipEn": "Connect external tools like Slack or Zapier" },
+        { "tip": "Jede Integration braucht eigene Berechtigungen", "tipEn": "Each integration needs its own permissions" }
+      ],
+      "additionalArticles": []
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "_description": "Seiten-Mappings für Kategorie 'einstellungen'",
+  "mappings": [
+    {
+      "pageName": "Team-Verwaltung",
+      "routes": ["/dashboard/settings/team"],
+      "mainArticle": "team-einladen",
+      "quickTips": [
+        { "tip": "Nur Owner können neue Mitglieder einladen", "tipEn": "Only owners can invite new members" },
+        { "tip": "Rollen bestimmen die Zugriffsrechte", "tipEn": "Roles determine access rights" },
+        { "tip": "Entfernte Mitglieder verlieren sofort den Zugang", "tipEn": "Removed members lose access immediately" }
+      ],
+      "additionalArticles": ["branding-einrichten"]
+    },
+    {
+      "pageName": "Branding",
+      "routes": ["/dashboard/settings/branding"],
+      "mainArticle": "branding-einrichten",
+      "quickTips": [
+        { "tip": "Logo erscheint in PDFs und E-Mails", "tipEn": "Logo appears in PDFs and emails" },
+        { "tip": "Nutze PNG mit transparentem Hintergrund", "tipEn": "Use PNG with transparent background" },
+        { "tip": "Primärfarbe beeinflusst Buttons und Links", "tipEn": "Primary color affects buttons and links" }
+      ],
+      "additionalArticles": []
+    },
+    {
+      "pageName": "E-Mail-Konfiguration",
+      "routes": ["/dashboard/settings/email"],
+      "mainArticle": "email-absender-einrichten",
+      "quickTips": [
+        { "tip": "Erstelle separate Absender pro Kunde", "tipEn": "Create separate senders per client" },
+        { "tip": "Aktiviere Inbox für eingehende E-Mails", "tipEn": "Enable Inbox for incoming emails" },
+        { "tip": "Signatur wird automatisch angehängt", "tipEn": "Signature is automatically appended" }
+      ],
+      "additionalArticles": ["email-signatur-erstellen", "versand-domain-authentifizieren"]
+    },
+    {
+      "pageName": "Domain-Verwaltung",
+      "routes": ["/dashboard/settings/domain", "/dashboard/settings/domains"],
+      "mainArticle": "versand-domain-authentifizieren",
+      "quickTips": [
+        { "tip": "DNS-Änderungen brauchen bis zu 48h", "tipEn": "DNS changes take up to 48h" },
+        { "tip": "Verifizierte Domains verbessern Zustellbarkeit", "tipEn": "Verified domains improve deliverability" },
+        { "tip": "Nutze die Kopier-Buttons für DNS-Einträge", "tipEn": "Use copy buttons for DNS records" }
+      ],
+      "additionalArticles": ["email-absender-einrichten"]
+    },
+    {
+      "pageName": "Import/Export",
+      "routes": ["/dashboard/settings/import-export"],
+      "mainArticle": "journalisten-importieren",
+      "quickTips": [
+        { "tip": "CSV-Dateien müssen UTF-8 kodiert sein", "tipEn": "CSV files must be UTF-8 encoded" },
+        { "tip": "Nutze die Vorlagen für korrektes Format", "tipEn": "Use templates for correct format" },
+        { "tip": "Prüfe die Vorschau vor dem Import", "tipEn": "Check preview before import" }
+      ],
+      "additionalArticles": ["journalisten-exportieren", "verlage-importieren"]
+    },
+    {
+      "pageName": "Templates",
+      "routes": ["/dashboard/settings/templates"],
+      "mainArticle": "vorlagen-nutzen",
+      "quickTips": [
+        { "tip": "Templates sparen Zeit bei wiederkehrenden Projekten", "tipEn": "Templates save time for recurring projects" },
+        { "tip": "Erstelle Vorlagen aus bestehenden Projekten", "tipEn": "Create templates from existing projects" }
+      ],
+      "additionalArticles": ["pressemeldung-erstellen"]
+    },
+    {
+      "pageName": "Benachrichtigungen",
+      "routes": ["/dashboard/settings/notifications"],
+      "mainArticle": "benachrichtigungen",
+      "quickTips": [
+        { "tip": "Wähle zwischen E-Mail und In-App Benachrichtigungen", "tipEn": "Choose between email and in-app notifications" },
+        { "tip": "Wichtige Updates werden immer gesendet", "tipEn": "Important updates are always sent" }
+      ],
+      "additionalArticles": ["inbox-verstehen"]
+    },
+    {
+      "pageName": "Spam-Blocklist",
+      "routes": ["/dashboard/settings/spam-blocklist"],
+      "mainArticle": "inbox-verstehen",
+      "quickTips": [
+        { "tip": "Blockierte Absender werden automatisch gefiltert", "tipEn": "Blocked senders are automatically filtered" },
+        { "tip": "Wildcards wie *@domain.de sind möglich", "tipEn": "Wildcards like *@domain.com are possible" }
+      ],
+      "additionalArticles": ["eingehende-anfragen-bearbeiten"]
+    }
+  ]
+}
