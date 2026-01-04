@@ -75,18 +75,19 @@ export const agenticChatFlow = ai.defineFlow(
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
 
-    // 3. Nachrichten formatieren (mit Fallback für leere Messages)
-    const messagesToFormat = input.messages || [];
+    // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
+    // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
+    const messagesToFormat = (input.messages || []).filter(msg => msg.content && msg.content.trim().length > 0);
     const formattedMessages = messagesToFormat.map(msg => ({
       role: msg.role === 'assistant' ? ('model' as const) : ('user' as const),
-      content: [{ text: msg.content || '' }],
+      content: [{ text: msg.content }],
     }));
 
     // Debug-Logging
     console.log('[AgenticFlow] specialistType:', input.specialistType);
     console.log('[AgenticFlow] tools count:', tools?.length ?? 0);
-    console.log('[AgenticFlow] tools:', tools?.map(t => t?.name ?? 'undefined'));
-    console.log('[AgenticFlow] messages count:', formattedMessages.length);
+    console.log('[AgenticFlow] original messages:', input.messages?.length ?? 0);
+    console.log('[AgenticFlow] filtered messages:', formattedMessages.length);
     console.log('[AgenticFlow] first message:', formattedMessages[0]);
 
     // 4. Generieren - TEMPORÄR ohne Tools zum Debuggen
