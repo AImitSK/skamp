@@ -112,16 +112,20 @@ const portableTextComponents = {
         {children}
       </code>
     ),
-    link: ({ value, children }: { value: { href: string }; children: React.ReactNode }) => (
-      <a
-        href={value.href}
-        className="text-primary-600 dark:text-primary-400 underline hover:no-underline"
-        target={value.href.startsWith('http') ? '_blank' : undefined}
-        rel={value.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-      >
-        {children}
-      </a>
-    ),
+    link: ({ value, children }: { value?: { href?: string }; children: React.ReactNode }) => {
+      const href = value?.href || '#'
+
+      return (
+        <a
+          href={href}
+          className="text-primary-600 dark:text-primary-400 underline hover:no-underline"
+          target={href.startsWith('http') ? '_blank' : undefined}
+          rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+        >
+          {children}
+        </a>
+      )
+    },
   },
 }
 
