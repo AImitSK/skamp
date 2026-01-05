@@ -11,9 +11,16 @@ import type { SpecialistType, ToolCall, ChatMessage } from '../types';
 // SCHEMA DEFINITIONS
 // ============================================================================
 
+const ToolCallInMessageSchema = z.object({
+  name: z.string(),
+  args: z.record(z.unknown()),
+  result: z.record(z.unknown()).optional(),
+});
+
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string(),
+  toolCalls: z.array(ToolCallInMessageSchema).optional(),
 });
 
 const AgenticChatInputSchema = z.object({
