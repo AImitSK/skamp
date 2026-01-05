@@ -9,6 +9,12 @@ import { ActionBubbles } from './components/ActionBubbles';
 import { DocumentSidebar } from './components/DocumentSidebar';
 import { useAgenticChat } from '@/hooks/agentic-chat/useAgenticChat';
 import { getSpecialistForDocument } from '@/lib/ai/agentic/specialist-mapping';
+import {
+  RoadmapBox,
+  TodoList,
+  SuggestionBubbles,
+  ConfirmBox,
+} from '@/components/agentic-chat/toolbox';
 import type { MarkenDNADocumentType as AgenticDocType } from '@/lib/ai/agentic/specialist-mapping';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
@@ -61,6 +67,10 @@ export function MarkenDNAChatModal({
     sendMessage,
     document: currentDocument,
     documentStatus,
+    toolbox,
+    sendSuggestion,
+    confirmAction,
+    adjustAction,
   } = useAgenticChat({
     initialSpecialist: specialistType,
     companyId,
@@ -210,6 +220,41 @@ export function MarkenDNAChatModal({
 
                 {/* Chat Messages Area */}
                 <ChatMessages messages={chatMessages} isLoading={isLoading} />
+
+                {/* Toolbox Components - Agentic UI */}
+                <div className="max-w-3xl mx-auto px-6 space-y-3">
+                  {/* Roadmap anzeigen */}
+                  {toolbox.roadmap && (
+                    <RoadmapBox
+                      phases={toolbox.roadmap.phases}
+                      currentPhaseIndex={toolbox.roadmap.currentPhaseIndex}
+                      completedPhases={toolbox.roadmap.completedPhases}
+                    />
+                  )}
+
+                  {/* Todo-Liste anzeigen */}
+                  {toolbox.todos.length > 0 && (
+                    <TodoList items={toolbox.todos} />
+                  )}
+
+                  {/* Suggestions anzeigen */}
+                  {toolbox.suggestions.length > 0 && (
+                    <SuggestionBubbles
+                      prompts={toolbox.suggestions}
+                      onSelect={sendSuggestion}
+                    />
+                  )}
+
+                  {/* Confirm-Box anzeigen */}
+                  {toolbox.confirmBox && toolbox.confirmBox.isVisible && (
+                    <ConfirmBox
+                      title={toolbox.confirmBox.title}
+                      summaryItems={toolbox.confirmBox.summaryItems}
+                      onConfirm={confirmAction}
+                      onAdjust={adjustAction}
+                    />
+                  )}
+                </div>
 
                 {/* Input Area */}
                 <div className="bg-zinc-50">
