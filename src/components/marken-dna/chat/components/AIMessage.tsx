@@ -15,13 +15,24 @@ import {
   ResultConfirmBox,
   parseResultContent,
 } from '../toolbox';
+import {
+  RoadmapBox as AgenticRoadmapBox,
+  TodoList,
+  SuggestionBubbles,
+  ConfirmBox,
+} from '@/components/agentic-chat/toolbox';
+import type { ToolCall, TodoItem, ConfirmSummaryItem } from '@/lib/ai/agentic/types';
 
 interface AIMessageProps {
   content: string;
+  toolCalls?: ToolCall[];
   onRegenerate?: () => void;
   onCopy?: () => void;
   onConfirmResult?: (phase: number, content: string) => void;
   onAdjustResult?: (phase: number) => void;
+  onSuggestionSelect?: (prompt: string) => void;
+  onConfirmAction?: () => void;
+  onAdjustAction?: () => void;
 }
 
 /**
@@ -41,10 +52,14 @@ interface AIMessageProps {
  */
 export function AIMessage({
   content,
+  toolCalls,
   onRegenerate,
   onCopy,
   onConfirmResult,
   onAdjustResult,
+  onSuggestionSelect,
+  onConfirmAction,
+  onAdjustAction,
 }: AIMessageProps) {
   // ============================================================================
   // TOOLBOX-TAGS PARSEN
@@ -164,6 +179,85 @@ export function AIMessage({
             content={documentContent}
             icon="document"
           />
+        </div>
+      )}
+
+      {/* ================================================================== */}
+      {/* AGENTIC TOOL-CALLS - Inline Rendering */}
+      {/* ================================================================== */}
+      {toolCalls && toolCalls.length > 0 && (
+        <div className="mt-3 space-y-3">
+          {toolCalls.map((call, idx) => {
+            // skill_roadmap → AgenticRoadmapBox
+            if (call.name === 'skill_roadmap') {
+              const args = call.args as { action: string; phases?: string[]; currentPhaseIndex?: number };
+              if (args.action === 'showRoadmap' && args.phases) {
+                return (
+                  <AgenticRoadmapBox
+                    key={`roadmap-${idx}`}
+                    phases={args.phases}
+                    currentPhaseIndex={args.currentPhaseIndex ?? 0}
+                    completedPhases={[]}
+                  />
+                );
+              }
+            }
+
+            // skill_todos → TodoList
+            if (call.name === 'skill_todos') {
+              const args = call.args as { items: TodoItem[] };
+              if (args.items && args.items.length > 0) {
+                return <TodoList key={`todos-${idx}`} items={args.items} />;
+              }
+            }
+
+            // skill_suggestions → SuggestionBubbles
+            if (call.name === 'skill_suggestions') {
+              const args = call.args as { prompts: string[] };
+              if (args.prompts && args.prompts.length > 0 && onSuggestionSelect) {
+                return (
+                  <SuggestionBubbles
+                    key={`suggestions-${idx}`}
+                    prompts={args.prompts}
+                    onSelect={onSuggestionSelect}
+                  />
+                );
+              }
+            }
+
+            // skill_confirm → ConfirmBox
+            if (call.name === 'skill_confirm') {
+              const args = call.args as { title: string; summaryItems: ConfirmSummaryItem[] };
+              if (args.title && onConfirmAction && onAdjustAction) {
+                return (
+                  <ConfirmBox
+                    key={`confirm-${idx}`}
+                    title={args.title}
+                    summaryItems={args.summaryItems || []}
+                    onConfirm={onConfirmAction}
+                    onAdjust={onAdjustAction}
+                  />
+                );
+              }
+            }
+
+            // skill_sidebar → DocumentBox (einfache Anzeige)
+            if (call.name === 'skill_sidebar') {
+              const args = call.args as { action: string; content?: string };
+              if (args.content) {
+                return (
+                  <ResultBox
+                    key={`sidebar-${idx}`}
+                    title={args.action === 'finalizeDocument' ? 'Finales Dokument' : 'Dokument-Entwurf'}
+                    content={args.content}
+                    icon="document"
+                  />
+                );
+              }
+            }
+
+            return null;
+          })}
         </div>
       )}
 

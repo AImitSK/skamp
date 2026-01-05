@@ -4,12 +4,14 @@ import { useEffect, useRef } from 'react';
 import { UserMessage } from './UserMessage';
 import { AIMessage } from './AIMessage';
 import { LoadingIndicator } from './LoadingIndicator';
+import type { ToolCall } from '@/lib/ai/agentic/types';
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp?: Date;
+  toolCalls?: ToolCall[];
 }
 
 interface ChatMessagesProps {
@@ -17,6 +19,9 @@ interface ChatMessagesProps {
   isLoading?: boolean;
   onConfirmResult?: (phase: number, content: string) => void;
   onAdjustResult?: (phase: number) => void;
+  onSuggestionSelect?: (prompt: string) => void;
+  onConfirmAction?: () => void;
+  onAdjustAction?: () => void;
 }
 
 /**
@@ -39,6 +44,9 @@ export function ChatMessages({
   isLoading,
   onConfirmResult,
   onAdjustResult,
+  onSuggestionSelect,
+  onConfirmAction,
+  onAdjustAction,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -76,10 +84,14 @@ export function ChatMessages({
               <AIMessage
                 key={message.id}
                 content={message.content}
+                toolCalls={message.toolCalls}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={() => handleRegenerate(message.id)}
                 onConfirmResult={onConfirmResult}
                 onAdjustResult={onAdjustResult}
+                onSuggestionSelect={onSuggestionSelect}
+                onConfirmAction={onConfirmAction}
+                onAdjustAction={onAdjustAction}
               />
             );
           }

@@ -9,12 +9,7 @@ import { ActionBubbles } from './components/ActionBubbles';
 import { DocumentSidebar } from './components/DocumentSidebar';
 import { useAgenticChat } from '@/hooks/agentic-chat/useAgenticChat';
 import { getSpecialistForDocument } from '@/lib/ai/agentic/specialist-mapping';
-import {
-  RoadmapBox,
-  TodoList,
-  SuggestionBubbles,
-  ConfirmBox,
-} from '@/components/agentic-chat/toolbox';
+// Toolbox-Komponenten werden jetzt in AIMessage inline gerendert
 import type { MarkenDNADocumentType as AgenticDocType } from '@/lib/ai/agentic/specialist-mapping';
 import { MarkenDNADocumentType } from '@/types/marken-dna';
 import { toastService } from '@/lib/utils/toast';
@@ -67,7 +62,6 @@ export function MarkenDNAChatModal({
     sendMessage,
     document: currentDocument,
     documentStatus,
-    toolbox,
     sendSuggestion,
     confirmAction,
     adjustAction,
@@ -101,11 +95,12 @@ export function MarkenDNAChatModal({
     }
   }, [documentStatus, currentDocument, sidebarOpen]);
 
-  // Messages in ChatMessages-Format konvertieren
+  // Messages in ChatMessages-Format konvertieren (inkl. toolCalls für Inline-Rendering)
   const chatMessages: ChatMessage[] = messages.map((msg, idx) => ({
     id: `${msg.role}-${idx}`,
     role: msg.role,
     content: msg.content,
+    toolCalls: msg.toolCalls,
   }));
 
   // Keyboard-Shortcut: Escape = Modal schließen (mit Warnung wenn ungespeichert)
@@ -218,43 +213,14 @@ export function MarkenDNAChatModal({
                   sidebarOpen={sidebarOpen}
                 />
 
-                {/* Chat Messages Area */}
-                <ChatMessages messages={chatMessages} isLoading={isLoading} />
-
-                {/* Toolbox Components - Agentic UI */}
-                <div className="max-w-3xl mx-auto px-6 space-y-3">
-                  {/* Roadmap anzeigen */}
-                  {toolbox.roadmap && (
-                    <RoadmapBox
-                      phases={toolbox.roadmap.phases}
-                      currentPhaseIndex={toolbox.roadmap.currentPhaseIndex}
-                      completedPhases={toolbox.roadmap.completedPhases}
-                    />
-                  )}
-
-                  {/* Todo-Liste anzeigen */}
-                  {toolbox.todos.length > 0 && (
-                    <TodoList items={toolbox.todos} />
-                  )}
-
-                  {/* Suggestions anzeigen */}
-                  {toolbox.suggestions.length > 0 && (
-                    <SuggestionBubbles
-                      prompts={toolbox.suggestions}
-                      onSelect={sendSuggestion}
-                    />
-                  )}
-
-                  {/* Confirm-Box anzeigen */}
-                  {toolbox.confirmBox && toolbox.confirmBox.isVisible && (
-                    <ConfirmBox
-                      title={toolbox.confirmBox.title}
-                      summaryItems={toolbox.confirmBox.summaryItems}
-                      onConfirm={confirmAction}
-                      onAdjust={adjustAction}
-                    />
-                  )}
-                </div>
+                {/* Chat Messages Area - Tool-Calls werden inline gerendert */}
+                <ChatMessages
+                  messages={chatMessages}
+                  isLoading={isLoading}
+                  onSuggestionSelect={sendSuggestion}
+                  onConfirmAction={confirmAction}
+                  onAdjustAction={adjustAction}
+                />
 
                 {/* Input Area */}
                 <div className="bg-zinc-50">
