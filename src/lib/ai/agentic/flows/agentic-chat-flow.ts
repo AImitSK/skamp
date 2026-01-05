@@ -72,23 +72,26 @@ export const agenticChatFlow = ai.defineFlow(
       input.companyName
     );
 
-    // 2. Tools für diesen Agenten laden
-    const tools = getSkillsForAgent(input.specialistType);
+    // 2. TEST: Minimales inline Tool zum Testen
+    const testTool = ai.defineTool(
+      {
+        name: 'test_greeting',
+        description: 'Ein einfaches Test-Tool das einen Gruß zurückgibt',
+        inputSchema: z.object({
+          name: z.string().describe('Der Name zum Grüßen'),
+        }),
+        outputSchema: z.object({
+          greeting: z.string(),
+        }),
+      },
+      async (input) => {
+        return { greeting: `Hallo ${input.name}!` };
+      }
+    );
 
-    // DEBUG: Prüfe Tool-Struktur
-    console.log('[AgenticFlow] Tools debug - count:', tools?.length);
-    if (tools && tools.length > 0) {
-      tools.forEach((tool, idx) => {
-        const action = tool?.__action;
-        console.log(`[AgenticFlow] Tool ${idx}:`, {
-          type: typeof tool,
-          hasAction: !!action,
-          actionName: action?.name,
-          hasInputSchema: !!action?.inputSchema,
-          hasOutputSchema: !!action?.outputSchema,
-        });
-      });
-    }
+    // Nur das Test-Tool verwenden
+    const tools = [testTool];
+    console.log('[AgenticFlow] Using TEST tool only');
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
