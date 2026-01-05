@@ -1,21 +1,20 @@
 'use client';
 
 // src/components/agentic-chat/toolbox/SuggestionBubbles.tsx
-// Klickbare Quick-Reply Vorschläge
+// Minimalistiche Vorschläge (Claude-Style)
 
 import type { SuggestionBubblesProps } from './types';
 
 /**
- * SuggestionBubbles
+ * SuggestionBubbles - Minimalistisch wie Claude.ai
  *
- * Zeigt klickbare Antwort-Vorschläge als Pills an.
- * Wird durch skill_suggestions.updateSuggestions() gesteuert.
+ * Einfache klickbare Text-Links als Antwort-Optionen.
  */
 export function SuggestionBubbles({ prompts, onSelect, disabled = false }: SuggestionBubblesProps) {
   if (prompts.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
+    <div className="my-2 flex flex-wrap gap-2">
       {prompts.map((prompt, index) => (
         <button
           key={index}
@@ -23,12 +22,11 @@ export function SuggestionBubbles({ prompts, onSelect, disabled = false }: Sugge
           onClick={() => onSelect(prompt)}
           disabled={disabled}
           className={`
-            px-4 py-2 text-sm font-medium rounded-full
-            border border-zinc-200 bg-white
-            transition-all duration-150
+            text-sm px-3 py-1.5 rounded-md
+            border border-zinc-200 bg-zinc-50
             ${disabled
               ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-zinc-50 hover:border-zinc-300 active:bg-zinc-100'
+              : 'hover:bg-zinc-100 hover:border-zinc-300'
             }
           `}
         >

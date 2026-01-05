@@ -1,88 +1,48 @@
 'use client';
 
 // src/components/agentic-chat/toolbox/TodoList.tsx
-// Vertikale Checkliste mit Status-Indikatoren
+// Minimalistiche Checkliste (Claude-Style)
 
 import type { TodoListProps } from './types';
 
 /**
- * TodoList
+ * TodoList - Minimalistisch wie Claude.ai
  *
- * Zeigt eine vertikale Checkliste mit Status-Kreisen.
- * Wird durch skill_todos.updateTodoStatus() gesteuert.
- *
- * Status-Icons:
- * - open: ○ (leerer Kreis)
- * - partial: ◐ (halb gefüllter Kreis)
- * - done: ● (voller Kreis, grün)
+ * Einfache Liste mit:
+ * - Grüner Punkt für offene Items
+ * - Grauer durchgestrichener Text für erledigte Items
  */
 export function TodoList({ items }: TodoListProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-lg p-4 mb-4">
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <li key={item.id} className="flex items-start gap-3">
-            {/* Status Circle */}
-            <div className="flex-shrink-0 mt-0.5">
-              <StatusCircle status={item.status} />
-            </div>
+    <ul className="my-2 space-y-1">
+      {items.map((item) => (
+        <li key={item.id} className="flex items-start gap-2">
+          {/* Einfacher Bullet Point */}
+          <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+            item.status === 'done' ? 'bg-zinc-400' : 'bg-green-500'
+          }`} />
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <span
-                className={`
-                  text-sm font-medium
-                  ${item.status === 'done' ? 'text-zinc-500' : 'text-zinc-900'}
-                `}
-              >
-                {item.label}
-              </span>
+          {/* Text */}
+          <div className="flex-1">
+            <span className={`text-sm ${
+              item.status === 'done'
+                ? 'text-zinc-400 line-through'
+                : 'text-zinc-700'
+            }`}>
+              {item.label}
+            </span>
 
-              {/* Value (wenn vorhanden) */}
-              {item.value && (
-                <p className="text-sm text-zinc-500 mt-0.5 truncate">
-                  {item.value}
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            {/* Wert eingerückt darunter */}
+            {item.value && (
+              <div className="text-sm text-zinc-500 ml-3 mt-0.5">
+                └── {item.value}
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
-}
-
-/**
- * Status-Kreis Komponente
- */
-function StatusCircle({ status }: { status: 'open' | 'partial' | 'done' }) {
-  switch (status) {
-    case 'done':
-      return (
-        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
-      );
-
-    case 'partial':
-      return (
-        <div className="w-5 h-5 rounded-full border-2 border-primary overflow-hidden">
-          <div className="w-full h-full bg-primary" style={{ clipPath: 'inset(0 50% 0 0)' }} />
-        </div>
-      );
-
-    case 'open':
-    default:
-      return (
-        <div className="w-5 h-5 rounded-full border-2 border-zinc-300" />
-      );
-  }
 }
