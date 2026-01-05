@@ -2,9 +2,8 @@
 // Genkit Standalone Server für Dev UI und Flow Execution
 // Läuft parallel zu Next.js auf separatem Port
 
-// 🔑 ENV Variables laden (WICHTIG: Vor allen anderen Imports!)
-import { config } from 'dotenv';
-config({ path: '.env.local' });
+// 🔑 ENV Variables werden via --require ./src/genkit-loader.js geladen
+// BEVOR dieser Code importiert wird!
 
 // ✅ WICHTIG: Flows und Evaluators müssen EXPORTIERT werden!
 export { ai } from './lib/ai/genkit-config';
@@ -17,6 +16,11 @@ export { analyzeKeywordSEOFlow } from './lib/ai/flows/analyze-keyword-seo';
 export { emailInsightsFlow } from './lib/ai/flows/email-insights';
 export { emailResponseFlow } from './lib/ai/flows/email-response';
 export { markenDNAChatFlow } from './lib/ai/flows/marken-dna-chat';
+export { agenticChatFlow } from './lib/ai/agentic/flows/agentic-chat-flow';
+
+// Agentic Chat Test-Flows
+export { runAgenticTestScenarioFlow, evaluateAgenticTestResultFlow } from './lib/ai/agentic/test-data/agentic-test-runner';
+
 export * from './lib/ai/evaluators/merge-quality-evaluators';
 export * from './lib/ai/evaluators/marken-dna-chat-evaluators';
 export * from './lib/ai/evaluators/headline-quality-evaluators';
@@ -26,6 +30,7 @@ export * from './lib/ai/evaluators/seo-keyword-evaluators';
 export * from './lib/ai/evaluators/email-insights-evaluators';
 
 console.log('✅ Genkit Server gestartet!');
-console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO, emailInsights, emailResponse, markenDNAChat');
+console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO, emailInsights, emailResponse, markenDNAChat, agenticChatFlow');
+console.log('🧪 Test-Flows: runAgenticTestScenario, evaluateAgenticTestResult');
 console.log('📊 Evaluators registriert: merge-quality, headline-quality, pr-structured-quality, text-transform-quality, seo-keyword-quality, email-insights-quality, marken-dna-chat-quality');
 console.log('🌐 Developer UI: http://localhost:4002 (oder anderer Port)');

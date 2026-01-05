@@ -95,7 +95,9 @@
       "WebFetch(domain:vercel.com)",
       "Bash(netstat:*)",
       "mcp__genkit__lookup_genkit_docs",
-      "Bash(claude mcp:*)"
+      "Bash(claude mcp:*)",
+      "mcp__genkit__list_flows",
+      "mcp__genkit__get_trace"
     ]
   },
   "enableAllProjectMcpServers": true,

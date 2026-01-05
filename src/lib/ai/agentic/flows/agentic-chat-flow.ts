@@ -76,13 +76,70 @@ export const agenticChatFlow = ai.defineFlow(
     const tools = getSkillsForAgent(input.specialistType);
     console.log('[AgenticFlow] Loaded skills for', input.specialistType, '- count:', tools?.length);
 
-    // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
+    // 3. Nachrichten formatieren - WICHTIG: Tool-Calls müssen in der History sein!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
     const messagesToFormat = (input.messages || []).filter(msg => msg.content && msg.content.trim().length > 0);
-    const formattedMessages = messagesToFormat.map(msg => ({
-      role: msg.role === 'assistant' ? ('model' as const) : ('user' as const),
-      content: [{ text: msg.content }],
-    }));
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formattedMessages: any[] = [];
+
+    for (const msg of messagesToFormat) {
+      if (msg.role === 'user') {
+        // User-Messages sind einfach Text
+        formattedMessages.push({
+          role: 'user' as const,
+          content: [{ text: msg.content }],
+        });
+      } else if (msg.role === 'assistant') {
+        // Assistant-Messages können Tool-Calls enthalten
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const toolCalls = (msg as any).toolCalls as Array<{
+          name: string;
+          args: Record<string, unknown>;
+          result?: Record<string, unknown>;
+        }> | undefined;
+
+        if (toolCalls && toolCalls.length > 0) {
+          // 1. Tool-Requests vom Model
+          formattedMessages.push({
+            role: 'model' as const,
+            content: toolCalls.map((tc, idx) => ({
+              toolRequest: {
+                name: tc.name,
+                input: tc.args,
+                ref: String(idx),
+              },
+            })),
+          });
+
+          // 2. Tool-Responses
+          formattedMessages.push({
+            role: 'tool' as const,
+            content: toolCalls.map((tc, idx) => ({
+              toolResponse: {
+                name: tc.name,
+                output: tc.result || {},
+                ref: String(idx),
+              },
+            })),
+          });
+
+          // 3. Text-Response vom Model (falls vorhanden)
+          if (msg.content && msg.content.trim()) {
+            formattedMessages.push({
+              role: 'model' as const,
+              content: [{ text: msg.content }],
+            });
+          }
+        } else {
+          // Keine Tool-Calls, nur Text
+          formattedMessages.push({
+            role: 'model' as const,
+            content: [{ text: msg.content }],
+          });
+        }
+      }
+    }
 
     // Debug-Logging
     console.log('[AgenticFlow] specialistType:', input.specialistType);
@@ -90,8 +147,8 @@ export const agenticChatFlow = ai.defineFlow(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     console.log('[AgenticFlow] tool names:', tools?.map((t: any) => t.__action?.name || t.name || 'unknown'));
     console.log('[AgenticFlow] original messages:', input.messages?.length ?? 0);
-    console.log('[AgenticFlow] filtered messages:', formattedMessages.length);
-    console.log('[AgenticFlow] first message:', formattedMessages[0]);
+    console.log('[AgenticFlow] formatted messages (incl. tool history):', formattedMessages.length);
+    console.log('[AgenticFlow] message roles:', formattedMessages.map(m => m.role));
 
     // 4. Generieren mit Tools
     // STRATEGIE: returnToolRequests=true gibt uns Kontrolle über Tool-Ausführung
