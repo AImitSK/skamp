@@ -21,8 +21,14 @@ export function TodoList({ items }: TodoListProps) {
   if (items.length === 0) return null;
 
   return (
-    <ul className="my-6 space-y-2">
-      {items.map((item) => {
+    <div className="my-6">
+      {/* Label */}
+      <div className="text-[8px] font-bold text-zinc-400 tracking-[0.3em] mb-2">
+        AUFGABENLISTE
+      </div>
+
+      <ul className="space-y-2">
+        {items.map((item) => {
         // Punkt-Farbe nach Status
         const dotColor =
           item.status === 'done' ? 'bg-green-500' :
@@ -52,6 +58,7 @@ export function TodoList({ items }: TodoListProps) {
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </div>
   );
 }

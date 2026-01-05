@@ -18,6 +18,11 @@ export function RoadmapBox({ phases, currentPhaseIndex, completedPhases }: Roadm
 
   return (
     <div className="my-6">
+      {/* Label */}
+      <div className="text-[8px] font-bold text-zinc-400 tracking-[0.3em] mb-2">
+        ROADMAP
+      </div>
+
       {phases.map((phase, index) => {
         const isCompleted = completedPhases.includes(index);
         const isCurrent = index === currentPhaseIndex && !isCompleted;
