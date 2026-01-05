@@ -75,15 +75,14 @@ export const agenticChatFlow = ai.defineFlow(
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
 
-    // DEBUG: Prüfe Tool-Struktur
-    console.log('[AgenticFlow] Tools debug:');
-    tools.forEach((tool, idx) => {
-      console.log(`[AgenticFlow] Tool ${idx}:`, {
-        exists: !!tool,
-        type: typeof tool,
-        hasName: tool?.__action?.name ?? 'no-name',
-      });
-    });
+    // DEBUG: Prüfe Tool-Struktur ausführlich
+    console.log('[AgenticFlow] Tools debug - count:', tools?.length);
+    if (tools && tools.length > 0) {
+      const firstTool = tools[0];
+      console.log('[AgenticFlow] First tool type:', typeof firstTool);
+      console.log('[AgenticFlow] First tool keys:', firstTool ? Object.keys(firstTool) : 'null');
+      console.log('[AgenticFlow] First tool stringified:', JSON.stringify(firstTool, null, 2).substring(0, 500));
+    }
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
