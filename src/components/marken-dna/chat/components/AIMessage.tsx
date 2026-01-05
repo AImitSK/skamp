@@ -241,20 +241,8 @@ export function AIMessage({
               }
             }
 
-            // skill_sidebar → DocumentBox (einfache Anzeige)
-            if (call.name === 'skill_sidebar') {
-              const args = call.args as { action: string; content?: string };
-              if (args.content) {
-                return (
-                  <ResultBox
-                    key={`sidebar-${idx}`}
-                    title={args.action === 'finalizeDocument' ? 'Finales Dokument' : 'Dokument-Entwurf'}
-                    content={args.content}
-                    icon="document"
-                  />
-                );
-              }
-            }
+            // skill_sidebar → Dokument wird in der Sidebar angezeigt, nicht inline
+            // Kein Rendering hier nötig
 
             return null;
           })}
