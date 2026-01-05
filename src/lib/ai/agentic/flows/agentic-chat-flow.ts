@@ -72,26 +72,10 @@ export const agenticChatFlow = ai.defineFlow(
       input.companyName
     );
 
-    // 2. TEST: Minimales inline Tool zum Testen
-    const testTool = ai.defineTool(
-      {
-        name: 'test_greeting',
-        description: 'Ein einfaches Test-Tool das einen Gruß zurückgibt',
-        inputSchema: z.object({
-          name: z.string().describe('Der Name zum Grüßen'),
-        }),
-        outputSchema: z.object({
-          greeting: z.string(),
-        }),
-      },
-      async (input) => {
-        return { greeting: `Hallo ${input.name}!` };
-      }
-    );
-
-    // Nur das Test-Tool verwenden
-    const tools = [testTool];
-    console.log('[AgenticFlow] Using TEST tool only');
+    // 2. TEST: Nur skillRoadmap verwenden
+    const { skillRoadmap } = await import('../skills/skill-roadmap');
+    const tools = [skillRoadmap];
+    console.log('[AgenticFlow] Using ONLY skillRoadmap for testing');
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
