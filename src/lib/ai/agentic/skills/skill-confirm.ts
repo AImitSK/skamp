@@ -3,7 +3,7 @@
 
 import { ai } from '@/lib/ai/genkit-config';
 import { z } from 'genkit';
-import { ConfirmInputSchema } from '../types';
+import { ConfirmInputSchema, ConfirmSummaryItemSchema } from '../types';
 
 /**
  * skill_confirm
@@ -16,11 +16,11 @@ import { ConfirmInputSchema } from '../types';
  * ```json
  * {
  *   "title": "Briefing-Check abschließen?",
- *   "summary": {
- *     "Unternehmen": "CeleroPress",
- *     "Branche": "PR-Software",
- *     "Fokus": "KI-Automatisierung"
- *   }
+ *   "summaryItems": [
+ *     { "key": "Unternehmen", "value": "CeleroPress" },
+ *     { "key": "Branche", "value": "PR-Software" },
+ *     { "key": "Fokus", "value": "KI-Automatisierung" }
+ *   ]
  * }
  * ```
  */
@@ -35,7 +35,7 @@ Rufe dieses Tool auf, wenn:
 
 Die Box zeigt:
 - Einen Titel (z.B. "Briefing-Check abschließen?")
-- Eine Zusammenfassung der gesammelten Daten
+- Eine Zusammenfassung der gesammelten Daten als Key-Value-Paare
 - Buttons [Ja] und [Anpassen]
 
 Bei [Ja]: Frontend ruft skill_sidebar.finalizeDocument() auf
@@ -44,7 +44,7 @@ Bei [Anpassen]: User kann weiteren Input geben`,
     outputSchema: z.object({
       success: z.boolean(),
       title: z.string(),
-      summary: z.record(z.string()),
+      summaryItems: z.array(ConfirmSummaryItemSchema),
       awaitingConfirmation: z.boolean(),
     }),
   },
@@ -52,7 +52,7 @@ Bei [Anpassen]: User kann weiteren Input geben`,
     return {
       success: true,
       title: input.title,
-      summary: input.summary,
+      summaryItems: input.summaryItems,
       awaitingConfirmation: true,
     };
   }

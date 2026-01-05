@@ -1,7 +1,7 @@
 // src/components/agentic-chat/toolbox/types.ts
 // Frontend Type-Definitionen für Toolbox-Komponenten
 
-import type { ToolCall, TodoItem } from '@/lib/ai/agentic/types';
+import type { ToolCall, TodoItem, ConfirmSummaryItem } from '@/lib/ai/agentic/types';
 
 // ============================================================================
 // TOOLBOX STATE
@@ -28,7 +28,7 @@ export interface ToolboxState {
   // Confirm Box
   confirmBox: {
     title: string;
-    summary: Record<string, string>;
+    summaryItems: ConfirmSummaryItem[];
     isVisible: boolean;
   } | null;
 
@@ -72,7 +72,7 @@ export interface SuggestionBubblesProps {
 
 export interface ConfirmBoxProps {
   title: string;
-  summary: Record<string, string>;
+  summaryItems: ConfirmSummaryItem[];
   onConfirm: () => void;
   onAdjust: () => void;
   isLoading?: boolean;
@@ -164,10 +164,10 @@ function processToolCalls(state: ToolboxState, toolCalls: ToolCall[]): ToolboxSt
       }
 
       case 'skill_confirm': {
-        const args = call.args as { title: string; summary: Record<string, string> };
+        const args = call.args as { title: string; summaryItems: ConfirmSummaryItem[] };
         newState.confirmBox = {
           title: args.title,
-          summary: args.summary,
+          summaryItems: args.summaryItems,
           isVisible: true,
         };
         break;

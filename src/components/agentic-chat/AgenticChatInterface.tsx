@@ -197,7 +197,7 @@ export function AgenticChatInterface({
         {toolbox.confirmBox?.isVisible && (
           <ConfirmBox
             title={toolbox.confirmBox.title}
-            summary={toolbox.confirmBox.summary}
+            summaryItems={toolbox.confirmBox.summaryItems}
             onConfirm={confirmAction}
             onAdjust={adjustAction}
             isLoading={isLoading}

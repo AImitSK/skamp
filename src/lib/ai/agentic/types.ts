@@ -50,11 +50,19 @@ export interface SuggestionsPayload {
 }
 
 /**
+ * Ein Summary-Item für skill_confirm
+ */
+export interface ConfirmSummaryItem {
+  key: string;
+  value: string;
+}
+
+/**
  * Payload für skill_confirm
  */
 export interface ConfirmPayload {
   title: string;
-  summary: Record<string, string>;
+  summaryItems: ConfirmSummaryItem[];
 }
 
 /**
@@ -159,9 +167,14 @@ export const SuggestionsInputSchema = z.object({
   prompts: z.array(z.string()),
 });
 
+export const ConfirmSummaryItemSchema = z.object({
+  key: z.string().describe('Der Feldname (z.B. "Unternehmen", "Branche")'),
+  value: z.string().describe('Der Wert für dieses Feld'),
+});
+
 export const ConfirmInputSchema = z.object({
-  title: z.string(),
-  summary: z.record(z.string()),
+  title: z.string().describe('Titel der Bestätigungsbox'),
+  summaryItems: z.array(ConfirmSummaryItemSchema).describe('Array von Key-Value-Paaren für die Zusammenfassung'),
 });
 
 export const SidebarInputSchema = z.object({

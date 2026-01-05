@@ -16,9 +16,7 @@ import type { ConfirmBoxProps } from './types';
  * - [Ja]: Bestätigt und finalisiert das Dokument
  * - [Anpassen]: Schließt die Box und erlaubt weitere Eingaben
  */
-export function ConfirmBox({ title, summary, onConfirm, onAdjust, isLoading = false }: ConfirmBoxProps) {
-  const entries = Object.entries(summary);
-
+export function ConfirmBox({ title, summaryItems, onConfirm, onAdjust, isLoading = false }: ConfirmBoxProps) {
   return (
     <div className="bg-white border-2 border-primary/20 rounded-lg p-5 mb-4 shadow-sm">
       {/* Header */}
@@ -29,13 +27,13 @@ export function ConfirmBox({ title, summary, onConfirm, onAdjust, isLoading = fa
       {/* Summary Table */}
       <div className="bg-zinc-50 rounded-lg p-4 mb-5">
         <dl className="space-y-2">
-          {entries.map(([key, value]) => (
-            <div key={key} className="flex">
+          {summaryItems.map((item) => (
+            <div key={item.key} className="flex">
               <dt className="w-1/3 text-sm font-medium text-zinc-500">
-                {key}
+                {item.key}
               </dt>
               <dd className="w-2/3 text-sm text-zinc-900">
-                {value}
+                {item.value}
               </dd>
             </div>
           ))}
