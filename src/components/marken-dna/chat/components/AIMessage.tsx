@@ -118,7 +118,7 @@ export function AIMessage({
     <div className="mb-6 max-w-3xl">
       {/* Hauptinhalt: Markdown (nur wenn vorhanden) */}
       {cleanContent && (
-        <div className="prose prose-sm max-w-none prose-zinc
+        <div className="prose max-w-none prose-zinc
                         prose-headings:font-semibold prose-headings:text-zinc-900
                         prose-p:text-zinc-700 prose-p:leading-relaxed
                         prose-strong:text-zinc-900 prose-strong:font-semibold
