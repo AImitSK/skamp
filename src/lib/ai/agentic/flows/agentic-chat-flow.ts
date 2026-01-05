@@ -72,10 +72,12 @@ export const agenticChatFlow = ai.defineFlow(
       input.companyName
     );
 
-    // 2. TEST: Nur skillRoadmap verwenden
+    // 2. TEST: Schrittweise mehr Skills hinzufügen
     const { skillRoadmap } = await import('../skills/skill-roadmap');
-    const tools = [skillRoadmap];
-    console.log('[AgenticFlow] Using ONLY skillRoadmap for testing');
+    const { skillSuggestions } = await import('../skills/skill-suggestions');
+    const { skillTodos } = await import('../skills/skill-todos');
+    const tools = [skillRoadmap, skillSuggestions, skillTodos];
+    console.log('[AgenticFlow] Testing with 3 skills: roadmap, suggestions, todos');
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
