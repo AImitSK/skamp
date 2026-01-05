@@ -1,0 +1,55 @@
+{
+  "testName": "Korrektur-Szenario",
+  "scenarioId": "briefing_specialist_correction",
+  "status": "PASSED",
+  "timestamp": "2026-01-05T13:33:18.690Z",
+  "totalDurationMs": 29913,
+  "totalToolCalls": 17,
+
+  "keyFinding": "Agent verarbeitet Korrekturen korrekt - Daten werden aktualisiert, altes 'KMU' wird durch 'Enterprise' ersetzt",
+
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Start",
+      "agent": "Lass uns das Briefing für CorrectionTest AG erstellen...",
+      "validation": "✅ Proaktiver Start"
+    },
+    {
+      "turn": 2,
+      "user": "E-Commerce Plattform, 30 MA, Zielgruppe: KMU im Einzelhandel",
+      "agent": "Verstanden. Was unterscheidet die E-Commerce Plattform...",
+      "dataInTodos": "Zielgruppe: KMU im Einzelhandel",
+      "validation": "✅"
+    },
+    {
+      "turn": 3,
+      "user": "Warte, ich hab mich vertan - die Zielgruppe ist nicht KMU sondern Enterprise-Kunden",
+      "agent": "Alles klar, die Zielgruppe ist aktualisiert.",
+      "dataInTodos": "Zielgruppe: Enterprise-Kunden mit 500+ Mitarbeitern",
+      "dataInSidebar": "**Zielgruppe:** Enterprise-Kunden mit 500+ Mitarbeitern",
+      "validation": "✅ KORREKTUR KORREKT VERARBEITET"
+    },
+    {
+      "turn": 4,
+      "user": "Jetzt fertig, bitte abschließen",
+      "agent": "Wir haben die wichtigsten Punkte erfasst. Hast du noch Ergänzungen oder sind wir fertig?",
+      "confirmData": "Zielgruppe: Enterprise-Kunden mit 500+ Mitarbeitern (NICHT KMU!)",
+      "validation": "✅ skill_confirm zeigt korrigierte Daten"
+    },
+    {
+      "turn": 5,
+      "user": "Ja, passt!",
+      "agent": "Das Briefing-Dokument wurde erstellt!",
+      "finalDocument": "**Zielgruppe:** Enterprise-Kunden mit 500+ Mitarbeitern",
+      "validation": "✅ finalizeDocument mit korrekten Daten"
+    }
+  ],
+
+  "robustnessCheck": {
+    "korrekturErkannt": true,
+    "datenAktualisiert": true,
+    "alteDatenEntfernt": true,
+    "finaleDatenKorrekt": true
+  }
+}

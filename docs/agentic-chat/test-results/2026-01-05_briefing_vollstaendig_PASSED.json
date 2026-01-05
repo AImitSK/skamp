@@ -1,0 +1,48 @@
+{
+  "testName": "Vollständiger Briefing-Test",
+  "scenarioId": "briefing_specialist_clear_ending",
+  "status": "PASSED",
+  "timestamp": "2026-01-05T12:50:28.251Z",
+  "totalDurationMs": 35019,
+  "totalToolCalls": 20,
+
+  "checklist": {
+    "proaktiverStart": {"passed": true, "note": "Agent sagt 'Lass uns das Briefing...' - kein Hallo"},
+    "toolUsage": {"passed": true, "note": "20 Tool-Calls: roadmap, todos, sidebar, suggestions, confirm"},
+    "keineLegacyTags": {"passed": true, "note": "Keine [DOCUMENT], [PROGRESS] in Antworten"},
+    "fertigRespektiert": {"passed": true, "note": "Turn 3: User sagt 'Fertig!' → Agent ruft skill_confirm"},
+    "finalizeDocument": {"passed": true, "note": "Turn 4: skill_sidebar mit action='finalizeDocument'"},
+    "kurzeAbschlussNachricht": {"passed": true, "note": "Exakt: 'Das Briefing-Dokument wurde erstellt!'"}
+  },
+
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Start",
+      "agent": "Lass uns das Briefing für EndTest GmbH erstellen. Bitte gib mir eine kurze Beschreibung deines Unternehmens.",
+      "toolCalls": ["skill_roadmap", "skill_todos", "skill_suggestions", "skill_sidebar"],
+      "validation": "✅"
+    },
+    {
+      "turn": 2,
+      "user": "IT-Beratung, 50 MA, USP: Cloud-Migration, Zielgruppe: KMU",
+      "agent": "Danke für die präzise Beschreibung. Was sind die spezifischen Dienstleistungen...",
+      "toolCalls": ["skill_roadmap", "skill_todos", "skill_sidebar", "skill_suggestions"],
+      "validation": "✅"
+    },
+    {
+      "turn": 3,
+      "user": "Wettbewerber: Accenture, Capgemini. Fertig!",
+      "agent": "Wir haben die wichtigsten Punkte erfasst. Hast du noch Ergänzungen oder sind wir fertig?",
+      "toolCalls": ["skill_todos", "skill_sidebar", "skill_confirm"],
+      "validation": "✅ Agent respektiert 'Fertig' und zeigt Confirm"
+    },
+    {
+      "turn": 4,
+      "user": "Ja, passt!",
+      "agent": "Das Briefing-Dokument wurde erstellt!",
+      "toolCalls": ["skill_todos", "skill_sidebar (finalizeDocument)", "skill_roadmap (completePhase x3)"],
+      "validation": "✅ Kurze Bestätigung, kein erneutes Zusammenfassen"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "scenarioId": "briefing_specialist_quick",
+  "specialistType": "briefing_specialist",
+  "testPurpose": "Prüfen ob Agent 'Fertig' respektiert und zum Abschluss-Flow geht",
+  "timestamp": "2026-01-05T12:43:54.428Z",
+  "totalDurationMs": 16543,
+  "validation": {
+    "passed": true,
+    "notes": "Turn 1 hat API-Fehler wegen leerem Input - das ist ein bekanntes Gemini-Limit, kein Agent-Problem",
+    "totalToolCalls": 6,
+    "requiredToolsPresent": true,
+    "endedWithConfirm": true
+  },
+  "keyFindings": {
+    "proaktivStart": "✅ Agent startet direkt mit Frage, kein 'Hallo'",
+    "fertigRespektiert": "✅ Agent setzt Items auf 'partial' und ruft skill_confirm auf",
+    "kurzeAntwort": "✅ Nur 'Wir haben die wichtigsten Punkte erfasst. Hast du noch Ergänzungen oder sind wir fertig?'"
+  },
+  "turns": [
+    {
+      "turnIndex": 0,
+      "userMessage": "",
+      "error": "Gemini API lehnt leere User-Nachricht ab",
+      "toolCalls": []
+    },
+    {
+      "turnIndex": 1,
+      "userMessage": "Wir entwickeln eine KI-gestützte Projektmanagement-Software für mittelständische Unternehmen.",
+      "assistantResponse": "Lass uns das Briefing für QuickTest AG erstellen. Welches spezifische Problem löst eure KI-gestützte Projektmanagement-Software für mittelständische Unternehmen?",
+      "toolCalls": ["skill_roadmap", "skill_todos", "skill_sidebar", "skill_suggestions"],
+      "validation": "✅ Perfekt"
+    },
+    {
+      "turnIndex": 2,
+      "userMessage": "Fertig, bitte abschließen.",
+      "assistantResponse": "Wir haben die wichtigsten Punkte erfasst. Hast du noch Ergänzungen oder sind wir fertig?",
+      "toolCalls": ["skill_todos (status: partial)", "skill_confirm"],
+      "validation": "✅ Agent respektiert 'Fertig' und geht zum Abschluss-Flow"
+    }
+  ]
+}
