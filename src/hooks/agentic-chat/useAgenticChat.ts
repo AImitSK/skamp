@@ -149,6 +149,11 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
       }
 
       const data: AgenticChatResponse = await response.json();
+      console.log('[useAgenticChat] API Response:', {
+        response: data.response?.substring(0, 50),
+        toolCallsCount: data.toolCalls?.length,
+        toolCallNames: data.toolCalls?.map(tc => tc.name),
+      });
 
       // AI-Antwort mit Tool-Calls hinzufügen
       const aiMessage: ChatMessage = {
