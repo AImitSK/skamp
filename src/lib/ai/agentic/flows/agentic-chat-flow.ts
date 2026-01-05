@@ -75,13 +75,19 @@ export const agenticChatFlow = ai.defineFlow(
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
 
-    // DEBUG: Prüfe Tool-Struktur ausführlich
+    // DEBUG: Prüfe Tool-Struktur
     console.log('[AgenticFlow] Tools debug - count:', tools?.length);
     if (tools && tools.length > 0) {
-      const firstTool = tools[0];
-      console.log('[AgenticFlow] First tool type:', typeof firstTool);
-      console.log('[AgenticFlow] First tool keys:', firstTool ? Object.keys(firstTool) : 'null');
-      console.log('[AgenticFlow] First tool stringified:', JSON.stringify(firstTool, null, 2).substring(0, 500));
+      tools.forEach((tool, idx) => {
+        const action = tool?.__action;
+        console.log(`[AgenticFlow] Tool ${idx}:`, {
+          type: typeof tool,
+          hasAction: !!action,
+          actionName: action?.name,
+          hasInputSchema: !!action?.inputSchema,
+          hasOutputSchema: !!action?.outputSchema,
+        });
+      });
     }
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
