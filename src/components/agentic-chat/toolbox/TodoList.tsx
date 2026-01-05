@@ -21,7 +21,7 @@ export function TodoList({ items }: TodoListProps) {
   if (items.length === 0) return null;
 
   return (
-    <ul className="my-3 space-y-2">
+    <ul className="my-6 space-y-2">
       {items.map((item) => {
         // Punkt-Farbe nach Status
         const dotColor =
