@@ -72,14 +72,13 @@ export const agenticChatFlow = ai.defineFlow(
       input.companyName
     );
 
-    // 2. TEST: 5 Skills (ohne urlCrawler)
+    // 2. TEST: 4 Skills (nur roadmap, suggestions, todos + confirm)
     const { skillRoadmap } = await import('../skills/skill-roadmap');
     const { skillSuggestions } = await import('../skills/skill-suggestions');
     const { skillTodos } = await import('../skills/skill-todos');
     const { skillConfirm } = await import('../skills/skill-confirm');
-    const { skillSidebar } = await import('../skills/skill-sidebar');
-    const tools = [skillRoadmap, skillSuggestions, skillTodos, skillConfirm, skillSidebar];
-    console.log('[AgenticFlow] Testing with 5 skills (without urlCrawler)');
+    const tools = [skillRoadmap, skillSuggestions, skillTodos, skillConfirm];
+    console.log('[AgenticFlow] Testing with 4 skills (roadmap, suggestions, todos, confirm)');
 
     // 3. Nachrichten formatieren - WICHTIG: Leere Messages herausfiltern!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
