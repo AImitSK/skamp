@@ -15,8 +15,14 @@ export function SuggestionBubbles({ prompts, onSelect, disabled = false }: Sugge
   if (prompts.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
-      {prompts.map((prompt, index) => (
+    <div className="my-6">
+      {/* Label */}
+      <div className="text-[8px] font-bold text-zinc-400 tracking-[0.3em] mb-2">
+        QUICK REPLIES
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {prompts.map((prompt, index) => (
         <button
           key={index}
           type="button"
@@ -35,6 +41,7 @@ export function SuggestionBubbles({ prompts, onSelect, disabled = false }: Sugge
           {prompt}
         </button>
       ))}
+      </div>
     </div>
   );
 }
