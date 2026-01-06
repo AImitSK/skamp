@@ -55,15 +55,6 @@ export function ChatMessages({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    // TODO: Toast-Notification "Kopiert!"
-  };
-
-  const handleRegenerate = (messageId: string) => {
-    // TODO: Message neu generieren (wird in Phase 5 implementiert)
-  };
-
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-50">
       <div className="max-w-3xl mx-auto px-6 py-6">
@@ -146,8 +137,6 @@ export function ChatMessages({
                 key={message.id}
                 content={message.content}
                 toolCalls={message.toolCalls}
-                onCopy={() => handleCopy(message.content)}
-                onRegenerate={() => handleRegenerate(message.id)}
                 onConfirmResult={onConfirmResult}
                 onAdjustResult={onAdjustResult}
                 onSuggestionSelect={onSuggestionSelect}

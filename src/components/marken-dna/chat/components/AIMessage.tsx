@@ -1,10 +1,6 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
-import {
-  ClipboardDocumentIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline';
 import { ResultBox } from './ResultBox';
 import {
   RoadmapBox,
@@ -26,8 +22,6 @@ import type { ToolCall, TodoItem, ConfirmSummaryItem } from '@/lib/ai/agentic/ty
 interface AIMessageProps {
   content: string;
   toolCalls?: ToolCall[];
-  onRegenerate?: () => void;
-  onCopy?: () => void;
   onConfirmResult?: (phase: number, content: string) => void;
   onAdjustResult?: (phase: number) => void;
   onSuggestionSelect?: (prompt: string) => void;
@@ -53,8 +47,6 @@ interface AIMessageProps {
 export function AIMessage({
   content,
   toolCalls,
-  onRegenerate,
-  onCopy,
   onConfirmResult,
   onAdjustResult,
   onSuggestionSelect,
@@ -249,33 +241,6 @@ export function AIMessage({
         </div>
       )}
 
-      {/* Icon-Buttons: Rechts unten */}
-      <div className="flex justify-end gap-1 mt-2">
-        {onCopy && (
-          <button
-            onClick={onCopy}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors
-                       focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            title="Kopieren"
-            type="button"
-            aria-label="Kopieren"
-          >
-            <ClipboardDocumentIcon className="h-4 w-4 text-zinc-700" />
-          </button>
-        )}
-        {onRegenerate && (
-          <button
-            onClick={onRegenerate}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors
-                       focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            title="Neu generieren"
-            type="button"
-            aria-label="Neu generieren"
-          >
-            <ArrowPathIcon className="h-4 w-4 text-zinc-700" />
-          </button>
-        )}
-      </div>
     </div>
   );
 }
