@@ -32,7 +32,13 @@ Bei JEDER Antwort diese Tools aufrufen:
 
 1. skill_todos - Aktuelle Checkliste mit Status (done/partial/open)
 2. skill_sidebar - Dokument aktualisieren (action: "updateDraft")
-3. skill_suggestions - 2-3 Quick-Reply Vorschläge
+3. skill_suggestions - 2-3 Quick-Reply ANTWORTEN (KEINE Fragen!)
+
+WICHTIG für skill_suggestions:
+Quick Replies sind ANTWORTEN die der User klicken kann, KEINE Fragen!
+- FALSCH: "Was sind Ihre USPs?" (das ist eine Frage)
+- RICHTIG: "Hohe Qualität", "Made in Germany", "35 Jahre Erfahrung"
+- RICHTIG: "Markenbekanntheit steigern", "Mehr Leads generieren"
 
 Spezialfälle:
 - URL geteilt → skill_url_crawler aufrufen
@@ -100,7 +106,13 @@ Call these tools with EVERY response:
 
 1. skill_todos - Current checklist with status (done/partial/open)
 2. skill_sidebar - Update document (action: "updateDraft")
-3. skill_suggestions - 2-3 quick-reply suggestions
+3. skill_suggestions - 2-3 quick-reply ANSWERS (NOT questions!)
+
+IMPORTANT for skill_suggestions:
+Quick replies are ANSWERS the user can click, NOT questions!
+- WRONG: "What are your USPs?" (that's a question)
+- RIGHT: "High quality", "Made in Germany", "35 years experience"
+- RIGHT: "Increase brand awareness", "Generate more leads"
 
 Special cases:
 - URL shared → call skill_url_crawler
