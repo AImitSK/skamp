@@ -12,6 +12,7 @@
  * - AIMessage: AI-Nachricht mit Markdown, Icon-Buttons, ResultBox
  * - ResultBox: Formatierte Phasen-Ergebnis Box
  * - LoadingIndicator: Typing-Animation (3 Punkte)
+ * - CrawlerLoadingIndicator: Spezielle Animation für URL-Crawling
  */
 
 export { ChatHeader } from './ChatHeader';
@@ -23,3 +24,4 @@ export { UserMessage } from './UserMessage';
 export { AIMessage } from './AIMessage';
 export { ResultBox } from './ResultBox';
 export { LoadingIndicator } from './LoadingIndicator';
+export { CrawlerLoadingIndicator } from './CrawlerLoadingIndicator';

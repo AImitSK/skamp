@@ -1,10 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { UserMessage } from './UserMessage';
 import { AIMessage } from './AIMessage';
 import { LoadingIndicator } from './LoadingIndicator';
+import { CrawlerLoadingIndicator } from './CrawlerLoadingIndicator';
 import type { ToolCall } from '@/lib/ai/agentic/types';
+
+/**
+ * Extrahiert die erste URL aus einem Text
+ */
+function extractUrlFromText(text: string): string | null {
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+  const match = text.match(urlRegex);
+  return match ? match[0] : null;
+}
 
 export interface ChatMessage {
   id: string;
@@ -53,6 +63,14 @@ export function ChatMessages({
   // Auto-Scroll zu neuen Messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Prüfe ob die letzte User-Nachricht eine URL enthält (für Crawler-Anzeige)
+  const lastUserMessageUrl = useMemo(() => {
+    const userMessages = messages.filter(m => m.role === 'user');
+    if (userMessages.length === 0) return null;
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    return extractUrlFromText(lastUserMessage.content);
   }, [messages]);
 
   return (
@@ -148,7 +166,13 @@ export function ChatMessages({
         })}
 
         {/* Loading Indicator */}
-        {isLoading && <LoadingIndicator />}
+        {isLoading && (
+          lastUserMessageUrl ? (
+            <CrawlerLoadingIndicator url={lastUserMessageUrl} />
+          ) : (
+            <LoadingIndicator />
+          )
+        )}
 
         {/* Auto-Scroll Anchor */}
         <div ref={messagesEndRef} />
