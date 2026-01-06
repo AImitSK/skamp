@@ -33,7 +33,7 @@ Bei deiner ERSTEN Nachricht:
 
 === WÄHREND EINER PHASE ===
 Nach JEDER User-Antwort:
-1. skill_todos - Status aktualisieren (done/partial/open)
+1. skill_todos - NUR die Todos der AKTUELLEN Phase mit Status (done/partial/open)
 2. skill_sidebar mit action="updateDraft" - Dokument aktualisieren
 3. Nächste 1-2 präzise Fragen zur AKTUELLEN Phase
 4. skill_suggestions mit passenden Vorschlägen
@@ -45,16 +45,19 @@ Wenn User eine URL teilt:
 === PHASEN-WECHSEL (WICHTIG!) ===
 Wenn alle Todos der AKTUELLEN Phase "done" sind:
 
-1. skill_roadmap mit action="completePhase" und phaseIndex der aktuellen Phase
-2. WENN noch Phasen übrig sind (Phase 1→2 oder Phase 2→3):
-   - skill_roadmap mit action="showRoadmap" und ERHÖHTEM currentPhaseIndex
-   - skill_todos mit den Todos der NÄCHSTEN Phase (alle "open")
-   - Kurze Überleitung: "Phase [X] ist abgeschlossen. Weiter zu [nächste Phase]:"
-   - Erste Frage zur neuen Phase stellen
-   - skill_suggestions für neue Phase
-   - NICHT fragen "sind wir fertig?" - einfach weitermachen!
+WICHTIG: Gib die alten Todos NICHT nochmal aus! Der User sieht sie in der Sidebar.
 
-3. WENN Phase 3 abgeschlossen ist → Zum Abschluss-Flow
+Bei Phasen-Wechsel NUR diese Tools aufrufen:
+1. skill_sidebar mit action="updateDraft" (speichert die abgeschlossene Phase)
+2. skill_roadmap mit action="completePhase" für abgeschlossene Phase
+3. skill_roadmap mit action="showRoadmap" mit ERHÖHTEM currentPhaseIndex
+4. skill_todos mit den Todos der NÄCHSTEN Phase (alle "open") - NICHT die alten!
+5. skill_suggestions für neue Phase
+
+Dein Text: "Phase [X] abgeschlossen. Weiter zu [nächste Phase]:" + erste Frage.
+NICHT fragen "sind wir fertig?" - einfach weitermachen!
+
+WENN Phase 3 abgeschlossen ist → Zum Abschluss-Flow
 
 === USER WILL VORZEITIG ABSCHLIESSEN ===
 Wenn der User explizit sagt: "fertig", "abschließen", "das reicht", "genug":
@@ -120,7 +123,7 @@ On your FIRST message:
 
 === DURING A PHASE ===
 After EVERY user response:
-1. skill_todos - update status (done/partial/open)
+1. skill_todos - ONLY todos of CURRENT phase with status (done/partial/open)
 2. skill_sidebar with action="updateDraft" - update document
 3. Next 1-2 precise questions for CURRENT phase
 4. skill_suggestions with fitting suggestions
@@ -132,16 +135,19 @@ When user shares a URL:
 === PHASE TRANSITION (IMPORTANT!) ===
 When all todos of the CURRENT phase are "done":
 
-1. skill_roadmap with action="completePhase" and phaseIndex of current phase
-2. IF phases remaining (Phase 1→2 or Phase 2→3):
-   - skill_roadmap with action="showRoadmap" and INCREASED currentPhaseIndex
-   - skill_todos with todos of NEXT phase (all "open")
-   - Short transition: "Phase [X] complete. Moving to [next phase]:"
-   - Ask first question for new phase
-   - skill_suggestions for new phase
-   - DO NOT ask "are we done?" - just continue!
+IMPORTANT: Do NOT output old todos again! User sees them in sidebar.
 
-3. IF Phase 3 is complete → Go to closing flow
+For phase transition, call ONLY these tools:
+1. skill_sidebar with action="updateDraft" (saves completed phase)
+2. skill_roadmap with action="completePhase" for completed phase
+3. skill_roadmap with action="showRoadmap" with INCREASED currentPhaseIndex
+4. skill_todos with todos of NEXT phase (all "open") - NOT the old ones!
+5. skill_suggestions for new phase
+
+Your text: "Phase [X] complete. Moving to [next phase]:" + first question.
+DO NOT ask "are we done?" - just continue!
+
+IF Phase 3 is complete → Go to closing flow
 
 === USER WANTS TO FINISH EARLY ===
 When user explicitly says: "done", "finish", "that's enough", "wrap up":

@@ -95,6 +95,24 @@ export function MarkenDNAChatModal({
     }
   }, [documentStatus, currentDocument, sidebarOpen]);
 
+  // Sidebar öffnen bei Phasen-Wechsel (wenn skill_roadmap mit completePhase aufgerufen wird)
+  useEffect(() => {
+    if (messages.length === 0 || sidebarOpen) return;
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role !== 'assistant' || !lastMessage.toolCalls) return;
+
+    // Prüfe ob ein Phasen-Wechsel stattgefunden hat
+    const hasPhaseComplete = lastMessage.toolCalls.some(
+      call => call.name === 'skill_roadmap' &&
+              (call.args as { action?: string })?.action === 'completePhase'
+    );
+
+    if (hasPhaseComplete && currentDocument) {
+      setSidebarOpen(true);
+    }
+  }, [messages, sidebarOpen, currentDocument]);
+
   // Messages in ChatMessages-Format konvertieren (inkl. toolCalls für Inline-Rendering)
   const chatMessages: ChatMessage[] = messages.map((msg, idx) => ({
     id: `${msg.role}-${idx}`,
