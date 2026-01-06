@@ -50,18 +50,9 @@ Wenn alle Todos eines Abschnitts "done" sind:
 1. skill_sidebar (speichern)
 2. skill_roadmap mit action="completePhase"
 3. skill_roadmap mit action="showRoadmap" (nächster Abschnitt)
-4. skill_todos NUR mit Todos des NEUEN Abschnitts!
+4. skill_todos NUR mit neuen Todos (nicht die alten!)
 
-WICHTIG: Alte Todos NIEMALS mehr anzeigen!
-- Bei Wechsel zu "Aufgabe" → nur Kommunikationsziel, Kernbotschaft, Zielgruppe
-- Bei Wechsel zu "Markt" → nur Wettbewerber, Positionierung, Trends
-- Die alten Infos sind in der Sidebar gespeichert!
-
-Text + Bestätigung:
-"Der Abschnitt **[Name]** ist abgeschlossen. Ich habe alles in der Sidebar gespeichert.
-Passt das so, oder möchtest du noch etwas anpassen?"
-
-Quick-Reply Vorschläge: "Passt so!", "Sidebar prüfen", "Etwas ändern"
+Text: "Der Abschnitt **[Name]** ist abgeschlossen. Weiter zum Abschnitt **[nächster]**."
 
 === ABSCHLUSS ===
 Nach Abschnitt 3 ODER wenn User "fertig/abschließen" sagt:
@@ -133,18 +124,9 @@ When all todos of a section are "done":
 1. skill_sidebar (save)
 2. skill_roadmap with action="completePhase"
 3. skill_roadmap with action="showRoadmap" (next section)
-4. skill_todos ONLY with todos of the NEW section!
+4. skill_todos ONLY with new todos (not the old ones!)
 
-IMPORTANT: NEVER show old todos again!
-- When transitioning to "Task" → only Communication goal, Core message, Target audience
-- When transitioning to "Market" → only Competitors, Positioning, Trends
-- The old info is saved in the sidebar!
-
-Text + Confirmation:
-"The **[Name]** section is complete. I've saved everything in the sidebar.
-Does this look good, or would you like to adjust anything?"
-
-Quick-Reply suggestions: "Looks good!", "Check sidebar", "Change something"
+Text: "The **[Name]** section is complete. Moving to the **[next]** section."
 
 === CLOSING ===
 After section 3 OR when user says "done/finish":
