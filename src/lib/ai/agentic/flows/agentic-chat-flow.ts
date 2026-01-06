@@ -81,12 +81,18 @@ export const agenticChatFlow = ai.defineFlow(
       input.companyName
     );
 
-    // 1b. Aktuellen Sidebar-Inhalt als Kontext hinzufügen (damit AI weiß was schon erfasst wurde)
+    // 1b. CompanyId für Tool-Calls hinzufügen (WICHTIG: AI nutzt sonst den Firmennamen statt der ID!)
+    const companyIdInfo = input.language === 'de'
+      ? `\n\n=== FIRMEN-KONTEXT ===\nFirmenname: ${input.companyName}\ncompanyId (für skill_dna_lookup): ${input.companyId}\n\nWICHTIG: Nutze bei skill_dna_lookup IMMER die companyId "${input.companyId}", NICHT den Firmennamen!`
+      : `\n\n=== COMPANY CONTEXT ===\nCompany name: ${input.companyName}\ncompanyId (for skill_dna_lookup): ${input.companyId}\n\nIMPORTANT: Always use companyId "${input.companyId}" for skill_dna_lookup, NOT the company name!`;
+    systemPrompt = systemPrompt + companyIdInfo;
+
+    // 1c. Aktuellen Sidebar-Inhalt als Kontext hinzufügen (damit AI weiß was schon erfasst wurde)
     if (input.currentDocument) {
       const contextLabel = input.language === 'de'
-        ? '=== AKTUELLER STAND DER SIDEBAR ===\nDas ist der aktuelle Inhalt der Sidebar. ERWEITERE diesen Inhalt, überschreibe ihn NICHT komplett:\n\n'
-        : '=== CURRENT SIDEBAR STATE ===\nThis is the current sidebar content. EXTEND this content, do NOT overwrite it completely:\n\n';
-      systemPrompt = systemPrompt + '\n\n' + contextLabel + input.currentDocument;
+        ? '\n\n=== AKTUELLER STAND DER SIDEBAR ===\nDas ist der aktuelle Inhalt der Sidebar. ERWEITERE diesen Inhalt, überschreibe ihn NICHT komplett:\n\n'
+        : '\n\n=== CURRENT SIDEBAR STATE ===\nThis is the current sidebar content. EXTEND this content, do NOT overwrite it completely:\n\n';
+      systemPrompt = systemPrompt + contextLabel + input.currentDocument;
     }
 
     // 2. Tools für diesen Agenten laden
