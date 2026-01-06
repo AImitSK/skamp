@@ -15,7 +15,7 @@ export function SuggestionBubbles({ prompts, onSelect, disabled = false }: Sugge
   if (prompts.length === 0) return null;
 
   return (
-    <div className="my-6">
+    <div className="mt-8">
       {/* Label */}
       <div className="text-[8px] font-bold text-zinc-400 tracking-[0.3em] mb-2">
         QUICK REPLIES
