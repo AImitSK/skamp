@@ -30,6 +30,20 @@ export interface ConversationTurn {
     /** Mindestlänge der Antwort */
     minLength?: number;
   };
+
+  /** Validierung der Todo-Status (NEU) */
+  todoStatusValidation?: {
+    /** Feldname → erwarteter Status */
+    [fieldName: string]: 'open' | 'partial' | 'done';
+  };
+
+  /** Validierung der Sidebar (NEU) */
+  sidebarValidation?: {
+    /** Muss diese Strings enthalten */
+    mustContain?: string[];
+    /** Darf diese Strings NICHT enthalten */
+    mustNotContain?: string[];
+  };
 }
 
 // ============================================================================
@@ -71,6 +85,18 @@ export interface AgenticTestScenario {
     shouldEndWithConfirm?: boolean;
     /** Der letzte Turn sollte ein finales Dokument haben */
     shouldProduceFinalDocument?: boolean;
+  };
+
+  /** Validierung des finalen Dokuments (NEU) */
+  finalDocumentValidation?: {
+    /** Pflicht-Abschnitte im Dokument */
+    requiredSections?: string[];
+    /** Muss diese Strings enthalten */
+    mustContain?: string[];
+    /** Darf diese Strings NICHT enthalten */
+    mustNotContain?: string[];
+    /** Minimale Zeichenanzahl pro Abschnitt */
+    minSectionLength?: number;
   };
 }
 
@@ -185,6 +211,11 @@ export const ConversationTurnSchema = z.object({
     mustNotContain: z.array(z.string()).optional(),
     minLength: z.number().optional(),
   }).optional(),
+  todoStatusValidation: z.record(z.enum(['open', 'partial', 'done'])).optional(),
+  sidebarValidation: z.object({
+    mustContain: z.array(z.string()).optional(),
+    mustNotContain: z.array(z.string()).optional(),
+  }).optional(),
 });
 
 export const AgenticTestScenarioSchema = z.object({
@@ -212,6 +243,12 @@ export const AgenticTestScenarioSchema = z.object({
     shouldEndWithConfirm: z.boolean().optional(),
     shouldProduceFinalDocument: z.boolean().optional(),
   }),
+  finalDocumentValidation: z.object({
+    requiredSections: z.array(z.string()).optional(),
+    mustContain: z.array(z.string()).optional(),
+    mustNotContain: z.array(z.string()).optional(),
+    minSectionLength: z.number().optional(),
+  }).optional(),
 });
 
 export const EvaluationMetricsSchema = z.object({
