@@ -137,7 +137,7 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
       }
       const token = await user.getIdToken();
 
-      // API-Call
+      // API-Call - inkl. currentDocument damit AI weiß was schon erfasst wurde
       const response = await fetch('/api/ai-chat/agentic', {
         method: 'POST',
         headers: {
@@ -151,6 +151,7 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
           documentType: options.documentType,
           language: locale,
           messages: updatedMessages,
+          currentDocument: toolbox.document?.content || undefined,
         }),
       });
 
@@ -204,7 +205,7 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, currentAgent, options, locale, tToast]);
+  }, [messages, isLoading, currentAgent, options, locale, tToast, toolbox.document?.content]);
 
   // ============================================================================
   // HELPER ACTIONS

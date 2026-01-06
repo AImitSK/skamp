@@ -38,6 +38,8 @@ const AgenticChatInputSchema = z.object({
   companyName: z.string(),
   language: z.enum(['de', 'en']).default('de'),
   messages: z.array(ChatMessageSchema),
+  /** Aktueller Sidebar-Inhalt (damit AI weiß was schon erfasst wurde) */
+  currentDocument: z.string().optional(),
 });
 
 const ToolCallSchema = z.object({
@@ -73,11 +75,19 @@ export const agenticChatFlow = ai.defineFlow(
   },
   async (input) => {
     // 1. System-Prompt für den Spezialisten laden
-    const systemPrompt = await loadSpecialistPrompt(
+    let systemPrompt = await loadSpecialistPrompt(
       input.specialistType,
       input.language,
       input.companyName
     );
+
+    // 1b. Aktuellen Sidebar-Inhalt als Kontext hinzufügen (damit AI weiß was schon erfasst wurde)
+    if (input.currentDocument) {
+      const contextLabel = input.language === 'de'
+        ? '=== AKTUELLER STAND DER SIDEBAR ===\nDas ist der aktuelle Inhalt der Sidebar. ERWEITERE diesen Inhalt, überschreibe ihn NICHT komplett:\n\n'
+        : '=== CURRENT SIDEBAR STATE ===\nThis is the current sidebar content. EXTEND this content, do NOT overwrite it completely:\n\n';
+      systemPrompt = systemPrompt + '\n\n' + contextLabel + input.currentDocument;
+    }
 
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
