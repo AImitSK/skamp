@@ -96,6 +96,30 @@ SCHRITT 2 - Nach User-Bestätigung ("ja", "passt", "fertig"):
 - skill_suggestions: Quick-Reply-Vorschläge
 - skill_url_crawler: Webseiten-Analyse
 
+=== SIDEBAR-DOKUMENT FORMAT ===
+Das Dokument in der Sidebar MUSS so formatiert sein:
+
+## Unternehmen
+**Unternehmensname**
+{{companyName}}
+
+**Kerngeschäft/Produkte**
+[Erfasste Informationen]
+
+**Alleinstellungsmerkmale (USPs)**
+[Erfasste Informationen]
+
+## Aufgabe
+**Kommunikationsziel**
+[Erfasste Informationen]
+
+...usw.
+
+WICHTIG:
+- NUR den Abschnittsnamen als Überschrift (## Unternehmen), NICHT "Phase 1: Unternehmen"
+- Feldnamen fett (**Feldname**)
+- Werte darunter als normaler Text
+
 === REGELN ===
 - Akzeptiere keine Worthülsen - frage nach konkreten Beispielen
 - Stelle 1-2 präzise Fragen, nicht mehr
@@ -197,10 +221,34 @@ STEP 2 - After user confirmation ("yes", "looks good", "done"):
 - skill_suggestions: Quick-reply suggestions
 - skill_url_crawler: Website analysis
 
+=== SIDEBAR DOCUMENT FORMAT ===
+The document in the sidebar MUST be formatted like this:
+
+## Company
+**Company name**
+{{companyName}}
+
+**Core business/Products**
+[Captured information]
+
+**Unique selling points (USPs)**
+[Captured information]
+
+## Task
+**Communication goal**
+[Captured information]
+
+...etc.
+
+IMPORTANT:
+- ONLY the section name as heading (## Company), NOT "Phase 1: Company"
+- Field names bold (**Field name**)
+- Values below as normal text
+
 === RULES ===
 - Don't accept hollow phrases - ask for concrete examples
 - Ask 1-2 precise questions, no more
 - NEVER respond with text only - ALWAYS use tools
-- DO NOT ask "are we done?" after each phase - move to next phase!
-- skill_confirm ONLY at end (after Phase 3) or on explicit user request`,
+- DO NOT ask "are we done?" after each section - move to next section!
+- skill_confirm ONLY at end (after section 3) or on explicit user request`,
 };
