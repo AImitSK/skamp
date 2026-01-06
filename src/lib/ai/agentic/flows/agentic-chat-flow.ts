@@ -230,15 +230,21 @@ export const agenticChatFlow = ai.defineFlow(
       }
     }
 
-    // 6. Text-Response generieren
+    // 6. Text-Response generieren (iterativ)
     // Mit returnToolRequests=true bekommen wir keinen Text, daher Follow-up-Generate
+    // WICHTIG: Wir iterieren bis wir Text bekommen oder maxIterations erreicht ist
     let textResponse = response.text || '';
+    let currentToolRequests = toolRequests;
+    let currentMessages = [...formattedMessages];
+    const maxIterations = 5; // Sicherheitslimit
+    let iteration = 0;
 
-    if (toolCalls.length > 0 && !textResponse) {
-      console.log('[AgenticFlow] Generating follow-up text response...');
+    while (toolCalls.length > 0 && !textResponse && iteration < maxIterations) {
+      iteration++;
+      console.log(`[AgenticFlow] Follow-up iteration ${iteration}/${maxIterations}...`);
 
       // Baue Tool-Response-Messages für den Follow-up-Call
-      const toolResponseParts = toolCalls.map(tc => ({
+      const toolResponseParts = toolCalls.slice(-currentToolRequests.length).map(tc => ({
         toolResponse: {
           name: tc.name,
           ref: tc.name, // Einfache Ref für Follow-up
@@ -246,35 +252,91 @@ export const agenticChatFlow = ai.defineFlow(
         },
       }));
 
-      // Follow-up Generate ohne mode='ANY' um Text zu bekommen
+      // Erweitere Messages mit den letzten Tool-Requests und Responses
+      currentMessages = [
+        ...currentMessages,
+        // Model's Tool-Requests
+        {
+          role: 'model' as const,
+          content: currentToolRequests.map(tr => ({
+            toolRequest: tr.toolRequest,
+          })),
+        },
+        // Tool-Responses
+        {
+          role: 'tool' as const,
+          content: toolResponseParts,
+        },
+      ];
+
+      // Follow-up Generate - returnToolRequests=true um weitere Tool-Calls zu fangen
       const followUpResponse = await ai.generate({
         model: gemini25FlashModel,
         system: systemPrompt,
-        messages: [
-          ...formattedMessages,
-          // Model's Tool-Requests
-          {
-            role: 'model' as const,
-            content: toolRequests.map(tr => ({
-              toolRequest: tr.toolRequest,
-            })),
-          },
-          // Tool-Responses
-          {
-            role: 'tool' as const,
-            content: toolResponseParts,
-          },
-        ],
+        messages: currentMessages,
         tools: hasTools ? tools : undefined,
-        // Kein mode='ANY' hier - wir wollen Text, keine weiteren Tools
         returnToolRequests: true,
         config: {
           temperature: 0.7,
         },
       });
 
-      textResponse = followUpResponse.text || '';
-      console.log('[AgenticFlow] Follow-up response:', textResponse.substring(0, 100));
+      // Prüfe ob Text zurückkam
+      if (followUpResponse.text) {
+        textResponse = followUpResponse.text;
+        console.log('[AgenticFlow] Follow-up response:', textResponse.substring(0, 100));
+        break;
+      }
+
+      // Prüfe ob neue Tool-Requests kamen
+      const newToolRequests = followUpResponse.toolRequests || [];
+      if (newToolRequests.length > 0) {
+        console.log('[AgenticFlow] Follow-up has more tool requests:', newToolRequests.length);
+
+        // Führe die neuen Tools aus
+        for (const request of newToolRequests) {
+          const toolName = request.toolRequest.name;
+          const toolInput = request.toolRequest.input as Record<string, unknown>;
+          console.log('[AgenticFlow] Executing follow-up tool:', toolName, toolInput);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const tool = tools?.find((t: any) => {
+            const name = t.__action?.name || t.name || t.__name;
+            return name === toolName;
+          });
+          let result: Record<string, unknown> | undefined;
+
+          if (tool) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              result = await (tool as any)(toolInput) as Record<string, unknown>;
+              console.log('[AgenticFlow] Follow-up tool result:', result);
+            } catch (error) {
+              console.error('[AgenticFlow] Follow-up tool execution error:', error);
+              result = { error: String(error) };
+            }
+          } else {
+            result = { error: `Tool ${toolName} not found` };
+          }
+
+          toolCalls.push({
+            name: toolName as ToolCall['name'],
+            args: toolInput,
+            result,
+          });
+        }
+
+        currentToolRequests = newToolRequests;
+      } else {
+        // Kein Text und keine Tools - breche ab
+        console.log('[AgenticFlow] No text and no more tool requests, breaking loop');
+        break;
+      }
+    }
+
+    if (iteration >= maxIterations && !textResponse) {
+      console.warn('[AgenticFlow] Max iterations reached without text response');
+      textResponse = 'Ich habe die Informationen verarbeitet. Wie kann ich Ihnen weiterhelfen?';
     }
 
     // 7. Prüfen ob ein Agent-Wechsel gewünscht ist
