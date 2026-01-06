@@ -77,7 +77,7 @@ export function ChatMessages({
             </div>
 
             {/* Tipps-Box */}
-            <div className="bg-white border border-zinc-200 rounded-lg p-6">
+            <div className="bg-white border border-zinc-200 rounded-lg p-8">
               <h2 className="text-sm font-semibold text-zinc-900 mb-4">Tipps für das Arbeiten mit dem Chat</h2>
 
               {/* Kommunikation steuern */}
