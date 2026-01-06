@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { UserMessage } from './UserMessage';
 import { AIMessage } from './AIMessage';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -60,11 +60,6 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // State für Crawler "Fertig" Animation
-  const [crawlerUrl, setCrawlerUrl] = useState<string | null>(null);
-  const [crawlerComplete, setCrawlerComplete] = useState(false);
-  const prevIsLoadingRef = useRef(isLoading);
-
   // Auto-Scroll zu neuen Messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,32 +72,6 @@ export function ChatMessages({
     const lastUserMessage = userMessages[userMessages.length - 1];
     return extractUrlFromText(lastUserMessage.content);
   }, [messages]);
-
-  // Crawler-State verwalten: Starte bei isLoading=true mit URL, zeige "Fertig" bei isLoading=false
-  useEffect(() => {
-    const wasLoading = prevIsLoadingRef.current;
-    prevIsLoadingRef.current = isLoading;
-
-    // Laden gestartet mit URL → Crawler-URL merken
-    if (isLoading && !wasLoading && lastUserMessageUrl) {
-      setCrawlerUrl(lastUserMessageUrl);
-      setCrawlerComplete(false);
-    }
-
-    // Laden beendet und wir hatten eine Crawler-URL → "Fertig" Animation starten
-    if (!isLoading && wasLoading && crawlerUrl) {
-      setCrawlerComplete(true);
-    }
-  }, [isLoading, lastUserMessageUrl, crawlerUrl]);
-
-  // Callback wenn Crawler-Animation fertig ist
-  const handleCrawlerHide = useCallback(() => {
-    setCrawlerUrl(null);
-    setCrawlerComplete(false);
-  }, []);
-
-  // Zeige Crawler wenn: (1) gerade lädt mit URL ODER (2) "Fertig" Animation läuft
-  const showCrawler = (isLoading && lastUserMessageUrl) || (crawlerComplete && crawlerUrl);
 
   return (
     <div className="flex-1 overflow-y-auto bg-zinc-50">
@@ -202,12 +171,8 @@ export function ChatMessages({
         })}
 
         {/* Loading Indicator */}
-        {showCrawler && crawlerUrl && (
-          <CrawlerLoadingIndicator
-            url={crawlerUrl}
-            isComplete={crawlerComplete}
-            onHide={handleCrawlerHide}
-          />
+        {isLoading && lastUserMessageUrl && (
+          <CrawlerLoadingIndicator url={lastUserMessageUrl} />
         )}
         {isLoading && !lastUserMessageUrl && (
           <LoadingIndicator />
