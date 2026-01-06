@@ -339,6 +339,10 @@ export const agenticChatFlow = ai.defineFlow(
       textResponse = 'Ich habe die Informationen verarbeitet. Wie kann ich Ihnen weiterhelfen?';
     }
 
+    // Debug: Log final response
+    console.log('[AgenticFlow] FINAL textResponse length:', textResponse.length);
+    console.log('[AgenticFlow] FINAL textResponse:', textResponse);
+
     // 7. Prüfen ob ein Agent-Wechsel gewünscht ist
     let nextAgent: string | undefined;
 
