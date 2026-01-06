@@ -94,7 +94,8 @@ export type ToolboxAction =
   | { type: 'PROCESS_TOOL_CALLS'; toolCalls: ToolCall[] }
   | { type: 'RESET' }
   | { type: 'DISMISS_CONFIRM' }
-  | { type: 'SET_SUGGESTIONS'; suggestions: string[] };
+  | { type: 'SET_SUGGESTIONS'; suggestions: string[] }
+  | { type: 'INIT_DOCUMENT'; content: string; status?: 'draft' | 'completed' };
 
 /**
  * Reducer für Toolbox State
@@ -117,6 +118,15 @@ export function toolboxReducer(state: ToolboxState, action: ToolboxAction): Tool
       return {
         ...state,
         suggestions: action.suggestions,
+      };
+
+    case 'INIT_DOCUMENT':
+      return {
+        ...state,
+        document: {
+          content: action.content,
+          status: action.status ?? 'draft',
+        },
       };
 
     default:

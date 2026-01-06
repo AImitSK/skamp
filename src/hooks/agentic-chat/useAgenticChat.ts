@@ -33,6 +33,8 @@ export interface UseAgenticChatOptions {
   documentType?: string;
   /** Bestehende Chat-History (z.B. bei Fortsetzung) */
   existingChatHistory?: ChatMessage[];
+  /** Bestehendes Dokument (z.B. bei Fortsetzung) */
+  existingDocument?: string;
   /** Callback wenn ein Dokument finalisiert wird */
   onDocumentComplete?: (document: string) => void;
   /** Callback wenn Agent wechselt */
@@ -98,7 +100,16 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
     setInput('');
     setError(null);
     dispatchToolbox({ type: 'RESET' });
-  }, [options.companyId, options.initialSpecialist, options.existingChatHistory]);
+
+    // Bestehendes Dokument initialisieren
+    if (options.existingDocument) {
+      dispatchToolbox({
+        type: 'INIT_DOCUMENT',
+        content: options.existingDocument,
+        status: 'draft',
+      });
+    }
+  }, [options.companyId, options.initialSpecialist, options.existingChatHistory, options.existingDocument]);
 
   // ============================================================================
   // NACHRICHT SENDEN

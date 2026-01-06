@@ -77,6 +77,7 @@ export function AgenticChatModal({
     companyName,
     documentType,
     existingChatHistory,
+    existingDocument,
     onDocumentComplete: (doc) => {
       setEditedDocument(doc);
       onDocumentComplete?.(doc);

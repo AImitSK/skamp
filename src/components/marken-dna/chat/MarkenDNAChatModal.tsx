@@ -71,6 +71,7 @@ export function MarkenDNAChatModal({
     companyName,
     documentType,
     existingChatHistory,
+    existingDocument,
     onDocumentComplete: (doc) => {
       // Dokument wurde finalisiert
       toastService.success('Dokument fertiggestellt!');
