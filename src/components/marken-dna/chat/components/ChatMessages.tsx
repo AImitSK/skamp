@@ -142,6 +142,22 @@ export function ChatMessages({
                 </ul>
               </div>
             </div>
+
+            {/* Start-Button */}
+            {onSuggestionSelect && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => onSuggestionSelect('Lass uns loslegen')}
+                  className="px-6 py-3 text-base font-medium rounded-full
+                    border border-zinc-200 bg-white
+                    transition-all duration-150
+                    hover:bg-zinc-50 hover:border-zinc-300 active:bg-zinc-100"
+                >
+                  Lass uns loslegen
+                </button>
+              </div>
+            )}
           </div>
         )}
 
