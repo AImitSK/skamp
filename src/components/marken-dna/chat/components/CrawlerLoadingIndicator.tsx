@@ -12,7 +12,7 @@ interface CrawlerLoadingIndicatorProps {
  * Crawler Loading Indicator
  *
  * Zeigt den Fortschritt beim Analysieren einer Webseite:
- * - Während Laden: Grün pulsierende Bubble + URL
+ * - Während Laden: Grün pulsierende Bubble + URL (opacity 0 → 1)
  * - Nach Laden: URL fadet aus, "Fertig" erscheint kurz
  *
  * @example
@@ -58,14 +58,29 @@ export function CrawlerLoadingIndicator({
 
   return (
     <div className="mb-6 max-w-3xl">
+      {/* Custom Keyframes für starkes Pulsieren */}
+      <style jsx>{`
+        @keyframes strongPulse {
+          0%, 100% {
+            opacity: 0.15;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+        .animate-strong-pulse {
+          animation: strongPulse 1.2s ease-in-out infinite;
+        }
+      `}</style>
+
       <div className="py-2">
         {/* Hauptzeile: Bubble + Text */}
         <div className="flex items-center gap-2">
-          {/* Pulsierende grüne Bubble */}
+          {/* Pulsierende grüne Bubble (stark: 0% → 100% opacity) */}
           <span
             className={`
               w-2 h-2 rounded-full bg-green-500 flex-shrink-0
-              ${phase === 'loading' ? 'animate-pulse' : ''}
+              ${phase === 'loading' ? 'animate-strong-pulse' : ''}
             `}
           />
           <span className="text-zinc-700">
