@@ -97,7 +97,8 @@
       "mcp__genkit__lookup_genkit_docs",
       "Bash(claude mcp:*)",
       "mcp__genkit__list_flows",
-      "mcp__genkit__get_trace"
+      "mcp__genkit__get_trace",
+      "Bash(npm run:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
