@@ -1,12 +1,12 @@
 // src/lib/ai/agentic/skills/skill-dna-lookup.ts
 // Skill: Lädt DNA-Kontext aus Firestore
+// WICHTIG: Verwendet Firebase Admin SDK, da Genkit server-side läuft!
 
 import { ai } from '@/lib/ai/genkit-config';
 import { z } from 'genkit';
 import { DnaLookupInputSchema } from '../types';
-import { markenDNAService } from '@/lib/firebase/marken-dna-service';
-import { dnaSyntheseService } from '@/lib/firebase/dna-synthese-service';
-import type { MarkenDNADocument } from '@/types/marken-dna';
+import { adminDb } from '@/lib/firebase/admin-init';
+import type { MarkenDNADocument, MarkenDNADocumentType } from '@/types/marken-dna';
 
 /**
  * skill_dna_lookup
@@ -59,12 +59,39 @@ WICHTIG: Nutze den geladenen Kontext als Leitplanke für deine Arbeit!`,
     }),
   },
   async (input) => {
+    console.log('[skill_dna_lookup] Called with companyId:', input.companyId, 'docType:', input.docType);
+
     try {
+      // Helper: Dokumente aus Firestore laden (Admin SDK)
+      const loadDocuments = async (companyId: string): Promise<MarkenDNADocument[]> => {
+        const collectionRef = adminDb
+          .collection('companies')
+          .doc(companyId)
+          .collection('markenDNA');
+
+        const snapshot = await collectionRef.get();
+        console.log('[skill_dna_lookup] Found', snapshot.docs.length, 'docs for', companyId);
+
+        return snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            type: data.type || docSnap.id as MarkenDNADocumentType,
+            ...data
+          } as MarkenDNADocument;
+        });
+      };
+
       // DNA-Synthese laden
       if (input.docType === 'synthesis') {
-        const synthesis = await dnaSyntheseService.getSynthese(input.companyId);
+        const syntheseRef = adminDb
+          .collection('companies')
+          .doc(input.companyId)
+          .collection('markenDNA')
+          .doc('synthesis');
+        const syntheseSnap = await syntheseRef.get();
 
-        if (!synthesis) {
+        if (!syntheseSnap.exists) {
           return {
             success: true,
             companyId: input.companyId,
@@ -76,13 +103,13 @@ WICHTIG: Nutze den geladenen Kontext als Leitplanke für deine Arbeit!`,
           };
         }
 
+        const syntheseData = syntheseSnap.data();
         return {
           success: true,
           companyId: input.companyId,
           docType: 'synthesis',
           synthesis: {
-            content: synthesis.plainText || synthesis.content,
-            // DNASynthese hat kein status Feld - wenn sie existiert, ist sie 'completed'
+            content: syntheseData?.plainText || syntheseData?.content || '',
             status: 'completed' as const,
           },
         };
@@ -90,7 +117,7 @@ WICHTIG: Nutze den geladenen Kontext als Leitplanke für deine Arbeit!`,
 
       // Alle Dokumente laden
       if (input.docType === 'all' || !input.docType) {
-        const docs = await markenDNAService.getDocuments(input.companyId);
+        const docs = await loadDocuments(input.companyId);
 
         const documentStatus = (['briefing', 'swot', 'audience', 'positioning', 'goals', 'messages'] as const).map(type => {
           const doc = docs.find((d: MarkenDNADocument) => d.type === type);
@@ -111,7 +138,7 @@ WICHTIG: Nutze den geladenen Kontext als Leitplanke für deine Arbeit!`,
       }
 
       // Spezifisches Dokument laden
-      const docs = await markenDNAService.getDocuments(input.companyId);
+      const docs = await loadDocuments(input.companyId);
       const doc = docs.find((d: MarkenDNADocument) => d.type === input.docType);
 
       if (!doc) {
@@ -139,6 +166,7 @@ WICHTIG: Nutze den geladenen Kontext als Leitplanke für deine Arbeit!`,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[skill_dna_lookup] Error:', errorMessage);
 
       return {
         success: false,
