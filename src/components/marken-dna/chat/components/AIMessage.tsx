@@ -22,6 +22,7 @@ import type { ToolCall, TodoItem, ConfirmSummaryItem } from '@/lib/ai/agentic/ty
 interface AIMessageProps {
   content: string;
   toolCalls?: ToolCall[];
+  isFirstResponse?: boolean; // Bei erster Antwort keine Quick Replies zeigen
   onConfirmResult?: (phase: number, content: string) => void;
   onAdjustResult?: (phase: number) => void;
   onSuggestionSelect?: (prompt: string) => void;
@@ -47,6 +48,7 @@ interface AIMessageProps {
 export function AIMessage({
   content,
   toolCalls,
+  isFirstResponse = false,
   onConfirmResult,
   onAdjustResult,
   onSuggestionSelect,
@@ -203,8 +205,8 @@ export function AIMessage({
               }
             }
 
-            // skill_suggestions → SuggestionBubbles
-            if (call.name === 'skill_suggestions') {
+            // skill_suggestions → SuggestionBubbles (nicht bei erster Antwort)
+            if (call.name === 'skill_suggestions' && !isFirstResponse) {
               const args = call.args as { prompts: string[] };
               if (args.prompts && args.prompts.length > 0 && onSuggestionSelect) {
                 return (

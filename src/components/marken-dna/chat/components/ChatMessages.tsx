@@ -146,15 +146,20 @@ export function ChatMessages({
         )}
 
         {/* Messages */}
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           if (message.role === 'user') {
             return <UserMessage key={message.id} content={message.content} />;
           } else {
+            // Prüfe ob es die erste AI-Antwort ist (keine Quick Replies bei erster Antwort)
+            const aiMessagesBeforeThis = messages.slice(0, index).filter(m => m.role === 'assistant').length;
+            const isFirstResponse = aiMessagesBeforeThis === 0;
+
             return (
               <AIMessage
                 key={message.id}
                 content={message.content}
                 toolCalls={message.toolCalls}
+                isFirstResponse={isFirstResponse}
                 onConfirmResult={onConfirmResult}
                 onAdjustResult={onAdjustResult}
                 onSuggestionSelect={onSuggestionSelect}
