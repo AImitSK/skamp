@@ -223,6 +223,7 @@ export function StrategieTabContent({
         projectId,
         companyId,
         companyName,
+        dnaSynthese: dnaSynthese?.plainText,
         dnaContacts: formattedContacts,
         targetGroup,
       },
