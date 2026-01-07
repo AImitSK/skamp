@@ -104,8 +104,8 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-bold text-zinc-900">{pipelinePercent}%</span>
-              <span className="text-base text-zinc-500">{completedSteps}/3</span>
+              <span className="text-2xl font-bold text-zinc-900">{pipelinePercent}%</span>
+              <span className="text-xs text-zinc-500">{completedSteps}/3</span>
             </div>
           </div>
         </div>
@@ -134,8 +134,8 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
-              <span className="text-base text-zinc-500">Tokens</span>
+              <span className="text-xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
+              <span className="text-xs text-zinc-500">Tokens</span>
             </div>
           </div>
         </div>
