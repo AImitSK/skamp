@@ -273,16 +273,26 @@ export const generatePMVorlageFlow = ai.defineFlow(
     outputSchema: PMVorlageOutputSchema,
   },
   async (input) => {
-    // 1. Speaker aus DNA-Kontakten auflösen
-    const speaker = input.dnaContacts.find(
+    // 1. Speaker aus DNA-Kontakten auflösen (mit Fallback)
+    let speaker = input.dnaContacts.find(
       c => c.id === input.faktenMatrix.quote.speakerId
     );
 
+    // Fallback: Wenn keine Kontakte oder Speaker nicht gefunden, nutze speakerId als Platzhalter
     if (!speaker) {
-      throw new Error(
-        `Speaker mit ID "${input.faktenMatrix.quote.speakerId}" nicht in DNA-Kontakten gefunden. ` +
-        `Verfuegbare IDs: ${input.dnaContacts.map(c => c.id).join(', ')}`
+      const speakerId = input.faktenMatrix.quote.speakerId;
+      console.warn(
+        `[PM-Vorlage] Speaker "${speakerId}" nicht in Kontakten gefunden. Verwende Fallback.`
       );
+      // Versuche Name/Position aus speakerId zu extrahieren (Format: "contact_vorname_nachname_position")
+      const parts = speakerId.replace('contact_', '').split('_');
+      const fallbackName = parts.slice(0, -1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Sprecher';
+      const fallbackPosition = parts[parts.length - 1]?.toUpperCase() || 'Geschaeftsfuehrer';
+      speaker = {
+        id: speakerId,
+        name: fallbackName,
+        position: fallbackPosition,
+      };
     }
 
     // 2. Experten-Prompt bauen

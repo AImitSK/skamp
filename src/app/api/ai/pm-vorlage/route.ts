@@ -45,12 +45,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (!body.dnaContacts || !Array.isArray(body.dnaContacts) || body.dnaContacts.length === 0) {
-        return NextResponse.json(
-          { error: 'dnaContacts Array erforderlich (mindestens 1 Kontakt)' },
-          { status: 400 }
-        );
-      }
+      // dnaContacts ist optional - wenn nicht vorhanden, verwenden wir Speaker-Info aus Fakten-Matrix
+      const dnaContacts = body.dnaContacts || [];
 
       // DNA-Synthese laden falls nicht angegeben
       let dnaSynthese = body.dnaSynthese;
@@ -95,7 +91,7 @@ export async function POST(request: NextRequest) {
         language: body.language || 'de',
         dnaSynthese,
         faktenMatrix,
-        dnaContacts: body.dnaContacts,
+        dnaContacts,
         targetGroup: body.targetGroup || 'ZG1',
       };
 
