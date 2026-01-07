@@ -300,7 +300,8 @@ export const generatePMVorlageFlow = ai.defineFlow(
       input.dnaSynthese,
       input.faktenMatrix,
       input.dnaContacts,
-      input.targetGroup
+      input.targetGroup,
+      input.companyName
     );
 
     // 3. Vollstaendigen System-Prompt zusammenbauen

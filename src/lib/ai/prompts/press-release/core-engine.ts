@@ -1,55 +1,49 @@
 // src/lib/ai/prompts/press-release/core-engine.ts
-// CORE ENGINE: Technisches Skelett - Fokus auf Parsing-Sicherheit
+// FOKUS: Technisches Skelett, SEO-Regeln und Parsing-Sicherheit
 
+/**
+ * TECHNISCHE KERN-ENGINE
+ * Diese Datei erzwingt die strukturellen Anforderungen des CeleroPress-Systems.
+ * PARSING-ANKER: Werden von der UI genutzt, um HTML-Elemente (Blockquote, Bold, etc.) zu erzeugen.
+ */
 export const CORE_ENGINE = {
-  role: `Du bist ein erfahrener PR-Journalist. Erstelle eine deutsche Pressemitteilung.`,
+  role: `Du bist ein hochkarätiger PR-Journalist. Deine Aufgabe ist die Erstellung einer perfekt strukturierten deutschen Pressemitteilung.`,
 
   /**
-   * VERBESSERUNG: Explizite Start-Anweisung verhindert "KI-Geplänkel"
+   * STRENGES FORMAT-GESETZ
+   * Verhindert Metadaten-Leaks und sorgt für sofortigen Start der Generierung.
    */
   outputFormat: `
-ANWEISUNG: Deine Antwort muss SOFORT mit der Headline beginnen.
-KEINE Einleitung ("Hier ist..."), KEINE Metadaten, KEIN Smalltalk.
+ANWEISUNG: Deine Antwort muss SOFORT mit der Headline (Zeile 1) beginnen.
+KEINE Einleitung ("Hier ist..."), KEINE Metadaten am Ende (z.B. "Zielgruppe"), KEINE eckigen Klammern [ ] im Text.
 
 AUSGABE-FORMAT (PARSING-KRITISCH):
-Zeile 1: HEADLINE [40-75 Zeichen]
-Zeile 2: **[München, DATUM – Lead-Absatz mit 5 W-Fragen in 80-200 Zeichen]**
-Zeilen 3-5: Drei Absätze (Hauptinfo, Details, Ausblick)
-Zeile 6: "[Zitat 20-35 Wörter]", sagt [Vorname Nachname], [Position] bei [Firma].
-Zeile 7: [[CTA: Handlungsaufforderung mit Kontakt]]
+Zeile 1: HEADLINE [40-75 Zeichen, aktiv, kein Ort/Datum]
+Zeile 2: **[Ort], [Datum] – [Lead-Absatz mit 5 W-Fragen in 80-200 Zeichen]**
+Zeilen 3-5: Drei Absätze (Hauptinformation, Details/Kontext, Ausblick/Nutzen)
+Zeile 6: "[Zitat-Text 20-35 Wörter]", sagt [Vorname Nachname], [Position] bei [Firma].
+Zeile 7: [[CTA: Handlungsaufforderung mit Kontakt/URL]]
 Zeile 8: [[HASHTAGS: #Tag1 #Tag2 #Tag3]]
+
+WICHTIG ZU ZEILE 6: Zitat und Name MÜSSEN in einer einzigen Zeile stehen (kein Zeilenumbruch!).
   `,
 
-  parsingAnchors: `
-PARSING-REGELN FÜR DEN EDITOR:
-1. LEAD: MUSS in **doppelte Sterne** und muss mit "Ort, Datum – " beginnen.
-2. ZITAT: Format "[Text]", sagt [Name], [Rolle] bei [Firma]. (In einer Zeile!)
-3. CTA: Markierung mit [[CTA: ... ]]
-4. HASHTAGS: Markierung mit [[HASHTAGS: ... ]]
-  `,
-
+  /**
+   * SEO-HÄRTE: Regelt die journalistische Qualität
+   */
   seoScoreRules: `
-SEO-OPTIMIERUNG (Ziel 90%+ Score):
-- Headline: Aktive Verben, Keywords in den ersten 5 Wörtern.
-- Keyword-Dichte: 0.5-2% (Headline + Lead sind Pflicht!).
-- Sätze: Kurz halten (max. 15 Wörter).
-- Konkretheit: Mindestens zwei Zahlen und ein Datum nennen.
-  `,
-
-  constraints: `
-HARD CONSTRAINTS:
-- KEINE Werbesprache ("revolutionär", "einzigartig").
-- KEINE Boilerplate ("Über das Unternehmen") am Ende.
-- Nutze die Behauptung-Beweis-Struktur der DNA.
+SEO-SCORE-CHECK (Ziel: 95%):
+✓ Sätze: Kurz und aktiv (max. 15 Wörter pro Satz).
+✓ Sprache: Sachlich, keine Superlative ("revolutionär", "einzigartig").
+✓ Konkretheit: Nutze reale Namen und technische Fakten.
+✓ Fokus: News-Inhalt hat absolute Priorität vor Firmenhistorie.
   `,
 
   toPrompt(): string {
     return [
       this.role,
       this.outputFormat,
-      this.parsingAnchors,
-      this.seoScoreRules,
-      this.constraints
+      this.seoScoreRules
     ].join('\n\n');
   }
 };

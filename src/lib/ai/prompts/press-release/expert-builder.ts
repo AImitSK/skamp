@@ -1,5 +1,5 @@
 // src/lib/ai/prompts/press-release/expert-builder.ts
-// EXPERT BUILDER: Fokus auf Lead-Schutz und Zitat-Echtheit
+// FOKUS: Inhaltliche Logik, Story-Struktur und Identitäts-Sicherung
 
 import {
   extractTonalityOverride,
@@ -11,7 +11,6 @@ export interface DNAContact {
   id: string;
   name: string;
   position: string;
-  expertise?: string;
 }
 
 export interface FaktenMatrix {
@@ -21,20 +20,21 @@ export interface FaktenMatrix {
 }
 
 /**
- * VERBESSERUNG: Einführung der "Inhalts-Hierarchie"
- * News (Ebene 3) führt den Text an, DNA (Ebene 1) gibt den Sound.
+ * STRATEGISCHES EXPERTEN-GEHIRN
+ * Implementiert die inhaltliche Hierarchie: Fakten-Matrix > DNA-Stil.
+ * Eliminiert PR-Floskeln durch eine zwingende Story-Abfolge.
  */
 export function buildExpertPrompt(
   dnaSynthese: string,
   faktenMatrix: FaktenMatrix,
   dnaContacts: DNAContact[],
-  targetGroup?: 'ZG1' | 'ZG2' | 'ZG3'
+  targetGroup?: 'ZG1' | 'ZG2' | 'ZG3',
+  companyName: string = "{{companyName}}"
 ): string {
   const tonality = extractTonalityOverride(dnaSynthese);
   const blacklist = extractBlacklist(dnaSynthese);
   const keyMessages = extractKeyMessagesForTargetGroup(dnaSynthese, targetGroup);
 
-  // Zitatgeber-Mapping
   const speaker = dnaContacts.find(c => c.id === faktenMatrix.quote.speakerId) || {
     name: "Sprecher",
     position: "Geschäftsführung"
@@ -42,55 +42,45 @@ export function buildExpertPrompt(
 
   return `
 ═══════════════════════════════════════════════════════════════════
-MISSION: NEWS-FOKUS (Priorität 1)
+STRIKTE INHALTS-KONTROLLE (ANTI-HALLUZINATION)
 ═══════════════════════════════════════════════════════════════════
-Deine Hauptaufgabe ist die Meldung über das AKTUELLE EREIGNIS.
-Allgemeine Informationen aus der MARKEN-DNA dienen nur als Hintergrund.
+Nutze NUR Fakten aus der MATRIX und den Sound aus der DNA.
+- Erfinde KEINE strategischen Pläne (z.B. "Expansion in andere Länder").
+- Erfinde KEINE falschen Hoffnungen oder PR-Floskeln.
+- Schreibe FAKTISCH und PRÄZISE.
 
 ═══════════════════════════════════════════════════════════════════
-FAKTEN FÜR DIESE PRESSEMELDUNG
+STRUKTUR-GESETZ (Folge diesem Ablauf)
 ═══════════════════════════════════════════════════════════════════
-
-**Ereignis:** ${faktenMatrix.hook.event}
-**Ort:** ${faktenMatrix.hook.location}
-**Datum:** ${faktenMatrix.hook.date}
-**Das Delta:** ${faktenMatrix.details.delta}
-**Beweis-Daten:** ${faktenMatrix.details.evidence}
-
-═══════════════════════════════════════════════════════════════════
-ZITATGEBER (FEST - NICHT ÄNDERN!)
-═══════════════════════════════════════════════════════════════════
-
-Name: ${speaker.name}
-Position: ${speaker.position}
-Kern-Aussage für Zitat: ${faktenMatrix.quote.rawStatement}
-
-${tonality ? `
-═══════════════════════════════════════════════════════════════════
-TONALITÄT (aus DNA)
-═══════════════════════════════════════════════════════════════════
-${tonality}
-` : ''}
-
-${keyMessages ? `
-═══════════════════════════════════════════════════════════════════
-KERNBOTSCHAFTEN FÜR ${targetGroup || 'ALLE'}
-═══════════════════════════════════════════════════════════════════
-${keyMessages}
-` : ''}
-
-${blacklist ? `
-═══════════════════════════════════════════════════════════════════
-🚫 BLACKLIST (NIEMALS VERWENDEN)
-═══════════════════════════════════════════════════════════════════
-${blacklist}
-` : ''}
+1. LEAD (Zeile 2): Das aktuelle Ereignis (Das Delta). MUSS in **Sterne**.
+2. KONTEXT: Bedeutung der Nachricht und Vorstellung der handelnden Experten.
+3. MEHRWERT: Technischer Nutzen und konkrete Vorteile (Engineering-Fokus).
+4. KOMMUNIKATION: Umsetzung vor Ort (Sprache, Zeit, Erreichbarkeit).
+5. ZITAT (Zeile 6): Strategische Einordnung durch den Experten.
+6. ABSCHLUSS: Der Anspruch der Marke ${companyName}.
 
 ═══════════════════════════════════════════════════════════════════
-PRÄZISIONSHINWEIS
+FAKTEN-MATRIX (Inhaltliche Wahrheit)
 ═══════════════════════════════════════════════════════════════════
-Schreibe den Lead-Absatz (Zeile 2) EXAKT über das EREIGNIS und das DELTA.
-Wiederhole keine allgemeinen Firmenfloskeln im Lead.
+- EREIGNIS: ${faktenMatrix.hook.event}
+- KONTEXT: ${faktenMatrix.details.delta}
+- BEWEISE: ${faktenMatrix.details.evidence}
+
+═══════════════════════════════════════════════════════════════════
+ZITAT-VORGABE (Echte Identität)
+═══════════════════════════════════════════════════════════════════
+SPRECHER: ${speaker.name}, ${speaker.position}
+KERNBOTSCHAFT: ${faktenMatrix.quote.rawStatement}
+
+REGEL: Formuliere ein lebendiges Zitat. Nutze KEINE eckigen Klammern [ ].
+Format: "Text", sagt ${speaker.name}, ${speaker.position} bei ${companyName}.
+
+═══════════════════════════════════════════════════════════════════
+DNA-STIL & TON (Leitplanken)
+═══════════════════════════════════════════════════════════════════
+SOUND: ${tonality || 'Sachlich-technisch'}
+BLACKLIST (VERBOTEN): ${blacklist || 'Keine'}
+NUTZE FOLGENDEN KONTEXT: ${keyMessages || ''}
 `;
 }
 
