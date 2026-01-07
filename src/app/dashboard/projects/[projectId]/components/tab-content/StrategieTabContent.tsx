@@ -8,6 +8,7 @@ import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft, useCreateKernbotschaft, useUpdateKernbotschaft, useDeleteKernbotschaft } from '@/lib/hooks/useKernbotschaft';
 import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory, useApplyPMVorlageToEditor, faktenMatrixKeys } from '@/lib/hooks/usePMVorlage';
+import { useContacts } from '@/lib/hooks/useCRMData';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
 import { KernbotschaftSection } from '@/components/projects/strategy/KernbotschaftSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
@@ -44,8 +45,19 @@ export function StrategieTabContent({
   const { data: kernbotschaft } = useKernbotschaft(projectId);
   const { data: pmVorlage } = usePMVorlage(projectId);
   const { data: faktenMatrix } = useFaktenMatrix(projectId);
-  // TODO: DNA-Kontakte aus Marken-DNA laden (Phase 7 Integration)
-  const dnaContacts: Array<{ id: string; name: string; position?: string; role?: string; expertise?: string; email?: string; phone?: string }> = [];
+
+  // DNA-Kontakte aus CRM laden und für Company filtern
+  const { data: allContacts } = useContacts(organizationId);
+  const dnaContacts = (allContacts || [])
+    .filter(c => c.companyId === companyId)
+    .map(c => ({
+      id: c.id,
+      name: c.displayName || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unbekannt',
+      position: c.position || '',
+      expertise: c.department || '',
+      email: c.emails?.find(e => e.isPrimary)?.email || c.emails?.[0]?.email || '',
+      phone: c.phones?.find(p => p.isPrimary)?.number || c.phones?.[0]?.number || '',
+    }));
 
   // Synthese Mutations
   const { mutate: synthesize, isPending: isSynthesizing } = useSynthesizeDNA();
