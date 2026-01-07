@@ -9,6 +9,7 @@ import {
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -189,7 +190,7 @@ export function KernbotschaftSection({
                 </>
               ) : (
                 <>
-                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                  <SparklesIcon className="h-4 w-4 mr-2" />
                   Generieren
                 </>
               )}

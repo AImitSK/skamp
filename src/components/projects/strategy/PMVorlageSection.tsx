@@ -213,7 +213,8 @@ export function PMVorlageSection({
               <Button
                 onClick={handleGenerate}
                 disabled={isLoading}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white text-sm"
+                className="text-white text-sm"
+                style={{ backgroundColor: '#0891b2' }}
               >
                 {isLoading ? (
                   <>
@@ -347,7 +348,8 @@ export function PMVorlageSection({
               {/* Toggle-Button (ganz rechts, Vollton mit weißem Pfeil) */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="h-9 w-9 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-all"
+                className="h-9 w-9 flex items-center justify-center rounded-lg transition-all"
+                style={{ backgroundColor: '#0891b2' }}
               >
                 {isExpanded ? (
                   <ChevronUpIcon className="h-4 w-4 text-white" />
