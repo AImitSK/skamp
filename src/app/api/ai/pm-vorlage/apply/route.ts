@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
       // Ansatz 1: Suche Campaign mit projectId Field
       const campaignsSnapshot = await adminDb
-        .collection('campaigns')
+        .collection('pr_campaigns')
         .where('projectId', '==', projectId)
         .where('organizationId', '==', organizationId)
         .limit(1)
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         updateData.title = pmVorlage.headline;
       }
 
-      await adminDb.collection('campaigns').doc(campaignId).update(updateData);
+      await adminDb.collection('pr_campaigns').doc(campaignId).update(updateData);
 
       console.log(`[PM-Vorlage Apply] Content übertragen in Campaign ${campaignId}`);
 
