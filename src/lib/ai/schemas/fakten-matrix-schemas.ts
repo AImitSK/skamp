@@ -58,8 +58,8 @@ export const FaktenMatrixQuoteSchema = z.object({
   rawStatement: z
     .string()
     .min(20, 'Kernaussage muss mindestens 20 Zeichen haben')
-    .max(500, 'Kernaussage darf maximal 500 Zeichen haben')
-    .describe('Die im Chat erarbeitete Kernaussage'),
+    .max(1500, 'Kernaussage darf maximal 1500 Zeichen haben')
+    .describe('Die im Chat erarbeitete Kernaussage (kann auch längere O-Töne enthalten)'),
 });
 
 /**
