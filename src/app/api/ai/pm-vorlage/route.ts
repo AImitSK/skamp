@@ -9,8 +9,8 @@ import {
   type GeneratePMVorlageInput,
 } from '@/lib/ai/flows/generate-pm-vorlage';
 import { pmVorlageService } from '@/lib/firebase/pm-vorlage-service';
-import { faktenMatrixService } from '@/lib/firebase/fakten-matrix-service';
-import { dnaSyntheseService } from '@/lib/firebase/dna-synthese-service';
+import { getFaktenMatrix } from '@/lib/firebase-admin/fakten-matrix-admin-service';
+import { adminDb } from '@/lib/firebase/admin-init';
 
 /**
  * POST /api/ai/pm-vorlage
@@ -48,39 +48,31 @@ export async function POST(request: NextRequest) {
       // dnaContacts ist optional - wenn nicht vorhanden, verwenden wir Speaker-Info aus Fakten-Matrix
       const dnaContacts = body.dnaContacts || [];
 
-      // DNA-Synthese laden falls nicht angegeben
-      let dnaSynthese = body.dnaSynthese;
-      let dnaHash = '';
+      // DNA-Synthese muss vom Frontend mitgesendet werden
+      const dnaSynthese = body.dnaSynthese;
       if (!dnaSynthese) {
-        const dnaData = await dnaSyntheseService.getSynthese(body.companyId);
-        if (!dnaData || !dnaData.plainText) {
-          return NextResponse.json(
-            { error: 'Keine DNA-Synthese gefunden. Bitte zuerst Marken-DNA erstellen.' },
-            { status: 400 }
-          );
-        }
-        dnaSynthese = dnaData.plainText;
-        // Hash berechnen (einfacher String-Hash)
-        dnaHash = hashString(dnaSynthese);
-      } else {
-        dnaHash = hashString(dnaSynthese);
+        return NextResponse.json(
+          { error: 'DNA-Synthese fehlt im Request. Bitte Seite neu laden.' },
+          { status: 400 }
+        );
       }
+      const dnaHash = hashString(dnaSynthese);
 
-      // Fakten-Matrix laden falls nicht angegeben
+      // Fakten-Matrix laden falls nicht angegeben (Admin SDK für Server-Side)
       let faktenMatrix = body.faktenMatrix;
       let faktenMatrixHash = '';
       if (!faktenMatrix) {
-        const fmData = await faktenMatrixService.getWithHash(body.projectId);
+        const fmData = await getFaktenMatrix(body.projectId);
         if (!fmData) {
           return NextResponse.json(
             { error: 'Keine Fakten-Matrix gefunden. Bitte zuerst Project-Wizard durchlaufen.' },
             { status: 400 }
           );
         }
-        faktenMatrix = fmData.data;
-        faktenMatrixHash = fmData.hash;
+        faktenMatrix = fmData;
+        faktenMatrixHash = hashString(JSON.stringify(faktenMatrix));
       } else {
-        faktenMatrixHash = faktenMatrixService.calculateHash(faktenMatrix);
+        faktenMatrixHash = hashString(JSON.stringify(faktenMatrix));
       }
 
       // Flow-Input vorbereiten
