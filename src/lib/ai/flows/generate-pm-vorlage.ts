@@ -198,8 +198,7 @@ function buildHtmlContent(
 ): string {
   const parts: string[] = [];
 
-  // Headline
-  parts.push(`<h1>${escapeHtml(headline)}</h1>`);
+  // KEINE Headline im Content - die geht ins title-Feld der Campaign
 
   // Lead mit Strong-Tag
   parts.push(`<p><strong>${escapeHtml(leadParagraph)}</strong></p>`);
