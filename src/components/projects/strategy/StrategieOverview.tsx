@@ -79,19 +79,19 @@ export function StrategieOverview({
     <div className="bg-white rounded-lg border border-zinc-200 p-6 mb-6">
       <Text className="text-lg font-semibold text-zinc-900 mb-4">Strategie-Übersicht</Text>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto_1fr] gap-6 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-[auto_auto_auto_1fr] gap-8 items-center">
         {/* Ring 1: Pipeline */}
         <div className="flex flex-col items-center">
-          <Text className="text-sm font-medium text-zinc-600 mb-2">Pipeline</Text>
+          <Text className="text-sm font-medium text-zinc-600 mb-3">Pipeline</Text>
           <div className="relative">
-            <ResponsiveContainer width={160} height={160}>
+            <ResponsiveContainer width={200} height={200}>
               <PieChart>
                 <Pie
                   data={pipelineData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
+                  innerRadius={65}
+                  outerRadius={90}
                   paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
@@ -104,24 +104,24 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-zinc-900">{pipelinePercent}%</span>
-              <span className="text-sm text-zinc-500">{completedSteps}/3</span>
+              <span className="text-4xl font-bold text-zinc-900">{pipelinePercent}%</span>
+              <span className="text-base text-zinc-500">{completedSteps}/3</span>
             </div>
           </div>
         </div>
 
         {/* Ring 2: Token-Verteilung */}
         <div className="flex flex-col items-center">
-          <Text className="text-sm font-medium text-zinc-600 mb-2">Token-Verteilung</Text>
+          <Text className="text-sm font-medium text-zinc-600 mb-3">Token-Verteilung</Text>
           <div className="relative">
-            <ResponsiveContainer width={160} height={160}>
+            <ResponsiveContainer width={200} height={200}>
               <PieChart>
                 <Pie
                   data={tokenData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
+                  innerRadius={65}
+                  outerRadius={90}
                   paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
@@ -134,14 +134,14 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
-              <span className="text-sm text-zinc-500">Tokens</span>
+              <span className="text-3xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
+              <span className="text-base text-zinc-500">Tokens</span>
             </div>
           </div>
         </div>
 
         {/* Gemeinsame Legende (nur Farben + Namen) */}
-        <div className="flex flex-col justify-center space-y-2">
+        <div className="flex flex-col justify-center space-y-3 mr-8">
           {legendItems.map((item, idx) => (
             <div key={idx} className="flex items-center gap-2">
               <div
