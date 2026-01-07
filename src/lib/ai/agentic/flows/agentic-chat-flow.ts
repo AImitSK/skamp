@@ -5,9 +5,9 @@ import { ai, gemini25FlashModel } from '@/lib/ai/genkit-config';
 import { z } from 'genkit';
 import { getSkillsForAgent } from '../skills';
 import { loadSpecialistPrompt } from '../prompts/prompt-loader';
-import { faktenMatrixService } from '@/lib/firebase/fakten-matrix-service';
+import { saveFaktenMatrix } from '@/lib/firebase-admin/fakten-matrix-admin-service';
 import type { SpecialistType, ToolCall, ChatMessage } from '../types';
-import type { FaktenMatrix } from '@/types/fakten-matrix';
+import type { FaktenMatrixCreateData } from '@/types/fakten-matrix';
 
 // ============================================================================
 // SCHEMA DEFINITIONS
@@ -241,8 +241,8 @@ export const agenticChatFlow = ai.defineFlow(
               console.log('[AgenticFlow] Fakten-Matrix condition matched! projectId:', input.projectId);
               if (input.projectId) {
                 try {
-                  const faktenMatrix = result.faktenMatrix as FaktenMatrix;
-                  await faktenMatrixService.save(input.projectId, faktenMatrix);
+                  const faktenMatrix = result.faktenMatrix as FaktenMatrixCreateData;
+                  await saveFaktenMatrix(input.projectId, faktenMatrix);
                   console.log('[AgenticFlow] Fakten-Matrix saved to Firestore for project:', input.projectId);
                   result = {
                     ...result,
@@ -370,8 +370,8 @@ export const agenticChatFlow = ai.defineFlow(
               if (toolName === 'skill_save_fakten_matrix' && result?.success && result?.faktenMatrix) {
                 if (input.projectId) {
                   try {
-                    const faktenMatrix = result.faktenMatrix as FaktenMatrix;
-                    await faktenMatrixService.save(input.projectId, faktenMatrix);
+                    const faktenMatrix = result.faktenMatrix as FaktenMatrixCreateData;
+                    await saveFaktenMatrix(input.projectId, faktenMatrix);
                     console.log('[AgenticFlow] Follow-up: Fakten-Matrix saved to Firestore for project:', input.projectId);
                     result = {
                       ...result,
