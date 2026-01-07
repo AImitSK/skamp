@@ -102,6 +102,7 @@ export const agenticChatFlow = ai.defineFlow(
     // 2. Tools für diesen Agenten laden
     const tools = getSkillsForAgent(input.specialistType);
     console.log('[AgenticFlow] Loaded skills for', input.specialistType, '- count:', tools?.length);
+    console.log('[AgenticFlow] Input projectId:', input.projectId || 'NOT PROVIDED');
 
     // 3. Nachrichten formatieren - WICHTIG: Tool-Calls müssen in der History sein!
     // Genkit akzeptiert keine leeren Text-Parts: "Unsupported Part type {"text":""}"
@@ -235,7 +236,9 @@ export const agenticChatFlow = ai.defineFlow(
             console.log('[AgenticFlow] Tool result:', result);
 
             // SPECIAL HANDLING: Fakten-Matrix in Firestore speichern
+            console.log('[AgenticFlow] Checking special handling for:', toolName, 'projectId:', input.projectId);
             if (toolName === 'skill_save_fakten_matrix' && result?.success && result?.faktenMatrix) {
+              console.log('[AgenticFlow] Fakten-Matrix condition matched! projectId:', input.projectId);
               if (input.projectId) {
                 try {
                   const faktenMatrix = result.faktenMatrix as FaktenMatrix;
