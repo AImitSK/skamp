@@ -23,7 +23,7 @@ import {
   CompanyMarkenDNAStatus,
   MARKEN_DNA_DOCUMENTS,
 } from '@/types/marken-dna';
-import { ContactEnhanced } from '@/types/crm-enhanced';
+import { ContactEnhanced, CompanyEnhanced } from '@/types/crm-enhanced';
 import crypto from 'crypto';
 
 // Positionen die als "Sprecher" gelten (für DNA Synthese)
@@ -396,6 +396,13 @@ class MarkenDNAService {
         }
       });
 
+      // Firmenstammdaten laden (unabhängig von organizationId)
+      const company = await this.getCompanyStammdaten(companyId);
+      if (company) {
+        const stammdatenSection = this.formatCompanyStammdatenForAI(company);
+        parts.push(stammdatenSection);
+      }
+
       // Ansprechpartner laden wenn organizationId vorhanden
       if (organizationId) {
         const spokespersons = await this.getSpokespersonsForCompany(companyId, organizationId);
@@ -498,6 +505,98 @@ class MarkenDNAService {
     });
 
     lines.push('Hinweis: Die KI soll aus Position und Abteilung ableiten, zu welchen Themen diese Person zitiert werden kann.');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Laedt die Firmenstammdaten einer Company
+   */
+  private async getCompanyStammdaten(companyId: string): Promise<CompanyEnhanced | null> {
+    try {
+      const companyRef = doc(db, 'companies_enhanced', companyId);
+      const companySnap = await getDoc(companyRef);
+
+      if (companySnap.exists()) {
+        return { id: companySnap.id, ...companySnap.data() } as CompanyEnhanced;
+      }
+      return null;
+    } catch (error) {
+      console.error('[MarkenDNA] Fehler beim Laden der Firmenstammdaten:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Formatiert Firmenstammdaten als Plain-Text fuer KI
+   * Analog zu formatSpokespersonsForAI
+   */
+  private formatCompanyStammdatenForAI(company: CompanyEnhanced): string {
+    const lines: string[] = ['# Firmenstammdaten\n'];
+
+    // Firmenname (mit Rechtsform)
+    const officialName = company.officialName || company.name;
+    const legalForm = company.legalForm || '';
+    const fullName = legalForm ? `${officialName} ${legalForm}` : officialName;
+    lines.push(`**Offizieller Firmenname:** ${fullName}`);
+
+    if (company.tradingName && company.tradingName !== company.name) {
+      lines.push(`**Handelsname:** ${company.tradingName}`);
+    }
+
+    // Adresse
+    if (company.mainAddress) {
+      const addr = company.mainAddress;
+      const addressParts: string[] = [];
+
+      if (addr.street) addressParts.push(addr.street);
+      if (addr.postalCode || addr.city) {
+        addressParts.push(`${addr.postalCode || ''} ${addr.city || ''}`.trim());
+      }
+      if (addr.country) addressParts.push(addr.country);
+
+      if (addressParts.length > 0) {
+        lines.push(`**Adresse:** ${addressParts.join(', ')}`);
+      }
+    }
+
+    // Website
+    if (company.website) {
+      lines.push(`**Website:** ${company.website}`);
+    }
+
+    // Presse-E-Mail (oder allgemeine E-Mail)
+    const pressEmail = company.emails?.find(e => e.type === 'press')?.email
+      || company.emails?.find(e => e.isPrimary)?.email
+      || company.emails?.[0]?.email;
+    if (pressEmail) {
+      lines.push(`**Presse-Kontakt E-Mail:** ${pressEmail}`);
+    }
+
+    // Telefon
+    const primaryPhone = company.phones?.find(p => p.isPrimary)?.number
+      || company.phones?.[0]?.number;
+    if (primaryPhone) {
+      lines.push(`**Telefon:** ${primaryPhone}`);
+    }
+
+    // Social Media
+    if (company.socialMedia) {
+      const socialLinks: string[] = [];
+      if (company.socialMedia.linkedin) socialLinks.push(`LinkedIn: ${company.socialMedia.linkedin}`);
+      if (company.socialMedia.twitter) socialLinks.push(`Twitter/X: ${company.socialMedia.twitter}`);
+      if (company.socialMedia.instagram) socialLinks.push(`Instagram: ${company.socialMedia.instagram}`);
+      if (company.socialMedia.facebook) socialLinks.push(`Facebook: ${company.socialMedia.facebook}`);
+      if (company.socialMedia.youtube) socialLinks.push(`YouTube: ${company.socialMedia.youtube}`);
+
+      if (socialLinks.length > 0) {
+        lines.push(`**Social Media:**`);
+        socialLinks.forEach(link => lines.push(`  - ${link}`));
+      }
+    }
+
+    lines.push('');
+    lines.push('Hinweis: Diese Firmenstammdaten MÜSSEN exakt so in generierten Texten verwendet werden (Schreibweise, Adresse, URLs).');
 
     return lines.join('\n');
   }

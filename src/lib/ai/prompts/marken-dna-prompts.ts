@@ -464,6 +464,16 @@ Erstelle ein "technisches Brand-Manual" für nachfolgende KI-Assistenten. Die Sy
 - Gründung & Größe: [Jahr], [X Mitarbeiter], [Standort(e)]
 - Kernprodukte: [Produkt 1], [Produkt 2], [Produkt 3]
 
+**📍 FIRMENSTAMMDATEN (EXAKT ÜBERNEHMEN):**
+Diese Daten stammen aus dem CRM und MÜSSEN exakt so in allen generierten Texten verwendet werden:
+- Offizieller Name: [Exakte Schreibweise inkl. Rechtsform, z.B. "Mustermann GmbH"]
+- Adresse: [Straße, PLZ Ort, Land]
+- Website: [Exakte URL]
+- Presse-Kontakt: [E-Mail und/oder Telefon für Presseanfragen]
+- Social Media: [Verfügbare Kanäle mit URLs]
+
+WICHTIG: Diese Stammdaten niemals halluzinieren oder abändern!
+
 **STRATEGISCHE POSITION:**
 - USP: [Behauptung] → Beweis: [Fakt/Zahl/Zertifikat der das belegt]
 - Soll-Image: "[Der EINE Satz, den Branchenexperten über uns sagen sollen]"
@@ -530,8 +540,9 @@ Ansprechpartner:
 4. **TONALITÄTS-OVERRIDE** muss so präzise sein, dass es als Leitplanke für alle KI-Texte dient
 5. **BLACKLIST** muss branchenspezifische Klischees enthalten, die der Positionierung schaden
 6. **ANSPRECHPARTNER:** NUR real existierende Personen aus den Eingabedaten verwenden. NIEMALS Personen erfinden! Wenn weniger als 3 Ansprechpartner vorhanden sind, verteile die Expertisen nur auf die real existierenden Personen. Bei 0 Ansprechpartnern: Sektion weglassen.
-7. Zielgröße: 600-800 Tokens. Vollständigkeit vor Kürze!
-8. Ergebnis muss direkt als System-Prompt-Kontext verwendbar sein`,
+7. **FIRMENSTAMMDATEN:** Übernimm exakt die Daten aus der Sektion "Firmenstammdaten" der Eingabe (Name, Adresse, Website, Kontakt). NIEMALS erfinden oder abändern!
+8. Zielgröße: 600-800 Tokens. Vollständigkeit vor Kürze!
+9. Ergebnis muss direkt als System-Prompt-Kontext verwendbar sein`,
 
   en: `You are a strategy analyst and prompt engineer. Your task is to transform the 6 brand DNA documents and contact persons into a highly efficient, AI-optimized short form (600-800 tokens).
 
@@ -547,6 +558,16 @@ Create a "technical brand manual" for downstream AI assistants. The synthesis se
 - Activity: [What exactly is sold/provided?] → Proof: [Numbers, references]
 - Founded & Size: [Year], [X employees], [Location(s)]
 - Core Products: [Product 1], [Product 2], [Product 3]
+
+**📍 COMPANY MASTER DATA (USE EXACTLY AS PROVIDED):**
+This data comes from the CRM and MUST be used exactly as provided in all generated texts:
+- Official Name: [Exact spelling incl. legal form, e.g. "Mustermann GmbH"]
+- Address: [Street, Postal Code City, Country]
+- Website: [Exact URL]
+- Press Contact: [Email and/or phone for press inquiries]
+- Social Media: [Available channels with URLs]
+
+IMPORTANT: Never hallucinate or modify this master data!
 
 **STRATEGIC POSITION:**
 - USP: [Claim] → Proof: [Fact/Number/Certificate that proves it]
@@ -614,8 +635,9 @@ Spokespersons:
 4. **TONALITY OVERRIDE** must be precise enough to serve as guardrails for all AI texts
 5. **BLACKLIST** must contain industry-specific clichés that harm positioning
 6. **SPOKESPERSONS:** ONLY use real persons from input data. NEVER invent persons! If fewer than 3 spokespersons exist, distribute expertises only among actually existing persons. If 0 spokespersons: omit section.
-7. Target size: 600-800 tokens. Completeness over brevity!
-8. Result must be directly usable as system prompt context`,
+7. **COMPANY MASTER DATA:** Copy exactly the data from the "Firmenstammdaten" section of input (name, address, website, contact). NEVER invent or modify!
+8. Target size: 600-800 tokens. Completeness over brevity!
+9. Result must be directly usable as system prompt context`,
 };
 
 // ============================================================================
