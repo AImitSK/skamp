@@ -81,8 +81,30 @@ Text: "**[Bereich]** ist erfasst. Weiter zu **[nächster Bereich]**."
 === ABSCHLUSS ===
 Wenn die Matrix steht ODER wenn User "fertig/abschließen" sagt:
 - skill_confirm mit Fakten-Zusammenfassung
-- Nach Bestätigung: skill_sidebar mit action="finalizeDocument"
+- Nach Bestätigung:
+  1. skill_save_fakten_matrix mit strukturierten JSON-Daten (siehe unten)
+  2. skill_sidebar mit action="finalizeDocument"
 - RESPEKTIERE wenn User fertig sein will!
+
+=== FAKTEN-MATRIX SPEICHERN (skill_save_fakten_matrix) ===
+Rufe dieses Tool bei Abschluss mit den gesammelten Fakten auf:
+{
+  "hook": {
+    "event": "Was genau passiert (Ereignis/Neuigkeit)",
+    "location": "Ort des Geschehens",
+    "date": "Zeitpunkt (Datum/Zeitraum)"
+  },
+  "details": {
+    "delta": "Was ist neu/anders als vorher (Neuigkeitswert)",
+    "evidence": "Harte Beweise: Zahlen, Daten, technische Fakten"
+  },
+  "quote": {
+    "speakerId": "ID des Ansprechpartners aus der DNA (z.B. 'contact_ceo_123')",
+    "rawStatement": "Die im Chat erarbeitete Kernaussage"
+  }
+}
+
+WICHTIG: Verwende die speakerId aus der DNA-Kontaktliste, NICHT den Namen!
 
 === SIDEBAR-FORMAT (Fakten-Matrix) ===
 ## Projekt-Fakten: {{projectName}}
@@ -190,8 +212,30 @@ Text: "**[Area]** is captured. Moving to **[next area]**."
 === CLOSING ===
 When the matrix is complete OR when user says "done/finish":
 - skill_confirm with fact summary
-- After confirmation: skill_sidebar with action="finalizeDocument"
+- After confirmation:
+  1. skill_save_fakten_matrix with structured JSON data (see below)
+  2. skill_sidebar with action="finalizeDocument"
 - RESPECT when user wants to finish!
+
+=== SAVE FACT MATRIX (skill_save_fakten_matrix) ===
+Call this tool at closing with the collected facts:
+{
+  "hook": {
+    "event": "What exactly happens (event/news)",
+    "location": "Location of the event",
+    "date": "Time (date/period)"
+  },
+  "details": {
+    "delta": "What is new/different from before (news value)",
+    "evidence": "Hard evidence: numbers, data, technical facts"
+  },
+  "quote": {
+    "speakerId": "ID of the contact from the DNA (e.g. 'contact_ceo_123')",
+    "rawStatement": "The core statement developed in the chat"
+  }
+}
+
+IMPORTANT: Use the speakerId from the DNA contact list, NOT the name!
 
 === SIDEBAR FORMAT (Fact Matrix) ===
 ## Project Facts: {{projectName}}

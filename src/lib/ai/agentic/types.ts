@@ -99,7 +99,8 @@ export type SkillName =
   | 'skill_confirm'
   | 'skill_sidebar'
   | 'skill_url_crawler'
-  | 'skill_dna_lookup';
+  | 'skill_dna_lookup'
+  | 'skill_save_fakten_matrix';
 
 export interface ToolCall {
   name: SkillName;
@@ -138,7 +139,7 @@ export const AGENT_SKILLS: Record<SpecialistType, SkillName[]> = {
   positioning_specialist: ['skill_dna_lookup', 'skill_roadmap', 'skill_todos', 'skill_confirm', 'skill_sidebar', 'skill_suggestions'],
   goals_specialist: ['skill_dna_lookup', 'skill_roadmap', 'skill_todos', 'skill_confirm', 'skill_sidebar', 'skill_suggestions'],
   messages_specialist: ['skill_dna_lookup', 'skill_roadmap', 'skill_todos', 'skill_confirm', 'skill_sidebar', 'skill_suggestions'],
-  project_wizard: ['skill_dna_lookup', 'skill_roadmap', 'skill_todos', 'skill_confirm', 'skill_sidebar', 'skill_suggestions'],
+  project_wizard: ['skill_dna_lookup', 'skill_roadmap', 'skill_todos', 'skill_confirm', 'skill_sidebar', 'skill_suggestions', 'skill_save_fakten_matrix'],
 };
 
 // ============================================================================

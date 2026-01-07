@@ -1,9 +1,12 @@
 // src/components/pr/ai/structured-generation/hooks/useStructuredGeneration.ts
 /**
- * Hook für strukturierte PR-Generierung
+ * Hook für strukturierte PR-Generierung (Standard-Modus)
  *
  * Handhabt die API-Integration für die strukturierte Generierung von Pressemitteilungen,
  * inklusive Validierung, Request-Building und Error-Handling.
+ *
+ * Hinweis: Experten-Modus mit DNA-Synthese ist jetzt im Strategie-Tab
+ * unter PM-Vorlage (siehe usePMVorlage Hook).
  */
 
 import { useState, useCallback } from 'react';
@@ -21,46 +24,26 @@ import { toastService } from '@/lib/utils/toast';
  * Parameter für die generate() Funktion
  */
 export interface GenerateParams {
-  /** Generierungs-Modus (standard oder expert) */
-  mode: 'standard' | 'expert';
-  /** User-Prompt (erforderlich im Standard-Modus, optional im Expert-Modus) */
+  /** Generierungs-Modus (nur 'standard' wird unterstützt) */
+  mode: 'standard';
+  /** User-Prompt */
   prompt: string;
   /** Generierungs-Kontext (Branche, Tonalität, Zielgruppe, etc.) */
   context: GenerationContext;
-  /** Ausgewählte Dokumente (Legacy, nicht mehr für Expert-Modus verwendet) */
+  /** Ausgewählte Dokumente (Legacy, nicht mehr verwendet) */
   selectedDocuments: DocumentContext[];
-  /** Projekt-ID für Experten-Modus (lädt Kernbotschaft) */
-  projectId?: string;
-  /** Company-ID für Experten-Modus (lädt DNA Synthese) */
-  companyId?: string;
 }
 
 /**
- * Hook für strukturierte Generierung von Pressemitteilungen
+ * Hook für strukturierte Generierung von Pressemitteilungen (Standard-Modus)
  *
  * Verwaltet die komplette Generierungs-Pipeline:
- * - Input-Validierung basierend auf Modus
- * - Request-Body-Building für Standard- und Expert-Modus
+ * - Input-Validierung
+ * - Request-Body-Building
  * - API-Call zu /api/ai/generate-structured
  * - State-Management (Loading, Result, Error)
  *
  * @returns Hook-API mit generate, reset, und State-Properties
- *
- * @example
- * ```typescript
- * const { generate, reset, isGenerating, result, error } = useStructuredGeneration();
- *
- * // Generierung starten
- * const response = await generate({
- *   mode: 'standard',
- *   prompt: 'Produktlaunch ankündigen',
- *   context: { tone: 'modern', audience: 'b2b', industry: 'Tech' },
- *   selectedDocuments: []
- * });
- *
- * // State zurücksetzen
- * reset();
- * ```
  */
 export function useStructuredGeneration() {
   const t = useTranslations('pr.ai.structuredGeneration');
@@ -79,56 +62,30 @@ export function useStructuredGeneration() {
     prompt,
     context,
     selectedDocuments,
-    projectId,
-    companyId
   }: GenerateParams): Promise<StructuredGenerateResponse | null> => {
-    // Validierung für Experten-Modus: projectId erforderlich
-    if (mode === 'expert' && !projectId) {
-      setError(t('validation.projectRequired'));
+    // Validierung
+    const validation = validateInput(mode, prompt, context, selectedDocuments);
+    if (!validation.isValid) {
+      const errorMessage = validation.errorKey
+        ? t(validation.errorKey as any)
+        : t('validation.validationFailed');
+      setError(errorMessage);
       return null;
-    }
-
-    // Validierung für Standard-Modus
-    if (mode === 'standard') {
-      const validation = validateInput(mode, prompt, context, selectedDocuments);
-      if (!validation.isValid) {
-        const errorMessage = validation.errorKey
-          ? t(validation.errorKey as any)
-          : t('validation.validationFailed');
-        setError(errorMessage);
-        return null;
-      }
     }
 
     setIsGenerating(true);
     setError(null);
 
     try {
-      const requestBody: any = {};
-
-      // STANDARD-MODUS: Prompt + Context senden
-      if (mode === 'standard') {
-        requestBody.prompt = prompt.trim();
-        requestBody.context = {
+      const requestBody = {
+        prompt: prompt.trim(),
+        context: {
           industry: context.industry,
           tone: context.tone,
           audience: context.audience,
           companyName: context.companyName,
-        };
-      }
-
-      // EXPERTEN-MODUS: projectId + companyId + optionaler Prompt (AI Sequenz wird serverseitig geladen)
-      if (mode === 'expert') {
-        requestBody.mode = 'expert';
-        requestBody.projectId = projectId;
-        requestBody.companyId = companyId;
-        // Prompt nur senden wenn vorhanden
-        if (prompt.trim()) {
-          requestBody.prompt = prompt.trim();
-        } else {
-          requestBody.prompt = t('defaultPrompt');
-        }
-      }
+        },
+      };
 
       // API-Call
       const apiResult: StructuredGenerateResponse = await apiClient.post<StructuredGenerateResponse>(

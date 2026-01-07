@@ -42,39 +42,14 @@ export interface StructuredGenerationModalProps {
 }
 
 /**
- * AI Sequenz Daten (DNA Synthese + Kernbotschaft)
- */
-export interface AISequenzData {
-  /** DNA Synthese vorhanden? */
-  hasDNASynthese: boolean;
-  /** Kernbotschaft vorhanden? */
-  hasKernbotschaft: boolean;
-  /** DNA Synthese Vorschau (erste 200 Zeichen) */
-  dnaSynthesePreview?: string;
-  /** Kernbotschaft Anlass */
-  kernbotschaftOccasion?: string;
-  /** Kernbotschaft Ziel */
-  kernbotschaftGoal?: string;
-  /** Lädt gerade? */
-  isLoading: boolean;
-}
-
-/**
  * Props für ContextSetupStep Komponente
+ *
+ * Vereinfacht - nur noch Standard-Modus.
+ * Experten-Modus (DNA-Synthese + Kernbotschaft) ist im Strategie-Tab.
  */
 export interface ContextSetupStepProps {
   context: GenerationContext;
   onChange: (context: GenerationContext) => void;
-  selectedDocuments?: DocumentContext[];
-  onOpenDocumentPicker?: () => void;
-  generationMode: 'standard' | 'expert';
-  setGenerationMode: (mode: 'standard' | 'expert') => void;
-  onClearDocuments?: () => void;
-  onRemoveDocument?: (docId: string) => void;
-  /** AI Sequenz Daten für Experten-Modus */
-  aiSequenz?: AISequenzData;
-  /** Projekt-ID für Experten-Modus */
-  projectId?: string;
 }
 
 /**
@@ -88,9 +63,6 @@ export interface ContentInputStepProps {
   context: GenerationContext;
   loadingTemplates: boolean;
   selectedTemplate?: AITemplate | null;
-  generationMode: 'standard' | 'expert';
-  hasDocuments?: boolean;
-  documentCount?: number;
 }
 
 /**

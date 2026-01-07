@@ -6,9 +6,11 @@ import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft, useCreateKernbotschaft, useUpdateKernbotschaft, useDeleteKernbotschaft } from '@/lib/hooks/useKernbotschaft';
+import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory } from '@/lib/hooks/usePMVorlage';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
 import { KernbotschaftSection } from '@/components/projects/strategy/KernbotschaftSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
+import { PMVorlageSection } from '@/components/projects/strategy/PMVorlageSection';
 import { toastService } from '@/lib/utils/toast';
 
 interface StrategieTabContentProps {
@@ -38,6 +40,10 @@ export function StrategieTabContent({
   const { data: dnaSynthese } = useDNASynthese(companyId);
   const { data: isOutdated } = useIsDNASyntheseOutdated(companyId);
   const { data: kernbotschaft } = useKernbotschaft(projectId);
+  const { data: pmVorlage } = usePMVorlage(projectId);
+  const { data: faktenMatrix } = useFaktenMatrix(projectId);
+  // TODO: DNA-Kontakte aus Marken-DNA laden (Phase 7 Integration)
+  const dnaContacts: Array<{ id: string; name: string; position?: string; role?: string; expertise?: string; email?: string; phone?: string }> = [];
 
   // Synthese Mutations
   const { mutate: synthesize, isPending: isSynthesizing } = useSynthesizeDNA();
@@ -49,12 +55,18 @@ export function StrategieTabContent({
   const { mutateAsync: updateKernbotschaft } = useUpdateKernbotschaft();
   const { mutateAsync: deleteKernbotschaft, isPending: isDeletingKernbotschaft } = useDeleteKernbotschaft();
 
+  // PM-Vorlage Mutations
+  const { mutate: generatePMVorlage, isPending: isGeneratingPMVorlage } = useGeneratePMVorlage();
+  const { mutateAsync: deletePMVorlage, isPending: isDeletingPMVorlage } = useDeletePMVorlage();
+  const { mutateAsync: restorePMVorlageFromHistory } = useRestorePMVorlageFromHistory();
+
   // UI State
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Pruefe ob Synthese moeglich ist (alle 6 Dokumente vorhanden)
   const canSynthesize = markenDNAStatus?.isComplete ?? false;
   const hasDNASynthese = !!dnaSynthese?.plainText;
+  const hasFaktenMatrix = !!faktenMatrix;
 
   // Handler für Synthese
   const handleSynthesize = () => {
@@ -181,6 +193,71 @@ export function StrategieTabContent({
     }
   };
 
+  // Handler für PM-Vorlage generieren
+  const handleGeneratePMVorlage = (targetGroup: 'ZG1' | 'ZG2' | 'ZG3') => {
+    if (!companyId || !companyName || !projectId) return;
+
+    // DNA-Kontakte in das richtige Format transformieren
+    const formattedContacts = (dnaContacts || []).map(contact => ({
+      id: contact.id || '',
+      name: contact.name || '',
+      position: contact.position || contact.role || '',
+      expertise: contact.expertise,
+      email: contact.email,
+      phone: contact.phone,
+    }));
+
+    generatePMVorlage(
+      {
+        projectId,
+        companyId,
+        companyName,
+        dnaContacts: formattedContacts,
+        targetGroup,
+      },
+      {
+        onSuccess: () => {
+          toastService.success('PM-Vorlage erfolgreich generiert!');
+        },
+        onError: (error) => {
+          toastService.error(`Fehler: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Handler für PM-Vorlage löschen
+  const handleDeletePMVorlage = async () => {
+    if (!projectId) return;
+
+    try {
+      await deletePMVorlage({ projectId });
+      toastService.success('PM-Vorlage gelöscht');
+    } catch (error) {
+      toastService.error('Fehler beim Löschen');
+    }
+  };
+
+  // Handler für PM-Vorlage in Editor übernehmen
+  const handleCopyPMVorlageToEditor = () => {
+    if (!pmVorlage?.htmlContent) return;
+    // TODO: Integration mit Editor (Phase 7)
+    navigator.clipboard.writeText(pmVorlage.htmlContent);
+    toastService.success('HTML in Zwischenablage kopiert');
+  };
+
+  // Handler für PM-Vorlage aus History wiederherstellen
+  const handleRestorePMVorlageFromHistory = async (historyIndex: number) => {
+    if (!projectId) return;
+
+    try {
+      await restorePMVorlageFromHistory({ projectId, historyIndex });
+      toastService.success('Ältere Version wiederhergestellt');
+    } catch (error) {
+      toastService.error('Fehler beim Wiederherstellen');
+    }
+  };
+
   // Falls projectId oder companyId fehlt, zeige Hinweis
   if (!projectId || !companyId) {
     return (
@@ -232,6 +309,28 @@ export function StrategieTabContent({
         }}
         onDelete={handleDeleteKernbotschaft}
         isLoading={isDeletingKernbotschaft}
+      />
+
+      {/* PM-Vorlage Section */}
+      <PMVorlageSection
+        projectId={projectId}
+        companyId={companyId}
+        companyName={companyName}
+        pmVorlage={pmVorlage}
+        faktenMatrix={faktenMatrix}
+        hasDNASynthese={hasDNASynthese}
+        hasFaktenMatrix={hasFaktenMatrix}
+        dnaContacts={(dnaContacts || []).map(c => ({
+          id: c.id || '',
+          name: c.name || '',
+          position: c.position || c.role || '',
+          expertise: c.expertise,
+        }))}
+        onGenerate={handleGeneratePMVorlage}
+        onDelete={handleDeletePMVorlage}
+        onCopyToEditor={handleCopyPMVorlageToEditor}
+        onRestoreFromHistory={handleRestorePMVorlageFromHistory}
+        isLoading={isGeneratingPMVorlage || isDeletingPMVorlage}
       />
 
       {/* Kernbotschaft Chat Modal */}

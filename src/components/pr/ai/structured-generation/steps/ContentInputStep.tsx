@@ -3,13 +3,14 @@
  * Content Input Step Component
  *
  * Zweiter Step im Generierungs-Workflow: Eingabe des Prompts
- * und Template-Auswahl (Standard-Modus) oder zusätzliche Anweisungen
- * (Experten-Modus).
+ * und Template-Auswahl.
+ *
+ * Hinweis: Experten-Modus mit DNA-Synthese ist jetzt im Strategie-Tab.
  */
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { DocumentTextIcon, LightBulbIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { LightBulbIcon } from '@heroicons/react/24/outline';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Textarea } from '@/components/ui/textarea';
 import clsx from 'clsx';
@@ -21,37 +22,12 @@ import TemplateDropdown from '../components/TemplateDropdown';
  *
  * Zeigt Eingabefelder für den Prompt und Template-Auswahl an.
  *
- * **Standard-Modus:**
  * - Template-Dropdown zur Auswahl bewährter Vorlagen
  * - Prompt-Eingabefeld mit Beispielen
  * - Tipps für bessere Ergebnisse
- *
- * **Experten-Modus:**
- * - Hinweis auf kontext-basierte Generierung
- * - Optionales Anweisungsfeld
- * - Kürzerer Prompt (da Dokumente bereits vorhanden)
- *
- * **Context Pills:**
- * - Zeigt ausgewählten Kontext (Firma, Branche, Tonalität, etc.)
- * - Dokumenten-Anzahl (im Experten-Modus)
+ * - Context Pills (Firma, Branche, Tonalität, etc.)
  *
  * @param props - Component Props (siehe ContentInputStepProps)
- *
- * @example
- * ```tsx
- * <ContentInputStep
- *   prompt={prompt}
- *   onChange={setPrompt}
- *   templates={templates}
- *   onTemplateSelect={handleTemplateSelect}
- *   context={context}
- *   loadingTemplates={false}
- *   selectedTemplate={null}
- *   generationMode="standard"
- *   hasDocuments={false}
- *   documentCount={0}
- * />
- * ```
  */
 function ContentInputStep({
   prompt,
@@ -61,9 +37,6 @@ function ContentInputStep({
   context,
   loadingTemplates,
   selectedTemplate,
-  generationMode,
-  hasDocuments,
-  documentCount
 }: ContentInputStepProps) {
   const t = useTranslations('pr.ai.structuredGeneration');
 
@@ -78,7 +51,7 @@ function ContentInputStep({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Context Pills */}
-      {(context.companyName || context.industry || context.tone || context.audience || hasDocuments) && (
+      {(context.companyName || context.industry || context.tone || context.audience) && (
         <div className="mb-6 flex flex-wrap gap-2 justify-center">
           {context.companyName && (
             <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
@@ -100,52 +73,23 @@ function ContentInputStep({
               {t(`audiences.${context.audience}.label`)}
             </span>
           )}
-          {hasDocuments && documentCount && (
-            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
-              <DocumentTextIcon className="h-4 w-4" />
-              {t('contentStep.documentsAttached', {
-                count: documentCount,
-                plural: documentCount !== 1 ? t('contentStep.documentsAttachedPlural') : ''
-              })}
-            </span>
-          )}
         </div>
       )}
 
       <div className="space-y-6">
-        {/* NEU: Dokumenten-Modus Hinweis */}
-        {generationMode === 'expert' && hasDocuments ? (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <CheckCircleIcon className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-green-900 mb-2">
-                  {t('contentStep.expertModeTitle')}
-                </h3>
-                <p className="text-sm text-green-700 mb-3">
-                  {t('contentStep.expertModeDescription', { count: documentCount || 0 })}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : generationMode === 'standard' ? (
-          /* Template Dropdown nur im Standard-Modus */
-          <TemplateDropdown
-            templates={templates}
-            onSelect={onTemplateSelect}
-            loading={loadingTemplates}
-            selectedTemplate={selectedTemplate}
-          />
-        ) : null}
+        {/* Template Dropdown */}
+        <TemplateDropdown
+          templates={templates}
+          onSelect={onTemplateSelect}
+          loading={loadingTemplates}
+          selectedTemplate={selectedTemplate}
+        />
 
         {/* Main Input */}
         <Field>
           <div className="flex items-center justify-between mb-2">
             <Label className="text-base font-semibold">
-              {generationMode === 'expert'
-                ? t('contentStep.promptLabelExpert')
-                : t('contentStep.promptLabelStandard')
-              }
+              {t('contentStep.promptLabelStandard')}
             </Label>
             {prompt.length > 0 && (
               <span className={clsx(
@@ -160,11 +104,8 @@ function ContentInputStep({
           <Textarea
             value={prompt}
             onChange={(e) => onChange(e.target.value)}
-            rows={generationMode === 'expert' ? 8 : 12}
-            placeholder={generationMode === 'expert'
-              ? t('contentStep.placeholderExpert')
-              : t('contentStep.placeholderStandard')
-            }
+            rows={12}
+            placeholder={t('contentStep.placeholderStandard')}
             className="w-full font-mono text-sm"
           />
         </Field>

@@ -15,28 +15,12 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
 import {
-  StructuredPressRelease,
   GenerationContext,
   GenerationResult,
   AITemplate,
-  StructuredGenerateResponse,
-  DocumentContext,
-  EnrichedGenerationContext
 } from '@/types/ai';
-import DocumentPickerModal from './DocumentPickerModal';
-import {
-  type StructuredGenerationModalProps,
-  type ContextSetupStepProps,
-  type ContentInputStepProps,
-  type GenerationStepProps,
-  type ReviewStepProps,
-  type TemplateDropdownProps,
-  INDUSTRIES,
-  TONES,
-  AUDIENCES
-} from './structured-generation/types';
+import { type StructuredGenerationModalProps } from './structured-generation/types';
 import type { GenerationStep } from './structured-generation/types';
-import TemplateDropdown from './structured-generation/components/TemplateDropdown';
 import StepProgressBar from './structured-generation/components/StepProgressBar';
 import ErrorBanner from './structured-generation/components/ErrorBanner';
 import ModalHeader from './structured-generation/components/ModalHeader';
@@ -44,7 +28,6 @@ import ModalFooter from './structured-generation/components/ModalFooter';
 import { useTemplates } from './structured-generation/hooks/useTemplates';
 import { useStructuredGeneration } from './structured-generation/hooks/useStructuredGeneration';
 import { useKeyboardShortcuts } from './structured-generation/hooks/useKeyboardShortcuts';
-import { useAISequenz } from './structured-generation/hooks/useAISequenz';
 import ContextSetupStep from './structured-generation/steps/ContextSetupStep';
 import ContentInputStep from './structured-generation/steps/ContentInputStep';
 import GenerationStepComponent from './structured-generation/steps/GenerationStep';
@@ -58,42 +41,16 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   // Workflow State
   const [currentStep, setCurrentStep] = useState<GenerationStep>('context');
 
-  // Generation Mode State
-  const [generationMode, setGenerationMode] = useState<'standard' | 'expert'>('standard');
-
-  // AI Sequenz laden (DNA Synthese + Kernbotschaft) für Experten-Modus
-  const aiSequenz = useAISequenz(projectId, companyId);
-
   // Generation Data
   const [context, setContext] = useState<GenerationContext>({});
   const [prompt, setPrompt] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<AITemplate | null>(null);
-
-  // Planungsdokumente State
-  const [selectedDocuments, setSelectedDocuments] = useState<DocumentContext[]>([]);
-  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
 
   // Templates laden mit Hook
   const { templates, loading: loadingTemplates } = useTemplates(currentStep === 'content');
 
   // Structured Generation Hook (übernimmt isGenerating, error, result)
   const { generate, isGenerating, error, result: generatedResult } = useStructuredGeneration();
-
-  // Handler für Modus-Wechsel (mit Context-Reset)
-  const handleModeChange = useCallback((mode: 'standard' | 'expert') => {
-    setGenerationMode(mode);
-    // Context und Dokumente zurücksetzen beim Modus-Wechsel
-    setContext({});
-    setSelectedDocuments([]);
-    setPrompt('');
-    setSelectedTemplate(null);
-  }, []);
-
-  // Handler für Dokument-Auswahl
-  const handleDocumentsSelected = useCallback((documents: DocumentContext[]) => {
-    setSelectedDocuments(documents);
-    setShowDocumentPicker(false);
-  }, []);
 
   // Handler für Generation
   const handleGenerate = useCallback(async () => {
@@ -102,13 +59,10 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
     // Hook nutzen für API-Call und Validierung
     const result = await generate({
-      mode: generationMode,
+      mode: 'standard',
       prompt,
       context,
-      selectedDocuments,
-      // AI Sequenz: projectId + companyId für Experten-Modus
-      projectId,
-      companyId
+      selectedDocuments: [],
     });
 
     // Wenn erfolgreich, zu Review wechseln
@@ -118,7 +72,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       // Bei Fehler zurück zu Content (error wird vom Hook gesetzt)
       setCurrentStep('content');
     }
-  }, [generate, generationMode, prompt, context, selectedDocuments, projectId, companyId]);
+  }, [generate, prompt, context]);
 
   // Handler für Result-Verwendung
   const handleUseResult = useCallback(() => {
@@ -215,17 +169,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
               <ContextSetupStep
                 context={context}
                 onChange={setContext}
-                // Dokumenten-Props (Legacy, wird für Standard-Modus nicht mehr benötigt)
-                selectedDocuments={selectedDocuments}
-                onOpenDocumentPicker={() => setShowDocumentPicker(true)}
-                onClearDocuments={() => setSelectedDocuments([])}
-                onRemoveDocument={(docId) => setSelectedDocuments(prev => prev.filter(d => d.id !== docId))}
-                // Modus-Props
-                generationMode={generationMode}
-                setGenerationMode={handleModeChange}
-                // AI Sequenz für Experten-Modus (DNA Synthese + Kernbotschaft)
-                aiSequenz={aiSequenz}
-                projectId={projectId}
               />
             )}
 
@@ -238,9 +181,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 context={context}
                 loadingTemplates={loadingTemplates}
                 selectedTemplate={selectedTemplate}
-                generationMode={generationMode}
-                hasDocuments={selectedDocuments.length > 0}
-                documentCount={selectedDocuments.length}
               />
             )}
 
@@ -273,25 +213,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
             onNext={() => setCurrentStep('content')}
             onGenerate={handleGenerate}
             onUseResult={handleUseResult}
-            canGenerate={
-              (generationMode === 'standard' && prompt.trim() !== '') ||
-              (generationMode === 'expert' && aiSequenz.hasDNASynthese && aiSequenz.hasKernbotschaft && !!projectId)
-            }
+            canGenerate={prompt.trim() !== ''}
             isGenerating={isGenerating}
           />
         </DialogPanel>
       </div>
-
-      {/* NEU: DocumentPickerModal */}
-      {showDocumentPicker && organizationId && dokumenteFolderId && (
-        <DocumentPickerModal
-          isOpen={showDocumentPicker}
-          onClose={() => setShowDocumentPicker(false)}
-          onSelect={handleDocumentsSelected}
-          organizationId={organizationId}
-          dokumenteFolderId={dokumenteFolderId}
-        />
-      )}
 
       {/* CSS für Animationen */}
       <style jsx global>{`

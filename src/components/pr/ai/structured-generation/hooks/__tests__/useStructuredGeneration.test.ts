@@ -1,6 +1,8 @@
 // src/components/pr/ai/structured-generation/hooks/__tests__/useStructuredGeneration.test.ts
 /**
- * Tests für useStructuredGeneration Hook
+ * Tests für useStructuredGeneration Hook (Standard-Modus)
+ *
+ * Hinweis: Experten-Modus wurde entfernt - ist jetzt im Strategie-Tab (PM-Vorlage).
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -138,89 +140,6 @@ describe('useStructuredGeneration', () => {
     });
   });
 
-  describe('Expert-Modus', () => {
-    it('sollte erfolgreiche Generierung im Expert-Modus durchführen', async () => {
-      const mockResponse = {
-        success: true,
-        structured: { headline: 'Expert', leadParagraph: 'Lead', bodyParagraphs: [], quote: null, cta: null, boilerplate: null, hashtags: [], socialOptimized: false },
-        headline: 'Expert',
-        htmlContent: '<p>Expert</p>'
-      };
-
-      mockValidation.validateInput.mockReturnValue({ isValid: true });
-      mockApiClient.post.mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(() => useStructuredGeneration());
-
-      const mockDocuments = [
-        {
-          id: 'doc1',
-          fileName: 'test.celero-doc',
-          plainText: 'Test content',
-          excerpt: 'Test content',
-          wordCount: 100,
-          createdAt: new Date()
-        }
-      ];
-
-      await act(async () => {
-        await result.current.generate({
-          mode: 'expert',
-          prompt: 'Custom instructions',
-          context: {},
-          selectedDocuments: mockDocuments
-        });
-      });
-
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/ai/generate-structured', {
-        prompt: 'Custom instructions',
-        documentContext: {
-          documents: mockDocuments
-        }
-      });
-    });
-
-    it('sollte Default-Prompt verwenden wenn Prompt leer ist im Expert-Modus', async () => {
-      const mockResponse = {
-        success: true,
-        structured: { headline: 'Expert', leadParagraph: 'Lead', bodyParagraphs: [], quote: null, cta: null, boilerplate: null, hashtags: [], socialOptimized: false },
-        headline: 'Expert',
-        htmlContent: '<p>Expert</p>'
-      };
-
-      mockValidation.validateInput.mockReturnValue({ isValid: true });
-      mockApiClient.post.mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(() => useStructuredGeneration());
-
-      const mockDocuments = [
-        {
-          id: 'doc1',
-          fileName: 'test.celero-doc',
-          plainText: 'Test',
-          excerpt: 'Test',
-          wordCount: 100,
-          createdAt: new Date()
-        }
-      ];
-
-      await act(async () => {
-        await result.current.generate({
-          mode: 'expert',
-          prompt: '   ',
-          context: {},
-          selectedDocuments: mockDocuments
-        });
-      });
-
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/ai/generate-structured', {
-        prompt: 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.',
-        documentContext: {
-          documents: mockDocuments
-        }
-      });
-    });
-  });
 
   describe('Validierung', () => {
     it('sollte Fehler setzen wenn Validierung fehlschlägt', async () => {
