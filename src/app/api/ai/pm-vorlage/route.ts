@@ -8,9 +8,8 @@ import {
   generatePMVorlageFlow,
   type GeneratePMVorlageInput,
 } from '@/lib/ai/flows/generate-pm-vorlage';
-import { pmVorlageService } from '@/lib/firebase/pm-vorlage-service';
 import { getFaktenMatrix } from '@/lib/firebase-admin/fakten-matrix-admin-service';
-import { adminDb } from '@/lib/firebase/admin-init';
+import { savePMVorlage } from '@/lib/firebase-admin/pm-vorlage-admin-service';
 
 /**
  * POST /api/ai/pm-vorlage
@@ -90,10 +89,10 @@ export async function POST(request: NextRequest) {
       // Flow aufrufen
       const result = await generatePMVorlageFlow(flowInput);
 
-      // In Firestore speichern (default: true)
+      // In Firestore speichern (default: true) - Admin SDK für Server-Side
       const saveToFirestore = body.saveToFirestore !== false;
       if (saveToFirestore) {
-        await pmVorlageService.save(body.projectId, {
+        await savePMVorlage(body.projectId, {
           headline: result.headline,
           leadParagraph: result.leadParagraph,
           bodyParagraphs: result.bodyParagraphs,
