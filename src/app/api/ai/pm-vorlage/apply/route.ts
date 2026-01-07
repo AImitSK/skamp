@@ -57,8 +57,10 @@ export async function POST(request: NextRequest) {
       }
 
       // 2. Campaign für dieses Projekt finden
-      console.log('[PM-Vorlage Apply] Searching campaign with projectId:', projectId, 'orgId:', organizationId);
+      // Zwei Ansätze: 1) projectId auf Campaign, 2) linkedCampaigns im Project
+      let campaignId: string | null = null;
 
+      // Ansatz 1: Suche Campaign mit projectId Field
       const campaignsSnapshot = await adminDb
         .collection('campaigns')
         .where('projectId', '==', projectId)
@@ -66,29 +68,35 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .get();
 
-      console.log('[PM-Vorlage Apply] Found campaigns:', campaignsSnapshot.size);
+      if (!campaignsSnapshot.empty) {
+        campaignId = campaignsSnapshot.docs[0].id;
+        console.log('[PM-Vorlage Apply] Found via projectId field:', campaignId);
+      }
 
-      if (campaignsSnapshot.empty) {
-        // Debug: Suche ohne organizationId Filter
-        const allCampaignsForProject = await adminDb
-          .collection('campaigns')
-          .where('projectId', '==', projectId)
-          .limit(5)
+      // Ansatz 2: Fallback über linkedCampaigns im Project
+      if (!campaignId) {
+        const projectDoc = await adminDb
+          .collection('projects')
+          .doc(projectId)
           .get();
 
-        console.log('[PM-Vorlage Apply] Campaigns with only projectId filter:', allCampaignsForProject.size);
-        allCampaignsForProject.docs.forEach(doc => {
-          console.log('[PM-Vorlage Apply] Campaign:', doc.id, 'orgId:', doc.data().organizationId);
-        });
+        if (projectDoc.exists) {
+          const projectData = projectDoc.data();
+          const linkedCampaigns = projectData?.linkedCampaigns as string[] | undefined;
 
+          if (linkedCampaigns && linkedCampaigns.length > 0) {
+            campaignId = linkedCampaigns[0]; // Erste verknüpfte Campaign
+            console.log('[PM-Vorlage Apply] Found via linkedCampaigns:', campaignId);
+          }
+        }
+      }
+
+      if (!campaignId) {
         return NextResponse.json(
           { error: 'Keine Pressemeldung für dieses Projekt gefunden. Bitte zuerst im Pressemeldungen-Tab erstellen.' },
           { status: 404 }
         );
       }
-
-      const campaignDoc = campaignsSnapshot.docs[0];
-      const campaignId = campaignDoc.id;
 
       // 3. Campaign-Content aktualisieren
       const updateData: Record<string, any> = {
