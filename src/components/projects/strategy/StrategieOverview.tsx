@@ -68,23 +68,30 @@ export function StrategieOverview({
     return kernbotschaftStatus === 'completed' ? 'Fertig' : 'Entwurf';
   };
 
+  // Legende-Daten (einmalig für beide Ringe)
+  const legendItems = [
+    { name: 'DNA Synthese', color: '#9333ea' },
+    { name: 'Kernbotschaft', color: '#2563eb' },
+    { name: 'PM-Vorlage', color: '#0891b2' },
+  ];
+
   return (
     <div className="bg-white rounded-lg border border-zinc-200 p-6 mb-6">
       <Text className="text-lg font-semibold text-zinc-900 mb-4">Strategie-Übersicht</Text>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto_1fr] gap-6 items-center">
         {/* Ring 1: Pipeline */}
         <div className="flex flex-col items-center">
           <Text className="text-sm font-medium text-zinc-600 mb-2">Pipeline</Text>
           <div className="relative">
-            <ResponsiveContainer width={140} height={140}>
+            <ResponsiveContainer width={160} height={160}>
               <PieChart>
                 <Pie
                   data={pipelineData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={45}
-                  outerRadius={60}
+                  innerRadius={50}
+                  outerRadius={70}
                   paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
@@ -97,26 +104,9 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold text-zinc-900">{pipelinePercent}%</span>
-              <span className="text-xs text-zinc-500">{completedSteps}/3</span>
+              <span className="text-3xl font-bold text-zinc-900">{pipelinePercent}%</span>
+              <span className="text-sm text-zinc-500">{completedSteps}/3</span>
             </div>
-          </div>
-          {/* Legend */}
-          <div className="mt-3 space-y-1">
-            {pipelineSteps.map((step, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-sm"
-                  style={{ backgroundColor: step.completed ? step.color : '#e4e4e7' }}
-                />
-                <Text className={`text-xs ${step.completed ? 'text-zinc-700' : 'text-zinc-400'}`}>
-                  {step.name}
-                </Text>
-                {step.completed && (
-                  <CheckCircleIcon className="w-3 h-3 text-green-500" />
-                )}
-              </div>
-            ))}
           </div>
         </div>
 
@@ -124,14 +114,14 @@ export function StrategieOverview({
         <div className="flex flex-col items-center">
           <Text className="text-sm font-medium text-zinc-600 mb-2">Token-Verteilung</Text>
           <div className="relative">
-            <ResponsiveContainer width={140} height={140}>
+            <ResponsiveContainer width={160} height={160}>
               <PieChart>
                 <Pie
                   data={tokenData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={45}
-                  outerRadius={60}
+                  innerRadius={50}
+                  outerRadius={70}
                   paddingAngle={4}
                   dataKey="value"
                   strokeWidth={0}
@@ -144,29 +134,23 @@ export function StrategieOverview({
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
-              <span className="text-xs text-zinc-500">Tokens</span>
+              <span className="text-2xl font-bold text-zinc-900">~{totalTokens.toLocaleString('de-DE')}</span>
+              <span className="text-sm text-zinc-500">Tokens</span>
             </div>
           </div>
-          {/* Legend */}
-          <div className="mt-3 space-y-1">
-            {[
-              { name: 'DNA Synthese', value: dnaTokens, color: '#9333ea' },
-              { name: 'Kernbotschaft', value: kernbotschaftTokens, color: '#2563eb' },
-              { name: 'PM-Vorlage', value: pmVorlageTokens, color: '#0891b2' },
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-sm"
-                  style={{ backgroundColor: item.color }}
-                />
-                <Text className="text-xs text-zinc-600 w-20">{item.name}</Text>
-                <Text className="text-xs font-medium text-zinc-700">
-                  {item.value > 0 ? `~${item.value.toLocaleString('de-DE')}` : '-'}
-                </Text>
-              </div>
-            ))}
-          </div>
+        </div>
+
+        {/* Gemeinsame Legende (nur Farben + Namen) */}
+        <div className="flex flex-col justify-center space-y-2">
+          {legendItems.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-sm flex-shrink-0"
+                style={{ backgroundColor: item.color }}
+              />
+              <Text className="text-sm text-zinc-700 whitespace-nowrap">{item.name}</Text>
+            </div>
+          ))}
         </div>
 
         {/* Stats Liste */}
@@ -174,7 +158,7 @@ export function StrategieOverview({
           <Text className="text-sm font-medium text-zinc-600 mb-3">Status</Text>
           <div className="space-y-2">
             {/* DNA Status */}
-            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+            <div className="flex items-center justify-between p-2.5 bg-purple-50 rounded-lg border border-purple-100">
               <Text className="text-sm text-purple-700">DNA Synthese</Text>
               <div className="flex items-center gap-2">
                 <Text className="text-sm font-semibold text-purple-900">
@@ -185,7 +169,7 @@ export function StrategieOverview({
             </div>
 
             {/* Kernbotschaft Status */}
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="flex items-center justify-between p-2.5 bg-blue-50 rounded-lg border border-blue-100">
               <Text className="text-sm text-blue-700">Kernbotschaft</Text>
               <div className="flex items-center gap-2">
                 <Text className="text-sm font-semibold text-blue-900">
@@ -198,7 +182,7 @@ export function StrategieOverview({
             </div>
 
             {/* PM-Vorlage Status */}
-            <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-100">
+            <div className="flex items-center justify-between p-2.5 bg-cyan-50 rounded-lg border border-cyan-100">
               <Text className="text-sm text-cyan-700">PM-Vorlage</Text>
               <div className="flex items-center gap-2">
                 <Text className="text-sm font-semibold text-cyan-900">
@@ -208,11 +192,8 @@ export function StrategieOverview({
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-zinc-200 my-2" />
-
             {/* Gesamt-Tokens */}
-            <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+            <div className="flex items-center justify-between p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 mt-1">
               <Text className="text-sm text-zinc-600">Gesamt-Tokens</Text>
               <Text className="text-sm font-bold text-zinc-900">
                 ~{totalTokens.toLocaleString('de-DE')}
