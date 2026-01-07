@@ -113,6 +113,11 @@ export function PMVorlageSection({
     setShowApplyConfirm(false);
   };
 
+  // Token-Anzahl berechnen
+  const tokenCount = pmVorlage?.htmlContent
+    ? Math.ceil(pmVorlage.htmlContent.length / 4)
+    : 0;
+
   // Erstellungsdatum formatieren
   const createdDate = pmVorlage?.generatedAt
     ? new Date(
@@ -236,13 +241,23 @@ export function PMVorlageSection({
         <div className="p-6 bg-gradient-to-r from-cyan-50/50 to-white">
           {/* Kompakte Zeile */}
           <div className="flex items-center gap-4">
-            {/* Links: Icon + Titel + Datum */}
+            {/* Links: Icon + Titel + ZG-Badge + Datum */}
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 bg-cyan-100 rounded-lg flex-shrink-0">
                 <DocumentDuplicateIcon className="h-5 w-5 text-cyan-600" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-zinc-900">PM-Vorlage</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-zinc-900">PM-Vorlage</h3>
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+                    {pmVorlage.targetGroup}
+                  </span>
+                  {isOutdated && (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Veraltet
+                    </span>
+                  )}
+                </div>
                 {createdDate && (
                   <p className="text-xs text-zinc-500">Erstellt: {createdDate}</p>
                 )}
@@ -252,22 +267,14 @@ export function PMVorlageSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Status-Badge + 3-Punkte-Menü + Toggle-Button */}
+            {/* Rechts: Token-Badge + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Zielgruppen-Badge */}
+              {/* Token-Badge */}
               <div className="h-9 flex items-center px-3 rounded-lg bg-cyan-50 border border-cyan-200">
                 <span className="text-xs text-cyan-600 whitespace-nowrap">
-                  {pmVorlage.targetGroup}
+                  ~{tokenCount} Tokens
                 </span>
               </div>
-
-              {/* Veraltet-Badge */}
-              {isOutdated && (
-                <div className="h-9 flex items-center gap-1 px-3 rounded-lg bg-amber-50 border border-amber-200">
-                  <ExclamationTriangleIcon className="w-3 h-3 text-amber-600" />
-                  <span className="text-xs text-amber-600 whitespace-nowrap">Veraltet</span>
-                </div>
-              )}
 
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu-pmvorlage>
@@ -303,7 +310,7 @@ export function PMVorlageSection({
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                     >
                       <ArrowRightIcon className="h-4 w-4" />
-                      In Pressemeldung übernehmen
+                      Übernehmen
                     </button>
 
                     {/* Ältere Versionen */}

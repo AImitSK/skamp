@@ -199,15 +199,20 @@ export function DNASyntheseSection({
         <div className="p-6 bg-gradient-to-r from-purple-50/50 to-white">
           {/* Kompakte Zeile */}
           <div className="flex items-center gap-4">
-            {/* Links: Icon + Titel + Datum */}
+            {/* Links: Icon + Titel + Status-Badge + Datum */}
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
                 <DnaIcon className="h-5 w-5 text-purple-600" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-zinc-900">
-                  DNA Synthese
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-zinc-900">
+                    DNA Synthese
+                  </h3>
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                    Fertig
+                  </span>
+                </div>
                 {createdDate && (
                   <p className="text-xs text-zinc-500">
                     Erstellt: {createdDate}

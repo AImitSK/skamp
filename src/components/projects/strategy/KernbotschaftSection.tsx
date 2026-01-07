@@ -75,6 +75,13 @@ export function KernbotschaftSection({
     (kernbotschaft?.content && kernbotschaft.content.length > 100);
   const statusText = isCompleted ? 'Fertig' : 'Entwurf';
 
+  // Token-Anzahl berechnen
+  const tokenCount = kernbotschaft?.plainText
+    ? Math.ceil(kernbotschaft.plainText.length / 4)
+    : kernbotschaft?.content
+    ? Math.ceil(kernbotschaft.content.length / 4)
+    : 0;
+
   // Erstellungsdatum formatieren
   const createdDate = kernbotschaft?.createdAt?.seconds
     ? new Date(kernbotschaft.createdAt.seconds * 1000).toLocaleDateString('de-DE', {
@@ -200,15 +207,20 @@ export function KernbotschaftSection({
         <div className="p-6 bg-gradient-to-r from-blue-50/50 to-white">
           {/* Kompakte Zeile */}
           <div className="flex items-center gap-4">
-            {/* Links: Icon + Titel + Datum */}
+            {/* Links: Icon + Titel + Status-Badge + Datum */}
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-zinc-900">
-                  Kernbotschaft
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-zinc-900">
+                    Kernbotschaft
+                  </h3>
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {statusText}
+                  </span>
+                </div>
                 {createdDate && (
                   <p className="text-xs text-zinc-500">
                     Erstellt: {createdDate}
@@ -220,12 +232,12 @@ export function KernbotschaftSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Status-Badge + 3-Punkte-Menü + Toggle-Button */}
+            {/* Rechts: Token-Badge + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Status-Badge (nicht klickbar) */}
+              {/* Token-Badge (nicht klickbar) */}
               <div className="h-9 flex items-center px-3 rounded-lg bg-blue-50 border border-blue-200">
                 <span className="text-xs whitespace-nowrap text-blue-600">
-                  Status: {statusText}
+                  ~{tokenCount} Tokens
                 </span>
               </div>
 
