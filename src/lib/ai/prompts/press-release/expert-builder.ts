@@ -54,7 +54,7 @@ export function buildExpertPrompt(
 
   // Letzter Fallback: Default-Werte
   if (!speaker) {
-    speaker = { name: "Sprecher", position: "Geschäftsführung" };
+    speaker = { id: 'fallback', name: "Sprecher", position: "Geschäftsführung" };
   }
 
   return `
@@ -79,9 +79,13 @@ STRUKTUR-GESETZ (Folge diesem Ablauf)
 ═══════════════════════════════════════════════════════════════════
 FAKTEN-MATRIX (Inhaltliche Wahrheit)
 ═══════════════════════════════════════════════════════════════════
+- ORT: ${faktenMatrix.hook.location}
+- DATUM: ${faktenMatrix.hook.date}
 - EREIGNIS: ${faktenMatrix.hook.event}
 - KONTEXT: ${faktenMatrix.details.delta}
 - BEWEISE: ${faktenMatrix.details.evidence}
+
+WICHTIG FÜR ZEILE 2 (LEAD): Verwende **${faktenMatrix.hook.location}, ${faktenMatrix.hook.date} –** am Anfang!
 
 ═══════════════════════════════════════════════════════════════════
 ZITAT-VORGABE (Echte Identität)

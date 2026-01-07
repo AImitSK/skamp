@@ -241,6 +241,54 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/**
+ * Validiert und korrigiert das Datum aus der Fakten-Matrix
+ * Wenn das Datum in der Vergangenheit liegt (>30 Tage), wird das aktuelle Datum verwendet
+ */
+function validateAndCorrectDate(dateString: string): string {
+  const currentDate = new Date();
+
+  // Deutsche Monatsnamen
+  const monthNames: Record<string, number> = {
+    'januar': 0, 'februar': 1, 'märz': 2, 'april': 3, 'mai': 4, 'juni': 5,
+    'juli': 6, 'august': 7, 'september': 8, 'oktober': 9, 'november': 10, 'dezember': 11
+  };
+
+  // Versuche deutsches Datumsformat zu parsen (z.B. "14. Mai 2024")
+  const germanDateMatch = dateString.match(/(\d{1,2})\.\s*(\w+)\s*(\d{4})/i);
+  if (germanDateMatch) {
+    const day = parseInt(germanDateMatch[1]);
+    const monthStr = germanDateMatch[2].toLowerCase();
+    const year = parseInt(germanDateMatch[3]);
+
+    const month = monthNames[monthStr];
+    if (month !== undefined) {
+      const parsedDate = new Date(year, month, day);
+
+      // Wenn Datum mehr als 30 Tage in der Vergangenheit liegt, aktuelles Datum verwenden
+      const daysDiff = Math.floor((currentDate.getTime() - parsedDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 30) {
+        console.log(`[PM-Vorlage] Datum "${dateString}" ist veraltet (${daysDiff} Tage alt). Verwende aktuelles Datum.`);
+        return formatGermanDate(currentDate);
+      }
+    }
+  }
+
+  // Datum scheint okay oder nicht parsebar - zurueckgeben wie es ist
+  return dateString;
+}
+
+/**
+ * Formatiert ein Date-Objekt als deutsches Datum (z.B. "7. Januar 2026")
+ */
+function formatGermanDate(date: Date): string {
+  const months = [
+    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+  ];
+  return `${date.getDate()}. ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 // ============================================================================
 // FLOW DEFINITION
 // ============================================================================
@@ -272,18 +320,38 @@ export const generatePMVorlageFlow = ai.defineFlow(
     outputSchema: PMVorlageOutputSchema,
   },
   async (input) => {
-    // 1. Speaker aus DNA-Kontakten auflösen (mit Fallback)
-    let speaker = input.dnaContacts.find(
-      c => c.id === input.faktenMatrix.quote.speakerId
-    );
+    // 1. Speaker aus DNA-Kontakten auflösen (mehrstufige Suche)
+    const speakerId = input.faktenMatrix.quote.speakerId;
+    let speaker: DNAContact | undefined;
 
-    // Fallback: Wenn keine Kontakte oder Speaker nicht gefunden, nutze speakerId als Platzhalter
+    // Stufe 1: Exakte ID-Übereinstimmung
+    speaker = input.dnaContacts.find(c => c.id === speakerId);
+
+    // Stufe 2: Name-Matching aus speakerId (Format: "contact_vorname_nachname_position")
+    if (!speaker && speakerId) {
+      const speakerIdParts = speakerId.replace('contact_', '').split('_');
+      // Name-Teile (alles außer letztem Part = Position)
+      const nameParts = speakerIdParts.slice(0, -1);
+
+      if (nameParts.length > 0) {
+        speaker = input.dnaContacts.find(c => {
+          const contactName = c.name.toLowerCase();
+          // Alle Name-Parts muessen im Kontaktnamen enthalten sein
+          return nameParts.every(part => contactName.includes(part.toLowerCase()));
+        });
+
+        if (speaker) {
+          console.log(`[PM-Vorlage] Speaker "${speakerId}" via Name-Matching gefunden: ${speaker.name}`);
+        }
+      }
+    }
+
+    // Stufe 3: Fallback mit extrahiertem Namen aus speakerId
     if (!speaker) {
-      const speakerId = input.faktenMatrix.quote.speakerId;
       console.warn(
         `[PM-Vorlage] Speaker "${speakerId}" nicht in Kontakten gefunden. Verwende Fallback.`
       );
-      // Versuche Name/Position aus speakerId zu extrahieren (Format: "contact_vorname_nachname_position")
+      // Name/Position aus speakerId extrahieren
       const parts = speakerId.replace('contact_', '').split('_');
       const fallbackName = parts.slice(0, -1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Sprecher';
       const fallbackPosition = parts[parts.length - 1]?.toUpperCase() || 'Geschaeftsfuehrer';
@@ -294,10 +362,20 @@ export const generatePMVorlageFlow = ai.defineFlow(
       };
     }
 
-    // 2. Experten-Prompt bauen
+    // 2. Datum validieren und korrigieren (veraltete Daten durch aktuelles Datum ersetzen)
+    const correctedDate = validateAndCorrectDate(input.faktenMatrix.hook.date);
+    const correctedFaktenMatrix = {
+      ...input.faktenMatrix,
+      hook: {
+        ...input.faktenMatrix.hook,
+        date: correctedDate,
+      },
+    };
+
+    // 3. Experten-Prompt bauen (mit korrigiertem Datum)
     const expertPrompt = buildExpertPrompt(
       input.dnaSynthese,
-      input.faktenMatrix,
+      correctedFaktenMatrix,
       input.dnaContacts,
       input.targetGroup,
       input.companyName
