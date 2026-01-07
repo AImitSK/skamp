@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft, useCreateKernbotschaft, useUpdateKernbotschaft, useDeleteKernbotschaft } from '@/lib/hooks/useKernbotschaft';
-import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory } from '@/lib/hooks/usePMVorlage';
+import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory, faktenMatrixKeys } from '@/lib/hooks/usePMVorlage';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
 import { KernbotschaftSection } from '@/components/projects/strategy/KernbotschaftSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
@@ -31,6 +32,7 @@ export function StrategieTabContent({
   onRefresh
 }: StrategieTabContentProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const companyId = project.customer?.id;
   const companyName = project.customer?.name || '';
   const projectId = project.id;
@@ -62,6 +64,15 @@ export function StrategieTabContent({
 
   // UI State
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Handler für Chat-Schließen mit Query-Invalidierung
+  const handleChatClose = useCallback(() => {
+    setIsChatOpen(false);
+    // Fakten-Matrix Queries invalidieren, da im Chat evtl. neue erstellt wurde
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: faktenMatrixKeys.byProject(projectId) });
+    }
+  }, [projectId, queryClient]);
 
   // Pruefe ob Synthese moeglich ist (alle 6 Dokumente vorhanden)
   const canSynthesize = markenDNAStatus?.isComplete ?? false;
@@ -336,7 +347,7 @@ export function StrategieTabContent({
       {/* Kernbotschaft Chat Modal */}
       <KernbotschaftChatModal
         isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
+        onClose={handleChatClose}
         projectId={projectId}
         companyId={companyId}
         companyName={companyName}

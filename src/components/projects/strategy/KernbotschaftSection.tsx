@@ -51,8 +51,8 @@ export function KernbotschaftSection({
 }: KernbotschaftSectionProps) {
   const t = useTranslations('markenDNA');
 
-  // UI State - Default ausgeklappt wenn Kernbotschaft vorhanden
-  const [isExpanded, setIsExpanded] = useState(true);
+  // UI State - Default eingeklappt
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);

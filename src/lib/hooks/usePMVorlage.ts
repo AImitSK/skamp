@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pmVorlageService } from '@/lib/firebase/pm-vorlage-service';
 import { faktenMatrixService } from '@/lib/firebase/fakten-matrix-service';
+import { auth } from '@/lib/firebase/client-init';
 import type { PMVorlage } from '@/types/pm-vorlage';
 import type { FaktenMatrix } from '@/types/fakten-matrix';
 
@@ -72,9 +73,19 @@ export function useGeneratePMVorlage() {
       dnaSynthese?: string;
       faktenMatrix?: FaktenMatrix;
     }) => {
+      // Auth Token holen
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Nicht authentifiziert');
+      }
+      const token = await user.getIdToken();
+
       const response = await fetch('/api/ai/pm-vorlage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(params),
       });
 
