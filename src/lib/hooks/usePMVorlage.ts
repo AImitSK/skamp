@@ -141,6 +141,51 @@ export function useRestorePMVorlageFromHistory() {
   });
 }
 
+/**
+ * Überträgt die PM-Vorlage in den Campaign Editor
+ */
+export function useApplyPMVorlageToEditor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      projectId: string;
+      organizationId: string;
+      includeTitle?: boolean;
+    }): Promise<{ success: boolean; campaignId: string; message: string }> => {
+      // Auth Token holen
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Nicht authentifiziert');
+      }
+      const token = await user.getIdToken();
+
+      const response = await fetch('/api/ai/pm-vorlage/apply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Übertragung fehlgeschlagen');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      // PM-Vorlage Query muss nicht invalidiert werden, aber Campaign schon
+      // Der User wird zur Campaign-Seite navigiert
+      queryClient.invalidateQueries({
+        queryKey: pmVorlageKeys.byProject(variables.projectId),
+      });
+    },
+  });
+}
+
 // ============================================================================
 // FAKTEN-MATRIX HOOKS
 // ============================================================================

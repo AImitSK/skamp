@@ -9,7 +9,7 @@ import {
   type GeneratePMVorlageInput,
 } from '@/lib/ai/flows/generate-pm-vorlage';
 import { getFaktenMatrix } from '@/lib/firebase-admin/fakten-matrix-admin-service';
-import { savePMVorlage } from '@/lib/firebase-admin/pm-vorlage-admin-service';
+import { savePMVorlage, getPMVorlage, deletePMVorlage } from '@/lib/firebase-admin/pm-vorlage-admin-service';
 
 /**
  * POST /api/ai/pm-vorlage
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const vorlage = await pmVorlageService.get(projectId);
+      const vorlage = await getPMVorlage(projectId);
 
       if (!vorlage) {
         return NextResponse.json(
@@ -182,7 +182,7 @@ export async function DELETE(request: NextRequest) {
         );
       }
 
-      await pmVorlageService.delete(projectId);
+      await deletePMVorlage(projectId);
 
       return NextResponse.json({ success: true });
     } catch (error: unknown) {

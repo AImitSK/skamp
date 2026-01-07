@@ -7,7 +7,7 @@ import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
 import { useKernbotschaft, useCreateKernbotschaft, useUpdateKernbotschaft, useDeleteKernbotschaft } from '@/lib/hooks/useKernbotschaft';
-import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory, faktenMatrixKeys } from '@/lib/hooks/usePMVorlage';
+import { usePMVorlage, useFaktenMatrix, useGeneratePMVorlage, useDeletePMVorlage, useRestorePMVorlageFromHistory, useApplyPMVorlageToEditor, faktenMatrixKeys } from '@/lib/hooks/usePMVorlage';
 import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/projects/strategy/DNASyntheseSection';
 import { KernbotschaftSection } from '@/components/projects/strategy/KernbotschaftSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
@@ -61,6 +61,7 @@ export function StrategieTabContent({
   const { mutate: generatePMVorlage, isPending: isGeneratingPMVorlage } = useGeneratePMVorlage();
   const { mutateAsync: deletePMVorlage, isPending: isDeletingPMVorlage } = useDeletePMVorlage();
   const { mutateAsync: restorePMVorlageFromHistory } = useRestorePMVorlageFromHistory();
+  const { mutate: applyPMVorlageToEditor, isPending: isApplyingPMVorlage } = useApplyPMVorlageToEditor();
 
   // UI State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -270,6 +271,29 @@ export function StrategieTabContent({
     }
   };
 
+  // Handler für PM-Vorlage in Editor übernehmen
+  const handleApplyPMVorlageToEditor = (includeTitle: boolean) => {
+    if (!projectId) return;
+
+    applyPMVorlageToEditor(
+      {
+        projectId,
+        organizationId,
+        includeTitle,
+      },
+      {
+        onSuccess: (result) => {
+          toastService.success('PM-Vorlage in Pressemeldung übertragen!');
+          // Zur Pressemeldung navigieren
+          router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${result.campaignId}`);
+        },
+        onError: (error) => {
+          toastService.error(`Fehler: ${error.message}`);
+        },
+      }
+    );
+  };
+
   // Falls projectId oder companyId fehlt, zeige Hinweis
   if (!projectId || !companyId) {
     return (
@@ -341,8 +365,10 @@ export function StrategieTabContent({
         onGenerate={handleGeneratePMVorlage}
         onDelete={handleDeletePMVorlage}
         onCopyToEditor={handleCopyPMVorlageToEditor}
+        onApplyToEditor={handleApplyPMVorlageToEditor}
         onRestoreFromHistory={handleRestorePMVorlageFromHistory}
         isLoading={isGeneratingPMVorlage || isDeletingPMVorlage}
+        isApplying={isApplyingPMVorlage}
       />
 
       {/* Kernbotschaft Chat Modal */}

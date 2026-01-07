@@ -12,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   DocumentDuplicateIcon,
   ArrowPathIcon,
+  ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -38,8 +39,10 @@ interface PMVorlageSectionProps {
   onGenerate?: (targetGroup: 'ZG1' | 'ZG2' | 'ZG3') => void;
   onDelete?: () => void;
   onCopyToEditor?: () => void;
+  onApplyToEditor?: (includeTitle: boolean) => void;
   onRestoreFromHistory?: (historyIndex: number) => void;
   isLoading?: boolean;
+  isApplying?: boolean;
 }
 
 export function PMVorlageSection({
@@ -55,8 +58,10 @@ export function PMVorlageSection({
   onGenerate,
   onDelete,
   onCopyToEditor,
+  onApplyToEditor,
   onRestoreFromHistory,
   isLoading = false,
+  isApplying = false,
 }: PMVorlageSectionProps) {
   const t = useTranslations('strategy');
 
@@ -65,6 +70,8 @@ export function PMVorlageSection({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [includeTitle, setIncludeTitle] = useState(true);
   const [selectedTargetGroup, setSelectedTargetGroup] = useState<'ZG1' | 'ZG2' | 'ZG3'>('ZG1');
 
   // Kann generiert werden?
@@ -106,8 +113,15 @@ export function PMVorlageSection({
     setIsMenuOpen(false);
   };
 
+  const handleApplyToEditor = () => {
+    if (onApplyToEditor) {
+      onApplyToEditor(includeTitle);
+    }
+    setShowApplyConfirm(false);
+  };
+
   return (
-    <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-zinc-200">
       {/* Header */}
       <div
         className={clsx(
@@ -272,6 +286,24 @@ export function PMVorlageSection({
       {hasPMVorlage && isExpanded && (
         <div className="p-4 bg-zinc-50">
           <PMVorlagePreview pmVorlage={pmVorlage} isExpanded={true} />
+
+          {/* In Editor übernehmen Button - prominent */}
+          {onApplyToEditor && (
+            <div className="mt-4 pt-4 border-t border-zinc-200">
+              <Button
+                onClick={() => setShowApplyConfirm(true)}
+                disabled={isApplying}
+                className="w-full gap-2 bg-[#005fab] hover:bg-[#004a8c] text-white"
+              >
+                {isApplying ? (
+                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRightIcon className="w-4 h-4" />
+                )}
+                In Pressemeldung uebernehmen
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -348,6 +380,58 @@ export function PMVorlageSection({
         <DialogActions>
           <Button plain onClick={() => setShowHistoryDialog(false)}>
             Schliessen
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Apply to Editor Confirm Dialog */}
+      <Dialog open={showApplyConfirm} onClose={() => setShowApplyConfirm(false)}>
+        <DialogTitle>In Pressemeldung uebernehmen</DialogTitle>
+        <DialogBody>
+          <div className="space-y-4">
+            {/* Warnung */}
+            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800">
+                <p className="font-medium">Achtung: Bestehende Inhalte werden ueberschrieben!</p>
+                <p className="mt-1">
+                  Diese Aktion ersetzt den gesamten Text Ihrer Pressemeldung mit der generierten Vorlage.
+                </p>
+              </div>
+            </div>
+
+            {/* Headline Option */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeTitle}
+                onChange={(e) => setIncludeTitle(e.target.checked)}
+                className="w-4 h-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
+              />
+              <span className="text-sm text-zinc-700">
+                Headline als Titel uebernehmen
+              </span>
+            </label>
+
+            {/* Preview der Headline */}
+            {includeTitle && pmVorlage?.headline && (
+              <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+                <p className="text-xs text-zinc-500 mb-1">Neuer Titel:</p>
+                <p className="text-sm font-medium text-zinc-900">{pmVorlage.headline}</p>
+              </div>
+            )}
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowApplyConfirm(false)}>
+            Abbrechen
+          </Button>
+          <Button
+            className="bg-[#005fab] text-white hover:bg-[#004a8c]"
+            onClick={handleApplyToEditor}
+            disabled={isApplying}
+          >
+            {isApplying ? 'Wird uebertragen...' : 'Uebernehmen'}
           </Button>
         </DialogActions>
       </Dialog>

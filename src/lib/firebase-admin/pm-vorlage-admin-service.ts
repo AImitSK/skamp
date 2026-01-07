@@ -35,18 +35,17 @@ export async function savePMVorlage(
     let history: PMVorlage['history'] = [];
 
     if (existing) {
-      // Aktuelle Version in History verschieben
+      // Aktuelle Version in History verschieben (mit content Wrapper)
       const currentVersion = {
-        headline: existing.headline,
-        leadParagraph: existing.leadParagraph,
-        bodyParagraphs: existing.bodyParagraphs,
-        quote: existing.quote,
-        cta: existing.cta,
-        hashtags: existing.hashtags,
-        htmlContent: existing.htmlContent,
-        targetGroup: existing.targetGroup,
-        markenDNAHash: existing.markenDNAHash,
-        faktenMatrixHash: existing.faktenMatrixHash,
+        content: {
+          headline: existing.headline,
+          leadParagraph: existing.leadParagraph,
+          bodyParagraphs: existing.bodyParagraphs,
+          quote: existing.quote,
+          cta: existing.cta,
+          hashtags: existing.hashtags,
+          htmlContent: existing.htmlContent,
+        },
         generatedAt: existing.generatedAt,
       };
 
@@ -90,5 +89,26 @@ export async function getPMVorlage(
   } catch (error) {
     console.error('[PMVorlageAdmin] Error getting:', error);
     return null;
+  }
+}
+
+/**
+ * Löscht eine PM-Vorlage
+ */
+export async function deletePMVorlage(projectId: string): Promise<void> {
+  console.log('[PMVorlageAdmin] Deleting for project:', projectId);
+
+  try {
+    const docRef = adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('strategy')
+      .doc('pmVorlage');
+
+    await docRef.delete();
+    console.log('[PMVorlageAdmin] Deleted successfully');
+  } catch (error) {
+    console.error('[PMVorlageAdmin] Error deleting:', error);
+    throw error;
   }
 }
