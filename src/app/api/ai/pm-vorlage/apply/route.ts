@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
 
       const { projectId, organizationId, includeTitle = true } = body;
 
+      console.log('[PM-Vorlage Apply] Request:', { projectId, organizationId, includeTitle });
+
       // 1. PM-Vorlage laden
       const pmVorlage = await getPMVorlage(projectId);
       if (!pmVorlage) {
@@ -55,6 +57,8 @@ export async function POST(request: NextRequest) {
       }
 
       // 2. Campaign für dieses Projekt finden
+      console.log('[PM-Vorlage Apply] Searching campaign with projectId:', projectId, 'orgId:', organizationId);
+
       const campaignsSnapshot = await adminDb
         .collection('campaigns')
         .where('projectId', '==', projectId)
@@ -62,7 +66,21 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .get();
 
+      console.log('[PM-Vorlage Apply] Found campaigns:', campaignsSnapshot.size);
+
       if (campaignsSnapshot.empty) {
+        // Debug: Suche ohne organizationId Filter
+        const allCampaignsForProject = await adminDb
+          .collection('campaigns')
+          .where('projectId', '==', projectId)
+          .limit(5)
+          .get();
+
+        console.log('[PM-Vorlage Apply] Campaigns with only projectId filter:', allCampaignsForProject.size);
+        allCampaignsForProject.docs.forEach(doc => {
+          console.log('[PM-Vorlage Apply] Campaign:', doc.id, 'orgId:', doc.data().organizationId);
+        });
+
         return NextResponse.json(
           { error: 'Keine Pressemeldung für dieses Projekt gefunden. Bitte zuerst im Pressemeldungen-Tab erstellen.' },
           { status: 404 }
