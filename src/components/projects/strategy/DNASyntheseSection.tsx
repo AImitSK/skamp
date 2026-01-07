@@ -219,26 +219,15 @@ export function DNASyntheseSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Token-Toggle + 3-Punkte-Menü */}
+            {/* Rechts: Token-Badge + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Token-Toggle */}
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={clsx(
-                  'h-9 flex items-center gap-2 px-3 rounded-lg transition-all',
-                  'border border-purple-200 hover:border-purple-300',
-                  isExpanded ? 'bg-purple-100' : 'bg-purple-50 hover:bg-purple-100'
-                )}
-              >
+              {/* Token-Badge (nicht klickbar) */}
+              <div className="h-9 flex items-center px-3 rounded-lg bg-purple-50 border border-purple-200">
                 <span className="text-xs text-purple-600 whitespace-nowrap">
                   ~{tokenCount} Tokens
                 </span>
-                {isExpanded ? (
-                  <ChevronUpIcon className="h-4 w-4 text-purple-600" />
-                ) : (
-                  <ChevronDownIcon className="h-4 w-4 text-purple-600" />
-                )}
-              </button>
+              </div>
+
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu>
                 <button
@@ -278,6 +267,18 @@ export function DNASyntheseSection({
                   </div>
                 )}
               </div>
+
+              {/* Toggle-Button (ganz rechts, Vollton mit weißem Pfeil) */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-9 w-9 flex items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-700 transition-all"
+              >
+                {isExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-white" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-white" />
+                )}
+              </button>
             </div>
           </div>
 

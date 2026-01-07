@@ -220,26 +220,15 @@ export function KernbotschaftSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Status-Toggle + 3-Punkte-Menü */}
+            {/* Rechts: Status-Badge + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Status-Toggle */}
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={clsx(
-                  'h-9 flex items-center gap-2 px-3 rounded-lg transition-all',
-                  'border border-blue-200 hover:border-blue-300',
-                  isExpanded ? 'bg-blue-100' : 'bg-blue-50 hover:bg-blue-100'
-                )}
-              >
+              {/* Status-Badge (nicht klickbar) */}
+              <div className="h-9 flex items-center px-3 rounded-lg bg-blue-50 border border-blue-200">
                 <span className="text-xs whitespace-nowrap text-blue-600">
                   Status: {statusText}
                 </span>
-                {isExpanded ? (
-                  <ChevronUpIcon className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <ChevronDownIcon className="h-4 w-4 text-blue-600" />
-                )}
-              </button>
+              </div>
+
               {/* 3-Punkte-Menü */}
               <div className="relative" data-menu-kernbotschaft>
                 <button
@@ -279,6 +268,18 @@ export function KernbotschaftSection({
                   </div>
                 )}
               </div>
+
+              {/* Toggle-Button (ganz rechts, Vollton mit weißem Pfeil) */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-9 w-9 flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 transition-all"
+              >
+                {isExpanded ? (
+                  <ChevronUpIcon className="h-4 w-4 text-white" />
+                ) : (
+                  <ChevronDownIcon className="h-4 w-4 text-white" />
+                )}
+              </button>
             </div>
           </div>
 
