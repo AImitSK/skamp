@@ -376,7 +376,8 @@ export function PMVorlageSection({
                   <Button
                     onClick={() => setShowApplyConfirm(true)}
                     disabled={isApplying}
-                    className="w-full gap-2 bg-[#005fab] hover:bg-[#004a8c] text-white"
+                    className="w-full gap-2 text-white"
+                    style={{ backgroundColor: '#0891b2' }}
                   >
                     {isApplying ? (
                       <ArrowPathIcon className="w-4 h-4 animate-spin" />
@@ -496,7 +497,8 @@ export function PMVorlageSection({
             Abbrechen
           </Button>
           <Button
-            className="bg-[#005fab] text-white hover:bg-[#004a8c]"
+            className="text-white"
+            style={{ backgroundColor: '#0891b2' }}
             onClick={handleApplyToEditor}
             disabled={isApplying}
           >
