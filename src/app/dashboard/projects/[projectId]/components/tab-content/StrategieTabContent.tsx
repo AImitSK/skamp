@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { Project } from '@/types/project';
 import { useMarkenDNAStatus } from '@/lib/hooks/useMarkenDNA';
 import { useDNASynthese, useIsDNASyntheseOutdated, useSynthesizeDNA, useUpdateDNASynthese, useDeleteDNASynthese } from '@/lib/hooks/useDNASynthese';
@@ -13,6 +14,8 @@ import { DNASyntheseSection as DNASyntheseSectionComponent } from '@/components/
 import { KernbotschaftSection } from '@/components/projects/strategy/KernbotschaftSection';
 import { KernbotschaftChatModal } from '@/components/projects/strategy/KernbotschaftChatModal';
 import { PMVorlageSection } from '@/components/projects/strategy/PMVorlageSection';
+import { StrategieOverview } from '@/components/projects/strategy/StrategieOverview';
+import { VideoInfoCard } from '@/components/ui/VideoInfoCard';
 import { toastService } from '@/lib/utils/toast';
 
 interface StrategieTabContentProps {
@@ -34,6 +37,7 @@ export function StrategieTabContent({
 }: StrategieTabContentProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const tVideo = useTranslations('strategieTab.video');
   const companyId = project.customer?.id;
   const companyName = project.customer?.name || '';
   const projectId = project.id;
@@ -77,6 +81,21 @@ export function StrategieTabContent({
 
   // UI State
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showVideoCard, setShowVideoCard] = useState(true);
+
+  // Video-Karte Sichtbarkeit aus localStorage laden
+  useEffect(() => {
+    const hidden = localStorage.getItem('strategieTab_videoCard_hidden');
+    if (hidden === 'true') {
+      setShowVideoCard(false);
+    }
+  }, []);
+
+  // Video-Karte ausblenden Handler
+  const handleCloseVideoCard = useCallback(() => {
+    setShowVideoCard(false);
+    localStorage.setItem('strategieTab_videoCard_hidden', 'true');
+  }, []);
 
   // Handler für Chat-Schließen mit Query-Invalidierung
   const handleChatClose = useCallback(() => {
@@ -91,6 +110,20 @@ export function StrategieTabContent({
   const canSynthesize = markenDNAStatus?.isComplete ?? false;
   const hasDNASynthese = !!dnaSynthese?.plainText;
   const hasFaktenMatrix = !!faktenMatrix;
+
+  // Token-Berechnung für Overview
+  const dnaTokens = dnaSynthese?.plainText ? Math.ceil(dnaSynthese.plainText.length / 4) : 0;
+  const kernbotschaftTokens = kernbotschaft?.plainText
+    ? Math.ceil(kernbotschaft.plainText.length / 4)
+    : kernbotschaft?.content
+    ? Math.ceil(kernbotschaft.content.length / 4)
+    : 0;
+  const pmVorlageTokens = pmVorlage?.htmlContent ? Math.ceil(pmVorlage.htmlContent.length / 4) : 0;
+
+  // DNA-Dokumente Count
+  const dnaDocumentsCount = markenDNAStatus?.documents
+    ? Object.values(markenDNAStatus.documents).filter(status => status === 'completed').length
+    : 0;
 
   // Handler für Synthese
   const handleSynthesize = () => {
@@ -319,6 +352,35 @@ export function StrategieTabContent({
 
   return (
     <div className="space-y-6">
+      {/* Video Tutorial Card */}
+      {showVideoCard && (
+        <VideoInfoCard
+          videoId="yTfquGkL4cg"
+          title={tVideo('title')}
+          description={tVideo('description')}
+          features={[
+            tVideo('features.dnaSynthese'),
+            tVideo('features.kernbotschaft'),
+            tVideo('features.pmVorlage'),
+            tVideo('features.workflow')
+          ]}
+          variant="default"
+          onClose={handleCloseVideoCard}
+        />
+      )}
+
+      {/* Strategie-Übersicht mit Ring-Diagrammen */}
+      <StrategieOverview
+        dnaDocumentsCount={dnaDocumentsCount}
+        hasDNASynthese={hasDNASynthese}
+        dnaTokens={dnaTokens}
+        hasKernbotschaft={!!kernbotschaft}
+        kernbotschaftStatus={kernbotschaft?.status || null}
+        kernbotschaftTokens={kernbotschaftTokens}
+        hasPMVorlage={!!pmVorlage}
+        pmVorlageTokens={pmVorlageTokens}
+      />
+
       {/* DNA Synthese Section - Kompakt mit Toggle */}
       <DNASyntheseSectionComponent
         projectId={projectId}

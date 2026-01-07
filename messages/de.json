@@ -11738,6 +11738,18 @@
       }
     }
   },
+  "strategieTab": {
+    "video": {
+      "title": "Die CeleroPress-Formel erklärt",
+      "description": "Erfahren Sie, wie Sie mit der dreistufigen Strategie-Pipeline professionelle Pressemeldungen erstellen.",
+      "features": {
+        "dnaSynthese": "DNA-Synthese aus Marken-DNA",
+        "kernbotschaft": "Kernbotschaft im KI-Dialog",
+        "pmVorlage": "PM-Vorlage generieren",
+        "workflow": "Nahtloser Workflow"
+      }
+    }
+  },
   "prTools": {
     "campaignContext": {
       "success": {

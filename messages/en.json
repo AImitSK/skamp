@@ -11724,6 +11724,18 @@
       }
     }
   },
+  "strategieTab": {
+    "video": {
+      "title": "The CeleroPress Formula explained",
+      "description": "Learn how to create professional press releases using the three-step strategy pipeline.",
+      "features": {
+        "dnaSynthese": "DNA Synthesis from Brand DNA",
+        "kernbotschaft": "Core Message via AI Dialog",
+        "pmVorlage": "Generate Press Release Template",
+        "workflow": "Seamless Workflow"
+      }
+    }
+  },
   "prTools": {
     "campaignContext": {
       "success": {

@@ -242,43 +242,6 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Validiert und korrigiert das Datum aus der Fakten-Matrix
- * Wenn das Datum in der Vergangenheit liegt (>30 Tage), wird das aktuelle Datum verwendet
- */
-function validateAndCorrectDate(dateString: string): string {
-  const currentDate = new Date();
-
-  // Deutsche Monatsnamen
-  const monthNames: Record<string, number> = {
-    'januar': 0, 'februar': 1, 'märz': 2, 'april': 3, 'mai': 4, 'juni': 5,
-    'juli': 6, 'august': 7, 'september': 8, 'oktober': 9, 'november': 10, 'dezember': 11
-  };
-
-  // Versuche deutsches Datumsformat zu parsen (z.B. "14. Mai 2024")
-  const germanDateMatch = dateString.match(/(\d{1,2})\.\s*(\w+)\s*(\d{4})/i);
-  if (germanDateMatch) {
-    const day = parseInt(germanDateMatch[1]);
-    const monthStr = germanDateMatch[2].toLowerCase();
-    const year = parseInt(germanDateMatch[3]);
-
-    const month = monthNames[monthStr];
-    if (month !== undefined) {
-      const parsedDate = new Date(year, month, day);
-
-      // Wenn Datum mehr als 30 Tage in der Vergangenheit liegt, aktuelles Datum verwenden
-      const daysDiff = Math.floor((currentDate.getTime() - parsedDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDiff > 30) {
-        console.log(`[PM-Vorlage] Datum "${dateString}" ist veraltet (${daysDiff} Tage alt). Verwende aktuelles Datum.`);
-        return formatGermanDate(currentDate);
-      }
-    }
-  }
-
-  // Datum scheint okay oder nicht parsebar - zurueckgeben wie es ist
-  return dateString;
-}
-
-/**
  * Formatiert ein Date-Objekt als deutsches Datum (z.B. "7. Januar 2026")
  */
 function formatGermanDate(date: Date): string {
@@ -362,23 +325,17 @@ export const generatePMVorlageFlow = ai.defineFlow(
       };
     }
 
-    // 2. Datum validieren und korrigieren (veraltete Daten durch aktuelles Datum ersetzen)
-    const correctedDate = validateAndCorrectDate(input.faktenMatrix.hook.date);
-    const correctedFaktenMatrix = {
-      ...input.faktenMatrix,
-      hook: {
-        ...input.faktenMatrix.hook,
-        date: correctedDate,
-      },
-    };
+    // 2. Aktuelles Datum für den Lead formatieren (IMMER heute!)
+    const currentDate = formatGermanDate(new Date());
 
-    // 3. Experten-Prompt bauen (mit korrigiertem Datum)
+    // 3. Experten-Prompt bauen (mit aktuellem Datum und Firmenstandort aus DNA)
     const expertPrompt = buildExpertPrompt(
       input.dnaSynthese,
-      correctedFaktenMatrix,
+      input.faktenMatrix,
       input.dnaContacts,
       input.targetGroup,
-      input.companyName
+      input.companyName,
+      currentDate
     );
 
     // 3. Vollstaendigen System-Prompt zusammenbauen

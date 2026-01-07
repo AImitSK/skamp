@@ -29,12 +29,20 @@ export function buildExpertPrompt(
   faktenMatrix: FaktenMatrix,
   dnaContacts: DNAContact[],
   targetGroup?: 'ZG1' | 'ZG2' | 'ZG3',
-  companyName: string = "{{companyName}}"
+  companyName: string = "{{companyName}}",
+  /** Aktuelles Datum für den Lead (Default: heute) */
+  currentDate?: string
 ): string {
   const tonality = extractTonalityOverride(dnaSynthese);
   const blacklist = extractBlacklist(dnaSynthese);
   const keyMessages = extractKeyMessagesForTargetGroup(dnaSynthese, targetGroup);
   const companyData = extractCompanyData(dnaSynthese);
+
+  // Firmenstandort aus DNA-Synthese extrahieren (für Lead)
+  const companyLocation = extractCompanyLocation(dnaSynthese);
+
+  // Aktuelles Datum für den Lead (IMMER heute, nicht aus FaktenMatrix!)
+  const leadDate = currentDate || formatGermanDate(new Date());
 
   // Speaker finden: Erst nach ID, dann nach Name-Pattern aus speakerId
   let speaker = dnaContacts.find(c => c.id === faktenMatrix.quote.speakerId);
@@ -77,15 +85,21 @@ STRUKTUR-GESETZ (Folge diesem Ablauf)
 6. ABSCHLUSS: Der Anspruch der Marke ${companyName}.
 
 ═══════════════════════════════════════════════════════════════════
+LEAD-VORGABE (EXAKT EINHALTEN!)
+═══════════════════════════════════════════════════════════════════
+FIRMENSTANDORT: ${companyLocation}
+DATUM: ${leadDate}
+
+ZWINGEND FÜR ZEILE 2 (LEAD): Beginne mit **${companyLocation}, ${leadDate} –** gefolgt von der Kernaussage!
+NICHT verwenden: Den Event-Ort (${faktenMatrix.hook.location}) im Lead - dieser gehört in den Body!
+
+═══════════════════════════════════════════════════════════════════
 FAKTEN-MATRIX (Inhaltliche Wahrheit)
 ═══════════════════════════════════════════════════════════════════
-- ORT: ${faktenMatrix.hook.location}
-- DATUM: ${faktenMatrix.hook.date}
+- EVENT-ORT: ${faktenMatrix.hook.location} (für den Body, NICHT für den Lead!)
 - EREIGNIS: ${faktenMatrix.hook.event}
 - KONTEXT: ${faktenMatrix.details.delta}
 - BEWEISE: ${faktenMatrix.details.evidence}
-
-WICHTIG FÜR ZEILE 2 (LEAD): Verwende **${faktenMatrix.hook.location}, ${faktenMatrix.hook.date} –** am Anfang!
 
 ═══════════════════════════════════════════════════════════════════
 ZITAT-VORGABE (Echte Identität)
@@ -105,11 +119,9 @@ NUTZE FOLGENDEN KONTEXT: ${keyMessages || ''}
 
 ${companyData ? `
 ═══════════════════════════════════════════════════════════════════
-FIRMENSTAMMDATEN (EXAKT ÜBERNEHMEN!)
+FIRMENSTAMMDATEN (Zusätzlicher Kontext)
 ═══════════════════════════════════════════════════════════════════
 ${companyData}
-
-WICHTIG: Verwende den Firmenstandort aus diesen Daten für den Lead!
 ` : ''}
 `;
 }
@@ -120,6 +132,44 @@ function extractKeyMessagesForTargetGroup(dnaSynthese: string, targetGroup?: str
   return allMessages.split('\n')
     .filter(line => line.includes(`FÜR: ${targetGroup}`) || !line.includes('FÜR:'))
     .join('\n');
+}
+
+/**
+ * Formatiert ein Date-Objekt als deutsches Datum (z.B. "7. Januar 2026")
+ */
+function formatGermanDate(date: Date): string {
+  const months = [
+    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+  ];
+  return `${date.getDate()}. ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * Extrahiert den Firmenstandort (Ort/Stadt) aus der DNA-Synthese
+ * Für den Lead der Pressemeldung (nicht Event-Ort aus FaktenMatrix!)
+ */
+function extractCompanyLocation(dnaSynthese: string): string {
+  // Pattern 1: Suche nach "Sitz:" oder "Hauptsitz:" im FIRMENSTAMMDATEN Block
+  const sitzMatch = dnaSynthese.match(/(?:Haupt)?[Ss]itz:\s*([^\n,]+)/i);
+  if (sitzMatch) {
+    return sitzMatch[1].trim();
+  }
+
+  // Pattern 2: Extrahiere Stadt aus Adresse (Format: "Straße Nr, PLZ Stadt")
+  const addressMatch = dnaSynthese.match(/Adresse:\s*[^,]+,\s*\d{5}\s+([^\n]+)/i);
+  if (addressMatch) {
+    return addressMatch[1].trim();
+  }
+
+  // Pattern 3: Extrahiere Stadt aus "PLZ Stadt" Pattern
+  const plzStadtMatch = dnaSynthese.match(/\b\d{5}\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)/);
+  if (plzStadtMatch) {
+    return plzStadtMatch[1].trim();
+  }
+
+  // Fallback: Firmenname als Indikator (oft enthält er den Ort)
+  return 'Deutschland';
 }
 
 /**
