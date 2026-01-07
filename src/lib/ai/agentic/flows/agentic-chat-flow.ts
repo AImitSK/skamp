@@ -5,7 +5,9 @@ import { ai, gemini25FlashModel } from '@/lib/ai/genkit-config';
 import { z } from 'genkit';
 import { getSkillsForAgent } from '../skills';
 import { loadSpecialistPrompt } from '../prompts/prompt-loader';
+import { faktenMatrixService } from '@/lib/firebase/fakten-matrix-service';
 import type { SpecialistType, ToolCall, ChatMessage } from '../types';
+import type { FaktenMatrix } from '@/types/fakten-matrix';
 
 // ============================================================================
 // SCHEMA DEFINITIONS
@@ -40,6 +42,8 @@ const AgenticChatInputSchema = z.object({
   messages: z.array(ChatMessageSchema),
   /** Aktueller Sidebar-Inhalt (damit AI weiß was schon erfasst wurde) */
   currentDocument: z.string().optional(),
+  /** Projekt-ID (benötigt für project_wizard um Fakten-Matrix zu speichern) */
+  projectId: z.string().optional(),
 });
 
 const ToolCallSchema = z.object({
@@ -229,6 +233,37 @@ export const agenticChatFlow = ai.defineFlow(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             result = await (tool as any)(toolInput) as Record<string, unknown>;
             console.log('[AgenticFlow] Tool result:', result);
+
+            // SPECIAL HANDLING: Fakten-Matrix in Firestore speichern
+            if (toolName === 'skill_save_fakten_matrix' && result?.success && result?.faktenMatrix) {
+              if (input.projectId) {
+                try {
+                  const faktenMatrix = result.faktenMatrix as FaktenMatrix;
+                  await faktenMatrixService.save(input.projectId, faktenMatrix);
+                  console.log('[AgenticFlow] Fakten-Matrix saved to Firestore for project:', input.projectId);
+                  result = {
+                    ...result,
+                    message: 'Fakten-Matrix erfolgreich in Firestore gespeichert.',
+                    savedToFirestore: true,
+                  };
+                } catch (saveError) {
+                  console.error('[AgenticFlow] Firestore save error:', saveError);
+                  result = {
+                    ...result,
+                    message: 'Validierung OK, aber Firestore-Speicherung fehlgeschlagen.',
+                    savedToFirestore: false,
+                    firestoreError: String(saveError),
+                  };
+                }
+              } else {
+                console.warn('[AgenticFlow] skill_save_fakten_matrix called but no projectId provided');
+                result = {
+                  ...result,
+                  message: 'Validierung OK, aber keine projectId - Speicherung nicht möglich.',
+                  savedToFirestore: false,
+                };
+              }
+            }
           } catch (error) {
             console.error('[AgenticFlow] Tool execution error:', error);
             result = { error: String(error) };
@@ -327,6 +362,37 @@ export const agenticChatFlow = ai.defineFlow(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               result = await (tool as any)(toolInput) as Record<string, unknown>;
               console.log('[AgenticFlow] Follow-up tool result:', result);
+
+              // SPECIAL HANDLING: Fakten-Matrix in Firestore speichern (auch in Follow-ups)
+              if (toolName === 'skill_save_fakten_matrix' && result?.success && result?.faktenMatrix) {
+                if (input.projectId) {
+                  try {
+                    const faktenMatrix = result.faktenMatrix as FaktenMatrix;
+                    await faktenMatrixService.save(input.projectId, faktenMatrix);
+                    console.log('[AgenticFlow] Follow-up: Fakten-Matrix saved to Firestore for project:', input.projectId);
+                    result = {
+                      ...result,
+                      message: 'Fakten-Matrix erfolgreich in Firestore gespeichert.',
+                      savedToFirestore: true,
+                    };
+                  } catch (saveError) {
+                    console.error('[AgenticFlow] Follow-up: Firestore save error:', saveError);
+                    result = {
+                      ...result,
+                      message: 'Validierung OK, aber Firestore-Speicherung fehlgeschlagen.',
+                      savedToFirestore: false,
+                      firestoreError: String(saveError),
+                    };
+                  }
+                } else {
+                  console.warn('[AgenticFlow] Follow-up: skill_save_fakten_matrix called but no projectId provided');
+                  result = {
+                    ...result,
+                    message: 'Validierung OK, aber keine projectId - Speicherung nicht möglich.',
+                    savedToFirestore: false,
+                  };
+                }
+              }
             } catch (error) {
               console.error('[AgenticFlow] Follow-up tool execution error:', error);
               result = { error: String(error) };

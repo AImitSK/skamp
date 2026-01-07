@@ -31,6 +31,8 @@ export interface UseAgenticChatOptions {
   companyName: string;
   /** Optionaler Document-Type für Spezialisten */
   documentType?: string;
+  /** Projekt-ID (benötigt für project_wizard um Fakten-Matrix zu speichern) */
+  projectId?: string;
   /** Bestehende Chat-History (z.B. bei Fortsetzung) */
   existingChatHistory?: ChatMessage[];
   /** Bestehendes Dokument (z.B. bei Fortsetzung) */
@@ -149,6 +151,7 @@ export function useAgenticChat(options: UseAgenticChatOptions) {
           companyId: options.companyId,
           companyName: options.companyName,
           documentType: options.documentType,
+          projectId: options.projectId,
           language: locale,
           messages: updatedMessages,
           currentDocument: toolbox.document?.content || undefined,

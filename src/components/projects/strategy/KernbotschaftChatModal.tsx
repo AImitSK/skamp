@@ -62,6 +62,7 @@ export function KernbotschaftChatModal({
     initialSpecialist: 'project_wizard',
     companyId,
     companyName,
+    projectId,
     documentType: 'kernbotschaft',
     existingChatHistory,
     onDocumentComplete: (doc) => {
