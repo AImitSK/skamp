@@ -82,10 +82,19 @@ export function buildExpertPrompt(
   const keyMessages = extractKeyMessagesForTargetGroup(dnaSynthese, targetGroup);
   const companyData = extractCompanyMasterData(dnaSynthese);
 
-  // 2. Zitatgeber aus DNA-Kontakten auflösen via speakerId
-  const speaker = dnaContacts.find(c => c.id === faktenMatrix.quote.speakerId);
+  // 2. Zitatgeber aus DNA-Kontakten auflösen via speakerId (mit Fallback)
+  let speaker = dnaContacts.find(c => c.id === faktenMatrix.quote.speakerId);
   if (!speaker) {
-    throw new Error(`Speaker mit ID ${faktenMatrix.quote.speakerId} nicht in DNA-Kontakten gefunden`);
+    // Fallback: Name/Position aus speakerId extrahieren (Format: "contact_vorname_nachname_position")
+    const speakerId = faktenMatrix.quote.speakerId;
+    const parts = speakerId.replace('contact_', '').split('_');
+    const fallbackName = parts.slice(0, -1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Sprecher';
+    const fallbackPosition = parts[parts.length - 1]?.toUpperCase() || 'Geschäftsführer';
+    speaker = {
+      id: speakerId,
+      name: fallbackName,
+      position: fallbackPosition,
+    };
   }
 
   // 3. Fokussierter Prompt bauen
