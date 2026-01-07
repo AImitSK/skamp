@@ -185,12 +185,12 @@ export function KernbotschaftSection({
               {isLoading ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Lädt...
+                  Generiere...
                 </>
               ) : (
                 <>
                   <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                  Mit KI erstellen
+                  Generieren
                 </>
               )}
             </Button>
