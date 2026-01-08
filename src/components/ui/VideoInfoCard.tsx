@@ -250,7 +250,7 @@ export function VideoInfoCard({
                 {features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <CheckIcon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className={`text-zinc-700 ${variant === 'compact' ? 'text-sm' : ''}`}>
+                    <span className={`text-zinc-700 ${variant === 'compact' ? 'text-xs' : 'text-sm'}`}>
                       {feature}
                     </span>
                   </li>
