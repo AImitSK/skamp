@@ -11740,13 +11740,13 @@
   },
   "strategieTab": {
     "video": {
-      "title": "Die CeleroPress-Formel erklärt",
-      "description": "Erfahren Sie, wie Sie mit der dreistufigen Strategie-Pipeline professionelle Pressemeldungen erstellen.",
+      "title": "Ihr Weg zur perfekten Pressemeldung",
+      "description": "Erfahren Sie, wie Sie mit unserer dreistufigen Strategie-Pipeline systematisch professionelle Ergebnisse erzielen. Dieser Workflow verwandelt Ihre Markenidentität in eine versandfertige Story.",
       "features": {
-        "dnaSynthese": "DNA-Synthese aus Marken-DNA",
-        "kernbotschaft": "Kernbotschaft im KI-Dialog",
-        "pmVorlage": "PM-Vorlage generieren",
-        "workflow": "Nahtloser Workflow"
+        "dnaSynthese": "DNA-Synthese (Lila): Das System bündelt Ihre 6 Marken-DNA-Dokumente zu einer kompakten Wissensbasis. Sie ist das Fundament für alle weiteren Schritte.",
+        "kernbotschaft": "Kernbotschaft (Blau): Im interaktiven KI-Dialog erarbeiten Sie das Herzstück Ihrer Meldung. Hier definieren wir gemeinsam Anlass, Ziel und Zielgruppen.",
+        "pmVorlage": "PM-Vorlage (Cyan): Basierend auf Ihrer DNA und der Fakten-Matrix erstellen wir ein fertiges Manuskript – maßgeschneidert für B2B, Consumer oder Fachmedien.",
+        "workflow": "Nahtloser Editor-Transfer: Ein Klick genügt, um die fertige Vorlage in den Kampagnen-Editor zu übertragen und final zu versenden."
       }
     }
   },

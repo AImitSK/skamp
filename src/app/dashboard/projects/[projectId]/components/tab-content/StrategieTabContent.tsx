@@ -355,7 +355,7 @@ export function StrategieTabContent({
       {/* Video Tutorial Card */}
       {showVideoCard && (
         <VideoInfoCard
-          videoId="yTfquGkL4cg"
+          videoId="ZUWe1NjECeE"
           title={tVideo('title')}
           description={tVideo('description')}
           features={[

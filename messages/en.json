@@ -11726,13 +11726,13 @@
   },
   "strategieTab": {
     "video": {
-      "title": "The CeleroPress Formula explained",
-      "description": "Learn how to create professional press releases using the three-step strategy pipeline.",
+      "title": "Your Path to the Perfect Press Release",
+      "description": "Discover how our three-step strategy pipeline helps you achieve professional results systematically. This workflow transforms your brand identity into a ready-to-publish story.",
       "features": {
-        "dnaSynthese": "DNA Synthesis from Brand DNA",
-        "kernbotschaft": "Core Message via AI Dialog",
-        "pmVorlage": "Generate Press Release Template",
-        "workflow": "Seamless Workflow"
+        "dnaSynthese": "DNA Synthesis (Purple): The system consolidates your 6 Brand DNA documents into a compact knowledge base. It serves as the foundation for all subsequent steps.",
+        "kernbotschaft": "Core Message (Blue): In an interactive AI dialog, you develop the heart of your release. Together we define the occasion, goals, and target audiences.",
+        "pmVorlage": "PR Template (Cyan): Based on your DNA and the Facts Matrix, we create a finished manuscript – tailored for B2B, Consumer, or Trade Media.",
+        "workflow": "Seamless Editor Transfer: One click is all it takes to transfer the finished template to the campaign editor and send it out."
       }
     }
   },

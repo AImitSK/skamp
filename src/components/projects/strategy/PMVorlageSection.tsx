@@ -268,13 +268,22 @@ export function PMVorlageSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Token-Badge + 3-Punkte-Menü + Toggle-Button */}
+            {/* Rechts: Token-Badge/Loader + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Token-Badge */}
+              {/* Token-Badge oder Loading-Indikator */}
               <div className="h-9 flex items-center px-3 rounded-lg bg-cyan-50 border border-cyan-200">
-                <span className="text-xs text-cyan-600 whitespace-nowrap">
-                  ~{tokenCount} Tokens
-                </span>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-3.5 w-3.5 border-2 border-cyan-300 border-t-cyan-600 rounded-full" />
+                    <span className="text-xs text-cyan-600 whitespace-nowrap">
+                      Generiere...
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-cyan-600 whitespace-nowrap">
+                    ~{tokenCount} Tokens
+                  </span>
+                )}
               </div>
 
               {/* 3-Punkte-Menü */}

@@ -224,13 +224,22 @@ export function DNASyntheseSection({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Rechts: Token-Badge + 3-Punkte-Menü + Toggle-Button */}
+            {/* Rechts: Token-Badge/Loader + 3-Punkte-Menü + Toggle-Button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Token-Badge (nicht klickbar) */}
+              {/* Token-Badge oder Loading-Indikator */}
               <div className="h-9 flex items-center px-3 rounded-lg bg-purple-50 border border-purple-200">
-                <span className="text-xs text-purple-600 whitespace-nowrap">
-                  ~{tokenCount} Tokens
-                </span>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-3.5 w-3.5 border-2 border-purple-300 border-t-purple-600 rounded-full" />
+                    <span className="text-xs text-purple-600 whitespace-nowrap">
+                      Generiere...
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-purple-600 whitespace-nowrap">
+                    ~{tokenCount} Tokens
+                  </span>
+                )}
               </div>
 
               {/* 3-Punkte-Menü */}
