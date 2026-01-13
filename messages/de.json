@@ -3403,12 +3403,13 @@
         "opened": "{count} geöffnet ({rate}%)"
       },
       "table": {
+        "article": "Artikel",
         "campaign": "Kampagne",
         "client": "Kunde",
-        "links": "Links",
         "medium": "Medium",
         "openArticle": "Artikel öffnen",
         "openProject": "Projekt öffnen",
+        "project": "Projekt",
         "sent": "Versendet",
         "status": "Status",
         "title": "Titel",

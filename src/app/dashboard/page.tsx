@@ -870,10 +870,10 @@ export default function DashboardHomePage() {
                   <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
                     <div className="grid grid-cols-12 gap-3">
                       <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.type')}</div>
-                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.client')}</div>
-                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">{t('monitoring.table.links')}</div>
-                      <div className="col-span-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.title')}</div>
-                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.medium')}</div>
+                      <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.client')}</div>
+                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">{t('monitoring.table.project')}</div>
+                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">{t('monitoring.table.article')}</div>
+                      <div className="col-span-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.medium')}</div>
                       <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.status')}</div>
                     </div>
                   </div>
@@ -891,9 +891,6 @@ export default function DashboardHomePage() {
                       const articleUrl = item.type === 'clipping'
                         ? (item.data as MediaClipping).url
                         : (item.data as MonitoringSuggestion).articleUrl;
-                      const articleTitle = item.type === 'clipping'
-                        ? (item.data as MediaClipping).title
-                        : (item.data as MonitoringSuggestion).articleTitle;
 
                       return (
                         <div key={`${item.type}-${item.type === 'clipping' ? (item.data as MediaClipping).id : (item.data as MonitoringSuggestion).id}-${idx}`} className="px-6 py-4 hover:bg-zinc-50 transition-colors">
@@ -908,15 +905,14 @@ export default function DashboardHomePage() {
                             </div>
 
                             {/* Kunde */}
-                            <div className="col-span-2 min-w-0">
+                            <div className="col-span-3 min-w-0">
                               <Text className="text-sm text-zinc-700 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={campaignInfo?.clientName}>
                                 {campaignInfo?.clientName || '—'}
                               </Text>
                             </div>
 
-                            {/* Links: Projekt + Artikel */}
-                            <div className="col-span-1 flex items-center justify-center gap-2">
-                              {/* Projekt-Link */}
+                            {/* Projekt-Link */}
+                            <div className="col-span-1 flex items-center justify-center">
                               {projectId ? (
                                 <Link
                                   href={`/dashboard/projects/${projectId}`}
@@ -930,7 +926,10 @@ export default function DashboardHomePage() {
                                   <FolderIcon className="h-4 w-4" />
                                 </span>
                               )}
-                              {/* Artikel-Link */}
+                            </div>
+
+                            {/* Artikel-Link */}
+                            <div className="col-span-1 flex items-center justify-center">
                               <a
                                 href={articleUrl}
                                 target="_blank"
@@ -942,18 +941,8 @@ export default function DashboardHomePage() {
                               </a>
                             </div>
 
-                            {/* Titel (nur Text, Links sind jetzt separat) */}
-                            <div className="col-span-4 min-w-0">
-                              <Text
-                                className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis"
-                                title={articleTitle}
-                              >
-                                {articleTitle}
-                              </Text>
-                            </div>
-
                             {/* Medium */}
-                            <div className="col-span-2 min-w-0">
+                            <div className="col-span-4 min-w-0">
                               <Text className="text-sm text-zinc-600 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                                 {item.type === 'clipping'
                                   ? (item.data as MediaClipping).outletName
