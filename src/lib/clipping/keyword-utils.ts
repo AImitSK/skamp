@@ -27,25 +27,30 @@ export interface AutoConfirmResult {
   seoScore: number;
 }
 
-// Bekannte deutsche Rechtsformen
+// Bekannte Rechtsformen (deutsch und international)
 const LEGAL_FORMS = [
-  'GmbH',
-  'AG',
-  'Ltd.',
-  'Inc.',
-  'LLC',
-  'UG',
-  'KG',
-  'e.V.',
-  'SE',
-  'OHG',
-  'GbR',
-  '& Co.',
-  '& Co. KG'
+  'GmbH', 'AG', 'KG', 'OHG', 'GbR', 'UG', 'e.V.', 'eG',
+  'Ltd.', 'Ltd', 'Inc.', 'Inc', 'LLC', 'Corp.', 'Corp',
+  'SE', 'S.A.', 'S.L.', 'B.V.', 'N.V.', 'Pty', 'PLC',
+  '& Co.', '& Co', 'KGaA', 'mbH', 'Co. KG', 'Co.KG', '& Co. KG'
 ];
 
 /**
+ * Prüft ob ein Keyword nur eine Rechtsform ist (zu generisch für Google News Suche)
+ * Diese würden zu vielen False Positives führen.
+ */
+function isOnlyLegalForm(keyword: string): boolean {
+  const cleaned = keyword.trim();
+  return LEGAL_FORMS.some(form =>
+    cleaned.toLowerCase() === form.toLowerCase()
+  );
+}
+
+/**
  * Extrahiert Keywords aus Company-Daten
+ *
+ * WICHTIG: Filtert alleinstehende Rechtsformen heraus (z.B. nur "GmbH"),
+ * da diese zu viele False Positives in Google News erzeugen.
  */
 export function extractCompanyKeywords(company: CompanyData): CompanyKeywords {
   const keywords: Set<string> = new Set();
@@ -59,16 +64,18 @@ export function extractCompanyKeywords(company: CompanyData): CompanyKeywords {
     return result.trim();
   };
 
-  // Hilfsfunktion: Varianten hinzufügen
+  // Hilfsfunktion: Varianten hinzufügen (mit Absicherung gegen reine Rechtsformen)
   const addVariants = (name: string) => {
     if (!name || name.length < 2) return;
 
-    // Original
-    keywords.add(name);
+    // Nur hinzufügen wenn es NICHT nur eine Rechtsform ist
+    if (!isOnlyLegalForm(name)) {
+      keywords.add(name);
+    }
 
     // Ohne Rechtsform
     const withoutForm = removeRechtsform(name);
-    if (withoutForm.length >= 2 && withoutForm !== name) {
+    if (withoutForm.length >= 2 && withoutForm !== name && !isOnlyLegalForm(withoutForm)) {
       keywords.add(withoutForm);
     }
   };
@@ -84,16 +91,17 @@ export function extractCompanyKeywords(company: CompanyData): CompanyKeywords {
   }
 
   // 3. Trading Name
-  if (company.tradingName && company.tradingName.length >= 2) {
+  if (company.tradingName && company.tradingName.length >= 2 && !isOnlyLegalForm(company.tradingName)) {
     keywords.add(company.tradingName);
   }
 
   // Primary ist der Hauptname
   const primary = company.name || '';
 
+  // Finale Filterung: min. 2 Zeichen und keine reinen Rechtsformen
   return {
     primary,
-    all: Array.from(keywords)
+    all: Array.from(keywords).filter(k => k.length >= 2 && !isOnlyLegalForm(k))
   };
 }
 

@@ -26,7 +26,9 @@ import {
   LinkIcon,
   NewspaperIcon,
   SparklesIcon,
-  CalendarIcon
+  CalendarIcon,
+  FolderIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { SentimentIcon } from '@/components/ui/sentiment-icons';
 import { projectService } from '@/lib/firebase/project-service';
@@ -97,6 +99,8 @@ export default function DashboardHomePage() {
   const [monitoringFilter, setMonitoringFilter] = useState<'published' | 'pending'>('published');
   const [monitoringPage, setMonitoringPage] = useState(1);
   const monitoringPerPage = 5;
+  // Map von campaignId -> { clientName, projectId }
+  const [campaignInfoMap, setCampaignInfoMap] = useState<Map<string, { clientName?: string; projectId?: string }>>(new Map());
 
   // Role Labels
   const roleLabels: Record<string, string> = {
@@ -183,6 +187,18 @@ export default function DashboardHomePage() {
 
       // Lade alle Kampagnen
       const allCampaigns = await prService.getAll(currentOrganization.id, true);
+
+      // Erstelle Map von campaignId -> { clientName, projectId }
+      const infoMap = new Map<string, { clientName?: string; projectId?: string }>();
+      for (const campaign of allCampaigns) {
+        if (campaign.id) {
+          infoMap.set(campaign.id, {
+            clientName: campaign.clientName,
+            projectId: campaign.projectId
+          });
+        }
+      }
+      setCampaignInfoMap(infoMap);
 
       // Lade alle Clippings und Suggestions parallel
       const [allClippings, allSuggestions] = await Promise.all([
@@ -852,87 +868,125 @@ export default function DashboardHomePage() {
                 <>
                   {/* Table Header */}
                   <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
-                    <div className="grid grid-cols-12 gap-4">
+                    <div className="grid grid-cols-12 gap-3">
                       <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.type')}</div>
-                      <div className="col-span-6 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.title')}</div>
-                      <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.medium')}</div>
+                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.client')}</div>
+                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">{t('monitoring.table.links')}</div>
+                      <div className="col-span-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.title')}</div>
+                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.medium')}</div>
                       <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.status')}</div>
                     </div>
                   </div>
 
                   {/* Table Body */}
                   <div className="flex-1 overflow-y-auto divide-y divide-zinc-200">
-                    {paginatedMonitoringItems.map((item, idx) => (
-                      <div key={`${item.type}-${item.type === 'clipping' ? (item.data as MediaClipping).id : (item.data as MonitoringSuggestion).id}-${idx}`} className="px-6 py-4 hover:bg-zinc-50 transition-colors">
-                        <div className="grid grid-cols-12 gap-4 items-center">
-                          {/* Typ Icon */}
-                          <div className="col-span-1">
-                            {item.type === 'clipping' ? (
-                              <NewspaperIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.publication')} />
-                            ) : (
-                              <SparklesIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.autoFind')} />
-                            )}
-                          </div>
+                    {paginatedMonitoringItems.map((item, idx) => {
+                      const campaignId = item.type === 'clipping'
+                        ? (item.data as MediaClipping).campaignId
+                        : (item.data as MonitoringSuggestion).campaignId;
+                      const campaignInfo = campaignId ? campaignInfoMap.get(campaignId) : undefined;
+                      const projectId = item.type === 'clipping'
+                        ? (item.data as MediaClipping).projectId || campaignInfo?.projectId
+                        : campaignInfo?.projectId;
+                      const articleUrl = item.type === 'clipping'
+                        ? (item.data as MediaClipping).url
+                        : (item.data as MonitoringSuggestion).articleUrl;
+                      const articleTitle = item.type === 'clipping'
+                        ? (item.data as MediaClipping).title
+                        : (item.data as MonitoringSuggestion).articleTitle;
 
-                          {/* Titel */}
-                          <div className="col-span-6 min-w-0">
-                            {item.type === 'clipping' ? (
+                      return (
+                        <div key={`${item.type}-${item.type === 'clipping' ? (item.data as MediaClipping).id : (item.data as MonitoringSuggestion).id}-${idx}`} className="px-6 py-4 hover:bg-zinc-50 transition-colors">
+                          <div className="grid grid-cols-12 gap-3 items-center">
+                            {/* Typ Icon */}
+                            <div className="col-span-1">
+                              {item.type === 'clipping' ? (
+                                <NewspaperIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.publication')} />
+                              ) : (
+                                <SparklesIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.autoFind')} />
+                              )}
+                            </div>
+
+                            {/* Kunde */}
+                            <div className="col-span-2 min-w-0">
+                              <Text className="text-sm text-zinc-700 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={campaignInfo?.clientName}>
+                                {campaignInfo?.clientName || '—'}
+                              </Text>
+                            </div>
+
+                            {/* Links: Projekt + Artikel */}
+                            <div className="col-span-1 flex items-center justify-center gap-2">
+                              {/* Projekt-Link */}
+                              {projectId ? (
+                                <Link
+                                  href={`/dashboard/projects/${projectId}`}
+                                  className="text-zinc-400 hover:text-primary transition-colors"
+                                  title={t('monitoring.table.openProject')}
+                                >
+                                  <FolderIcon className="h-4 w-4" />
+                                </Link>
+                              ) : (
+                                <span className="text-zinc-200">
+                                  <FolderIcon className="h-4 w-4" />
+                                </span>
+                              )}
+                              {/* Artikel-Link */}
                               <a
-                                href={(item.data as MediaClipping).url}
+                                href={articleUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm font-medium text-primary hover:text-primary-hover hover:underline truncate whitespace-nowrap overflow-hidden text-ellipsis block"
-                                title={(item.data as MediaClipping).title}
+                                className="text-zinc-400 hover:text-primary transition-colors"
+                                title={t('monitoring.table.openArticle')}
                               >
-                                {(item.data as MediaClipping).title}
+                                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                               </a>
-                            ) : (
-                              <a
-                                href={(item.data as MonitoringSuggestion).articleUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm font-medium text-zinc-900 hover:text-primary hover:underline truncate whitespace-nowrap overflow-hidden text-ellipsis block"
-                                title={(item.data as MonitoringSuggestion).articleTitle}
-                              >
-                                {(item.data as MonitoringSuggestion).articleTitle}
-                              </a>
-                            )}
-                          </div>
+                            </div>
 
-                          {/* Medium */}
-                          <div className="col-span-3 min-w-0">
-                            <Text className="text-sm text-zinc-600 truncate whitespace-nowrap overflow-hidden text-ellipsis">
-                              {item.type === 'clipping'
-                                ? (item.data as MediaClipping).outletName
-                                : (item.data as MonitoringSuggestion).sources?.[0]?.sourceName || t('monitoring.unknown')}
-                            </Text>
-                          </div>
-
-                          {/* Status / Sentiment + Aktion */}
-                          <div className="col-span-2 flex items-center gap-2">
-                            {item.type === 'clipping' ? (
-                              <>
-                                <SentimentIcon
-                                  sentiment={(item.data as MediaClipping).sentiment}
-                                  className="h-5 w-5"
-                                />
-                                <CalendarIcon className="h-4 w-4 text-zinc-400" />
-                                <Text className="text-xs text-zinc-500">
-                                  {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
-                                </Text>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => handleConfirmSuggestion(item.data as MonitoringSuggestion)}
-                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            {/* Titel (nur Text, Links sind jetzt separat) */}
+                            <div className="col-span-4 min-w-0">
+                              <Text
+                                className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis"
+                                title={articleTitle}
                               >
-                                {t('common.confirm')}
-                              </button>
-                            )}
+                                {articleTitle}
+                              </Text>
+                            </div>
+
+                            {/* Medium */}
+                            <div className="col-span-2 min-w-0">
+                              <Text className="text-sm text-zinc-600 truncate whitespace-nowrap overflow-hidden text-ellipsis">
+                                {item.type === 'clipping'
+                                  ? (item.data as MediaClipping).outletName
+                                  : (item.data as MonitoringSuggestion).sources?.[0]?.sourceName || t('monitoring.unknown')}
+                              </Text>
+                            </div>
+
+                            {/* Status / Sentiment + Aktion */}
+                            <div className="col-span-2 flex items-center gap-2">
+                              {item.type === 'clipping' ? (
+                                <>
+                                  <SentimentIcon
+                                    sentiment={(item.data as MediaClipping).sentiment}
+                                    className="h-5 w-5"
+                                  />
+                                  <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                                  <Text className="text-xs text-zinc-500">
+                                    {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                                  </Text>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => handleConfirmSuggestion(item.data as MonitoringSuggestion)}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                >
+                                  {t('common.confirm')}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Pagination */}

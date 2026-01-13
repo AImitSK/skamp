@@ -3409,7 +3409,11 @@
       },
       "table": {
         "campaign": "Campaign",
+        "client": "Client",
+        "links": "Links",
         "medium": "Medium",
+        "openArticle": "Open article",
+        "openProject": "Open project",
         "sent": "Sent",
         "status": "Status",
         "title": "Title",

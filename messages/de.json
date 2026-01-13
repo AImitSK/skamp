@@ -3404,7 +3404,11 @@
       },
       "table": {
         "campaign": "Kampagne",
+        "client": "Kunde",
+        "links": "Links",
         "medium": "Medium",
+        "openArticle": "Artikel öffnen",
+        "openProject": "Projekt öffnen",
         "sent": "Versendet",
         "status": "Status",
         "title": "Titel",

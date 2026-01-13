@@ -409,13 +409,17 @@ class CampaignMonitoringService {
   /**
    * Extrahiert Keywords aus Company-Daten
    * Verwendet name, officialName und tradingName
+   *
+   * WICHTIG: Filtert alleinstehende Rechtsformen heraus (z.B. nur "GmbH"),
+   * da diese zu viele False Positives in Google News erzeugen.
    */
   private extractKeywordsFromCompany(company: any): string[] {
     const keywords: string[] = [];
     const legalForms = [
       'GmbH', 'AG', 'KG', 'OHG', 'GbR', 'UG', 'e.V.', 'eG',
       'Ltd.', 'Ltd', 'Inc.', 'Inc', 'LLC', 'Corp.', 'Corp',
-      'SE', 'S.A.', 'S.L.', 'B.V.', 'N.V.', 'Pty', 'PLC'
+      'SE', 'S.A.', 'S.L.', 'B.V.', 'N.V.', 'Pty', 'PLC',
+      '& Co.', '& Co', 'KGaA', 'mbH', 'Co. KG', 'Co.KG'
     ];
 
     const removeLegalForm = (name: string): string => {
@@ -427,31 +431,50 @@ class CampaignMonitoringService {
       return cleaned;
     };
 
+    // Prüft ob ein Keyword nur eine Rechtsform ist (zu generisch für Suche)
+    const isOnlyLegalForm = (keyword: string): boolean => {
+      const cleaned = keyword.trim();
+      return legalForms.some(form =>
+        cleaned.toLowerCase() === form.toLowerCase()
+      );
+    };
+
     // 1. name (Pflicht)
     if (company.name) {
-      keywords.push(company.name.trim());
-      const withoutLegal = removeLegalForm(company.name);
-      if (withoutLegal !== company.name.trim() && withoutLegal.length >= 2) {
+      const name = company.name.trim();
+      // Nur hinzufügen wenn es NICHT nur eine Rechtsform ist
+      if (!isOnlyLegalForm(name)) {
+        keywords.push(name);
+      }
+      const withoutLegal = removeLegalForm(name);
+      if (withoutLegal !== name && withoutLegal.length >= 2 && !isOnlyLegalForm(withoutLegal)) {
         keywords.push(withoutLegal);
       }
     }
 
     // 2. officialName (falls vorhanden und anders als name)
     if (company.officialName && company.officialName !== company.name) {
-      keywords.push(company.officialName.trim());
-      const withoutLegal = removeLegalForm(company.officialName);
-      if (withoutLegal !== company.officialName.trim() && !keywords.includes(withoutLegal) && withoutLegal.length >= 2) {
+      const officialName = company.officialName.trim();
+      // Nur hinzufügen wenn es NICHT nur eine Rechtsform ist
+      if (!isOnlyLegalForm(officialName)) {
+        keywords.push(officialName);
+      }
+      const withoutLegal = removeLegalForm(officialName);
+      if (withoutLegal !== officialName && !keywords.includes(withoutLegal) && withoutLegal.length >= 2 && !isOnlyLegalForm(withoutLegal)) {
         keywords.push(withoutLegal);
       }
     }
 
     // 3. tradingName (falls vorhanden)
-    if (company.tradingName && !keywords.includes(company.tradingName.trim())) {
-      keywords.push(company.tradingName.trim());
+    if (company.tradingName) {
+      const tradingName = company.tradingName.trim();
+      if (!keywords.includes(tradingName) && !isOnlyLegalForm(tradingName)) {
+        keywords.push(tradingName);
+      }
     }
 
-    // Deduplizieren und filtern
-    return [...new Set(keywords)].filter(k => k.length >= 2);
+    // Deduplizieren und filtern (min. 2 Zeichen, keine reinen Rechtsformen)
+    return [...new Set(keywords)].filter(k => k.length >= 2 && !isOnlyLegalForm(k));
   }
 
   /**
