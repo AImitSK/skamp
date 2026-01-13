@@ -183,8 +183,8 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
   return (
     <>
-      {/* Chat Toggle Button - immer sichtbar */}
-      <div className="fixed bottom-4 right-4 z-50">
+      {/* Chat Toggle Button - immer sichtbar, über dem HelpButton positioniert */}
+      <div className="fixed bottom-20 right-6 z-50">
         {!isOpen && (
           <button
             onClick={toggleChat}
@@ -213,9 +213,9 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
         )}
       </div>
 
-      {/* Chat Panel - nur sichtbar wenn isOpen */}
+      {/* Chat Panel - nur sichtbar wenn isOpen, über dem HelpButton positioniert */}
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 z-50 ${shouldAnimate ? 'animate-slide-up' : ''}`} data-floating-chat>
+        <div className={`fixed bottom-20 right-6 z-50 ${shouldAnimate ? 'animate-slide-up' : ''}`} data-floating-chat>
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
             <div className="bg-primary text-white px-2 py-2 rounded-t-lg flex items-center justify-between">
