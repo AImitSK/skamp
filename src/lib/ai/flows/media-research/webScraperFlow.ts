@@ -5,16 +5,13 @@ import { ai, gemini25FlashModel } from '../../genkit-config';
 import {
   WebScraperInputSchema,
   WebScraperOutputSchema,
-  ExtractedPublisherInfoSchema,
-  ExtractedPublicationSchema,
-  ExtractedContactSchema,
   type WebScraperInput,
   type WebScraperOutput,
   type ExtractedPublisherInfo,
   type ExtractedPublication,
   type ExtractedContact,
+  type SocialMediaLink,
 } from '../../schemas/media-research-schemas';
-import { z } from 'genkit';
 
 // ══════════════════════════════════════════════════════════════
 // KONSTANTEN
@@ -146,15 +143,50 @@ KEINE MEDIENUNTERNEHMEN sind:
 ✗ Post, Logistik, Kurierdienste
 ✗ Immobilien, Makler
 
+AUCH KEINE PR-RELEVANTEN MEDIEN (ausschließen!):
+✗ Fachverlage ohne Nachrichtenwert (Steuerrecht, Formulare, Schulbücher, Fachbücher)
+✗ Marketing-Agenturen, SEO-Agenturen, Werbeagenturen
+✗ Content-Marketing-Blogs, Unternehmensblogs
+✗ Buchverlage ohne journalistische Inhalte (Kinderbücher, Romane, Fachliteratur)
+✗ Newsletter-Services ohne eigene Redaktion
+✗ Performance-Marketing, Growth-Hacking Blogs
+✗ Religiöse Verlage (Bibeln, Predigten, religiöse Literatur)
+
+NUR RELEVANT FÜR PR sind Medien mit:
+✓ Aktuelle Nachrichten/Berichterstattung
+✓ Journalistische Redaktion
+✓ Regionale oder überregionale Reichweite
+✓ Leserschaft die für PR-Meldungen relevant ist
+
 SCHRITT 2 - EXTRAKTION (nur wenn isMediaCompany = true):
 - Extrahiere NUR Informationen die explizit im Text vorhanden sind
 - Erfinde KEINE Informationen
 - Bei Unsicherheit: lieber weglassen als raten
 - E-Mail-Adressen und Telefonnummern müssen exakt übernommen werden
 
+SCHRITT 3 - NUR JOURNALISTEN EXTRAHIEREN (KRITISCH):
+Bei Kontakten: Extrahiere NUR echte Journalisten/Redakteure!
+✓ Chefredakteur, Redaktionsleiter
+✓ Redakteur (auch: Lokalredakteur, Sportredakteur, etc.)
+✓ Reporter, Journalist, Korrespondent
+✓ Ressortleiter
+✓ CvD (Chef vom Dienst)
+✓ Volontär
+
+KEINE Journalisten (NICHT extrahieren):
+✗ Geschäftsführer, CEO, Vorstand (außer gleichzeitig Chefredakteur)
+✗ Marketing, Vertrieb, Sales
+✗ IT, Technik, Webmaster
+✗ Buchhaltung, Personal, HR
+✗ Anzeigenverkauf, Mediaberater
+✗ Sekretariat, Empfang
+✗ Fahrer, Zusteller
+
+Wenn KEINE Journalisten gefunden werden: Erstelle einen Funktionskontakt mit redaktion@, presse@ oder info@ E-Mail.
+
 Antworte IMMER mit validem JSON im angegebenen Format.`;
 
-const EXTRACTION_USER_PROMPT = (companyName: string, content: string) => `
+const EXTRACTION_USER_PROMPT = (companyName: string, content: string, baseUrl: string) => `
 Analysiere den folgenden Website-Content von "${companyName}".
 
 SCHRITT 1: Ist dies ein echtes MEDIENUNTERNEHMEN?
@@ -162,23 +194,77 @@ Prüfe anhand des Contents ob es ein Verlag, Zeitung, Radiosender, Online-Nachri
 Setze "isMediaCompany": false wenn es sich um Bäckerei, Supermarkt, Restaurant, Landwirtschaft, Versicherung, Sportverein, Kirche, Behörde, etc. handelt.
 
 SCHRITT 2: Nur wenn isMediaCompany=true, extrahiere:
-1. PUBLISHER INFO: Verlagsinformationen
-2. PUBLICATIONS: Publikationen/Zeitungen/Magazine
-3. CONTACTS: Redakteure und Ansprechpartner
+1. PUBLISHER INFO: Verlagsinformationen inkl. Social Media
+2. PUBLICATIONS: Publikationen mit Website, Social Media, ISSN, Auflage, Page Views
+3. CONTACTS: NUR echte Journalisten/Redakteure (siehe Regeln unten)!
 
-WICHTIG FÜR KONTAKTE:
-- Suche AKTIV nach E-Mail-Adressen im GESAMTEN Content!
-- E-Mail-Formate: vorname.nachname@domain.de, v.nachname@domain.de, redaktion@domain.de
-- Suche nach Telefon-Durchwahlen (oft mit -Nummern wie 05021 966-123)
-- Prüfe BESONDERS: Impressum, Kontaktseite, Team-Seite, Redaktionsseite
-- Wenn du eine E-Mail wie "m.mueller@zeitung.de" findest, ordne sie "Max Müller" zu
-- Auch allgemeine Redaktions-E-Mails (redaktion@, info@) sind wertvoll als Fallback
+═══════════════════════════════════════════════════════════════
+KONTAKTE - NUR JOURNALISTEN MIT KONTAKTDATEN!
+═══════════════════════════════════════════════════════════════
+WICHTIG: Füge einen Kontakt NUR zur contacts-Liste hinzu, wenn du:
+- Einen vollständigen Namen (Vor- UND Nachname) UND
+- Eine E-Mail-Adresse ODER Telefonnummer findest!
 
-WICHTIG FÜR PUBLIKATIONEN:
-- Jede Publikation braucht eine Website-URL (meist die Hauptdomain oder Subdomain)
-- PRINT-Metriken: Suche nach "Auflage", "verkaufte Auflage", "IVW", "verbreitete Auflage"
-- ONLINE-Metriken: Suche nach "Page Views", "Visits", "Unique Visitors", "Reichweite"
-- Diese Zahlen stehen oft in: Media-Daten, Über uns, Werbung/Anzeigen-Seiten
+Kontakte OHNE Email und OHNE Telefon werden NICHT importiert - ignoriere sie!
+
+Extrahiere NUR Personen mit diesen Positionen:
+✓ Chefredakteur, Redaktionsleiter, Stellv. Chefredakteur
+✓ Redakteur (Sport-, Lokal-, Politik-, Kultur-, Wirtschaftsredakteur)
+✓ Reporter, Journalist, Korrespondent
+✓ Ressortleiter, CvD (Chef vom Dienst)
+✓ Volontär, Freier Mitarbeiter (redaktionell)
+
+NICHT extrahieren (IGNORIEREN):
+✗ Geschäftsführer, Vorstand, CEO (außer = Chefredakteur)
+✗ Marketing, Vertrieb, Anzeigenverkauf
+✗ IT, Webmaster, Technik
+✗ HR, Buchhaltung, Verwaltung
+✗ Personen OHNE E-Mail UND OHNE Telefonnummer!
+
+Für jeden Journalisten:
+- Suche die persönliche E-Mail: vorname.nachname@domain.de
+- Suche Durchwahl-Telefonnummern
+
+═══════════════════════════════════════════════════════════════
+FUNKTIONSKONTAKT (FALLBACK)
+═══════════════════════════════════════════════════════════════
+Wenn du KEINE Journalisten mit persönlicher E-Mail findest:
+Erstelle einen "functionalContact" mit:
+- contactType: "function"
+- functionName: "Redaktion" oder "Newsdesk" oder "Pressestelle"
+- email: redaktion@..., newsdesk@..., presse@..., oder info@...
+- phone: Redaktions-Telefonnummer
+
+═══════════════════════════════════════════════════════════════
+PUBLIKATIONEN - VOLLSTÄNDIGE DATEN
+═══════════════════════════════════════════════════════════════
+Für jede Publikation extrahiere:
+- website: URL der Publikation (PFLICHT! z.B. ${baseUrl})
+- socialMedia: Facebook, Instagram, Twitter, YouTube Profile
+- issn: ISSN-Nummer falls vorhanden
+- circulation: Print-Auflage (Zahl, z.B. 25000)
+- monthlyPageViews: Online Page Views (Zahl, z.B. 500000)
+- monthlyUniqueVisitors: Unique Visitors (Zahl)
+
+Suche nach: "Auflage", "IVW", "verkaufte Auflage", "Page Views", "Visits", "Reichweite"
+
+═══════════════════════════════════════════════════════════════
+SOCIAL MEDIA
+═══════════════════════════════════════════════════════════════
+Suche nach Social Media Links für Publisher UND Publikationen:
+- Facebook: facebook.com/...
+- Instagram: instagram.com/...
+- Twitter/X: twitter.com/... oder x.com/...
+- LinkedIn: linkedin.com/company/...
+- YouTube: youtube.com/...
+- TikTok: tiktok.com/@...
+
+═══════════════════════════════════════════════════════════════
+MEDIADATEN-PDF LINKS
+═══════════════════════════════════════════════════════════════
+Suche nach PDF-Links zu Mediadaten:
+- Links mit "mediadaten", "media-daten", "mediadata" im URL
+- Links zu .pdf Dateien auf /mediadaten, /media, /werbung Seiten
 
 WEBSITE CONTENT:
 ${content}
@@ -187,46 +273,68 @@ Antworte mit diesem JSON-Format:
 {
   "isMediaCompany": true/false,
   "mediaConfidence": 0-100,
-  "mediaClassificationReason": "Kurze Begründung warum Medienunternehmen oder nicht",
+  "mediaClassificationReason": "Kurze Begründung",
+  "mediadataPdfUrls": ["https://...mediadaten.pdf"],
   "publisherInfo": {
     "name": "...",
     "officialName": "...",
-    "legalForm": "...",
+    "legalForm": "GmbH/AG/etc.",
     "address": { "street": "...", "postalCode": "...", "city": "...", "country": "DE" },
     "phone": "...",
     "email": "...",
-    "website": "...",
-    "description": "..."
+    "website": "${baseUrl}",
+    "description": "...",
+    "socialMedia": [
+      { "platform": "facebook", "url": "https://facebook.com/...", "handle": "..." },
+      { "platform": "instagram", "url": "https://instagram.com/...", "handle": "..." }
+    ]
   },
   "publications": [
     {
-      "name": "Name der Zeitung/Zeitschrift",
+      "name": "Name der Zeitung",
       "type": "daily|weekly|monthly|online|magazine|special|other",
-      "frequency": "täglich/wöchentlich/monatlich/etc.",
-      "distribution": "Verbreitungsgebiet (z.B. Region Schaumburg)",
+      "frequency": "täglich/wöchentlich/etc.",
+      "distribution": "Region/Verbreitungsgebiet",
       "topics": ["Politik", "Sport", "Lokales"],
-      "website": "https://www.publikation-url.de (WICHTIG: URL der Publikation!)",
+      "website": "https://www.zeitung-url.de",
       "circulation": 25000,
       "monthlyPageViews": 500000,
-      "monthlyUniqueVisitors": 150000
+      "monthlyUniqueVisitors": 150000,
+      "issn": "1234-5678",
+      "socialMedia": [
+        { "platform": "facebook", "url": "...", "handle": "..." }
+      ]
     }
   ],
   "contacts": [
     {
-      "name": "Vollständiger Name",
-      "firstName": "...",
-      "lastName": "...",
-      "position": "...",
-      "department": "...",
-      "email": "vorname.nachname@domain.de (WICHTIG: Echte E-Mail aus Content!)",
-      "phone": "+49 xxx yyy (WICHTIG: Echte Nummer aus Content!)",
-      "beats": ["Themengebiet1", "Themengebiet2"],
-      "isEditor": true/false
+      "contactType": "person",
+      "name": "Max Müller",
+      "firstName": "Max",
+      "lastName": "Müller",
+      "position": "Sportredakteur",
+      "department": "Sport",
+      "email": "max.mueller@zeitung.de",
+      "phone": "+49 5021 966-123",
+      "beats": ["Sport", "Lokalsport"],
+      "isEditor": false,
+      "isJournalist": true
     }
-  ]
+  ],
+  "functionalContact": {
+    "contactType": "function",
+    "functionName": "Redaktion",
+    "name": "Redaktion Zeitung XY",
+    "email": "redaktion@zeitung.de",
+    "phone": "+49 5021 966-0",
+    "isJournalist": false
+  }
 }
 
-WICHTIG: Bei isMediaCompany=false können publisherInfo, publications und contacts leer sein.`;
+WICHTIG:
+- Bei isMediaCompany=false: publisherInfo, publications, contacts leer lassen
+- functionalContact NUR wenn keine Journalisten mit persönlicher E-Mail gefunden
+- Jede Publication MUSS eine website haben!`;
 
 // ══════════════════════════════════════════════════════════════
 // GENKIT FLOW
@@ -258,6 +366,9 @@ export const webScraperFlow = ai.defineFlow(
 
     if (!mainContent) {
       return {
+        isMediaCompany: false,
+        mediaConfidence: 0,
+        mediaClassificationReason: 'Website konnte nicht geladen werden',
         publisherInfo: undefined,
         publications: [],
         contacts: [],
@@ -278,7 +389,7 @@ export const webScraperFlow = ai.defineFlow(
     const subpageUrls = findSubpageUrls(input.websiteUrl, mainContent);
     const allContent: string[] = [mainContent];
 
-    for (const subUrl of subpageUrls.slice(0, 3)) { // Max 3 Subpages
+    for (const subUrl of subpageUrls.slice(0, 5)) { // Max 5 Subpages für mehr Kontaktdaten
       try {
         const subContent = await scrapeWithJina(subUrl);
         jinaRequests++;
@@ -291,8 +402,8 @@ export const webScraperFlow = ai.defineFlow(
         // Subpage nicht verfügbar - OK
       }
 
-      // Rate Limiting
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Rate Limiting - 1.5 Sekunden zwischen Requests um 429 Errors zu vermeiden
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     // 3. Kombinierter Content für LLM
@@ -310,13 +421,20 @@ export const webScraperFlow = ai.defineFlow(
     let publisherInfo: ExtractedPublisherInfo | undefined;
     let publications: ExtractedPublication[] = [];
     let contacts: ExtractedContact[] = [];
+    let functionalContact: ExtractedContact | undefined;
+    let mediadataPdfUrls: string[] = [];
+    const internalNotesItems: string[] = [];
+
+    // Base URL für Prompt extrahieren
+    const baseUrlObj = new URL(input.websiteUrl);
+    const baseUrl = baseUrlObj.origin;
 
     try {
       const response = await ai.generate({
         model: gemini25FlashModel,
         prompt: [
           { text: EXTRACTION_SYSTEM_PROMPT },
-          { text: EXTRACTION_USER_PROMPT(input.companyName, truncatedContent) },
+          { text: EXTRACTION_USER_PROMPT(input.companyName, truncatedContent, baseUrl) },
         ],
         config: {
           temperature: 0.1, // Niedrig für konsistente Extraktion
@@ -335,7 +453,7 @@ export const webScraperFlow = ai.defineFlow(
         try {
           const extracted = JSON.parse(jsonMatch[0]);
 
-          // 1. Medien-Klassifizierung extrahieren (WICHTIG!)
+          // 1. Medien-Klassifizierung extrahieren (KRITISCH!)
           isMediaCompany = extracted.isMediaCompany === true;
           mediaConfidence = typeof extracted.mediaConfidence === 'number' ? extracted.mediaConfidence : 0;
           mediaClassificationReason = extracted.mediaClassificationReason;
@@ -347,7 +465,12 @@ export const webScraperFlow = ai.defineFlow(
             reason: mediaClassificationReason,
           });
 
-          // 2. Nur bei echten Medienunternehmen weitere Daten extrahieren
+          // 2. Mediadaten-PDF URLs extrahieren
+          if (Array.isArray(extracted.mediadataPdfUrls)) {
+            mediadataPdfUrls = extracted.mediadataPdfUrls.filter((url: string) => url && url.includes('.pdf'));
+          }
+
+          // 3. Nur bei echten Medienunternehmen weitere Daten extrahieren
           if (isMediaCompany && extracted.publisherInfo) {
             const extractedPublisher = extracted.publisherInfo as ExtractedPublisherInfo;
 
@@ -370,43 +493,159 @@ export const webScraperFlow = ai.defineFlow(
             publisherInfo = extractedPublisher;
           }
 
+          // 4. Publikationen mit Website-Fallback
           if (isMediaCompany && Array.isArray(extracted.publications)) {
-            publications = extracted.publications.filter((p: any) => p.name);
+            // Valide Publication-Types
+            const validTypes = ['daily', 'weekly', 'monthly', 'online', 'magazine', 'special', 'other'] as const;
+
+            publications = extracted.publications
+              .filter((p: any) => p.name)
+              .map((p: any) => {
+                // Sanitize type: LLM gibt manchmal "daily|online" zurück
+                let sanitizedType: typeof validTypes[number] | undefined = undefined;
+                if (p.type) {
+                  const typeStr = String(p.type).toLowerCase().split('|')[0].trim();
+                  if (validTypes.includes(typeStr as any)) {
+                    sanitizedType = typeStr as typeof validTypes[number];
+                  }
+                }
+
+                // Website robust extrahieren (Fallback zu baseUrl)
+                const pubWebsite = (p.website && p.website.trim() !== '') ? p.website.trim() : baseUrl;
+
+                console.log('[WebScraper] Publication Website:', {
+                  name: p.name,
+                  originalWebsite: p.website,
+                  finalWebsite: pubWebsite,
+                });
+
+                // Firestore-sicheres Objekt bauen (keine undefined Werte!)
+                const publication: Record<string, unknown> = {
+                  name: p.name,
+                  website: pubWebsite,
+                };
+                // Nur definierte Werte hinzufügen
+                if (sanitizedType) publication.type = sanitizedType;
+                if (p.frequency) publication.frequency = p.frequency;
+                if (p.distribution) publication.distribution = p.distribution;
+                if (Array.isArray(p.topics) && p.topics.length > 0) publication.topics = p.topics;
+                if (p.circulation) publication.circulation = p.circulation;
+                if (p.monthlyPageViews) publication.monthlyPageViews = p.monthlyPageViews;
+                if (p.monthlyUniqueVisitors) publication.monthlyUniqueVisitors = p.monthlyUniqueVisitors;
+                if (Array.isArray(p.socialMedia) && p.socialMedia.length > 0) publication.socialMedia = p.socialMedia;
+                if (p.issn) publication.issn = p.issn;
+                if (p.ivwId) publication.ivwId = p.ivwId;
+                return publication;
+              });
+
+            // Note wenn keine Publikation eine eigene Website hat
+            const pubsWithoutWebsite = publications.filter(p => p.website === baseUrl);
+            if (pubsWithoutWebsite.length > 0) {
+              internalNotesItems.push(`${pubsWithoutWebsite.length} Publikation(en) ohne eigene Website - Basis-URL verwendet`);
+            }
           }
 
+          // 5. Kontakte - NUR Journalisten!
           if (isMediaCompany && Array.isArray(extracted.contacts)) {
             contacts = extracted.contacts
-              .filter((c: any) => c.name)
+              .filter((c: any) => c.name && c.isJournalist !== false)
               .map((c: any) => ({
                 ...c,
+                contactType: 'person' as const,
+                isJournalist: true,
                 // Vor- und Nachname splitten wenn nicht vorhanden
                 firstName: c.firstName || c.name?.split(' ')[0],
                 lastName: c.lastName || c.name?.split(' ').slice(1).join(' '),
               }));
+
+            // Statistik: Journalisten mit/ohne Email
+            const journalistsWithEmail = contacts.filter(c => c.email);
+            const journalistsWithPhone = contacts.filter(c => c.phone);
+
+            if (contacts.length > 0 && journalistsWithEmail.length === 0) {
+              internalNotesItems.push(`${contacts.length} Journalist(en) gefunden, aber keine mit persönlicher E-Mail`);
+            }
+
+            console.log('[WebScraper] Journalisten:', {
+              total: contacts.length,
+              withEmail: journalistsWithEmail.length,
+              withPhone: journalistsWithPhone.length,
+            });
+          }
+
+          // 6. Funktionskontakt als Fallback
+          if (isMediaCompany && extracted.functionalContact) {
+            const fc = extracted.functionalContact;
+            if (fc.email || fc.phone) {
+              functionalContact = {
+                contactType: 'function',
+                name: fc.name || fc.functionName || 'Redaktion',
+                functionName: fc.functionName || 'Redaktion',
+                email: fc.email,
+                phone: fc.phone,
+                isJournalist: false,
+              };
+              console.log('[WebScraper] Funktionskontakt:', functionalContact.name, functionalContact.email);
+            }
+          }
+
+          // 7. Automatisch Funktionskontakt erstellen wenn keine Journalisten mit Email
+          if (isMediaCompany && contacts.filter(c => c.email).length === 0 && !functionalContact) {
+            // Suche nach redaktion@, presse@, info@ im Content
+            const emailPatterns = [
+              /redaktion@[\w.-]+\.\w+/gi,
+              /newsdesk@[\w.-]+\.\w+/gi,
+              /presse@[\w.-]+\.\w+/gi,
+              /news@[\w.-]+\.\w+/gi,
+              /info@[\w.-]+\.\w+/gi,
+            ];
+
+            for (const pattern of emailPatterns) {
+              const match = truncatedContent.match(pattern);
+              if (match) {
+                functionalContact = {
+                  contactType: 'function',
+                  name: `Redaktion ${input.companyName}`,
+                  functionName: 'Redaktion',
+                  email: match[0].toLowerCase(),
+                  isJournalist: false,
+                };
+                internalNotesItems.push(`Keine Journalisten-Emails gefunden - Funktionskontakt erstellt: ${match[0]}`);
+                console.log('[WebScraper] Auto-Funktionskontakt:', match[0]);
+                break;
+              }
+            }
+
+            if (!functionalContact) {
+              internalNotesItems.push('Keine Redakteurs-Emails und keine allgemeine Redaktions-Email gefunden');
+            }
           }
 
           console.log('[WebScraper] Extrahiert:', {
             isMediaCompany,
             hasPublisher: !!publisherInfo,
             publications: publications.length,
-            contacts: contacts.length,
-            contactsWithEmail: contacts.filter(c => c.email).length,
-            contactsWithPhone: contacts.filter(c => c.phone).length,
+            journalists: contacts.length,
+            journalistsWithEmail: contacts.filter(c => c.email).length,
+            hasFunctionalContact: !!functionalContact,
+            mediadataPdfs: mediadataPdfUrls.length,
           });
         } catch (parseError) {
           errors.push(`JSON Parse Error: ${parseError}`);
           console.error('[WebScraper] JSON Parse Error:', parseError);
+          internalNotesItems.push('LLM-Antwort konnte nicht geparst werden');
         }
       } else {
         errors.push('Kein JSON in LLM-Antwort gefunden');
+        internalNotesItems.push('LLM hat kein valides JSON zurückgegeben');
       }
     } catch (llmError) {
       errors.push(`LLM Error: ${llmError}`);
       console.error('[WebScraper] LLM Error:', llmError);
+      internalNotesItems.push(`LLM-Fehler: ${llmError}`);
     }
 
-    // 5. Fallback: NUR bei Medienunternehmen Basis-Info erstellen
-    // Bei Nicht-Medien: publisherInfo bleibt undefined!
+    // 8. Fallback: NUR bei Medienunternehmen Basis-Info erstellen
     if (isMediaCompany && !publisherInfo) {
       publisherInfo = {
         name: input.companyName,
@@ -414,7 +653,13 @@ export const webScraperFlow = ai.defineFlow(
         phone: input.knownInfo?.phone,
         address: input.knownInfo?.city ? { city: input.knownInfo.city } : undefined,
       };
+      internalNotesItems.push('Nur Basis-Verlagsinfo erstellt - keine detaillierten Daten auf Website gefunden');
     }
+
+    // 9. Interne Notizen zusammenfassen
+    const internalNotes = internalNotesItems.length > 0
+      ? internalNotesItems.join('\n• ')
+      : undefined;
 
     // Kosten berechnen (Gemini 2.5 Flash: $0.075/1M input, $0.30/1M output)
     const estimatedCostUSD = (llmTokensUsed / 1_000_000) * 0.15; // Durchschnitt
@@ -426,9 +671,12 @@ export const webScraperFlow = ai.defineFlow(
       publisherInfo,
       publications,
       contacts,
+      functionalContact,
       scrapedUrls,
+      mediadataPdfUrls: mediadataPdfUrls.length > 0 ? mediadataPdfUrls : undefined,
       success: errors.length === 0,
       errors: errors.length > 0 ? errors : undefined,
+      internalNotes,
       cost: {
         jinaRequests,
         llmTokensUsed,

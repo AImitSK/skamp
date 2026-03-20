@@ -14,6 +14,8 @@ import {
 import { googlePlacesSearchFlow } from './googlePlacesSearchFlow';
 import { webScraperFlow } from './webScraperFlow';
 import { crmImportFlow } from './crmImportFlow';
+import { saveToStagingFlow, autoEnrichSessionFlow } from './stagingFlow';
+import { v4 as uuidv4 } from 'uuid';
 
 // ══════════════════════════════════════════════════════════════
 // TYPES
@@ -25,6 +27,8 @@ interface PublisherResult {
   publisherInfo?: ExtractedPublisherInfo;
   publications: ExtractedPublication[];
   contacts: ExtractedContact[];
+  /** Funktionskontakt als Fallback wenn keine Journalisten mit Email */
+  functionalContact?: ExtractedContact;
   status: 'success' | 'partial' | 'failed' | 'not_media';
   errors: string[];
   placeId?: string;
@@ -32,6 +36,8 @@ interface PublisherResult {
   isMediaCompany?: boolean;
   mediaConfidence?: number;
   mediaClassificationReason?: string;
+  /** Interne Notizen für CRM (Probleme, Hinweise) */
+  internalNotes?: string;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -176,6 +182,7 @@ export const mediaResearchFlow = ai.defineFlow(
         publisherResult.isMediaCompany = scraperResult.isMediaCompany;
         publisherResult.mediaConfidence = scraperResult.mediaConfidence;
         publisherResult.mediaClassificationReason = scraperResult.mediaClassificationReason;
+        publisherResult.internalNotes = scraperResult.internalNotes;
 
         // WICHTIG: Nur echte Medienunternehmen weiter verarbeiten!
         if (!scraperResult.isMediaCompany) {
@@ -187,10 +194,15 @@ export const mediaResearchFlow = ai.defineFlow(
           publisherResult.publisherInfo = scraperResult.publisherInfo;
           publisherResult.publications = scraperResult.publications;
           publisherResult.contacts = scraperResult.contacts;
+          publisherResult.functionalContact = scraperResult.functionalContact;
 
+          const journalistsWithEmail = scraperResult.contacts.filter(c => c.email).length;
           console.log(`[MediaResearch] ✓ MEDIEN: ${place.name} (${scraperResult.mediaConfidence}% Konfidenz)`);
-          console.log(`[MediaResearch]   Extrahiert: ${scraperResult.publications.length} Pub, ${scraperResult.contacts.length} Kontakte`);
-          console.log(`[MediaResearch]   Kontakte mit E-Mail: ${scraperResult.contacts.filter(c => c.email).length}`);
+          console.log(`[MediaResearch]   Extrahiert: ${scraperResult.publications.length} Pub, ${scraperResult.contacts.length} Journalisten`);
+          console.log(`[MediaResearch]   Journalisten mit E-Mail: ${journalistsWithEmail}`);
+          if (scraperResult.functionalContact) {
+            console.log(`[MediaResearch]   Funktionskontakt: ${scraperResult.functionalContact.email}`);
+          }
         } else {
           publisherResult.status = 'partial';
           publisherResult.errors = scraperResult.errors || [];
@@ -253,38 +265,121 @@ export const mediaResearchFlow = ai.defineFlow(
     // ══════════════════════════════════════════════════════════════
     let crmImportResult;
 
-    if (input.importToCrm) {
-      console.log('\n💾 PHASE 3: CRM Import...');
+    // ══════════════════════════════════════════════════════════════
+    // PHASE 3: STAGING ODER CRM IMPORT
+    // ══════════════════════════════════════════════════════════════
 
-      // WICHTIG: NUR verifizierte Medienunternehmen importieren!
-      const mediaResults = results.filter(r =>
-        r.isMediaCompany === true &&
-        r.status !== 'failed' &&
-        r.status !== 'not_media' &&
-        r.publisherInfo
-      );
+    // WICHTIG: NUR verifizierte Medienunternehmen verarbeiten!
+    const mediaResults = results.filter(r =>
+      r.isMediaCompany === true &&
+      r.status !== 'failed' &&
+      r.status !== 'not_media' &&
+      r.publisherInfo
+    );
 
-      const nonMediaResults = results.filter(r =>
-        r.isMediaCompany === false || r.status === 'not_media'
-      );
+    const nonMediaResults = results.filter(r =>
+      r.isMediaCompany === false || r.status === 'not_media'
+    );
 
-      console.log(`[MediaResearch] Klassifizierung:`);
-      console.log(`  - Echte Medienunternehmen: ${mediaResults.length}`);
-      console.log(`  - Keine Medienunternehmen (gefiltert): ${nonMediaResults.length}`);
+    console.log(`[MediaResearch] Klassifizierung:`);
+    console.log(`  - Echte Medienunternehmen: ${mediaResults.length}`);
+    console.log(`  - Keine Medienunternehmen (gefiltert): ${nonMediaResults.length}`);
 
-      // Log gefilterte Nicht-Medien
-      for (const nm of nonMediaResults) {
-        console.log(`  ✗ ${nm.publisherName}: ${nm.mediaClassificationReason || 'nicht klassifiziert'}`);
+    // Log gefilterte Nicht-Medien
+    for (const nm of nonMediaResults) {
+      console.log(`  ✗ ${nm.publisherName}: ${nm.mediaClassificationReason || 'nicht klassifiziert'}`);
+    }
+
+    // Staging-Tracking
+    let stagingSessionId: string | undefined;
+    let stagingStats = { saved: 0, readyForImport: 0, needsEnrichment: 0 };
+
+    // ══════════════════════════════════════════════════════════════
+    // OPTION A: STAGING MODUS (empfohlen für Review)
+    // ══════════════════════════════════════════════════════════════
+    if (input.useStaging) {
+      console.log('\n📦 PHASE 3: Staging-Modus (Review vor Import)...');
+
+      // Session ID für diese Recherche
+      stagingSessionId = uuidv4();
+      console.log(`[MediaResearch] Staging Session: ${stagingSessionId}`);
+
+      for (const result of mediaResults) {
+        try {
+          // In Staging speichern
+          const stagingResult = await saveToStagingFlow({
+            organizationId: input.organizationId,
+            sessionId: stagingSessionId,
+            tagName: input.tagName,
+            userId: input.userId,
+            googlePlacesData: {
+              placeId: result.placeId || '',
+              name: result.publisherName,
+              website: result.website,
+              searchTerm: 'media-research',
+            },
+            scraperOutput: {
+              isMediaCompany: result.isMediaCompany || false,
+              mediaConfidence: result.mediaConfidence || 0,
+              mediaClassificationReason: result.mediaClassificationReason,
+              publisherInfo: result.publisherInfo,
+              publications: result.publications,
+              contacts: result.contacts,
+              functionalContact: result.functionalContact,
+              scrapedUrls: [],
+              mediadataPdfUrls: [],
+              internalNotes: result.internalNotes,
+              cost: { jinaRequests: 0, llmTokensUsed: 0, estimatedCostUSD: 0 },
+            },
+          });
+
+          stagingStats.saved++;
+          if (stagingResult.readyForImport) {
+            stagingStats.readyForImport++;
+          } else {
+            stagingStats.needsEnrichment++;
+          }
+
+          console.log(`[MediaResearch] Staging: ${result.publisherName} → Score ${stagingResult.qualityScore}, ${stagingResult.status}`);
+        } catch (error: any) {
+          warnings.push(`Staging-Fehler für ${result.publisherName}: ${error.message}`);
+        }
       }
+
+      console.log(`[MediaResearch] Staging abgeschlossen: ${stagingStats.saved} gespeichert, ${stagingStats.readyForImport} bereit, ${stagingStats.needsEnrichment} braucht Enrichment`);
+
+      // Auto-Enrichment falls aktiviert
+      if (input.autoEnrich && stagingStats.needsEnrichment > 0) {
+        console.log('\n🔄 Auto-Enrichment für Einträge mit niedrigem Score...');
+        try {
+          const enrichResult = await autoEnrichSessionFlow({
+            sessionId: stagingSessionId,
+            maxEnrichments: Math.min(stagingStats.needsEnrichment, 10),
+          });
+          console.log(`[MediaResearch] Auto-Enrichment: ${enrichResult.improved} verbessert, ${enrichResult.nowReady} jetzt bereit`);
+          stagingStats.readyForImport += enrichResult.nowReady;
+        } catch (error: any) {
+          warnings.push(`Auto-Enrichment Fehler: ${error.message}`);
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // OPTION B: DIREKTER CRM IMPORT (bisheriges Verhalten)
+    // ══════════════════════════════════════════════════════════════
+    else if (input.importToCrm) {
+      console.log('\n💾 PHASE 3: Direkter CRM Import...');
 
       const publishersToImport = mediaResults
         .map(r => ({
           publisherInfo: r.publisherInfo!,
           publications: r.publications,
           contacts: r.contacts,
+          functionalContact: r.functionalContact,
           sourceUrl: r.website,
           placeId: r.placeId,
-          fallbackName: r.publisherName, // Google Places Name als Fallback
+          fallbackName: r.publisherName,
+          internalNotes: r.internalNotes,
         }));
 
       console.log(`[MediaResearch] Importiere ${publishersToImport.length} verifizierte Medien-Publisher`);
@@ -378,6 +473,12 @@ export const mediaResearchFlow = ai.defineFlow(
         errors: r.errors.length > 0 ? r.errors : undefined,
       })),
       crmImport: crmImportResult,
+      staging: stagingSessionId ? {
+        sessionId: stagingSessionId,
+        saved: stagingStats.saved,
+        readyForImport: stagingStats.readyForImport,
+        needsEnrichment: stagingStats.needsEnrichment,
+      } : undefined,
       costs: {
         googlePlaces: googlePlacesCost,
         jina: jinaCost,

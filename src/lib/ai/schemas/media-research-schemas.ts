@@ -85,6 +85,16 @@ export const WebScraperInputSchema = z.object({
 export type WebScraperInput = z.infer<typeof WebScraperInputSchema>;
 
 /**
+ * Social Media Link Schema
+ */
+export const SocialMediaLinkSchema = z.object({
+  platform: z.enum(['facebook', 'instagram', 'twitter', 'x', 'linkedin', 'youtube', 'tiktok', 'xing', 'whatsapp', 'threads', 'bluesky', 'other']).describe('Plattform'),
+  url: z.string().describe('URL zum Profil'),
+  handle: z.string().nullish().describe('Handle/Username ohne @'),
+});
+export type SocialMediaLink = z.infer<typeof SocialMediaLinkSchema>;
+
+/**
  * Eine extrahierte Publikation
  */
 export const ExtractedPublicationSchema = z.object({
@@ -100,16 +110,26 @@ export const ExtractedPublicationSchema = z.object({
   /** Monatliche Unique Visitors */
   monthlyUniqueVisitors: z.number().nullish().describe('Monatliche Unique Visitors (Online)'),
   website: z.string().nullish().describe('Website URL der Publikation'),
+  /** Social Media Profile der Publikation */
+  socialMedia: z.array(SocialMediaLinkSchema).nullish().describe('Social Media Profile'),
+  /** Identifikatoren (ISSN, etc.) */
+  issn: z.string().nullish().describe('ISSN-Nummer'),
+  /** IVW-Nummer für geprüfte Auflagen */
+  ivwId: z.string().nullish().describe('IVW-Identifikator'),
 });
 export type ExtractedPublication = z.infer<typeof ExtractedPublicationSchema>;
 
 /**
- * Ein extrahierter Redakteur/Kontakt
+ * Ein extrahierter Redakteur/Kontakt (nur echte Journalisten!)
  */
 export const ExtractedContactSchema = z.object({
-  name: z.string().nullish().describe('Vollständiger Name'),
-  firstName: z.string().nullish().describe('Vorname'),
-  lastName: z.string().nullish().describe('Nachname'),
+  /** Kontakttyp: person (echter Journalist) oder function (Funktionskontakt wie "Redaktion") */
+  contactType: z.enum(['person', 'function']).default('person').describe('Kontakttyp'),
+  name: z.string().nullish().describe('Vollständiger Name oder Funktionsname'),
+  firstName: z.string().nullish().describe('Vorname (nur bei person)'),
+  lastName: z.string().nullish().describe('Nachname (nur bei person)'),
+  /** Funktionsname bei Typ "function" (z.B. "Redaktion", "Newsdesk", "Pressestelle") */
+  functionName: z.string().nullish().describe('Funktionsname (nur bei function)'),
   position: z.string().nullish().describe('Position/Rolle'),
   department: z.string().nullish().describe('Abteilung/Ressort'),
   email: z.string().nullish().describe('E-Mail-Adresse'),
@@ -117,6 +137,8 @@ export const ExtractedContactSchema = z.object({
   beats: z.array(z.string()).nullish().describe('Themengebiete'),
   publications: z.array(z.string()).nullish().describe('Zugehörige Publikationen'),
   isEditor: z.boolean().nullish().describe('Ist Chefredakteur/Leitung'),
+  /** Ist dies ein echter Journalist/Redakteur? */
+  isJournalist: z.boolean().default(true).describe('Ist echter Journalist/Redakteur'),
 });
 export type ExtractedContact = z.infer<typeof ExtractedContactSchema>;
 
@@ -140,6 +162,8 @@ export const ExtractedPublisherInfoSchema = z.object({
   description: z.string().nullish().describe('Beschreibung des Verlags'),
   foundedYear: z.number().nullish().describe('Gründungsjahr'),
   parentCompany: z.string().nullish().describe('Muttergesellschaft'),
+  /** Social Media Profile des Verlags */
+  socialMedia: z.array(SocialMediaLinkSchema).nullish().describe('Social Media Profile'),
 });
 export type ExtractedPublisherInfo = z.infer<typeof ExtractedPublisherInfoSchema>;
 
@@ -156,9 +180,15 @@ export const WebScraperOutputSchema = z.object({
   publisherInfo: ExtractedPublisherInfoSchema.optional().describe('Verlagsinformationen'),
   publications: z.array(ExtractedPublicationSchema).describe('Gefundene Publikationen'),
   contacts: z.array(ExtractedContactSchema).describe('Gefundene Kontakte'),
+  /** Funktionskontakt als Fallback wenn keine Journalisten gefunden wurden */
+  functionalContact: ExtractedContactSchema.optional().describe('Funktionskontakt (Redaktion) als Fallback'),
   scrapedUrls: z.array(z.string()).describe('Durchsuchte URLs'),
+  /** Gefundene Mediadaten-PDF URLs */
+  mediadataPdfUrls: z.array(z.string()).optional().describe('Gefundene Mediadaten-PDF URLs'),
   success: z.boolean().describe('War das Scraping erfolgreich'),
   errors: z.array(z.string()).optional().describe('Aufgetretene Fehler'),
+  /** Interne Notizen für CRM (Probleme, Hinweise) */
+  internalNotes: z.string().optional().describe('Interne Notizen für den CRM-Datensatz'),
   cost: z.object({
     jinaRequests: z.number(),
     llmTokensUsed: z.number(),
@@ -186,10 +216,14 @@ export const CrmImportInputSchema = z.object({
     publisherInfo: ExtractedPublisherInfoSchema,
     publications: z.array(ExtractedPublicationSchema),
     contacts: z.array(ExtractedContactSchema),
+    /** Funktionskontakt als Fallback (Redaktion, Pressestelle) */
+    functionalContact: ExtractedContactSchema.optional(),
     sourceUrl: z.string().optional(),
     placeId: z.string().optional(),
     /** Fallback-Name falls publisherInfo.name null ist (z.B. aus Google Places) */
     fallbackName: z.string().optional(),
+    /** Interne Notizen für den Company-Datensatz */
+    internalNotes: z.string().optional(),
   })).describe('Publisher mit Publikationen und Kontakten'),
 });
 export type CrmImportInput = z.infer<typeof CrmImportInputSchema>;
@@ -257,6 +291,10 @@ export const MediaResearchInputSchema = z.object({
   importToCrm: z.boolean().default(true).describe('In CRM importieren'),
   /** Ob bestehende aktualisiert werden sollen */
   updateExisting: z.boolean().default(false).describe('Bestehende Einträge aktualisieren'),
+  /** Staging-Modus: Speichert in Staging Collection statt direktem CRM-Import */
+  useStaging: z.boolean().default(false).describe('Staging-Modus (empfohlen für Review vor Import)'),
+  /** Auto-Enrichment nach Staging aktivieren */
+  autoEnrich: z.boolean().default(true).describe('Automatisches Re-Enrichment bei niedrigem Score'),
 });
 export type MediaResearchInput = z.infer<typeof MediaResearchInputSchema>;
 
@@ -279,11 +317,18 @@ export const MediaResearchOutputSchema = z.object({
     website: z.string().optional(),
     publicationsCount: z.number(),
     contactsCount: z.number(),
-    status: z.enum(['success', 'partial', 'failed']),
+    status: z.enum(['success', 'partial', 'failed', 'not_media', 'skipped']),
     errors: z.array(z.string()).optional(),
   })).describe('Ergebnisse pro Publisher'),
   /** CRM Import Ergebnis (falls durchgeführt) */
   crmImport: CrmImportOutputSchema.optional().describe('CRM Import Ergebnis'),
+  /** Staging Ergebnis (falls useStaging=true) */
+  staging: z.object({
+    sessionId: z.string().describe('Staging Session ID'),
+    saved: z.number().describe('In Staging gespeichert'),
+    readyForImport: z.number().describe('Bereit für Import'),
+    needsEnrichment: z.number().describe('Braucht Enrichment'),
+  }).optional().describe('Staging Ergebnis'),
   /** Kosten */
   costs: z.object({
     googlePlaces: z.number(),

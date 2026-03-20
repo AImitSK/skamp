@@ -199,7 +199,8 @@ async function createCompany(
   publications: ExtractedPublication[],
   sourceUrl?: string,
   placeId?: string,
-  fallbackName?: string
+  fallbackName?: string,
+  internalNotes?: string
 ): Promise<string> {
   const companiesRef = adminDb.collection('companies_enhanced');
 
@@ -219,6 +220,13 @@ async function createCompany(
       website: pub.website,
     })),
   };
+
+  // Social Media aus PublisherInfo
+  const socialMedia = publisherInfo.socialMedia?.map(sm => ({
+    platform: sm.platform,
+    url: sm.url,
+    handle: sm.handle,
+  }));
 
   const companyData: Record<string, any> = {
     // Pflichtfelder
@@ -240,6 +248,9 @@ async function createCompany(
       isPrimary: true,
     }] : [],
 
+    // Social Media
+    socialMedia,
+
     // Adresse
     mainAddress: publisherInfo.address ? {
       street: publisherInfo.address.street,
@@ -252,6 +263,9 @@ async function createCompany(
     legalForm: publisherInfo.legalForm,
     description: publisherInfo.description,
     foundedDate: publisherInfo.foundedYear ? new Date(publisherInfo.foundedYear, 0, 1) : undefined,
+
+    // Interne Notizen (für Import-Probleme/Hinweise)
+    internalNotes,
 
     // Medien-Info mit Publikationen
     mediaInfo,
@@ -353,6 +367,44 @@ async function createPublication(
   const pubType = mapPublicationType(publication.type);
   const pubFrequency = mapPublicationFrequency(publication.frequency, publication.type);
 
+  // Social Media für Publication
+  const socialMedia = publication.socialMedia?.map(sm => ({
+    platform: sm.platform,
+    url: sm.url,
+    handle: sm.handle,
+  }));
+
+  // Identifikatoren (ISSN, IVW)
+  const identifiers: Record<string, string>[] = [];
+  if (publication.issn) {
+    identifiers.push({ type: 'issn', value: publication.issn });
+  }
+  if (publication.ivwId) {
+    identifiers.push({ type: 'ivw', value: publication.ivwId });
+  }
+
+  // DEBUG: Website-Wert prüfen
+  console.log('[CRMImport] Publication Website Debug:', {
+    name: publication.name,
+    websiteFromPublication: publication.website,
+    hasWebsite: !!publication.website,
+  });
+
+  // Geographic Scope aus Distribution ableiten
+  const distribution = publication.distribution?.toLowerCase() || '';
+  let geographicScope: 'local' | 'regional' | 'national' | 'international' = 'regional';
+  if (distribution.includes('national') || distribution.includes('deutschland') || distribution.includes('bundesweit')) {
+    geographicScope = 'national';
+  } else if (distribution.includes('lokal') || distribution.includes('stadt')) {
+    geographicScope = 'local';
+  }
+
+  // Social Media URLs für CRM-UI Format
+  const socialMediaUrls = socialMedia?.map((sm: { platform: string; url: string }) => ({
+    platform: sm.platform,
+    url: sm.url,
+  }));
+
   const publicationData: Record<string, any> = {
     // Grunddaten
     title: publication.name,
@@ -362,12 +414,23 @@ async function createPublication(
     publisherId: companyId,
     publisherName: companyName,
 
-    // Website der Publikation (WICHTIG!)
-    website: publication.website,
+    // Website der Publikation - BEIDE Felder setzen für Kompatibilität
+    website: publication.website || null,
+    websiteUrl: publication.website || null, // UI erwartet websiteUrl
+
+    // Social Media - BEIDE Formate für Kompatibilität
+    socialMedia,
+    socialMediaUrls, // CRM-UI erwartet dieses Format
+
+    // Identifikatoren (ISSN, IVW)
+    identifiers: identifiers.length > 0 ? identifiers : undefined,
 
     // Klassifizierung
     type: pubType,
     format: publication.type === 'online' ? 'online' : 'both',
+
+    // Geographic Scope
+    geographicScope,
 
     // Metriken
     metrics: {
@@ -424,6 +487,7 @@ async function createPublication(
 
 /**
  * Erstellt Contact aus extrahierten Kontakt-Daten
+ * Unterstützt sowohl Personen (Journalisten) als auch Funktionskontakte (Redaktion)
  */
 async function createContact(
   organizationId: string,
@@ -432,33 +496,58 @@ async function createContact(
   contact: ExtractedContact,
   companyId: string,
   companyName: string,
-  publications: string[]
+  publications: string[],
+  internalNotes?: string
 ): Promise<string | null> {
   // Skip contacts ohne Namen
-  if (!contact.name) {
+  if (!contact.name && !contact.functionName) {
     console.log('[CRMImport] Skip Contact ohne Namen');
     return null;
   }
 
   const contactsRef = adminDb.collection('contacts_enhanced');
-  const nameParts = contact.name.split(' ');
+
+  // Bestimme Kontakttyp
+  const contactType = contact.contactType || 'person';
+  const isFunctional = contactType === 'function';
+
+  // Name-Handling unterschiedlich für Person vs Funktion
+  let displayName: string;
+  let nameObj: Record<string, string>;
+
+  if (isFunctional) {
+    // Funktionskontakt: z.B. "Redaktion Die Harke"
+    displayName = contact.name || contact.functionName || 'Redaktion';
+    nameObj = {
+      firstName: contact.functionName || 'Redaktion',
+      lastName: companyName,
+    };
+  } else {
+    // Person: Normales Name-Splitting
+    const nameParts = (contact.name || '').split(' ');
+    displayName = contact.name || 'Unbekannt';
+    nameObj = {
+      firstName: contact.firstName || nameParts[0] || 'Unbekannt',
+      lastName: contact.lastName || nameParts.slice(1).join(' ') || 'Unbekannt',
+    };
+  }
 
   const contactData: Record<string, any> = {
     // Pflichtfelder
-    contactType: 'person',
-    name: {
-      firstName: contact.firstName || nameParts[0] || 'Unbekannt',
-      lastName: contact.lastName || nameParts.slice(1).join(' ') || 'Unbekannt',
-    },
-    displayName: contact.name,
+    contactType,
+    name: nameObj,
+    displayName,
     organizationId,
+
+    // Funktionsname (nur bei Funktionskontakten)
+    functionName: isFunctional ? (contact.functionName || 'Redaktion') : undefined,
 
     // Firmenverknüpfung
     companyId,
     companyName,
 
-    // Position
-    position: contact.position,
+    // Position (nur bei Personen relevant)
+    position: isFunctional ? undefined : contact.position,
     department: contact.department,
 
     // Kontaktdaten
@@ -474,13 +563,16 @@ async function createContact(
       isPrimary: true,
     }] : [],
 
-    // Medien-Profil für Journalisten
+    // Medien-Profil
     mediaProfile: {
-      isJournalist: true,
-      publicationIds: publications, // Publication-IDs aus der Library
+      isJournalist: contact.isJournalist !== false && !isFunctional,
+      publicationIds: publications,
       beats: contact.beats || [],
-      mediaTypes: ['print', 'online'], // Default für Zeitungsredakteure
+      mediaTypes: ['print', 'online'],
     },
+
+    // Interne Notizen
+    internalNotes,
 
     // Tags und Meta
     tagIds: [tagId],
@@ -503,7 +595,7 @@ async function createContact(
   const cleanedContactData = removeNullish(contactData);
 
   const docRef = await contactsRef.add(cleanedContactData);
-  console.log('[CRMImport] Contact erstellt:', contact.name, docRef.id);
+  console.log('[CRMImport] Contact erstellt:', displayName, `(${contactType})`, docRef.id);
 
   return docRef.id;
 }
@@ -560,10 +652,11 @@ export const crmImportFlow = ai.defineFlow(
       for (const publisher of input.publishers) {
         try {
           // Prüfe auf existierende Company
+          const publisherName = publisher.publisherInfo.name || publisher.fallbackName || 'Unbekannter Verlag';
           const existingCompanyId = await findExistingCompany(
             input.organizationId,
-            publisher.publisherInfo.name,
-            publisher.publisherInfo.website
+            publisherName,
+            publisher.publisherInfo.website || undefined
           );
 
           let companyId: string;
@@ -575,7 +668,7 @@ export const crmImportFlow = ai.defineFlow(
             result.companies.skipped++;
             result.companies.ids.push(companyId);
           } else {
-            // Neue Company erstellen
+            // Neue Company erstellen (mit internalNotes)
             companyId = await createCompany(
               input.organizationId,
               input.userId,
@@ -584,7 +677,8 @@ export const crmImportFlow = ai.defineFlow(
               publisher.publications,
               publisher.sourceUrl,
               publisher.placeId,
-              publisher.fallbackName
+              publisher.fallbackName,
+              publisher.internalNotes // NEU: Interne Notizen
             );
             result.companies.created++;
             result.companies.ids.push(companyId);
@@ -626,14 +720,34 @@ export const crmImportFlow = ai.defineFlow(
             }
           }
 
-          // 4. Kontakte für diese Company verarbeiten
+          // 4. Kontakte für diese Company verarbeiten (nur Journalisten)
+          const companyNameForContact = publisher.publisherInfo.name || publisher.fallbackName || 'Unbekannt';
+          let hasJournalistWithEmail = false;
+
           for (const contact of publisher.contacts) {
             try {
+              // VALIDIERUNG: Kontakte ohne Namen oder Email nicht importieren
+              const isFunctionalContact = contact.contactType === 'function';
+              const hasValidName = contact.name && contact.name.trim() !== '' && contact.name !== 'Unbekannt';
+              const hasEmail = !!contact.email;
+
+              if (!isFunctionalContact && (!hasValidName || !hasEmail)) {
+                console.log('[CRMImport] Kontakt übersprungen (kein Name oder Email):', contact.name || 'Unbekannt');
+                result.contacts.skipped++;
+                continue;
+              }
+
+              if (isFunctionalContact && !hasEmail) {
+                console.log('[CRMImport] Funktionskontakt übersprungen (keine Email):', contact.functionName || contact.name);
+                result.contacts.skipped++;
+                continue;
+              }
+
               // Prüfe auf existierenden Contact
               const existingContactId = await findExistingContact(
                 input.organizationId,
-                contact.email,
-                contact.name,
+                contact.email || undefined,
+                contact.name || undefined,
                 companyId
               );
 
@@ -641,9 +755,9 @@ export const crmImportFlow = ai.defineFlow(
                 console.log('[CRMImport] Contact existiert bereits:', contact.name);
                 result.contacts.skipped++;
                 result.contacts.ids.push(existingContactId);
+                if (contact.email) hasJournalistWithEmail = true;
               } else {
                 // Neuen Contact erstellen
-                const companyNameForContact = publisher.publisherInfo.name || publisher.fallbackName || 'Unbekannt';
                 const contactId = await createContact(
                   input.organizationId,
                   input.userId,
@@ -651,11 +765,12 @@ export const crmImportFlow = ai.defineFlow(
                   contact,
                   companyId,
                   companyNameForContact,
-                  publicationIds // Publication-IDs aus der Library
+                  publicationIds
                 );
                 if (contactId) {
                   result.contacts.created++;
                   result.contacts.ids.push(contactId);
+                  if (contact.email) hasJournalistWithEmail = true;
                 } else {
                   result.contacts.skipped++;
                 }
@@ -666,6 +781,48 @@ export const crmImportFlow = ai.defineFlow(
                 type: 'contact',
                 name: contact.name || 'Unbekannter Kontakt',
                 error: contactError.message || String(contactError),
+              });
+            }
+          }
+
+          // 5. Funktionskontakt als Fallback erstellen (wenn keine Journalisten mit Email)
+          if (!hasJournalistWithEmail && publisher.functionalContact) {
+            try {
+              const funcContact = publisher.functionalContact;
+              console.log('[CRMImport] Erstelle Funktionskontakt:', funcContact.functionName || funcContact.name);
+
+              // Prüfe ob Funktionskontakt bereits existiert
+              const existingFuncId = await findExistingContact(
+                input.organizationId,
+                funcContact.email || undefined,
+                funcContact.name || undefined,
+                companyId
+              );
+
+              if (!existingFuncId) {
+                const funcContactId = await createContact(
+                  input.organizationId,
+                  input.userId,
+                  result.tagId,
+                  funcContact,
+                  companyId,
+                  companyNameForContact,
+                  publicationIds,
+                  'Funktionskontakt erstellt da keine Journalisten mit persönlicher E-Mail gefunden wurden'
+                );
+                if (funcContactId) {
+                  result.contacts.created++;
+                  result.contacts.ids.push(funcContactId);
+                }
+              } else {
+                result.contacts.skipped++;
+              }
+            } catch (funcError: any) {
+              console.error('[CRMImport] Funktionskontakt Error:', funcError);
+              result.errors.push({
+                type: 'contact',
+                name: publisher.functionalContact.name || 'Funktionskontakt',
+                error: funcError.message || String(funcError),
               });
             }
           }
