@@ -6,8 +6,7 @@ import { ai } from '@/lib/ai/genkit-config';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import {
-  CORE_ENGINE,
-  PRESS_RELEASE_CRAFTSMANSHIP,
+  STORY_ENGINE,
   buildExpertPrompt,
   type DNAContact,
 } from '@/lib/ai/prompts/press-release';
@@ -338,23 +337,24 @@ export const generatePMVorlageFlow = ai.defineFlow(
       currentDate
     );
 
-    // 3. Vollstaendigen System-Prompt zusammenbauen
+    // 3. Vollstaendigen System-Prompt zusammenbauen (Story-First!)
     const systemPrompt = [
-      CORE_ENGINE.toPrompt(),
-      PRESS_RELEASE_CRAFTSMANSHIP.toPrompt(),
+      STORY_ENGINE.toPrompt(),
       expertPrompt,
     ].join('\n\n');
 
     // 4. User-Prompt mit Generierungsaufforderung
-    const userPrompt = `Erstelle jetzt die Pressemeldung fuer "${input.companyName}" basierend auf den oben genannten Fakten.
+    const userPrompt = `Erstelle jetzt eine packende Pressemeldung fuer "${input.companyName}".
 
-Beachte:
-- Halte dich EXAKT an das Ausgabe-Format
-- Verwende die Fakten aus der Fakten-Matrix
-- Das Zitat muss von ${speaker.name} (${speaker.position}) kommen
-- Kernaussage fuer das Zitat: "${input.faktenMatrix.quote.rawStatement}"
+Nutze die DNA als Story-Werkzeug:
+- Finde einen Hook aus den Pain-Points
+- Positioniere gegen Wettbewerber/Klischees
+- Sprich die Zielgruppe direkt an
 
-Beginne mit der Headline:`;
+Das Zitat kommt von ${speaker.name} (${speaker.position}).
+Seine Kernaussage: "${input.faktenMatrix.quote.rawStatement}"
+
+Beginne SOFORT mit der Headline (packend, nicht generisch!):`;
 
     // 5. Generierung mit Gemini
     const response = await ai.generate({
