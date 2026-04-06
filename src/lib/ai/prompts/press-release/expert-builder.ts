@@ -81,7 +81,8 @@ FAKTEN-MATRIX (Die harten Facts - erfinde nichts dazu!)
 📍 LEAD-DATEN:
 - Firmenstandort: ${companyLocation}
 - Datum: ${leadDate}
-→ Lead beginnt mit: **${companyLocation}, ${leadDate} –**
+→ Lead-Format: **${companyLocation}, ${leadDate} – [Kompletter Lead-Satz hier]**
+→ Der GESAMTE Lead-Paragraph muss in **Sterne** fuer Bold!
 
 📰 DIE NEWS:
 - Was passiert: ${faktenMatrix.hook.event}

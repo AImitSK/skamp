@@ -103,11 +103,13 @@ function parseGeneratedText(
   let headline = lines[0] || '';
   headline = headline.replace(/^HEADLINE:?\s*/i, '').trim();
 
-  // Lead: Zeile mit **...**
+  // Lead: Zeile mit **...** (kann mehrzeilig sein)
   let leadParagraph = '';
-  const leadMatch = text.match(/\*\*([^*]+)\*\*/);
+  // Greedy match fuer alles zwischen ** und ** (auch ueber Zeilenumbrueche)
+  const leadMatch = text.match(/\*\*([\s\S]+?)\*\*/);
   if (leadMatch) {
-    leadParagraph = leadMatch[1].trim();
+    // Zeilenumbrueche zu Leerzeichen normalisieren
+    leadParagraph = leadMatch[1].replace(/\n+/g, ' ').trim();
   }
 
   // Body: Absaetze zwischen Lead und Zitat
