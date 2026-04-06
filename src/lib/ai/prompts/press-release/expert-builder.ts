@@ -1,5 +1,5 @@
 // src/lib/ai/prompts/press-release/expert-builder.ts
-// FOKUS: Inhaltliche Logik, Story-Struktur und Identitäts-Sicherung
+// STORY-FOKUS: DNA als strategisches Werkzeug, nicht als Einschränkung
 
 import {
   extractTonalityOverride,
@@ -20,9 +20,10 @@ export interface FaktenMatrix {
 }
 
 /**
- * STRATEGISCHES EXPERTEN-GEHIRN
- * Implementiert die inhaltliche Hierarchie: Fakten-Matrix > DNA-Stil.
- * Eliminiert PR-Floskeln durch eine zwingende Story-Abfolge.
+ * EXPERT PROMPT BUILDER
+ *
+ * Baut den DNA-spezifischen Teil des Prompts.
+ * Fokus: DNA als Story-Werkzeug nutzen, nicht als Regel-Korsett.
  */
 export function buildExpertPrompt(
   dnaSynthese: string,
@@ -30,113 +31,122 @@ export function buildExpertPrompt(
   dnaContacts: DNAContact[],
   targetGroup?: 'ZG1' | 'ZG2' | 'ZG3',
   companyName: string = "{{companyName}}",
-  /** Aktuelles Datum für den Lead (Default: heute) */
   currentDate?: string
 ): string {
   const tonality = extractTonalityOverride(dnaSynthese);
   const blacklist = extractBlacklist(dnaSynthese);
-  const keyMessages = extractKeyMessagesForTargetGroup(dnaSynthese, targetGroup);
-  const companyData = extractCompanyData(dnaSynthese);
-
-  // Firmenstandort aus DNA-Synthese extrahieren (für Lead)
   const companyLocation = extractCompanyLocation(dnaSynthese);
-
-  // Aktuelles Datum für den Lead (IMMER heute, nicht aus FaktenMatrix!)
   const leadDate = currentDate || formatGermanDate(new Date());
 
-  // Speaker finden: Erst nach ID, dann nach Name-Pattern aus speakerId
-  let speaker = dnaContacts.find(c => c.id === faktenMatrix.quote.speakerId);
+  // Speaker finden
+  let speaker = findSpeaker(faktenMatrix.quote.speakerId, dnaContacts);
 
-  // Fallback: Name aus speakerId extrahieren und matchen (Format: contact_vorname_nachname_position)
-  if (!speaker && faktenMatrix.quote.speakerId) {
-    const speakerIdParts = faktenMatrix.quote.speakerId.replace('contact_', '').split('_');
-    // Name-Teile (alles außer letztem Part = Position)
-    const nameParts = speakerIdParts.slice(0, -1);
-    const searchName = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
-
-    speaker = dnaContacts.find(c => {
-      const contactName = c.name.toLowerCase();
-      return nameParts.every(part => contactName.includes(part.toLowerCase()));
-    });
-  }
-
-  // Letzter Fallback: Default-Werte
-  if (!speaker) {
-    speaker = { id: 'fallback', name: "Sprecher", position: "Geschäftsführung" };
-  }
+  // DNA-Elemente für Story extrahieren
+  const painPoints = extractPainPoints(dnaSynthese);
+  const challengerPosition = extractChallengerPosition(dnaSynthese);
+  const usps = extractUSPs(dnaSynthese);
+  const targetGroupInfo = extractTargetGroupInfo(dnaSynthese, targetGroup);
 
   return `
 ═══════════════════════════════════════════════════════════════════
-STRIKTE INHALTS-KONTROLLE (ANTI-HALLUZINATION)
+MARKEN-DNA (Dein Story-Werkzeugkasten)
 ═══════════════════════════════════════════════════════════════════
-Nutze NUR Fakten aus der MATRIX und den Sound aus der DNA.
-- Erfinde KEINE strategischen Pläne (z.B. "Expansion in andere Länder").
-- Erfinde KEINE falschen Hoffnungen oder PR-Floskeln.
-- Schreibe FAKTISCH und PRÄZISE.
+
+${dnaSynthese}
 
 ═══════════════════════════════════════════════════════════════════
-STRUKTUR-GESETZ (Folge diesem Ablauf)
+STORY-ELEMENTE AUS DER DNA (Nutze diese aktiv!)
 ═══════════════════════════════════════════════════════════════════
-1. LEAD (Zeile 2): Das aktuelle Ereignis (Das Delta). MUSS in **Sterne**.
-2. KONTEXT: Bedeutung der Nachricht und Vorstellung der handelnden Experten.
-3. MEHRWERT: Technischer Nutzen und konkrete Vorteile (Engineering-Fokus).
-4. KOMMUNIKATION: Umsetzung vor Ort (Sprache, Zeit, Erreichbarkeit).
-5. ZITAT (Zeile 6): Strategische Einordnung durch den Experten.
-6. ABSCHLUSS: Der Anspruch der Marke ${companyName}.
+
+🎯 PAIN-POINTS DER ZIELGRUPPE (= Dein HOOK):
+${painPoints || 'Nicht explizit definiert - aus Kontext ableiten'}
+→ Nutze diese als Einstieg! "Tschüss [Klischee]...", "Schluss mit [Problem]..."
+
+⚔️ CHALLENGER-POSITION (= Deine DIFFERENZIERUNG):
+${challengerPosition || 'Nicht explizit definiert'}
+→ Positioniere gegen Wettbewerber/alte Denkmuster: "Während andere..., setzt X auf..."
+
+💎 USPs (= Deine BEWEISE):
+${usps || 'Aus Fakten-Matrix ableiten'}
+→ Konkrete Belege statt Marketing-Floskeln
+
+👥 ZIELGRUPPE ${targetGroup || 'ZG1'} (= Deine ANSPRACHE):
+${targetGroupInfo || 'Nicht explizit definiert'}
+→ Sprich sie direkt an, nenne ihre Bedürfnisse
 
 ═══════════════════════════════════════════════════════════════════
-LEAD-VORGABE (EXAKT EINHALTEN!)
+FAKTEN-MATRIX (Die harten Facts - erfinde nichts dazu!)
 ═══════════════════════════════════════════════════════════════════
-FIRMENSTANDORT: ${companyLocation}
-DATUM: ${leadDate}
 
-ZWINGEND FÜR ZEILE 2 (LEAD): Beginne mit **${companyLocation}, ${leadDate} –** gefolgt von der Kernaussage!
-NICHT verwenden: Den Event-Ort (${faktenMatrix.hook.location}) im Lead - dieser gehört in den Body!
+📍 LEAD-DATEN:
+- Firmenstandort: ${companyLocation}
+- Datum: ${leadDate}
+→ Lead beginnt mit: **${companyLocation}, ${leadDate} –**
 
-═══════════════════════════════════════════════════════════════════
-FAKTEN-MATRIX (Inhaltliche Wahrheit)
-═══════════════════════════════════════════════════════════════════
-- EVENT-ORT: ${faktenMatrix.hook.location} (für den Body, NICHT für den Lead!)
-- EREIGNIS: ${faktenMatrix.hook.event}
-- KONTEXT: ${faktenMatrix.details.delta}
-- BEWEISE: ${faktenMatrix.details.evidence}
+📰 DIE NEWS:
+- Was passiert: ${faktenMatrix.hook.event}
+- Wo: ${faktenMatrix.hook.location}
+- Das Besondere: ${faktenMatrix.details.delta}
+- Beweise/Zahlen: ${faktenMatrix.details.evidence}
 
 ═══════════════════════════════════════════════════════════════════
-ZITAT-VORGABE (Echte Identität)
+ZITAT-VORGABE
 ═══════════════════════════════════════════════════════════════════
-SPRECHER: ${speaker.name}, ${speaker.position}
-KERNBOTSCHAFT: ${faktenMatrix.quote.rawStatement}
 
-REGEL: Formuliere ein lebendiges Zitat. Nutze KEINE eckigen Klammern [ ].
-Format: "Text", sagt ${speaker.name}, ${speaker.position} bei ${companyName}.
+👤 SPRECHER: ${speaker.name}, ${speaker.position} bei ${companyName}
+💬 KERNAUSSAGE: "${faktenMatrix.quote.rawStatement}"
 
-═══════════════════════════════════════════════════════════════════
-DNA-STIL & TON (Leitplanken)
-═══════════════════════════════════════════════════════════════════
-SOUND: ${tonality || 'Sachlich-technisch'}
-BLACKLIST (VERBOTEN): ${blacklist || 'Keine'}
-NUTZE FOLGENDEN KONTEXT: ${keyMessages || ''}
+→ Formuliere ein lebendiges, authentisches Zitat.
+→ Es soll klingen wie ein echter Mensch, nicht wie eine Pressestelle.
+→ Format: "[Text]", sagt ${speaker.name}, ${speaker.position} bei ${companyName}.
 
-${companyData ? `
+${tonality ? `
 ═══════════════════════════════════════════════════════════════════
-FIRMENSTAMMDATEN (Zusätzlicher Kontext)
+TONALITÄT
 ═══════════════════════════════════════════════════════════════════
-${companyData}
+${tonality}
+` : ''}
+
+${blacklist ? `
+═══════════════════════════════════════════════════════════════════
+BLACKLIST (Diese Begriffe NICHT verwenden)
+═══════════════════════════════════════════════════════════════════
+${blacklist}
 ` : ''}
 `;
 }
 
-function extractKeyMessagesForTargetGroup(dnaSynthese: string, targetGroup?: string): string | null {
-  const allMessages = extractKeyMessages(dnaSynthese);
-  if (!allMessages || !targetGroup) return allMessages;
-  return allMessages.split('\n')
-    .filter(line => line.includes(`FÜR: ${targetGroup}`) || !line.includes('FÜR:'))
-    .join('\n');
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function findSpeaker(speakerId: string, dnaContacts: DNAContact[]): DNAContact {
+  // Stufe 1: Exakte ID
+  let speaker = dnaContacts.find(c => c.id === speakerId);
+  if (speaker) return speaker;
+
+  // Stufe 2: Name-Matching
+  if (speakerId) {
+    const speakerIdParts = speakerId.replace('contact_', '').split('_');
+    const nameParts = speakerIdParts.slice(0, -1);
+
+    if (nameParts.length > 0) {
+      speaker = dnaContacts.find(c => {
+        const contactName = c.name.toLowerCase();
+        return nameParts.every(part => contactName.includes(part.toLowerCase()));
+      });
+      if (speaker) return speaker;
+    }
+  }
+
+  // Stufe 3: Fallback
+  const parts = speakerId.replace('contact_', '').split('_');
+  const fallbackName = parts.slice(0, -1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Sprecher';
+  const fallbackPosition = parts[parts.length - 1]?.charAt(0).toUpperCase() + parts[parts.length - 1]?.slice(1).toLowerCase() || 'Geschäftsführer';
+
+  return { id: speakerId, name: fallbackName, position: fallbackPosition };
 }
 
-/**
- * Formatiert ein Date-Objekt als deutsches Datum (z.B. "7. Januar 2026")
- */
 function formatGermanDate(date: Date): string {
   const months = [
     'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
@@ -145,49 +155,97 @@ function formatGermanDate(date: Date): string {
   return `${date.getDate()}. ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-/**
- * Extrahiert den Firmenstandort (Ort/Stadt) aus der DNA-Synthese
- * Für den Lead der Pressemeldung (nicht Event-Ort aus FaktenMatrix!)
- */
 function extractCompanyLocation(dnaSynthese: string): string {
-  // Pattern 1: Suche nach "Sitz:" oder "Hauptsitz:" im FIRMENSTAMMDATEN Block
+  // Pattern 1: Sitz
   const sitzMatch = dnaSynthese.match(/(?:Haupt)?[Ss]itz:\s*([^\n,]+)/i);
-  if (sitzMatch) {
-    return sitzMatch[1].trim();
-  }
+  if (sitzMatch) return sitzMatch[1].trim();
 
-  // Pattern 2: Extrahiere Stadt aus Adresse (Format: "Straße Nr, PLZ Stadt")
+  // Pattern 2: Adresse
   const addressMatch = dnaSynthese.match(/Adresse:\s*[^,]+,\s*\d{5}\s+([^\n]+)/i);
-  if (addressMatch) {
-    return addressMatch[1].trim();
-  }
+  if (addressMatch) return addressMatch[1].trim();
 
-  // Pattern 3: Extrahiere Stadt aus "PLZ Stadt" Pattern
+  // Pattern 3: PLZ Stadt
   const plzStadtMatch = dnaSynthese.match(/\b\d{5}\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)/);
-  if (plzStadtMatch) {
-    return plzStadtMatch[1].trim();
-  }
+  if (plzStadtMatch) return plzStadtMatch[1].trim();
 
-  // Fallback: Firmenname als Indikator (oft enthält er den Ort)
   return 'Deutschland';
 }
 
 /**
- * Extrahiert Firmenstammdaten aus der DNA-Synthese
- * Sucht nach "📍 FIRMENSTAMMDATEN" Block
+ * Extrahiert Pain-Points der Zielgruppen aus der DNA
  */
-function extractCompanyData(dnaSynthese: string): string | null {
-  // Pattern für Firmenstammdaten-Block
-  const pattern = /📍\s*FIRMENSTAMMDATEN[^:]*:?\s*([\s\S]*?)(?=\n\n[A-Z📋💬🎯]|$)/i;
-  const match = dnaSynthese.match(pattern);
-  if (match && match[1]) {
-    return match[1].trim();
+function extractPainPoints(dnaSynthese: string): string | null {
+  // Suche nach Pain-Point/Trigger in der Zielgruppen-Matrix
+  const painPointMatch = dnaSynthese.match(/Pain-Point\/Trigger[:\s]+([^\n]+)/gi);
+  if (painPointMatch) {
+    return painPointMatch.map(p => p.replace(/Pain-Point\/Trigger[:\s]+/i, '').trim()).join('\n- ');
   }
 
-  // Fallback: Suche nach "Adresse:" Zeile
-  const addressMatch = dnaSynthese.match(/Adresse:\s*([^\n]+)/i);
-  if (addressMatch) {
-    return `Adresse: ${addressMatch[1].trim()}`;
+  // Alternative: Suche nach "Image" Problemen
+  const imageMatch = dnaSynthese.match(/[Nn]egativ\w*\s+[Ii]mage[^.]+/g);
+  if (imageMatch) {
+    return imageMatch.join('\n- ');
+  }
+
+  return null;
+}
+
+/**
+ * Extrahiert die Challenger-Positionierung
+ */
+function extractChallengerPosition(dnaSynthese: string): string | null {
+  // Suche nach Marktrolle: Challenger
+  if (dnaSynthese.toLowerCase().includes('challenger')) {
+    const diffMatch = dnaSynthese.match(/Differenzierung[:\s]+([^\n]+(?:\n[^\n]+)?)/i);
+    if (diffMatch) {
+      return diffMatch[1].trim();
+    }
+  }
+
+  // Suche nach "Im Gegensatz zu" Formulierungen
+  const contrastMatch = dnaSynthese.match(/[Ii]m\s+[Gg]egensatz\s+zu[^.]+\./g);
+  if (contrastMatch) {
+    return contrastMatch.join(' ');
+  }
+
+  return null;
+}
+
+/**
+ * Extrahiert USPs aus der DNA
+ */
+function extractUSPs(dnaSynthese: string): string | null {
+  const uspMatch = dnaSynthese.match(/USP[:\s]+([^\n]+(?:\n[^→\n]+)?)/i);
+  if (uspMatch) {
+    return uspMatch[1].trim();
+  }
+
+  // Alternative: Beweis-Zeilen
+  const beweisMatch = dnaSynthese.match(/→\s*Beweis[:\s]+([^\n]+)/gi);
+  if (beweisMatch) {
+    return beweisMatch.map(b => b.replace(/→\s*Beweis[:\s]+/i, '').trim()).join('\n- ');
+  }
+
+  return null;
+}
+
+/**
+ * Extrahiert Zielgruppen-Informationen
+ */
+function extractTargetGroupInfo(dnaSynthese: string, targetGroup?: string): string | null {
+  if (!targetGroup) return null;
+
+  // Suche nach ZG1, ZG2, ZG3 in der Matrix
+  const zgPattern = new RegExp(`${targetGroup}\\s+([^\\n]+)`, 'i');
+  const zgMatch = dnaSynthese.match(zgPattern);
+  if (zgMatch) {
+    return zgMatch[1].trim();
+  }
+
+  // Suche nach Kernbotschaften für die Zielgruppe
+  const kernbotschaftMatch = dnaSynthese.match(new RegExp(`FÜR:\\s*${targetGroup}[^\\n]*`, 'gi'));
+  if (kernbotschaftMatch) {
+    return kernbotschaftMatch.join('\n');
   }
 
   return null;

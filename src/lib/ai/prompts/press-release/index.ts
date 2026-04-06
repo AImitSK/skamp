@@ -6,13 +6,14 @@
  *
  * Modulare Architektur mit klarer Trennung zwischen:
  * - Standard-Modus: Generische Bibliothek für User ohne Strategie-Vorarbeit
- * - Experten-Modus: DNA-gesteuerte Generierung mit Fakten-Matrix
+ * - Experten-Modus: DNA-gesteuerte Generierung mit Fakten-Matrix (Story-First!)
  */
 
-// Core Engine: Parsing-kritische Format-Vorgaben
-export { CORE_ENGINE } from './core-engine';
+// Story Engine: Story-First Ansatz für Experten-Modus (NEU - ersetzt Core + Craftsmanship)
+export { STORY_ENGINE } from './story-engine';
 
-// Press Release Craftsmanship: Universelle journalistische Standards
+// Legacy-Exports (für Abwärtskompatibilität, werden nicht mehr aktiv genutzt)
+export { CORE_ENGINE } from './core-engine';
 export { PRESS_RELEASE_CRAFTSMANSHIP } from './press-release-craftsmanship';
 
 // Standard Library: Tonalitäten, Branchen, Zielgruppen (nur Standard-Modus)
