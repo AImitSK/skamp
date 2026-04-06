@@ -23,7 +23,7 @@ function CommunicationToggleBoxComponent({
   className = '',
   ...props
 }: CommunicationToggleBoxProps) {
-  const t = useTranslations('pages.customerReview.communication');
+  const t = useTranslations('email.customerReview.communication');
 
   const handleReply = useCallback((communication: CommunicationItem) => {
     onReply?.(communication);
