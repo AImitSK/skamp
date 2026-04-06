@@ -69,8 +69,9 @@ Danach: BODY
 → Konkrete Zahlen und Fakten einbauen
 
 ZITAT:
-→ "[Zitat-Text]", sagt [Vorname Nachname], [Position] bei [Firma].
+→ "Das Zitat als Fliesstext", sagt Vorname Nachname, Position bei Firma.
 → Zitat und Attribution in EINER Zeile (kein Umbruch!)
+→ KEINE eckigen Klammern im Zitat verwenden!
 
 ABSCHLUSS:
 → [[CTA: Handlungsaufforderung mit konkretem Kontakt/URL]]

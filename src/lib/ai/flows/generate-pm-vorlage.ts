@@ -152,7 +152,8 @@ function parseGeneratedText(
   const hashtagsMatch = text.match(/\[\[HASHTAGS:\s*([^\]]+)\]\]/i);
   if (hashtagsMatch) {
     const hashtagStr = hashtagsMatch[1].trim();
-    const tags = hashtagStr.match(/#\w+/g);
+    // Unicode-faehiger Regex: \p{L} matcht alle Buchstaben inkl. Umlaute
+    const tags = hashtagStr.match(/#[\p{L}\p{N}_]+/gu);
     if (tags) {
       hashtags.push(...tags);
     }
@@ -286,8 +287,15 @@ export const generatePMVorlageFlow = ai.defineFlow(
     const speakerId = input.faktenMatrix.quote.speakerId;
     let speaker: DNAContact | undefined;
 
+    console.log(`[PM-Vorlage] Speaker-Suche gestartet:`);
+    console.log(`  - speakerId: "${speakerId}"`);
+    console.log(`  - Verfuegbare Kontakte: ${input.dnaContacts.map(c => `${c.id}="${c.name}"`).join(', ')}`);
+
     // Stufe 1: Exakte ID-Übereinstimmung
     speaker = input.dnaContacts.find(c => c.id === speakerId);
+    if (speaker) {
+      console.log(`[PM-Vorlage] ✅ Speaker via exakte ID gefunden: ${speaker.name}`);
+    }
 
     // Stufe 2: Name-Matching aus speakerId (Format: "contact_vorname_nachname_position")
     if (!speaker && speakerId) {
@@ -303,25 +311,29 @@ export const generatePMVorlageFlow = ai.defineFlow(
         });
 
         if (speaker) {
-          console.log(`[PM-Vorlage] Speaker "${speakerId}" via Name-Matching gefunden: ${speaker.name}`);
+          console.log(`[PM-Vorlage] ✅ Speaker via Name-Matching gefunden: ${speaker.name}`);
         }
       }
     }
 
-    // Stufe 3: Fallback mit extrahiertem Namen aus speakerId
+    // Stufe 3: Fallback - ersten Kontakt nehmen wenn vorhanden
+    if (!speaker && input.dnaContacts.length > 0) {
+      speaker = input.dnaContacts[0];
+      console.warn(`[PM-Vorlage] ⚠️ Speaker "${speakerId}" nicht gefunden. Fallback auf ersten Kontakt: ${speaker.name}`);
+    }
+
+    // Stufe 4: Letzter Fallback mit extrahiertem Namen aus speakerId
     if (!speaker) {
-      console.warn(
-        `[PM-Vorlage] Speaker "${speakerId}" nicht in Kontakten gefunden. Verwende Fallback.`
-      );
-      // Name/Position aus speakerId extrahieren
+      console.error(`[PM-Vorlage] ❌ Keine Kontakte vorhanden! Extrahiere aus speakerId.`);
       const parts = speakerId.replace('contact_', '').split('_');
       const fallbackName = parts.slice(0, -1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Sprecher';
-      const fallbackPosition = parts[parts.length - 1]?.toUpperCase() || 'Geschaeftsfuehrer';
+      const fallbackPosition = parts[parts.length - 1]?.charAt(0).toUpperCase() + parts[parts.length - 1]?.slice(1).toLowerCase() || 'Geschaeftsfuehrer';
       speaker = {
         id: speakerId,
         name: fallbackName,
         position: fallbackPosition,
       };
+      console.log(`[PM-Vorlage] Fallback-Speaker erstellt: ${speaker.name}, ${speaker.position}`);
     }
 
     // 2. Aktuelles Datum für den Lead formatieren (IMMER heute!)

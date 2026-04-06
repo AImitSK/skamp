@@ -98,7 +98,8 @@ ZITAT-VORGABE
 
 → Formuliere ein lebendiges, authentisches Zitat.
 → Es soll klingen wie ein echter Mensch, nicht wie eine Pressestelle.
-→ Format: "[Text]", sagt ${speaker.name}, ${speaker.position} bei ${companyName}.
+→ EXAKTES Format: "Zitat-Text hier", sagt ${speaker.name}, ${speaker.position} bei ${companyName}.
+→ KEINE eckigen Klammern verwenden!
 
 ${tonality ? `
 ═══════════════════════════════════════════════════════════════════
