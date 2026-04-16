@@ -1,20 +1,11 @@
-// src/app/freigabe/[shareId]/page.tsx - Mit Branding-Integration
+// src/app/freigabe/[shareId]/page.tsx - Öffentliche Freigabe-Seite (kein Auth erforderlich)
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import React from "react";
 import { useParams } from "next/navigation";
-import { prService } from "@/lib/firebase/pr-service";
-import { approvalService } from "@/lib/firebase/approval-service";
-import { mediaService } from "@/lib/firebase/media-service";
-import { brandingService } from "@/lib/firebase/branding-service";
-import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
-import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
-import { notificationsService } from "@/lib/firebase/notifications-service";
-import { inboxService } from "@/lib/firebase/inbox-service";
 import { useToggleState } from "@/hooks/use-toggle-state";
-import { PRCampaign, CampaignAssetAttachment } from "@/types/pr";
-import { MediaAsset, MediaFolder } from "@/types/media";
+import { PRCampaign } from "@/types/pr";
 import { BrandingSettings } from "@/types/branding";
 import { PDFVersion as ServicePDFVersion } from "@/lib/firebase/pdf-versions-service";
 import { PDFVersion } from "@/types/customer-review";
@@ -41,11 +32,7 @@ import {
   CalendarIcon,
   InformationCircleIcon,
   PhotoIcon,
-  FolderIcon,
   DocumentIcon,
-  FilmIcon,
-  ArrowDownTrayIcon,
-  EyeIcon,
   PhoneIcon,
   EnvelopeIcon,
   GlobeAltIcon,
@@ -124,188 +111,6 @@ const approvalStatusConfig = {
 };
 
 
-// ENTFERNT: CustomerPDFVersionCard - ersetzt durch PDFVersionOverview
-
-// NEU: Media Gallery Component
-function MediaGallery({ 
-  attachments,
-  loading 
-}: { 
-  attachments: CampaignAssetAttachment[];
-  loading: boolean;
-}) {
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
-  const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [loadingAssets, setLoadingAssets] = useState(true);
-
-  useEffect(() => {
-    if (attachments.length > 0) {
-      loadAssetDetails();
-    } else {
-      setLoadingAssets(false);
-    }
-  }, [attachments]);
-
-  const loadAssetDetails = async () => {
-    try {
-      setLoadingAssets(true);
-      
-      // Lade Asset-Details
-      const assetPromises = attachments
-        .filter(a => a.type === 'asset' && a.assetId)
-        .map(a => mediaService.getMediaAssetById(a.assetId!));
-      
-      // Lade Folder-Details
-      const folderPromises = attachments
-        .filter(a => a.type === 'folder' && a.folderId)
-        .map(a => mediaService.getFolder(a.folderId!));
-      
-      const [loadedAssets, loadedFolders] = await Promise.all([
-        Promise.all(assetPromises),
-        Promise.all(folderPromises)
-      ]);
-      
-      setAssets(loadedAssets.filter(Boolean) as MediaAsset[]);
-      setFolders(loadedFolders.filter(Boolean) as MediaFolder[]);
-      
-    } catch (error) {
-      // Fehler beim Laden der Medien
-    } finally {
-      setLoadingAssets(false);
-    }
-  };
-
-  const getFileIcon = (fileType?: string) => {
-    if (!fileType) return DocumentIcon;
-    if (fileType.startsWith('image/')) return PhotoIcon;
-    if (fileType.startsWith('video/')) return FilmIcon;
-    if (fileType.includes('pdf')) return DocumentTextIcon;
-    return DocumentIcon;
-  };
-
-  if (loading || loadingAssets) {
-    return (
-      <div className="animate-pulse">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="aspect-square bg-gray-200 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (attachments.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-6">
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <PhotoIcon className="h-5 w-5 text-gray-400" />
-          Angehängte Medien ({attachments.length})
-        </h2>
-      </div>
-      
-      <div className="p-6">
-        {/* Folders */}
-        {folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Ordner</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {folders.map((folder) => (
-                <div 
-                  key={folder.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
-                >
-                  <FolderIcon className="h-8 w-8 text-gray-400" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{folder.name}</p>
-                    {folder.description && (
-                      <p className="text-xs text-gray-500">{folder.description}</p>
-                    )}
-                  </div>
-                  <Badge color="blue" className="text-xs">Ordner</Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Assets Grid */}
-        {assets.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Dateien</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {assets.map((asset) => {
-                const FileIcon = getFileIcon(asset.fileType);
-                const isImage = asset.fileType?.startsWith('image/');
-                
-                return (
-                  <div 
-                    key={asset.id}
-                    className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Preview */}
-                    <div className="aspect-square bg-gray-50 flex items-center justify-center">
-                      {isImage ? (
-                        <img
-                          src={asset.downloadUrl}
-                          alt={asset.fileName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <FileIcon className="h-16 w-16 text-gray-400" />
-                      )}
-                    </div>
-                    
-                    {/* Overlay on Hover */}
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="flex gap-2">
-                        <a
-                          href={asset.downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                          title="Ansehen"
-                        >
-                          <EyeIcon className="h-5 w-5 text-gray-700" />
-                        </a>
-                      </div>
-                    </div>
-                    
-                    {/* File Info */}
-                    <div className="p-3">
-                      <p className="text-xs font-medium text-gray-900 truncate" title={asset.fileName}>
-                        {asset.fileName}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex">
-            <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
-            <p className="text-sm text-blue-800">
-              Diese Medien sind Teil der Pressemitteilung und werden nach Ihrer Freigabe 
-              zusammen mit der Mitteilung an die Empfänger versendet.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ApprovalPage() {
   const params = useParams();
   const shareId = params.shareId as string;
@@ -341,177 +146,131 @@ export default function ApprovalPage() {
     }
   }, [shareId]);
 
+  // Helper: Rekonstruiert Firestore Timestamps aus serialisierten Daten
+  const parseTimestamp = (val: any) => {
+    if (!val) return val;
+    if (val._seconds !== undefined) {
+      return new Date(val._seconds * 1000);
+    }
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  };
+
   const loadCampaign = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // NEU: Direkte Approval-Service Nutzung (vereinfachter 1-stufiger Workflow)
-      const approvalData = await approvalService.getByShareId(shareId);
-      
-      if (!approvalData) {
-        setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
+      // Alle Daten über öffentliche API-Route laden (kein Auth erforderlich)
+      const res = await fetch(`/api/public/approval/${shareId}`);
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        setError(errorData.error || 'Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
       }
-      
+
+      const data = await res.json();
+      const { approval: approvalData, campaign: campaignData, pdfVersions: pdfVersionsData, brandingSettings: brandingData, teamMember: teamMemberData } = data;
+
       setApproval(approvalData);
-      
-      // Lade zugehörige Campaign über approvalService
-      const campaignData = await prService.getById(approvalData.campaignId);
-      
-      if (!campaignData) {
-        setError('Zugehörige Kampagne nicht gefunden.');
-        return;
-      }
-      
-      // Prüfe ob Kampagne bereits versendet wurde
-      if (campaignData.status === 'sent') {
-        setError('Diese Kampagne wurde bereits versendet. Die Freigabe-Seite ist nicht mehr verfügbar.');
-        return;
-      }
-      
+
       // Vereinfachte Approval-Daten (1-stufiger Workflow)
       const approvalDataForCampaign = {
         shareId: approvalData.shareId,
-        status: approvalData.status === 'approved' ? 'approved' : 
+        status: approvalData.status === 'approved' ? 'approved' :
                 approvalData.status === 'rejected' ? 'commented' :
                 approvalData.status === 'changes_requested' ? 'commented' :
                 approvalData.status === 'pending' ? 'pending' : 'viewed',
-        feedbackHistory: approvalData.history?.filter(h => h.details?.comment).map(h => {
-          // Verwende den Namen aus recipients für Kunden, sonst actorName
+        feedbackHistory: approvalData.history?.filter((h: any) => h.details?.comment).map((h: any) => {
           let authorName = h.actorName || 'Teammitglied';
-          
-          // NUR für Kundennachrichten: Ersetze "Kunde" durch den echten Namen
+
           if (h.actorName === 'Kunde' || h.actorEmail?.includes('customer') || h.actorEmail?.includes('freigabe.system')) {
             if (approvalData.recipients?.[0]?.name) {
               authorName = approvalData.recipients[0].name;
-            } else if (customerContact?.name) {
-              authorName = customerContact.name;
             } else {
               authorName = 'Kunde';
             }
           }
-          
+
           return {
             comment: h.details?.comment || '',
-            requestedAt: h.timestamp,
+            requestedAt: parseTimestamp(h.timestamp),
             author: authorName,
-            action: h.action  // WICHTIG: action-Feld übertragen!
+            action: h.action
           };
         }) || [],
-        approvedAt: approvalData.approvedAt,
+        approvedAt: parseTimestamp(approvalData.approvedAt),
         customerApprovalRequired: true,
         teamApprovalRequired: false,
         teamApprovers: [],
         currentStage: 'customer' as const,
-        workflowStartedAt: approvalData.requestedAt,
+        workflowStartedAt: parseTimestamp(approvalData.requestedAt),
         workflowId: approvalData.id
       };
-      
-      // Merge Campaign mit vereinfachten Approval-Daten
+
       campaignData.approvalData = approvalDataForCampaign as any;
 
-      // 🐛 TEMP DEBUG: Prüfe Content-Properties
+      // PDF-Versionen setzen
+      if (pdfVersionsData && pdfVersionsData.length > 0) {
+        setPdfVersions(pdfVersionsData);
 
+        const currentPdf = pdfVersionsData.find((v: any) =>
+          v.status === 'pending_customer' ||
+          v.status === 'approved' ||
+          v.status === 'rejected'
+        ) || pdfVersionsData[0];
 
-      // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
-      if (approvalData.campaignId) {
-        try {
-          const pdfVersions = await pdfVersionsService.getVersionHistory(approvalData.campaignId);
-          
-          setPdfVersions(pdfVersions);
-          
-          // Vereinfachte PDF-Status-Logik (kein Team-Approval):
-          // Suche nach der aktuellen Customer-PDF (nur pending_customer, approved, rejected)
-          const currentPdfVersion = pdfVersions.find(v => 
-            v.status === 'pending_customer' || 
-            v.status === 'approved' || 
-            v.status === 'rejected'
-          ) || pdfVersions[0]; // Fallback zur neuesten Version
-          
-          setCurrentPdfVersion(currentPdfVersion);
-          
-          
-          // VALIDIERUNG: PDF MUSS vorhanden sein!
-          if (!currentPdfVersion) {
-            // Keine PDF-Version verfügbar
-            setError('Systemfehler: PDF-Version nicht gefunden. Bitte Support kontaktieren.');
-            return;
-          }
-          
-        } catch (pdfError) {
-          // Fehler beim Laden der PDF-Versionen - nicht kritisch
-          setError('PDF-Versionen konnten nicht geladen werden.');
+        setCurrentPdfVersion(currentPdf);
+
+        if (!currentPdf) {
+          setError('Systemfehler: PDF-Version nicht gefunden. Bitte Support kontaktieren.');
           return;
         }
       }
 
-      // Customer Contact Daten laden - KORRIGIERT: Aus recipients[0] (da steht der spezifische Name!)
-      console.log('🔍 DEBUG: approvalData.recipients:', approvalData.recipients);
-      
+      // Customer Contact aus Recipients
       if (approvalData.recipients && approvalData.recipients.length > 0) {
         const recipient = approvalData.recipients[0];
-        console.log('🔍 DEBUG: recipient[0]:', recipient);
-        
         setCustomerContact({
           name: recipient.name || approvalData.clientName || 'Kunde',
           email: recipient.email || approvalData.clientEmail || '',
           role: 'client'
         });
-        
-        console.log('🔍 DEBUG: customerContact set from recipients to:', {
-          name: recipient.name || approvalData.clientName || 'Kunde',
-          email: recipient.email || approvalData.clientEmail || '',
-          role: 'client'
-        });
       } else {
-        // Fallback zu clientName wenn keine recipients
-        console.log('🔍 DEBUG: Fallback zu clientName');
         setCustomerContact({
           name: approvalData.clientName || 'Kunde',
           email: approvalData.clientEmail || '',
           role: 'client'
         });
       }
-      
-      // Customer Approval Message aus Approval-Service (vereinfacht)
-      if ((approvalData as any).customerMessage) {
-        setCustomerMessage((approvalData as any).customerMessage);
+
+      if (approvalData.customerMessage) {
+        setCustomerMessage(approvalData.customerMessage);
       }
 
-      // Markiere als "viewed" bei allen aktiven Status (nicht nur pending)
+      // Markiere als "viewed" über API (non-blocking)
       if (approvalData.status === 'pending' || approvalData.status === 'in_review' || approvalData.status === 'changes_requested') {
-        await approvalService.markAsViewed(shareId);
+        fetch(`/api/public/approval/${shareId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'markAsViewed' })
+        }).catch(() => {});
       }
 
       setCampaign(campaignData);
 
-      // Lade TeamMember-Daten für den zuständigen Mitarbeiter
-      if (campaignData.organizationId && campaignData.userId) {
-        try {
-          const members = await teamMemberService.getByOrganization(campaignData.organizationId);
-          const member = members.find(m => m.userId === campaignData.userId);
-          if (member) {
-            setTeamMember(member);
-          }
-        } catch (teamError) {
-          // Fehler beim Laden der TeamMember-Daten - nicht kritisch
-        }
+      // Team-Member und Branding kommen direkt aus der API-Antwort
+      if (teamMemberData) {
+        setTeamMember(teamMemberData);
       }
-
-      // Lade Branding-Einstellungen
-      if (campaignData.organizationId) {
-        try {
-          const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
-          setBrandingSettings(branding);
-        } catch (brandingError) {
-          // Fehler beim Laden der Branding-Einstellungen
-          // Kein kritischer Fehler - fahre ohne Branding fort
-        }
+      if (brandingData) {
+        setBrandingSettings(brandingData);
       }
 
     } catch (error) {
-      // Fehler beim Laden der Kampagne
       setError('Die Pressemitteilung konnte nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -523,40 +282,36 @@ export default function ApprovalPage() {
 
     try {
       setSubmitting(true);
-      
-      // NEU: Direkte Approval-Service Nutzung (vereinfachter Workflow)
-      await approvalService.submitDecisionPublic(
-        shareId,
-        'approved',
-        undefined, // Kein Kommentar bei Freigabe
-        customerContact?.name || 'Kunde'
-      );
-      
-      // PDF-Version Status aktualisieren (vereinfachter Workflow)
-      if (currentPdfVersion) {
-        try {
-          await pdfVersionsService.updateVersionStatus(
-            currentPdfVersion.id!, 
-            'approved'
-          );
-        } catch (pdfError) {
-          // Fehler beim PDF-Status Update
-          // Nicht kritisch - fahre fort
-        }
+
+      // Freigabe über öffentliche API-Route
+      const res = await fetch(`/api/public/approval/${shareId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          authorName: customerContact?.name || 'Kunde'
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Freigabe fehlgeschlagen');
       }
 
-      // Email-Benachrichtigung an internen User senden
-      try {
-        await notificationsService.notifyApprovalGranted(
-          campaign,
-          customerContact?.name || 'Kunde', // Customer-Name
-          campaign.userId,
-          campaign.organizationId
-        );
-      } catch (notificationError) {
-        // Notification-Fehler nicht kritisch
+      // PDF-Version Status aktualisieren über API
+      if (currentPdfVersion?.id) {
+        fetch(`/api/public/approval/${shareId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updatePdfStatus',
+            pdfVersionId: currentPdfVersion.id,
+            status: 'approved'
+          })
+        }).catch(() => {});
       }
-      
+
+      // Benachrichtigungen werden server-seitig in der API-Route erstellt
+
       // Aktualisiere lokalen State
       setCampaign({
         ...campaign,
@@ -567,19 +322,17 @@ export default function ApprovalPage() {
           approvedAt: new Date() as any
         }
       });
-      
-      // Update PDF State lokal
+
       if (currentPdfVersion) {
         setCurrentPdfVersion({
           ...currentPdfVersion,
           status: 'approved'
         });
       }
-      
+
       setActionCompleted(true);
       setShowFeedbackForm(false);
     } catch (error) {
-      // Fehler bei der Freigabe
       alert('Die Freigabe konnte nicht erteilt werden. Bitte versuchen Sie es erneut.');
     } finally {
       setSubmitting(false);
@@ -587,67 +340,50 @@ export default function ApprovalPage() {
   };
 
   const handleRequestChanges = async (changesText?: string) => {
-    // Verwende übergebenen Text oder fallback auf feedbackText
     const textToSubmit = changesText || feedbackText;
-    
+
     if (!campaign || !textToSubmit.trim()) return;
 
     try {
       setSubmitting(true);
-      
-      // NEU: Direkte Approval-Service Nutzung (vereinfachter Workflow)
-      await approvalService.requestChangesPublic(
-        shareId,
-        customerContact?.email || 'customer@freigabe.system', // Customer E-Mail
-        textToSubmit.trim(),
-        customerContact?.name || 'Kunde'
-      );
-      
-      // PDF-Version Status aktualisieren (vereinfachter Workflow)
-      if (currentPdfVersion) {
-        try {
-          await pdfVersionsService.updateVersionStatus(
-            currentPdfVersion.id!, 
-            'rejected'
-          );
-        } catch (pdfError) {
-          // Fehler beim PDF-Status Update
-          // Nicht kritisch - fahre fort
-        }
+
+      // Änderungen über öffentliche API-Route anfordern
+      const res = await fetch(`/api/public/approval/${shareId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'requestChanges',
+          comment: textToSubmit.trim(),
+          authorName: customerContact?.name || 'Kunde',
+          recipientEmail: customerContact?.email || 'customer@freigabe.system'
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Feedback konnte nicht gesendet werden');
       }
 
-      // Email-Benachrichtigung und Inbox-Thread erstellen
-      try {
-        // Notification an internen User
-        await notificationsService.notifyChangesRequested(
-          campaign,
-          customerContact?.name || 'Kunde', // Customer-Name
-          campaign.userId
-        );
-
-        // Inbox-Thread für Communication
-        await inboxService.createApprovalThread({
-          organizationId: campaign.organizationId || '',
-          approvalId: shareId,
-          campaignTitle: campaign.title || 'Pressemitteilung',
-          clientName: campaign.clientName || 'Kunde',
-          createdBy: {
-            userId: 'customer',
-            name: customerContact?.name || 'Kunde',
-            email: customerContact?.email || 'kunde@example.com'
-          },
-          initialMessage: feedbackText.trim()
-        });
-      } catch (communicationError) {
-        // Communication-Fehler nicht kritisch
+      // PDF-Version Status aktualisieren über API
+      if (currentPdfVersion?.id) {
+        fetch(`/api/public/approval/${shareId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updatePdfStatus',
+            pdfVersionId: currentPdfVersion.id,
+            status: 'rejected'
+          })
+        }).catch(() => {});
       }
-      
+
+      // Benachrichtigungen und Inbox-Thread werden server-seitig in der API-Route erstellt
+
       // Aktualisiere lokalen State
       const newFeedback = {
-        comment: feedbackText.trim(),
+        comment: textToSubmit.trim(),
         requestedAt: new Date() as any,
         author: customerContact?.name || 'Kunde',
-        action: 'changes_requested'  // Für korrekte Kunde-Erkennung
+        action: 'changes_requested'
       };
 
       setCampaign({
@@ -659,20 +395,18 @@ export default function ApprovalPage() {
           feedbackHistory: [...(campaign.approvalData?.feedbackHistory || []), newFeedback]
         }
       });
-      
-      // Update PDF State lokal
+
       if (currentPdfVersion) {
         setCurrentPdfVersion({
           ...currentPdfVersion,
           status: 'rejected'
         });
       }
-      
+
       setFeedbackText('');
       setShowFeedbackForm(false);
       setActionCompleted(true);
     } catch (error) {
-      // Fehler beim Senden des Feedbacks
       alert('Das Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
     } finally {
       setSubmitting(false);
