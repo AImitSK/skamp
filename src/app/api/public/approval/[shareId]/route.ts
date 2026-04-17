@@ -333,7 +333,7 @@ async function handleApprove(
           'APPROVAL_GRANTED',
           'Freigabe erteilt',
           `${approverName} hat die Pressemitteilung "${campaign.title || 'Unbekannt'}" freigegeben.`,
-          `/dashboard/pr-kampagnen/${approvalData.campaignId}`,
+          `/dashboard/pr-tools/campaigns/campaigns/${approvalData.campaignId}`,
           {
             campaignId: approvalData.campaignId,
             campaignTitle: campaign.title,
@@ -453,7 +453,7 @@ async function handleRequestChanges(
         'CHANGES_REQUESTED',
         'Änderungen erbeten',
         `${reviewerName} hat Änderungen zur Pressemitteilung "${campaign.title || 'Unbekannt'}" angefordert.`,
-        `/dashboard/pr-kampagnen/${approvalData.campaignId}`,
+        `/dashboard/pr-tools/campaigns/campaigns/${approvalData.campaignId}`,
         {
           campaignId: approvalData.campaignId,
           campaignTitle: campaign.title,
@@ -854,7 +854,7 @@ async function sendTeamApprovalEmails(
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
-  const campaignUrl = `${baseUrl}/dashboard/pr-tools/campaigns/${campaignId}`;
+  const campaignUrl = `${baseUrl}/dashboard/pr-tools/campaigns/campaigns/${campaignId}`;
 
   let subject: string;
   let htmlContent: string;
