@@ -55,7 +55,11 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
 
   const formattedDate = useMemo(() => {
     if (!createdAt) return '';
-    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const date = createdAt.toDate
+      ? createdAt.toDate()
+      : createdAt._seconds != null
+        ? new Date(createdAt._seconds * 1000)
+        : new Date(createdAt);
     return date.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'long',

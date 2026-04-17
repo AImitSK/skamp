@@ -415,7 +415,11 @@ export default function ApprovalPage() {
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = timestamp.toDate
+      ? timestamp.toDate()
+      : timestamp._seconds != null
+        ? new Date(timestamp._seconds * 1000)
+        : new Date(timestamp);
     return date.toLocaleString('de-DE', {
       day: '2-digit',
       month: '2-digit',
