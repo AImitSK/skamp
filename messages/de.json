@@ -1872,6 +1872,12 @@
         "pendingCustomer": "Warte auf Kundenfreigabe",
         "rejected": "Abgelehnt",
         "approved": "Freigegeben"
+      },
+      "stages": {
+        "unknown": {
+          "label": "Unbekannt",
+          "description": "Status konnte nicht ermittelt werden"
+        }
       }
     }
   },
@@ -11112,6 +11118,8 @@
         "thumbnailGenerating": "Vorschau wird erstellt..."
       },
       "description": "Beschreibung",
+      "loading": "Laden...",
+      "loadingTemplates": "Vorlagen werden geladen...",
       "templatesAvailable": "{count, plural, =0 {Keine Vorlagen} =1 {1 Vorlage} other {# Vorlagen}} verfügbar"
     }
   },
