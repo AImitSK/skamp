@@ -146,14 +146,44 @@ export function KeyVisualSection({
       if (selectedProjectId) {
         // ✅ RICHTIGE LÖSUNG: Finde den Medien-Ordner des Projekts und lade dort hoch
         const { mediaService } = await import('@/lib/firebase/media-service');
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/client-init');
 
         // 1. Alle Ordner der Organisation laden
         const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-        // 2. Projekt-Hauptordner finden - verwende gleiche Logik wie AssetSelectorModal
-        const projectFolder = allFolders.find(folder =>
-          folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
-        );
+        // 2. Robuste Projekt-Ordner-Suche (3 Strategien)
+        let projectFolder: any = null;
+
+        // Strategie A: Über assetFolders im Projekt-Dokument
+        try {
+          const projectDoc = await getDoc(doc(db, 'projects', selectedProjectId));
+          if (projectDoc.exists()) {
+            const project = projectDoc.data();
+            if (project?.assetFolders?.length > 0) {
+              projectFolder = allFolders.find(f => f.id === project.assetFolders[0].folderId);
+            }
+          }
+        } catch {
+          // Nicht kritisch
+        }
+
+        // Strategie B: Über Ordnernamen
+        if (!projectFolder && selectedProjectName) {
+          projectFolder = allFolders.find(folder =>
+            folder.name.includes('P-') && folder.name.includes(selectedProjectName)
+          );
+        }
+
+        // Strategie C: Teilname-Match
+        if (!projectFolder && selectedProjectName) {
+          const firstWord = selectedProjectName.split(/\s+/)[0];
+          if (firstWord.length >= 4) {
+            projectFolder = allFolders.find(folder =>
+              folder.name.includes('P-') && folder.name.toLowerCase().includes(firstWord.toLowerCase())
+            );
+          }
+        }
 
         if (projectFolder) {
           // 3. Medien-Unterordner finden

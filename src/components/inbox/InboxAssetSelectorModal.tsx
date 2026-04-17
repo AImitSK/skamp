@@ -123,10 +123,40 @@ export function InboxAssetSelectorModal({
       // 1. Alle Ordner der Organisation laden
       const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-      // 2. Projekt-Hauptordner finden
-      const projectFolder = allFolders.find(folder =>
-        folder.name.includes('P-') && folder.name.includes(projectName)
-      );
+      // 2. Robuste Projekt-Ordner-Suche (3 Strategien)
+      let projectFolder: any = null;
+
+      // Strategie A: Über assetFolders im Projekt-Dokument
+      try {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/client-init');
+        const projectDoc = await getDoc(doc(db, 'projects', selectedProjectId!));
+        if (projectDoc.exists()) {
+          const project = projectDoc.data();
+          if (project?.assetFolders?.length > 0) {
+            projectFolder = allFolders.find(f => f.id === project.assetFolders[0].folderId);
+          }
+        }
+      } catch {
+        // Nicht kritisch
+      }
+
+      // Strategie B: Über Ordnernamen
+      if (!projectFolder) {
+        projectFolder = allFolders.find(folder =>
+          folder.name.includes('P-') && folder.name.includes(projectName)
+        );
+      }
+
+      // Strategie C: Teilname-Match
+      if (!projectFolder) {
+        const firstWord = projectName.split(/\s+/)[0];
+        if (firstWord.length >= 4) {
+          projectFolder = allFolders.find(folder =>
+            folder.name.includes('P-') && folder.name.toLowerCase().includes(firstWord.toLowerCase())
+          );
+        }
+      }
 
       if (projectFolder && projectFolder.id) {
         setProjectRootFolderId(projectFolder.id);
