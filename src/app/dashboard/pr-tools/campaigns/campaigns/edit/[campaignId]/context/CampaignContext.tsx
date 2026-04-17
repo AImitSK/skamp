@@ -416,7 +416,9 @@ export function CampaignProvider({
       toastService.success(t('success.pdfGenerated'));
 
     } catch (error) {
-      toastService.error(t('errors.pdfGenerationFailed'));
+      console.error('PDF-Erstellung fehlgeschlagen:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toastService.error(`${t('errors.pdfGenerationFailed')}: ${errorMessage}`);
     } finally {
       setGeneratingPdf(false);
     }
