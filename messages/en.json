@@ -1559,7 +1559,24 @@
         "distribution": "Distribution",
         "review": "Review"
       },
-      "update": "Update"
+      "update": "Update",
+      "dialog": {
+        "title": "Organize files into project folder",
+        "description": "The files from this campaign will be moved to the project folder of \"{projectName}\" and organized there.",
+        "filesCount": "{count, plural, =0 {No files} =1 {1 file} other {# files}} will be organized:",
+        "fileTypes": {
+          "keyVisuals": "Key Visuals (Images)",
+          "attachments": "Attachments & Documents",
+          "pdfs": "PDF Versions"
+        },
+        "notice": "The files will be <strong>copied</strong>, not moved. The originals remain in the campaign.",
+        "buttons": {
+          "cancel": "Cancel",
+          "organize": "{count, plural, =0 {No files} =1 {Organize 1 file} other {Organize # files}}",
+          "organizing": "Organizing..."
+        },
+        "processing": "Files are being moved to the project folder. Please wait..."
+      }
     },
     "projectUpload": {
       "cancel": "Cancel",

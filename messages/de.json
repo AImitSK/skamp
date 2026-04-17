@@ -1559,7 +1559,24 @@
         "distribution": "Verteilung",
         "review": "Review"
       },
-      "update": "Aktualisieren"
+      "update": "Aktualisieren",
+      "dialog": {
+        "title": "Dateien in Projektordner organisieren",
+        "description": "Die Dateien dieser Kampagne werden in den Projektordner von \"{projectName}\" verschoben und dort organisiert.",
+        "filesCount": "{count, plural, =0 {Keine Dateien} =1 {1 Datei} other {# Dateien}} werden organisiert:",
+        "fileTypes": {
+          "keyVisuals": "Key Visuals (Bilder)",
+          "attachments": "Anhänge & Dokumente",
+          "pdfs": "PDF-Versionen"
+        },
+        "notice": "Die Dateien werden <strong>kopiert</strong>, nicht verschoben. Die Originale bleiben in der Kampagne erhalten.",
+        "buttons": {
+          "cancel": "Abbrechen",
+          "organize": "{count, plural, =0 {Keine Dateien} =1 {1 Datei organisieren} other {# Dateien organisieren}}",
+          "organizing": "Wird organisiert..."
+        },
+        "processing": "Dateien werden in den Projektordner verschoben. Bitte warten..."
+      }
     },
     "projectUpload": {
       "cancel": "Abbrechen",

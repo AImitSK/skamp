@@ -44,13 +44,47 @@ async function getOrCreateAIImagesFolder(
     ...doc.data()
   })) as Array<{ id: string; name: string; parentFolderId?: string }>;
 
-  // 2. Projekt-Hauptordner finden (Format: "P-XXXX - Projektname")
-  const projectFolder = allFolders.find(folder =>
-    folder.name.includes('P-') && folder.name.includes(projectName)
-  );
+  // 2. Projekt-Hauptordner finden
+  // Strategie A: Über assetFolders im Projekt-Dokument (zuverlässigste Methode)
+  let projectFolder = null;
+  try {
+    const projectDoc = await adminDb.collection('projects').doc(projectId).get();
+    if (projectDoc.exists) {
+      const projectData = projectDoc.data();
+      const mainFolder = projectData?.assetFolders?.find(
+        (f: any) => f.folderName === projectData?.title || f.folderName === projectName
+      );
+      if (mainFolder?.folderId) {
+        projectFolder = allFolders.find(f => f.id === mainFolder.folderId);
+      }
+      // Fallback: Erster Eintrag in assetFolders ist der Hauptordner
+      if (!projectFolder && projectData?.assetFolders?.length > 0) {
+        projectFolder = allFolders.find(f => f.id === projectData.assetFolders[0].folderId);
+      }
+    }
+  } catch {
+    // Nicht kritisch, Fallback auf Namenssuche
+  }
+
+  // Strategie B: Über Ordnernamen (Format: "P-{Datum}-{Company}-{Projektname}")
+  if (!projectFolder) {
+    projectFolder = allFolders.find(folder =>
+      folder.name.includes('P-') && folder.name.includes(projectName)
+    );
+  }
+
+  // Strategie C: Teilweise Namensübereinstimmung (erstes Wort des Projektnamens)
+  if (!projectFolder) {
+    const firstWord = projectName.split(/\s+/)[0];
+    if (firstWord.length >= 4) {
+      projectFolder = allFolders.find(folder =>
+        folder.name.includes('P-') && folder.name.toLowerCase().includes(firstWord.toLowerCase())
+      );
+    }
+  }
 
   if (!projectFolder) {
-    throw new Error(`Projekt-Ordner für "${projectName}" nicht gefunden`);
+    throw new Error(`Projekt-Ordner für "${projectName}" nicht gefunden. Bitte erstellen Sie zuerst die Projektordner-Struktur im Daten-Tab.`);
   }
 
   // 3. Medien-Unterordner finden
