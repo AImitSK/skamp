@@ -322,10 +322,13 @@ async function handleApprove(
     }
 
     if (campaign) {
-      // Benachrichtigung an internen User erstellen
+      // Alle aktiven Team-Mitglieder laden
+      const teamMembers = await loadActiveTeamMembers(campaign.organizationId);
+
+      // Glocken-Benachrichtigung an alle Team-Mitglieder
       try {
-        await createNotification(
-          campaign.userId,
+        await createTeamNotifications(
+          teamMembers,
           campaign.organizationId,
           'APPROVAL_GRANTED',
           'Freigabe erteilt',
@@ -341,9 +344,10 @@ async function handleApprove(
         // Notification-Fehler nicht kritisch
       }
 
-      // Email-Benachrichtigung an Team senden
+      // Email-Benachrichtigung an alle Team-Mitglieder
       try {
-        await sendApprovalEmail(
+        await sendTeamApprovalEmails(
+          teamMembers,
           campaign.organizationId,
           'approved',
           approverName,
@@ -438,10 +442,13 @@ async function handleRequestChanges(
   }
 
   if (campaign) {
-    // Benachrichtigung an internen User erstellen
+    // Alle aktiven Team-Mitglieder laden
+    const teamMembers = await loadActiveTeamMembers(campaign.organizationId);
+
+    // Glocken-Benachrichtigung an alle Team-Mitglieder
     try {
-      await createNotification(
-        campaign.userId,
+      await createTeamNotifications(
+        teamMembers,
         campaign.organizationId,
         'CHANGES_REQUESTED',
         'Änderungen erbeten',
@@ -457,9 +464,10 @@ async function handleRequestChanges(
       // Notification-Fehler nicht kritisch
     }
 
-    // Email-Benachrichtigung an Team senden
+    // Email-Benachrichtigung an alle Team-Mitglieder
     try {
-      await sendApprovalEmail(
+      await sendTeamApprovalEmails(
+        teamMembers,
         campaign.organizationId,
         'changes_requested',
         reviewerName,
@@ -615,10 +623,76 @@ function removeUndefined(obj: Record<string, any>): Record<string, any> {
 }
 
 /**
- * Erstellt eine Benachrichtigung für einen internen User via Admin SDK
+ * Lädt alle aktiven Team-Mitglieder einer Organisation via Admin SDK
  */
-async function createNotification(
+async function loadActiveTeamMembers(
+  organizationId: string
+): Promise<Array<{ userId: string; email: string; displayName: string }>> {
+  if (!organizationId) return [];
+
+  try {
+    const snap = await adminDb
+      .collection('team_members')
+      .where('organizationId', '==', organizationId)
+      .where('status', '==', 'active')
+      .get();
+
+    return snap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        userId: data.userId,
+        email: data.email || '',
+        displayName: data.displayName || ''
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Prüft ob eine Notification für einen User aktiviert ist (Admin SDK)
+ * Lookup-Reihenfolge: org-spezifisch -> legacy -> Default (aktiviert)
+ */
+async function isNotificationEnabledAdmin(
   userId: string,
+  type: string,
+  organizationId: string
+): Promise<boolean> {
+  try {
+    // Erst org-spezifische Settings
+    let settingsDoc = await adminDb
+      .collection('notification_settings')
+      .doc(`${organizationId}_${userId}`)
+      .get();
+
+    // Fallback: Legacy-Settings ohne Org-Prefix
+    if (!settingsDoc.exists) {
+      settingsDoc = await adminDb
+        .collection('notification_settings')
+        .doc(userId)
+        .get();
+    }
+
+    // Kein Settings-Dokument = Default: alle aktiviert
+    if (!settingsDoc.exists) return true;
+
+    const settings = settingsDoc.data();
+    if (type === 'APPROVAL_GRANTED') return settings?.approvalGranted !== false;
+    if (type === 'CHANGES_REQUESTED') return settings?.changesRequested !== false;
+    return true;
+  } catch {
+    // Bei Fehler: Default aktiviert
+    return true;
+  }
+}
+
+/**
+ * Erstellt Glocken-Benachrichtigungen für alle Team-Mitglieder via Admin SDK
+ * Prüft pro User die Notification-Settings
+ */
+async function createTeamNotifications(
+  teamMembers: Array<{ userId: string }>,
   organizationId: string,
   type: string,
   title: string,
@@ -626,21 +700,36 @@ async function createNotification(
   linkUrl: string,
   metadata: Record<string, any>
 ) {
-  const notificationRef = adminDb.collection('notifications').doc();
-  await notificationRef.set({
-    id: notificationRef.id,
-    userId,
-    organizationId,
-    type,
-    title,
-    message,
-    linkUrl,
-    linkType: 'campaign',
-    linkId: metadata.campaignId,
-    isRead: false,
-    metadata,
-    createdAt: FieldValue.serverTimestamp()
-  });
+  if (teamMembers.length === 0) return;
+
+  const batch = adminDb.batch();
+  let count = 0;
+
+  for (const member of teamMembers) {
+    const enabled = await isNotificationEnabledAdmin(member.userId, type, organizationId);
+    if (!enabled) continue;
+
+    const ref = adminDb.collection('notifications').doc();
+    batch.set(ref, {
+      id: ref.id,
+      userId: member.userId,
+      organizationId,
+      type,
+      title,
+      message,
+      linkUrl,
+      linkType: 'campaign',
+      linkId: metadata.campaignId,
+      isRead: false,
+      metadata,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    count++;
+  }
+
+  if (count > 0) {
+    await batch.commit();
+  }
 }
 
 /**
@@ -732,21 +821,10 @@ async function loadOrganizationEmailAddress(
 }
 
 /**
- * Generiert eine Reply-To Adresse für Inbox-Routing
+ * Sendet Email-Benachrichtigungen an alle Team-Mitglieder via SendGrid
  */
-function generateReplyToAddress(emailAddress: { localPart: string; organizationId: string; id: string }): string {
-  const prefix = (emailAddress.localPart || '')
-    .substring(0, 10)
-    .replace(/[^a-z0-9]/gi, '');
-  const shortOrgId = emailAddress.organizationId.substring(0, 8);
-  const shortEmailId = emailAddress.id.substring(0, 8);
-  return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
-}
-
-/**
- * Sendet eine Email-Benachrichtigung an das Team via SendGrid
- */
-async function sendApprovalEmail(
+async function sendTeamApprovalEmails(
+  teamMembers: Array<{ userId: string; email: string; displayName: string }>,
   organizationId: string,
   type: 'approved' | 'changes_requested',
   actorName: string,
@@ -762,13 +840,19 @@ async function sendApprovalEmail(
     return;
   }
 
+  // Nur Team-Mitglieder mit gültiger Email-Adresse
+  const recipients = teamMembers.filter(m => m.email && m.email.includes('@'));
+  if (recipients.length === 0) {
+    console.warn('Keine Team-Mitglieder mit Email-Adresse gefunden');
+    return;
+  }
+
   const emailAddress = await loadOrganizationEmailAddress(organizationId);
   if (!emailAddress) {
     console.warn('Keine Standard-Email-Adresse für Organisation gefunden:', organizationId);
     return;
   }
 
-  const replyToAddress = generateReplyToAddress(emailAddress);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
   const campaignUrl = `${baseUrl}/dashboard/pr-tools/campaigns/${campaignId}`;
 
@@ -778,7 +862,7 @@ async function sendApprovalEmail(
   if (type === 'approved') {
     subject = `Freigabe erhalten: ${campaignTitle}`;
     htmlContent = `
-      <h2>✅ Freigabe erhalten</h2>
+      <h2>Freigabe erhalten</h2>
       <p><strong>Kampagne:</strong> ${campaignTitle}</p>
       <p><strong>Kunde:</strong> ${clientName}</p>
       <p><strong>Freigegeben von:</strong> ${actorName}</p>
@@ -786,12 +870,12 @@ async function sendApprovalEmail(
 
       <p>Die Kampagne kann nun versendet werden.</p>
 
-      <p><a href="${campaignUrl}">Kampagne anzeigen</a></p>
+      <p><a href="${campaignUrl}" style="display:inline-block;padding:10px 20px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;">Kampagne anzeigen</a></p>
     `;
   } else {
     subject = `Änderungen angefordert: ${campaignTitle}`;
     htmlContent = `
-      <h2>🔄 Änderungen angefordert</h2>
+      <h2>Änderungen angefordert</h2>
       <p><strong>Kampagne:</strong> ${campaignTitle}</p>
       <p><strong>Kunde:</strong> ${clientName}</p>
       <p><strong>Änderungen von:</strong> ${actorName}</p>
@@ -803,27 +887,34 @@ async function sendApprovalEmail(
 
       <p>Die Kampagne kann nun bearbeitet werden.</p>
 
-      <p><a href="${campaignUrl}">Kampagne bearbeiten</a></p>
+      <p><a href="${campaignUrl}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Kampagne bearbeiten</a></p>
     `;
   }
 
-  const msg = {
-    to: { email: replyToAddress, name: 'CeleroPress Team' },
-    from: { email: emailAddress.email, name: 'CeleroPress' },
-    replyTo: replyToAddress,
-    subject,
-    html: htmlContent,
-    text: htmlContent.replace(/<[^>]*>/g, ''),
-    customArgs: {
-      type: 'approval_notification',
-      approval_type: type,
-      campaign_id: campaignId,
-      organization_id: organizationId
+  // An jeden Empfänger einzeln senden (personalisiert)
+  const sendPromises = recipients.map(async (recipient) => {
+    try {
+      const msg = {
+        to: { email: recipient.email, name: recipient.displayName || 'Team-Mitglied' },
+        from: { email: emailAddress.email, name: 'CeleroPress' },
+        subject,
+        html: htmlContent,
+        text: htmlContent.replace(/<[^>]*>/g, ''),
+        customArgs: {
+          type: 'approval_notification',
+          approval_type: type,
+          campaign_id: campaignId,
+          organization_id: organizationId
+        }
+      };
+      await sgMail.send(msg);
+    } catch (err) {
+      console.error(`Email-Versand an ${recipient.email} fehlgeschlagen:`, err);
     }
-  };
+  });
 
-  await sgMail.send(msg);
-  console.log(`📧 Approval-Email gesendet: ${type} für Kampagne ${campaignId}`);
+  await Promise.all(sendPromises);
+  console.log(`Approval-Emails gesendet: ${type} an ${recipients.length} Team-Mitglieder für Kampagne ${campaignId}`);
 }
 
 /**
