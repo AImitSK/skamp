@@ -6,6 +6,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { nanoid } from 'nanoid';
+import sgMail from '@sendgrid/mail';
+
+// SendGrid konfigurieren
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 // ============================================
 // GET: Lade alle Daten für die Freigabe-Seite
@@ -267,6 +273,8 @@ async function handleApprove(
   approvalData: FirebaseFirestore.DocumentData,
   body: { authorName?: string; comment?: string; inlineComments?: any[] }
 ) {
+  const approverName = body.authorName || 'Kunde';
+
   const updates: Record<string, any> = {
     status: 'approved',
     approvedAt: FieldValue.serverTimestamp(),
@@ -277,7 +285,7 @@ async function handleApprove(
     id: nanoid(),
     timestamp: Timestamp.now(),
     action: 'approved',
-    actorName: body.authorName || 'Kunde',
+    actorName: approverName,
     actorEmail: 'public-access@freigabe.system',
     details: removeUndefined({
       previousStatus: approvalData.status,
@@ -293,7 +301,7 @@ async function handleApprove(
 
   await approvalRef.update(updates);
 
-  // Campaign-Status auch aktualisieren
+  // Campaign-Status und Lock aktualisieren
   if (approvalData.campaignId) {
     try {
       await adminDb.collection('pr_campaigns').doc(approvalData.campaignId).update({
@@ -304,27 +312,60 @@ async function handleApprove(
       // Nicht kritisch
     }
 
-    // Benachrichtigung an internen User erstellen
+    // Campaign-Daten laden (für Notification + Email)
+    let campaign: FirebaseFirestore.DocumentData | undefined;
     try {
       const campaignSnap = await adminDb.collection('pr_campaigns').doc(approvalData.campaignId).get();
-      const campaign = campaignSnap.data();
-      if (campaign) {
+      campaign = campaignSnap.data();
+    } catch {
+      // Nicht kritisch
+    }
+
+    if (campaign) {
+      // Benachrichtigung an internen User erstellen
+      try {
         await createNotification(
           campaign.userId,
           campaign.organizationId,
           'APPROVAL_GRANTED',
           'Freigabe erteilt',
-          `${body.authorName || 'Kunde'} hat die Pressemitteilung "${campaign.title || 'Unbekannt'}" freigegeben.`,
+          `${approverName} hat die Pressemitteilung "${campaign.title || 'Unbekannt'}" freigegeben.`,
           `/dashboard/pr-kampagnen/${approvalData.campaignId}`,
           {
             campaignId: approvalData.campaignId,
             campaignTitle: campaign.title,
-            senderName: body.authorName || 'Kunde'
+            senderName: approverName
           }
         );
+      } catch {
+        // Notification-Fehler nicht kritisch
       }
-    } catch {
-      // Notification-Fehler nicht kritisch
+
+      // Email-Benachrichtigung an Team senden
+      try {
+        await sendApprovalEmail(
+          campaign.organizationId,
+          'approved',
+          approverName,
+          approvalData.campaignTitle || campaign.title || 'Pressemitteilung',
+          approvalData.clientName || campaign.clientName || 'Unbekannt',
+          approvalData.campaignId,
+          approvalData.shareId
+        );
+      } catch (emailError) {
+        console.error('Email-Versand fehlgeschlagen (approve):', emailError);
+      }
+
+      // Inbox-Thread aktualisieren (System-Nachricht)
+      try {
+        await addInboxSystemMessage(
+          approvalData,
+          campaign.organizationId,
+          `✅ **Freigabe erhalten**\n\nDie Kampagne "${campaign.title || 'Pressemitteilung'}" wurde von ${approverName} freigegeben.\n\nDie Kampagne kann nun versendet werden.`
+        );
+      } catch {
+        // Inbox-Fehler nicht kritisch
+      }
     }
   }
 }
@@ -338,6 +379,9 @@ async function handleRequestChanges(
     throw new Error('Kommentar ist erforderlich');
   }
 
+  const reviewerName = body.authorName || 'Kunde';
+  const feedback = body.comment.trim();
+
   const updates: Record<string, any> = {
     status: 'changes_requested',
     updatedAt: FieldValue.serverTimestamp()
@@ -347,10 +391,10 @@ async function handleRequestChanges(
     id: nanoid(),
     timestamp: Timestamp.now(),
     action: 'changes_requested',
-    actorName: body.authorName || 'Kunde',
+    actorName: reviewerName,
     actorEmail: body.recipientEmail || 'public-access@freigabe.system',
     details: removeUndefined({
-      comment: body.comment.trim(),
+      comment: feedback,
       previousStatus: approvalData.status,
       newStatus: 'changes_requested',
       changes: body.inlineComments
@@ -363,30 +407,86 @@ async function handleRequestChanges(
 
   await approvalRef.update(updates);
 
-  // Benachrichtigung an internen User erstellen
+  // Campaign laden und Lock-Status aktualisieren
+  let campaign: FirebaseFirestore.DocumentData | undefined;
   try {
     const campaignSnap = await adminDb.collection('pr_campaigns').doc(approvalData.campaignId).get();
-    const campaign = campaignSnap.data();
-    if (campaign) {
+    campaign = campaignSnap.data();
+  } catch {
+    // Nicht kritisch
+  }
+
+  // Campaign-Lock lösen (Kampagne wird wieder bearbeitbar)
+  if (approvalData.campaignId) {
+    try {
+      await adminDb.collection('pr_campaigns').doc(approvalData.campaignId).update({
+        status: 'changes_requested',
+        editLocked: false,
+        editLockedReason: FieldValue.delete(),
+        lockedBy: FieldValue.delete(),
+        unlockedAt: FieldValue.serverTimestamp(),
+        lastUnlockedBy: {
+          userId: 'system',
+          displayName: 'Freigabe-System',
+          reason: 'Änderung angefordert'
+        },
+        updatedAt: FieldValue.serverTimestamp()
+      });
+    } catch {
+      // Nicht kritisch
+    }
+  }
+
+  if (campaign) {
+    // Benachrichtigung an internen User erstellen
+    try {
       await createNotification(
         campaign.userId,
         campaign.organizationId,
         'CHANGES_REQUESTED',
         'Änderungen erbeten',
-        `${body.authorName || 'Kunde'} hat Änderungen zur Pressemitteilung "${campaign.title || 'Unbekannt'}" angefordert.`,
+        `${reviewerName} hat Änderungen zur Pressemitteilung "${campaign.title || 'Unbekannt'}" angefordert.`,
         `/dashboard/pr-kampagnen/${approvalData.campaignId}`,
         {
           campaignId: approvalData.campaignId,
           campaignTitle: campaign.title,
-          senderName: body.authorName || 'Kunde'
+          senderName: reviewerName
         }
       );
+    } catch {
+      // Notification-Fehler nicht kritisch
     }
-  } catch {
-    // Notification-Fehler nicht kritisch
+
+    // Email-Benachrichtigung an Team senden
+    try {
+      await sendApprovalEmail(
+        campaign.organizationId,
+        'changes_requested',
+        reviewerName,
+        approvalData.campaignTitle || campaign.title || 'Pressemitteilung',
+        approvalData.clientName || campaign.clientName || 'Unbekannt',
+        approvalData.campaignId,
+        approvalData.shareId,
+        feedback,
+        body.inlineComments
+      );
+    } catch (emailError) {
+      console.error('Email-Versand fehlgeschlagen (requestChanges):', emailError);
+    }
+
+    // Inbox-Thread aktualisieren (System-Nachricht)
+    try {
+      await addInboxSystemMessage(
+        approvalData,
+        campaign.organizationId,
+        `🔄 **Änderungen angefordert**\n\nDer Kunde ${reviewerName} hat Änderungen zur Kampagne "${campaign.title || 'Pressemitteilung'}" angefordert.\n\n**Feedback:**\n${feedback}${body.inlineComments?.length ? `\n\n**Inline-Kommentare:** ${body.inlineComments.length}` : ''}\n\nDie Kampagne kann nun bearbeitet werden.`
+      );
+    } catch {
+      // Inbox-Fehler nicht kritisch
+    }
   }
 
-  // Inbox-Thread erstellen
+  // Inbox-Thread erstellen (Kunden-Nachricht)
   try {
     await createInboxThread(approvalData, body);
   } catch {
@@ -597,5 +697,176 @@ async function createInboxThread(
     },
     type: 'message',
     createdAt: FieldValue.serverTimestamp()
+  });
+}
+
+/**
+ * Lädt die Standard-Email-Adresse einer Organisation via Admin SDK
+ */
+async function loadOrganizationEmailAddress(
+  organizationId: string
+): Promise<{ email: string; id: string; localPart: string; organizationId: string } | null> {
+  if (!organizationId) return null;
+
+  try {
+    const snap = await adminDb
+      .collection('email_addresses')
+      .where('organizationId', '==', organizationId)
+      .where('isDefault', '==', true)
+      .limit(1)
+      .get();
+
+    if (snap.empty) return null;
+
+    const doc = snap.docs[0];
+    const data = doc.data();
+    return {
+      id: doc.id,
+      email: data.email,
+      localPart: data.localPart || data.email?.split('@')[0] || '',
+      organizationId: data.organizationId
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generiert eine Reply-To Adresse für Inbox-Routing
+ */
+function generateReplyToAddress(emailAddress: { localPart: string; organizationId: string; id: string }): string {
+  const prefix = (emailAddress.localPart || '')
+    .substring(0, 10)
+    .replace(/[^a-z0-9]/gi, '');
+  const shortOrgId = emailAddress.organizationId.substring(0, 8);
+  const shortEmailId = emailAddress.id.substring(0, 8);
+  return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
+}
+
+/**
+ * Sendet eine Email-Benachrichtigung an das Team via SendGrid
+ */
+async function sendApprovalEmail(
+  organizationId: string,
+  type: 'approved' | 'changes_requested',
+  actorName: string,
+  campaignTitle: string,
+  clientName: string,
+  campaignId: string,
+  shareId: string,
+  feedback?: string,
+  inlineComments?: any[]
+): Promise<void> {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.warn('SENDGRID_API_KEY nicht konfiguriert - Email-Versand übersprungen');
+    return;
+  }
+
+  const emailAddress = await loadOrganizationEmailAddress(organizationId);
+  if (!emailAddress) {
+    console.warn('Keine Standard-Email-Adresse für Organisation gefunden:', organizationId);
+    return;
+  }
+
+  const replyToAddress = generateReplyToAddress(emailAddress);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
+  const campaignUrl = `${baseUrl}/dashboard/pr-tools/campaigns/${campaignId}`;
+
+  let subject: string;
+  let htmlContent: string;
+
+  if (type === 'approved') {
+    subject = `Freigabe erhalten: ${campaignTitle}`;
+    htmlContent = `
+      <h2>✅ Freigabe erhalten</h2>
+      <p><strong>Kampagne:</strong> ${campaignTitle}</p>
+      <p><strong>Kunde:</strong> ${clientName}</p>
+      <p><strong>Freigegeben von:</strong> ${actorName}</p>
+      <p><strong>Status:</strong> Freigegeben</p>
+
+      <p>Die Kampagne kann nun versendet werden.</p>
+
+      <p><a href="${campaignUrl}">Kampagne anzeigen</a></p>
+    `;
+  } else {
+    subject = `Änderungen angefordert: ${campaignTitle}`;
+    htmlContent = `
+      <h2>🔄 Änderungen angefordert</h2>
+      <p><strong>Kampagne:</strong> ${campaignTitle}</p>
+      <p><strong>Kunde:</strong> ${clientName}</p>
+      <p><strong>Änderungen von:</strong> ${actorName}</p>
+
+      <h3>Feedback:</h3>
+      <p>${feedback || 'Keine spezifischen Kommentare'}</p>
+
+      ${inlineComments && inlineComments.length > 0 ? `<p><strong>Inline-Kommentare:</strong> ${inlineComments.length}</p>` : ''}
+
+      <p>Die Kampagne kann nun bearbeitet werden.</p>
+
+      <p><a href="${campaignUrl}">Kampagne bearbeiten</a></p>
+    `;
+  }
+
+  const msg = {
+    to: { email: replyToAddress, name: 'CeleroPress Team' },
+    from: { email: emailAddress.email, name: 'CeleroPress' },
+    replyTo: replyToAddress,
+    subject,
+    html: htmlContent,
+    text: htmlContent.replace(/<[^>]*>/g, ''),
+    customArgs: {
+      type: 'approval_notification',
+      approval_type: type,
+      campaign_id: campaignId,
+      organization_id: organizationId
+    }
+  };
+
+  await sgMail.send(msg);
+  console.log(`📧 Approval-Email gesendet: ${type} für Kampagne ${campaignId}`);
+}
+
+/**
+ * Fügt eine System-Nachricht zum bestehenden Inbox-Thread hinzu
+ */
+async function addInboxSystemMessage(
+  approvalData: FirebaseFirestore.DocumentData,
+  organizationId: string,
+  content: string
+): Promise<void> {
+  // Bestehenden Thread suchen
+  const threadSnap = await adminDb
+    .collection('inbox_threads')
+    .where('relatedEntityId', '==', approvalData.shareId)
+    .where('relatedEntityType', '==', 'approval')
+    .limit(1)
+    .get();
+
+  if (threadSnap.empty) return;
+
+  const thread = threadSnap.docs[0];
+
+  // System-Nachricht hinzufügen
+  const messageRef = adminDb.collection('inbox_messages').doc();
+  await messageRef.set({
+    id: messageRef.id,
+    threadId: thread.id,
+    organizationId,
+    content,
+    sender: {
+      userId: 'system',
+      name: 'System',
+      email: 'system@celeropress.com'
+    },
+    type: 'status_change',
+    createdAt: FieldValue.serverTimestamp()
+  });
+
+  // Thread updaten
+  await thread.ref.update({
+    updatedAt: FieldValue.serverTimestamp(),
+    lastMessageAt: FieldValue.serverTimestamp(),
+    messageCount: FieldValue.increment(1),
+    unreadCount: FieldValue.increment(1)
   });
 }
