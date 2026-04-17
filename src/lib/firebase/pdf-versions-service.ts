@@ -779,28 +779,42 @@ class PDFVersionsService {
             // Projekt-basierter Upload: Finde Pressemeldungen-Ordner
             const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-            // ✅ VERWENDE GLEICHE SUCHLOGIK WIE KEYVISUAL-UPLOAD
-            // Hole Projekt-Daten für korrekte Namenssuche
-            let projectName = 'Dan dann'; // Fallback
+            // Robuste Projekt-Ordner-Suche (3 Strategien)
+            let projectFolder: any = null;
+            let projectName = '';
 
+            // Strategie A: Über assetFolders im Projekt-Dokument
             try {
-              if (campaignData.projectId) {
-                // Direkte Firestore-Abfrage statt Service-Import
-                const projectDoc = await getDoc(doc(db, 'projects', campaignData.projectId));
-                if (projectDoc.exists()) {
-                  const project = projectDoc.data();
-                  if (project && project.title) {
-                    projectName = project.title;
-                  }
+              const projectDoc = await getDoc(doc(db, 'projects', campaignData.projectId));
+              if (projectDoc.exists()) {
+                const project = projectDoc.data();
+                projectName = project?.title || '';
+
+                // assetFolders hat die Ordner-IDs direkt gespeichert
+                if (project?.assetFolders?.length > 0) {
+                  projectFolder = allFolders.find(f => f.id === project.assetFolders[0].folderId);
                 }
               }
-            } catch (error) {
-              // Projekt-Daten konnten nicht geladen werden, verwende Fallback
+            } catch {
+              // Nicht kritisch, Fallback auf Namenssuche
             }
 
-            const projectFolder = allFolders.find(folder =>
-              folder.name.includes('P-') && folder.name.includes(projectName)
-            );
+            // Strategie B: Über Ordnernamen
+            if (!projectFolder && projectName) {
+              projectFolder = allFolders.find(folder =>
+                folder.name.includes('P-') && folder.name.includes(projectName)
+              );
+            }
+
+            // Strategie C: Teilname-Match
+            if (!projectFolder && projectName) {
+              const firstWord = projectName.split(/\s+/)[0];
+              if (firstWord.length >= 4) {
+                projectFolder = allFolders.find(folder =>
+                  folder.name.includes('P-') && folder.name.toLowerCase().includes(firstWord.toLowerCase())
+                );
+              }
+            }
 
             if (projectFolder) {
               // Finde Pressemeldungen-Unterordner
@@ -864,7 +878,7 @@ class PDFVersionsService {
                 throw new Error('Pressemeldungen-Ordner nicht gefunden');
               }
             } else {
-              throw new Error('Projekt-Ordner nicht gefunden');
+              throw new Error(`Projekt-Ordner nicht gefunden für "${projectName}". Bitte Projektordner-Struktur im Daten-Tab erstellen.`);
             }
           } else {
             // Fallback für Campaigns ohne Projekt
