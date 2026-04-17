@@ -322,7 +322,9 @@ class PDFVersionsService {
       return pdfVersionId;
 
     } catch (error) {
-      throw new Error('Fehler beim Erstellen der PDF-Version');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('PDF-Version Erstellung fehlgeschlagen:', errorMessage, error);
+      throw new Error(`Fehler beim Erstellen der PDF-Version: ${errorMessage}`);
     }
   }
 
@@ -945,7 +947,9 @@ class PDFVersionsService {
       }
       
       // Fallback: Werfe Fehler weiter, damit der aufrufende Code reagieren kann
-      throw new Error(`PDF-Generation fehlgeschlagen: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('generateRealPDF fehlgeschlagen:', errorMessage);
+      throw new Error(`PDF-Generation fehlgeschlagen: ${errorMessage}`);
     }
   }
 
