@@ -333,7 +333,7 @@ async function handleApprove(
           'APPROVAL_GRANTED',
           'Freigabe erteilt',
           `${approverName} hat die Pressemitteilung "${campaign.title || 'Unbekannt'}" freigegeben.`,
-          `/dashboard/pr-tools/campaigns/campaigns/${approvalData.campaignId}`,
+          `/dashboard/projects/${campaign.projectId || approvalData.campaignId}`,
           {
             campaignId: approvalData.campaignId,
             campaignTitle: campaign.title,
@@ -354,7 +354,8 @@ async function handleApprove(
           approvalData.campaignTitle || campaign.title || 'Pressemitteilung',
           approvalData.clientName || campaign.clientName || 'Unbekannt',
           approvalData.campaignId,
-          approvalData.shareId
+          approvalData.shareId,
+          campaign.projectId
         );
       } catch (emailError) {
         console.error('Email-Versand fehlgeschlagen (approve):', emailError);
@@ -453,7 +454,7 @@ async function handleRequestChanges(
         'CHANGES_REQUESTED',
         'Änderungen erbeten',
         `${reviewerName} hat Änderungen zur Pressemitteilung "${campaign.title || 'Unbekannt'}" angefordert.`,
-        `/dashboard/pr-tools/campaigns/campaigns/${approvalData.campaignId}`,
+        `/dashboard/projects/${campaign.projectId || approvalData.campaignId}`,
         {
           campaignId: approvalData.campaignId,
           campaignTitle: campaign.title,
@@ -475,6 +476,7 @@ async function handleRequestChanges(
         approvalData.clientName || campaign.clientName || 'Unbekannt',
         approvalData.campaignId,
         approvalData.shareId,
+        campaign.projectId,
         feedback,
         body.inlineComments
       );
@@ -832,6 +834,7 @@ async function sendTeamApprovalEmails(
   clientName: string,
   campaignId: string,
   shareId: string,
+  projectId?: string,
   feedback?: string,
   inlineComments?: any[]
 ): Promise<void> {
@@ -854,7 +857,7 @@ async function sendTeamApprovalEmails(
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
-  const campaignUrl = `${baseUrl}/dashboard/pr-tools/campaigns/campaigns/${campaignId}`;
+  const projectUrl = `${baseUrl}/dashboard/projects/${projectId || campaignId}`;
 
   let subject: string;
   let htmlContent: string;
@@ -870,7 +873,7 @@ async function sendTeamApprovalEmails(
 
       <p>Die Kampagne kann nun versendet werden.</p>
 
-      <p><a href="${campaignUrl}" style="display:inline-block;padding:10px 20px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;">Kampagne anzeigen</a></p>
+      <p><a href="${projectUrl}" style="display:inline-block;padding:10px 20px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;">Projekt öffnen</a></p>
     `;
   } else {
     subject = `Änderungen angefordert: ${campaignTitle}`;
@@ -887,7 +890,7 @@ async function sendTeamApprovalEmails(
 
       <p>Die Kampagne kann nun bearbeitet werden.</p>
 
-      <p><a href="${campaignUrl}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Kampagne bearbeiten</a></p>
+      <p><a href="${projectUrl}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Projekt öffnen</a></p>
     `;
   }
 
